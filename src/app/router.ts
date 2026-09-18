@@ -4,6 +4,7 @@ import WelcomeView from '@/features/onboarding/WelcomeView.vue'
 import SetupView from '@/features/onboarding/SetupView.vue'
 import RestoreView from '@/features/onboarding/RestoreView.vue'
 import TodayView from '@/features/today/TodayView.vue'
+import StorageView from '@/features/storage/StorageView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -39,6 +40,11 @@ export const router = createRouter({
       path: '/reader',
       name: 'reader',
       component: PrototypeView,
+    },
+    {
+      path: '/storage',
+      name: 'storage',
+      component: StorageView,
     },
     {
       path: '/:pathMatch(.*)*',

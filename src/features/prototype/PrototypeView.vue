@@ -1,121 +1,262 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { BibleChapter } from '@/api/contracts'
+import { computed, onMounted, ref } from 'vue'
+import type { BibleBook, BibleChapter, TranslationSummary } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import MobileShell from '@/components/MobileShell.vue'
-import { ru } from '@/i18n/ru'
 import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
+import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
+import { bookmarkKey, type Bookmark } from '@/offline/libraryRepository'
 import { createChapterService } from '@/services/chapterService'
-import { schedulePrototypeNotification } from '@/notifications/localNotifications'
+import { createOfflinePackageService, type PackageProgress } from '@/services/offlinePackageService'
 
-const service = createChapterService(bibleApi, createIndexedDbChapterRepository())
+const chapterRepository = createIndexedDbChapterRepository()
+const libraryRepository = createIndexedDbLibraryRepository()
+const chapterService = createChapterService(bibleApi, chapterRepository)
+const packageService = createOfflinePackageService(bibleApi, chapterRepository, libraryRepository)
 
-const translationCode = ref('BQ_RUSSIAN_RST_STRONG')
-const bookSlug = ref('genesis')
+const translations = ref<TranslationSummary[]>([])
+const books = ref<BibleBook[]>([])
+const translationCode = ref('')
+const bookSlug = ref('')
 const chapterNumber = ref(1)
 const chapter = ref<BibleChapter>()
+const bookmarks = ref<Bookmark[]>([])
 const message = ref('')
 const busy = ref(false)
+const packageBusy = ref(false)
+const packageProgress = ref<PackageProgress>()
+const packageVersion = ref('')
+const packageUpdateAvailable = ref(false)
+let packageAbortController: AbortController | undefined
 
-async function download(): Promise<void> {
+const selectedTranslation = computed(() => translations.value.find((item) => item.code === translationCode.value))
+const selectedBook = computed(() => books.value.find((item) => item.slug === bookSlug.value))
+const bookmarkedVerseKeys = computed(() => new Set(bookmarks.value.map((item) => item.key)))
+
+onMounted(async () => {
+  busy.value = true
+  message.value = 'Загружаем каталог…'
+  try {
+    const [catalog, savedLocation, savedBookmarks] = await Promise.all([
+      bibleApi.getTranslations('ru'),
+      libraryRepository.getReadingLocation(),
+      libraryRepository.listBookmarks(),
+    ])
+    translations.value = catalog
+    bookmarks.value = savedBookmarks
+    translationCode.value = savedLocation?.translationCode
+      ?? catalog.find((item) => item.is_default)?.code
+      ?? catalog[0]?.code
+      ?? ''
+    await loadBooks(savedLocation?.bookSlug)
+    chapterNumber.value = savedLocation?.chapter ?? 1
+    message.value = savedLocation ? 'Последнее место восстановлено.' : 'Выберите книгу и главу.'
+    if (savedLocation) await openChapter()
+  } catch (error) {
+    message.value = errorMessage(error)
+  } finally {
+    busy.value = false
+  }
+})
+
+async function loadBooks(preferredBook?: string): Promise<void> {
+  if (!translationCode.value) return
+  books.value = await bibleApi.getBooks(translationCode.value)
+  bookSlug.value = books.value.some((item) => item.slug === preferredBook)
+    ? preferredBook!
+    : books.value[0]?.slug ?? ''
+  chapterNumber.value = 1
+  chapter.value = undefined
+  const status = await packageService.inspect(translationCode.value)
+  packageVersion.value = status.stored
+    ? `${status.stored.chapterCount} глав · ${formatDate(status.stored.downloadedAt)}`
+    : `Не загружен · ${status.totalChapters} глав`
+  packageUpdateAvailable.value = status.updateAvailable
+}
+
+async function changeTranslation(): Promise<void> {
   await run(async () => {
-    chapter.value = await service.download(translationCode.value, bookSlug.value, chapterNumber.value)
-    message.value = ru.saved
+    await loadBooks()
+    message.value = 'Каталог книг обновлён.'
   })
 }
 
-async function openOffline(): Promise<void> {
+function changeBook(): void {
+  chapterNumber.value = 1
+  chapter.value = undefined
+}
+
+async function openChapter(): Promise<void> {
+  const book = selectedBook.value
+  if (!book || chapterNumber.value < 1 || chapterNumber.value > book.chapters_count) {
+    message.value = 'Выберите существующую главу.'
+    return
+  }
+
   await run(async () => {
-    chapter.value = await service.readOffline(translationCode.value, bookSlug.value, chapterNumber.value)
-    message.value = chapter.value ? ru.offlineOpened : ru.offlineMissing
+    try {
+      chapter.value = await chapterService.download(translationCode.value, bookSlug.value, chapterNumber.value)
+      message.value = 'Глава открыта и сохранена для офлайна.'
+    } catch (networkError) {
+      chapter.value = await chapterService.readOffline(translationCode.value, bookSlug.value, chapterNumber.value)
+      if (!chapter.value) throw networkError
+      message.value = 'Нет сети — открыта сохранённая глава.'
+    }
+    await libraryRepository.saveReadingLocation({
+      translationCode: translationCode.value,
+      bookSlug: bookSlug.value,
+      chapter: chapterNumber.value,
+      updatedAt: new Date().toISOString(),
+    })
   })
 }
 
-async function testNotification(): Promise<void> {
-  await run(async () => {
-    const result = await schedulePrototypeNotification()
-    message.value = result === 'scheduled'
-      ? ru.notificationScheduled
-      : result === 'denied'
-        ? ru.notificationDenied
-        : ru.notificationUnsupported
-  })
+async function moveChapter(offset: number): Promise<void> {
+  const book = selectedBook.value
+  if (!book) return
+  const next = chapterNumber.value + offset
+  if (next < 1 || next > book.chapters_count) return
+  chapterNumber.value = next
+  await openChapter()
+}
+
+async function toggleBookmark(verse: BibleChapter['verses'][number]): Promise<void> {
+  if (!chapter.value) return
+  const key = bookmarkKey(translationCode.value, bookSlug.value, chapterNumber.value, verse.number)
+  const existing = bookmarks.value.find((item) => item.key === key)
+  if (existing) {
+    await libraryRepository.deleteBookmark(key)
+    bookmarks.value = bookmarks.value.filter((item) => item.key !== key)
+    message.value = `Закладка на стих ${verse.number} удалена.`
+    return
+  }
+
+  const value: Bookmark = {
+    key,
+    translationCode: translationCode.value,
+    translationName: chapter.value.translation.name,
+    bookSlug: bookSlug.value,
+    bookName: chapter.value.book.name,
+    chapter: chapterNumber.value,
+    verse: verse.number,
+    text: verse.plain_text,
+    createdAt: new Date().toISOString(),
+  }
+  await libraryRepository.putBookmark(value)
+  bookmarks.value = [...bookmarks.value, value]
+  message.value = `Стих ${verse.number} добавлен в закладки.`
+}
+
+async function downloadTranslation(): Promise<void> {
+  const translation = selectedTranslation.value
+  if (!translation || !window.confirm(`Скачать перевод «${translation.name}» целиком? Загрузка может занять несколько минут.`)) return
+
+  packageAbortController = new AbortController()
+  packageBusy.value = true
+  packageProgress.value = undefined
+  message.value = 'Начинаем загрузку перевода…'
+  try {
+    const result = await packageService.download(
+      translation,
+      (progress) => { packageProgress.value = progress },
+      packageAbortController.signal,
+    )
+    packageVersion.value = `${result.chapterCount} глав · ${formatDate(result.downloadedAt)}`
+    packageUpdateAvailable.value = false
+    message.value = 'Перевод полностью загружен и доступен без сети.'
+  } catch (error) {
+    message.value = error instanceof DOMException && error.name === 'AbortError'
+      ? 'Загрузка остановлена. Готовая версия пакета не изменена.'
+      : errorMessage(error)
+  } finally {
+    packageBusy.value = false
+    packageAbortController = undefined
+  }
+}
+
+function stopPackageDownload(): void {
+  packageAbortController?.abort()
 }
 
 async function run(action: () => Promise<void>): Promise<void> {
   busy.value = true
-  message.value = ru.loading
   try {
     await action()
   } catch (error) {
-    message.value = error instanceof Error ? error.message : ru.unknownError
+    message.value = errorMessage(error)
   } finally {
     busy.value = false
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Неизвестная ошибка.'
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short' }).format(new Date(value))
 }
 </script>
 
 <template>
   <MobileShell>
-      <section class="hero">
-        <p class="eyebrow">{{ ru.eyebrow }}</p>
-        <h1>{{ ru.title }}</h1>
-        <p class="intro">{{ ru.intro }}</p>
-      </section>
+    <section class="reader-heading">
+      <span class="card-icon"><img src="/icons/library.png" alt="" /></span>
+      <span><p class="eyebrow dark-eyebrow">Библия</p><h1>Чтение</h1></span>
+      <RouterLink class="storage-link" to="/storage">Офлайн</RouterLink>
+    </section>
 
-      <section class="chapter-card" aria-labelledby="chapter-form-title">
-        <header class="card-header">
-          <span class="card-icon"><img src="/icons/library.png" alt="" /></span>
-          <span>
-            <small>{{ ru.cardEyebrow }}</small>
-            <h2 id="chapter-form-title">{{ ru.cardTitle }}</h2>
-          </span>
-        </header>
+    <section class="chapter-card" aria-labelledby="chapter-form-title">
+      <h2 id="chapter-form-title" class="visually-hidden">Выбор главы</h2>
+      <div class="fields">
+        <label class="translation-field">
+          <span>Перевод</span>
+          <select v-model="translationCode" :disabled="busy || packageBusy" @change="changeTranslation">
+            <option v-for="translation in translations" :key="translation.code" :value="translation.code">{{ translation.name }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Книга</span>
+          <select v-model="bookSlug" :disabled="busy || packageBusy" @change="changeBook">
+            <option v-for="book in books" :key="book.slug" :value="book.slug">{{ book.name }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Глава</span>
+          <input v-model.number="chapterNumber" type="number" min="1" :max="selectedBook?.chapters_count ?? 1" inputmode="numeric" :disabled="busy || packageBusy" />
+        </label>
+      </div>
 
-        <div class="fields">
-          <label class="translation-field">
-            <span>{{ ru.translation }}</span>
-            <input v-model.trim="translationCode" list="translation-options" autocomplete="off" />
-            <datalist id="translation-options">
-              <option value="BQ_RUSSIAN_RST_STRONG">{{ ru.translationName }}</option>
-            </datalist>
-          </label>
-          <label>
-            <span>{{ ru.book }}</span>
-            <input v-model.trim="bookSlug" list="book-options" autocomplete="off" />
-            <datalist id="book-options">
-              <option value="genesis">Бытие</option>
-            </datalist>
-          </label>
-          <label>
-            <span>{{ ru.chapter }}</span>
-            <input v-model.number="chapterNumber" type="number" min="1" inputmode="numeric" />
-          </label>
-        </div>
+      <button :disabled="busy || packageBusy || !selectedBook" class="primary-action" type="button" @click="openChapter">
+        {{ busy ? 'Загрузка…' : 'Открыть главу' }}
+      </button>
 
-        <button :disabled="busy" class="primary-action" type="button" @click="download">
-          {{ busy ? ru.loading : ru.download }}
-        </button>
+      <div class="package-row">
+        <div><strong>Офлайн-перевод</strong><small>{{ packageVersion }}<template v-if="packageUpdateAvailable"> · доступно обновление</template></small></div>
+        <button v-if="!packageBusy" type="button" :disabled="busy" @click="downloadTranslation">{{ packageVersion.startsWith('Не загружен') ? 'Скачать' : 'Обновить' }}</button>
+        <button v-else type="button" class="danger-text" @click="stopPackageDownload">Остановить</button>
+      </div>
+      <div v-if="packageProgress" class="download-progress" role="progressbar" :aria-valuenow="packageProgress.current" :aria-valuemax="packageProgress.total">
+        <span :style="{ width: `${(packageProgress.current / packageProgress.total) * 100}%` }"></span>
+        <small>{{ packageProgress.bookName }}, {{ packageProgress.chapter }} · {{ packageProgress.current }}/{{ packageProgress.total }}</small>
+      </div>
+      <p v-if="message" class="status" role="status" aria-live="polite">{{ message }}</p>
+    </section>
 
-        <div class="card-actions">
-          <button :disabled="busy" type="button" @click="openOffline">{{ ru.openOffline }}</button>
-          <button :disabled="busy" type="button" @click="testNotification">{{ ru.notification }}</button>
-        </div>
-
-        <p v-if="message" class="status" role="status" aria-live="polite">{{ message }}</p>
-      </section>
-
-      <article v-if="chapter" class="reading-card">
-        <header>
-          <p>{{ chapter.translation.name }}</p>
-          <h2>{{ chapter.book.name }}, глава {{ chapter.chapter.number }}</h2>
-        </header>
-        <ol>
-          <li v-for="verse in chapter.verses" :key="verse.id">
-            <span class="verse-number">{{ verse.number }}</span>
-            {{ verse.plain_text }}
-          </li>
-        </ol>
-      </article>
+    <article v-if="chapter" class="reading-card">
+      <header class="reading-header">
+        <button type="button" :disabled="busy || chapterNumber <= 1" aria-label="Предыдущая глава" @click="moveChapter(-1)">←</button>
+        <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}, глава {{ chapter.chapter.number }}</h2></span>
+        <button type="button" :disabled="busy || chapterNumber >= chapter.book.chapters_count" aria-label="Следующая глава" @click="moveChapter(1)">→</button>
+      </header>
+      <ol>
+        <li v-for="verse in chapter.verses" :key="verse.id">
+          <button class="bookmark-button" :class="{ active: bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) }" type="button" :aria-label="`Закладка на стих ${verse.number}`" @click="toggleBookmark(verse)">
+            {{ bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) ? '★' : '☆' }}
+          </button>
+          <span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text }}
+        </li>
+      </ol>
+    </article>
   </MobileShell>
 </template>

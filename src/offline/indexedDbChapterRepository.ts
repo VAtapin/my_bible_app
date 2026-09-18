@@ -1,48 +1,47 @@
 import type { ChapterRepository, StoredChapter } from './chapterRepository'
-
-const databaseName = 'my-bible-app'
-const storeName = 'chapters'
+import { offlineStores, openOfflineDatabase, runRequest } from './database'
 
 export function createIndexedDbChapterRepository(): ChapterRepository {
-  const openDatabase = (): Promise<IDBDatabase> =>
-    new Promise((resolve, reject) => {
-      const request = indexedDB.open(databaseName, 1)
-
-      request.onupgradeneeded = () => {
-        const database = request.result
-        if (!database.objectStoreNames.contains(storeName)) {
-          database.createObjectStore(storeName, { keyPath: 'key' })
-        }
-      }
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-
   return {
     async get(key) {
-      const database = await openDatabase()
+      const database = await openOfflineDatabase()
       try {
         return await runRequest<StoredChapter | undefined>(
-          database.transaction(storeName, 'readonly').objectStore(storeName).get(key),
+          database.transaction(offlineStores.chapters, 'readonly').objectStore(offlineStores.chapters).get(key),
         )
       } finally {
         database.close()
       }
     },
     async put(chapter) {
-      const database = await openDatabase()
+      const database = await openOfflineDatabase()
       try {
-        await runRequest(database.transaction(storeName, 'readwrite').objectStore(storeName).put(chapter))
+        await runRequest(
+          database.transaction(offlineStores.chapters, 'readwrite').objectStore(offlineStores.chapters).put(chapter),
+        )
+      } finally {
+        database.close()
+      }
+    },
+    async list() {
+      const database = await openOfflineDatabase()
+      try {
+        return await runRequest<StoredChapter[]>(
+          database.transaction(offlineStores.chapters, 'readonly').objectStore(offlineStores.chapters).getAll(),
+        )
+      } finally {
+        database.close()
+      }
+    },
+    async delete(key) {
+      const database = await openOfflineDatabase()
+      try {
+        await runRequest(
+          database.transaction(offlineStores.chapters, 'readwrite').objectStore(offlineStores.chapters).delete(key),
+        )
       } finally {
         database.close()
       }
     },
   }
-}
-
-function runRequest<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
 }

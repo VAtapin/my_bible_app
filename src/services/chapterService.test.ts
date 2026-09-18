@@ -17,6 +17,8 @@ describe('chapter service', () => {
     const repository: ChapterRepository = {
       get: vi.fn(async () => stored),
       put: vi.fn(async (value) => { stored = value }),
+      list: vi.fn(async () => stored ? [stored] : []),
+      delete: vi.fn(async () => { stored = undefined }),
     }
     const api = {
       getChapter: vi.fn(async () => chapter),
@@ -30,5 +32,21 @@ describe('chapter service', () => {
 
     expect(repository.put).toHaveBeenCalledWith(expect.objectContaining({ key: 'L1_RST:genesis:1' }))
     expect(offlineChapter).toEqual(chapter)
+  })
+
+  it('lists and removes stored chapters', async () => {
+    let stored: StoredChapter | undefined = { key: 'L1_RST:genesis:1', savedAt: '2026-09-18', data: chapter }
+    const repository: ChapterRepository = {
+      get: vi.fn(async () => stored),
+      put: vi.fn(async (value) => { stored = value }),
+      list: vi.fn(async () => stored ? [stored] : []),
+      delete: vi.fn(async () => { stored = undefined }),
+    }
+    const api = { getChapter: vi.fn(), getBooks: vi.fn(), getTranslations: vi.fn() } satisfies BibleApi
+    const service = createChapterService(api, repository)
+
+    expect(await service.listStored()).toHaveLength(1)
+    await service.deleteStored('L1_RST:genesis:1')
+    expect(await service.listStored()).toHaveLength(0)
   })
 })

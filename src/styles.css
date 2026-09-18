@@ -1016,6 +1016,264 @@ select {
   font-weight: 700;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.reader-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 2px 2px;
+}
+
+.reader-heading .eyebrow,
+.reader-heading h1 {
+  margin: 0;
+}
+
+.reader-heading h1 {
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.storage-link {
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 13px 11px;
+  color: var(--brand-blue);
+  background: #edf3f7;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.package-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.package-row > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.package-row strong,
+.package-row small {
+  display: block;
+}
+
+.package-row strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.package-row small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.package-row button,
+.reading-header button,
+.storage-item button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--brand-blue);
+  background: #f7fafc;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.download-progress {
+  position: relative;
+  height: 30px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #edf1f4;
+}
+
+.download-progress > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgb(125 161 194 / 45%);
+}
+
+.download-progress small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  padding: 8px 9px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reading-header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.reading-header span {
+  min-width: 0;
+}
+
+.reading-card li {
+  position: relative;
+  padding-left: 27px;
+}
+
+.bookmark-button {
+  position: absolute;
+  top: 1px;
+  left: -8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  padding: 0;
+  color: var(--brand-blue-soft);
+  background: transparent;
+  font-size: 20px;
+}
+
+.bookmark-button.active {
+  color: var(--brand-gold);
+}
+
+.storage-page {
+  padding-top: 12px;
+}
+
+.storage-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.storage-summary > div {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 13px 8px;
+  background: var(--white);
+  text-align: center;
+}
+
+.storage-summary strong,
+.storage-summary small {
+  display: block;
+}
+
+.storage-summary strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  text-overflow: ellipsis;
+}
+
+.storage-summary small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.storage-section {
+  margin-top: 23px;
+}
+
+.storage-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--white);
+}
+
+.storage-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 11px 12px;
+}
+
+.storage-item + .storage-item {
+  border-top: 1px solid var(--line);
+}
+
+.storage-item > span:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.storage-item strong,
+.storage-item small {
+  display: block;
+}
+
+.storage-item strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.storage-item small {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.complete-badge {
+  flex: 0 0 auto !important;
+  border-radius: 999px;
+  padding: 5px 8px;
+  color: #31664e;
+  background: #e4f1ea;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.danger-text {
+  color: #8b4d48 !important;
+}
+
+.empty-state {
+  border: 1px dashed var(--line);
+  border-radius: 15px;
+  padding: 17px;
+  color: var(--muted);
+  background: rgb(255 255 255 / 55%);
+  font-size: 12px;
+  text-align: center;
+}
+
 @media (max-width: 520px) {
   .app-content {
     padding: 14px 12px 24px;
