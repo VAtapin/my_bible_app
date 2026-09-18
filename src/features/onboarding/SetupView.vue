@@ -88,7 +88,7 @@ function save(): void {
       notificationTime: notificationTime.value,
     }, profile.configuration)
     profile.save(configuration)
-    void router.push('/today')
+    void router.push(notificationsEnabled.value ? '/notifications?onboarding=1' : '/today')
   } catch (error) {
     message.value = error instanceof Error && error.message === 'sections-required'
       ? ru.setup.sectionRequired

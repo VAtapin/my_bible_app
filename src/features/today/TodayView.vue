@@ -51,6 +51,11 @@ onMounted(() => {
           <span><strong>{{ ru.sections.study.title }}</strong><small>{{ ru.today.configured }}</small></span>
           <span class="module-status">{{ ru.today.nextStage }}</span>
         </div>
+        <RouterLink class="module-card available" to="/notifications">
+          <span class="module-icon"><img src="/icons/calendar.png" alt="" /></span>
+          <span><strong>Напоминания</strong><small>Категории, время и состояние разрешений</small></span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
       </div>
     </section>
 

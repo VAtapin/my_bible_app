@@ -8,6 +8,7 @@ import StorageView from '@/features/storage/StorageView.vue'
 import PrayerListView from '@/features/prayers/PrayerListView.vue'
 import PrayerView from '@/features/prayers/PrayerView.vue'
 import CalendarView from '@/features/calendar/CalendarView.vue'
+import NotificationSettingsView from '@/features/notifications/NotificationSettingsView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -63,6 +64,11 @@ export const router = createRouter({
       path: '/calendar',
       name: 'calendar',
       component: CalendarView,
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: NotificationSettingsView,
     },
     {
       path: '/:pathMatch(.*)*',

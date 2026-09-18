@@ -1532,6 +1532,60 @@ select {
   accent-color: var(--brand-blue);
 }
 
+.notification-page {
+  padding-top: 12px;
+}
+
+.notification-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 21px;
+}
+
+.notification-row {
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  padding: 7px 14px;
+  background: var(--white);
+}
+
+.notification-row .time-row {
+  border-top: 1px solid var(--line);
+}
+
+.diagnostics-card {
+  margin-top: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--white);
+}
+
+.diagnostics-card > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 13px;
+}
+
+.diagnostics-card > div + div {
+  border-top: 1px solid var(--line);
+}
+
+.diagnostics-card span {
+  flex: 1;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.diagnostics-card strong {
+  max-width: 55%;
+  color: var(--ink);
+  font-size: 11px;
+  text-align: right;
+}
+
 @media (max-width: 520px) {
   .app-content {
     padding: 14px 12px 24px;
