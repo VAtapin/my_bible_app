@@ -19,5 +19,8 @@ npm run build
 
 test -s dist/index.html
 test -s dist/sw.js
+for icon in bookmarks calendar library prayers setup; do
+    test -s "dist/app-icons/${icon}.png"
+done
 
 echo "My Bible App build is ready in $app_dir/dist"

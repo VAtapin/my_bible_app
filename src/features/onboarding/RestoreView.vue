@@ -74,7 +74,7 @@ async function run(action: () => Promise<void>, navigate = true): Promise<void> 
 <template>
   <MobileShell :show-navigation="false" back-to="/">
     <section class="simple-page restore-page">
-      <img class="simple-page-icon" src="/icons/bookmarks.png" alt="" />
+      <img class="simple-page-icon" src="/app-icons/bookmarks.png" alt="" />
       <p class="eyebrow dark-eyebrow">Восстановление</p>
       <h1>Вернуть моё приложение</h1>
       <p>Используйте персональную ссылку или короткий код. Восстановление заменит локальную конфигурацию этого устройства.</p>

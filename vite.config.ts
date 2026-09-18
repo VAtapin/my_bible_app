@@ -12,6 +12,11 @@ export default defineConfig({
         'brand/favicon-192.png',
         'brand/app-icon-512.png',
         'brand/apple-touch-icon.png',
+        'app-icons/bookmarks.png',
+        'app-icons/calendar.png',
+        'app-icons/library.png',
+        'app-icons/prayers.png',
+        'app-icons/setup.png',
       ],
       manifest: {
         name: 'Bible Desktop — Моё приложение',

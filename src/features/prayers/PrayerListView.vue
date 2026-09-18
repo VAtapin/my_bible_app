@@ -46,13 +46,13 @@ function contentExcerpt(value: string): string {
 <template>
   <MobileShell>
     <section class="reader-heading">
-      <span class="card-icon"><img src="/icons/prayers.png" alt="" /></span>
+      <span class="card-icon"><img src="/app-icons/prayers.png" alt="" /></span>
       <span><p class="eyebrow dark-eyebrow">Ежедневная молитва</p><h1>Молитвослов</h1></span>
     </section>
     <p v-if="message" class="status" role="status">{{ message }}</p>
     <section v-if="prayers.length" class="content-catalog">
       <RouterLink v-for="prayer in displayPrayers" :key="prayer.id" class="content-card" :to="`/prayers/${prayer.id}`">
-        <span class="module-icon"><img src="/icons/prayers.png" alt="" /></span>
+        <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span>
         <span><em v-if="ruleLabel(prayer)">{{ ruleLabel(prayer) }}</em><strong>{{ prayer.title }}</strong><small>{{ prayer.excerpt }}</small></span>
         <span aria-hidden="true">→</span>
       </RouterLink>

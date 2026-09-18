@@ -52,17 +52,17 @@ onMounted(() => {
           <span class="module-status">{{ ru.today.nextStage }}</span>
         </div>
         <RouterLink class="module-card available" to="/notifications">
-          <span class="module-icon"><img src="/icons/calendar.png" alt="" /></span>
+          <span class="module-icon"><img src="/app-icons/calendar.png" alt="" /></span>
           <span><strong>Напоминания</strong><small>Категории, время и состояние разрешений</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
         <RouterLink class="module-card available" to="/profile">
-          <span class="module-icon"><img src="/icons/bookmarks.png" alt="" /></span>
+          <span class="module-icon"><img src="/app-icons/bookmarks.png" alt="" /></span>
           <span><strong>Профиль и перенос</strong><small>Ссылка, синхронизация, экспорт и удаление</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
         <RouterLink class="module-card available" to="/diagnostics">
-          <span class="module-icon"><img src="/icons/setup.png" alt="" /></span>
+          <span class="module-icon"><img src="/app-icons/setup.png" alt="" /></span>
           <span><strong>Диагностика</strong><small>Локальная обезличенная сводка для поддержки</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
@@ -70,7 +70,7 @@ onMounted(() => {
     </section>
 
     <section class="offline-note">
-      <img src="/icons/bookmarks.png" alt="" />
+      <img src="/app-icons/bookmarks.png" alt="" />
       <span><strong>{{ ru.today.localTitle }}</strong><small>{{ ru.today.localDescription }}</small></span>
     </section>
   </MobileShell>

@@ -54,15 +54,15 @@ onUnmounted(() => {
 
     <nav v-if="showNavigation" class="bottom-nav" :aria-label="ru.navigation.label">
       <RouterLink to="/today" :class="{ active: route.path === '/today' }">
-        <img src="/icons/calendar.png" alt="" />
+        <img src="/app-icons/calendar.png" alt="" />
         <span>{{ ru.navigation.today }}</span>
       </RouterLink>
       <RouterLink to="/reader" :class="{ active: route.path === '/reader' }">
-        <img src="/icons/library.png" alt="" />
+        <img src="/app-icons/library.png" alt="" />
         <span>{{ ru.navigation.reading }}</span>
       </RouterLink>
       <RouterLink to="/setup/manual?edit=1" :class="{ active: route.path.startsWith('/setup') }">
-        <img src="/icons/setup.png" alt="" />
+        <img src="/app-icons/setup.png" alt="" />
         <span>{{ ru.navigation.settings }}</span>
       </RouterLink>
     </nav>

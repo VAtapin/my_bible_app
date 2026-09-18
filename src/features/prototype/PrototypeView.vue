@@ -211,7 +211,7 @@ function formatDate(value: string): string {
 <template>
   <MobileShell>
     <section class="reader-heading">
-      <span class="card-icon"><img src="/icons/library.png" alt="" /></span>
+      <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
       <span><p class="eyebrow dark-eyebrow">Библия</p><h1>Чтение</h1></span>
       <RouterLink class="storage-link" to="/storage">Офлайн</RouterLink>
     </section>

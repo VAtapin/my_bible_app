@@ -49,10 +49,11 @@ D:\Projekte\BibleDesktop\UI
 | PWA 192 × 192 | `public/brand/favicon-192.png` |
 | PWA 512 × 512 | `public/brand/app-icon-512.png` |
 | Иконка iOS Home Screen | `public/brand/apple-touch-icon.png` |
-| Библия / чтение | `public/icons/library.png` |
-| Сохранённое | `public/icons/bookmarks.png` |
-| Календарь | `public/icons/calendar.png` |
-| Молитвы / напоминание | `public/icons/prayers.png` |
+| Библия / чтение | `public/app-icons/library.png` |
+| Сохранённое | `public/app-icons/bookmarks.png` |
+| Календарь | `public/app-icons/calendar.png` |
+| Молитвы / напоминание | `public/app-icons/prayers.png` |
+| Настройка | `public/app-icons/setup.png` |
 
 Исходник для генерации нативных иконок и splash-экранов хранится в
 `assets/logo.png`. После замены исходника ресурсы Android и iOS нужно
