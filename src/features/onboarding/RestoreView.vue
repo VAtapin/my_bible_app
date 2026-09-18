@@ -11,9 +11,11 @@ import {
 } from '@/profile/profileSync'
 import { useProfileStore } from '@/stores/profileStore'
 import { recordSanitizedError } from '@/diagnostics/productDiagnostics'
+import { formatMessage, useI18n } from '@/i18n'
 
 const router = useRouter()
 const profile = useProfileStore()
+const { messages: text } = useI18n()
 const personalLink = ref('')
 const recoveryCode = ref('')
 const message = ref('')
@@ -29,13 +31,13 @@ onMounted(async () => {
 async function restoreFromLink(): Promise<void> {
   const parsed = parsePersonalRestoreLink(personalLink.value)
   if (!parsed) {
-    message.value = 'Персональная ссылка имеет неверный формат.'
+    message.value = text.value.restoreFlow.invalidLink
     return
   }
   await run(async () => {
     const remote = await remoteProfileApi.get(parsed.profileId, parsed.secret)
     applyRemote(remote, parsed.secret)
-    message.value = 'Профиль восстановлен по персональной ссылке.'
+    message.value = text.value.restoreFlow.restoredLink
   })
 }
 
@@ -45,7 +47,7 @@ async function restoreFromCode(): Promise<void> {
     const remote = await remoteProfileApi.recover(recoveryCode.value.trim())
     applyRemote(remote, remote.secret)
     recoveryCode.value = remote.recovery_code
-    message.value = `Профиль восстановлен. Новый код: ${remote.recovery_code}`
+    message.value = formatMessage(text.value.restoreFlow.restoredCode, { code: remote.recovery_code })
   }, false)
 }
 
@@ -64,7 +66,7 @@ async function run(action: () => Promise<void>, navigate = true): Promise<void> 
     if (navigate) window.setTimeout(() => { void router.push('/today') }, 700)
   } catch (error) {
     recordSanitizedError('profile_restore')
-    message.value = error instanceof Error ? error.message : 'Не удалось восстановить профиль.'
+    message.value = error instanceof Error ? error.message : text.value.restoreFlow.failed
   } finally {
     busy.value = false
   }
@@ -75,22 +77,22 @@ async function run(action: () => Promise<void>, navigate = true): Promise<void> 
   <MobileShell :show-navigation="false" back-to="/">
     <section class="simple-page restore-page">
       <img class="simple-page-icon" src="/app-icons/bookmarks.png" alt="" />
-      <p class="eyebrow dark-eyebrow">Восстановление</p>
-      <h1>Вернуть моё приложение</h1>
-      <p>Используйте персональную ссылку или короткий код. Восстановление заменит локальную конфигурацию этого устройства.</p>
+      <p class="eyebrow dark-eyebrow">{{ text.restoreFlow.eyebrow }}</p>
+      <h1>{{ text.restoreFlow.title }}</h1>
+      <p>{{ text.restoreFlow.intro }}</p>
 
       <section class="restore-card">
-        <h2>Персональная ссылка</h2>
-        <label><span>Вставьте ссылку</span><input v-model.trim="personalLink" type="url" autocomplete="off" /></label>
-        <button class="primary-action" type="button" :disabled="busy || !personalLink" @click="restoreFromLink">Открыть профиль</button>
+        <h2>{{ text.restoreFlow.linkTitle }}</h2>
+        <label><span>{{ text.restoreFlow.pasteLink }}</span><input v-model.trim="personalLink" type="url" autocomplete="off" /></label>
+        <button class="primary-action" type="button" :disabled="busy || !personalLink" @click="restoreFromLink">{{ text.restoreFlow.openProfile }}</button>
       </section>
 
-      <div class="restore-divider"><span>или</span></div>
+      <div class="restore-divider"><span>{{ text.restoreFlow.or }}</span></div>
 
       <section class="restore-card">
-        <h2>Код восстановления</h2>
-        <label><span>Код из четырёх групп</span><input v-model.trim="recoveryCode" type="text" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX" /></label>
-        <button class="primary-action" type="button" :disabled="busy || !recoveryCode" @click="restoreFromCode">Восстановить и заменить код</button>
+        <h2>{{ text.restoreFlow.codeTitle }}</h2>
+        <label><span>{{ text.restoreFlow.codeLabel }}</span><input v-model.trim="recoveryCode" type="text" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX" /></label>
+        <button class="primary-action" type="button" :disabled="busy || !recoveryCode" @click="restoreFromCode">{{ text.restoreFlow.recover }}</button>
       </section>
 
       <p v-if="message" class="status" role="status">{{ message }}</p>

@@ -1,19 +1,27 @@
 import type { LocalNotificationSchema } from '@capacitor/local-notifications'
 import { addCalendarDays, calendarDateInTimeZone } from '@/services/calendarDates'
 import type { NotificationCategoryId, NotificationPreferences } from './preferences'
+import { getMessages } from '@/i18n'
+import type { InterfaceLanguage } from '@/i18n/locale'
 
-const categoryInfo: Record<NotificationCategoryId, { id: number; title: string; body: string; route: string }> = {
-  morning: { id: 1, title: 'Утренняя молитва', body: 'Спокойное время для молитвенного правила.', route: '/prayers' },
-  evening: { id: 2, title: 'Вечерняя молитва', body: 'Завершите день молитвой.', route: '/prayers' },
-  reading: { id: 3, title: 'Чтение Библии', body: 'Продолжите с последнего места.', route: '/reader' },
-  calendar: { id: 4, title: 'Церковный календарь', body: 'Откройте память и чтения дня.', route: '/calendar' },
+const categoryIds: Record<NotificationCategoryId, { id: number; route: string }> = {
+  morning: { id: 1, route: '/prayers' }, evening: { id: 2, route: '/prayers' },
+  reading: { id: 3, route: '/reader' }, calendar: { id: 4, route: '/calendar' },
 }
 
 export function buildRollingSchedule(
   preferences: NotificationPreferences,
   now = new Date(),
   days = 14,
+  language: InterfaceLanguage = 'ru',
 ): LocalNotificationSchema[] {
+  const labels = getMessages(language).notifications
+  const categoryInfo: Record<NotificationCategoryId, { id: number; title: string; body: string; route: string }> = {
+    morning: { ...categoryIds.morning, title: labels.morning, body: labels.morningHint },
+    evening: { ...categoryIds.evening, title: labels.evening, body: labels.eveningHint },
+    reading: { ...categoryIds.reading, title: labels.reading, body: labels.readingHint },
+    calendar: { ...categoryIds.calendar, title: labels.calendar, body: labels.calendarHint },
+  }
   const today = calendarDateInTimeZone(now, Intl.DateTimeFormat().resolvedOptions().timeZone)
   const notifications: LocalNotificationSchema[] = []
 

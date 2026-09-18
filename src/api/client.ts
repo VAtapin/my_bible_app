@@ -3,6 +3,9 @@ import type {
   BibleBook,
   BibleChapter,
   CalendarDay,
+  LanguageSummary,
+  LiturgicalWorkSummary,
+  LiturgicalWorkVersion,
   PrayerDetail,
   PrayerSummary,
   TranslationSummary,
@@ -22,11 +25,14 @@ export class ApiError extends Error {
 }
 
 export interface BibleApi {
+  getLanguages(): Promise<LanguageSummary[]>
   getTranslations(language?: string): Promise<TranslationSummary[]>
   getBooks(translationCode: string): Promise<BibleBook[]>
   getChapter(translationCode: string, bookSlug: string, chapter: number): Promise<BibleChapter>
   getPrayers(language?: string): Promise<PrayerSummary[]>
   getPrayer(id: number): Promise<PrayerDetail>
+  getLiturgicalWorks(collection: string): Promise<LiturgicalWorkSummary[]>
+  getLiturgicalVersion(slug: string, language: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
 }
 
@@ -71,6 +77,9 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
   }
 
   return {
+    getLanguages() {
+      return request<LanguageSummary[]>('/languages', isLanguageList)
+    },
     getTranslations(language) {
       const query = language ? `?language=${encodeURIComponent(language)}` : ''
       return request<TranslationSummary[]>(`/translations${query}`, isTranslationList)
@@ -93,6 +102,18 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
     },
     getPrayer(id) {
       return request<PrayerDetail>(`/prayers/${id}`, isPrayerDetail)
+    },
+    getLiturgicalWorks(collection) {
+      return request<LiturgicalWorkSummary[]>(
+        `/liturgical/works?collection=${encodeURIComponent(collection)}`,
+        isLiturgicalWorkList,
+      )
+    },
+    getLiturgicalVersion(slug, language) {
+      return request<LiturgicalWorkVersion>(
+        `/liturgical/works/${encodeURIComponent(slug)}/versions/${encodeURIComponent(language)}`,
+        isLiturgicalWorkVersion,
+      )
     },
     getCalendarDay(date, language = 'ru', profile = 'typikon-strict') {
       const query = new URLSearchParams({ date, lang: language, profile })
@@ -170,7 +191,14 @@ function isBibleVerse(value: unknown): value is BibleChapter['verses'][number] {
 }
 
 function isLanguageSummary(value: unknown): value is TranslationSummary['language'] {
-  return isRecord(value) && typeof value.code === 'string' && typeof value.name === 'string'
+  return isRecord(value)
+    && typeof value.code === 'string'
+    && typeof value.name === 'string'
+    && (value.native_name === undefined || typeof value.native_name === 'string')
+}
+
+function isLanguageList(value: unknown): value is LanguageSummary[] {
+  return Array.isArray(value) && value.every(isLanguageSummary)
 }
 
 function isNullableString(value: unknown): value is string | null {
@@ -205,6 +233,39 @@ function isPrayerDetail(value: unknown): value is PrayerDetail {
     && typeof value.body === 'string'
     && isNullableString(value.source_url)
     && Array.isArray(value.sections)
+}
+
+function isLiturgicalWorkList(value: unknown): value is LiturgicalWorkSummary[] {
+  return Array.isArray(value) && value.every((item) => isRecord(item)
+    && typeof item.id === 'number'
+    && typeof item.slug === 'string'
+    && typeof item.title === 'string'
+    && Array.isArray(item.collections)
+    && item.collections.every((collection) => typeof collection === 'string')
+    && Array.isArray(item.available_languages)
+    && item.available_languages.every((language) => typeof language === 'string')
+    && Array.isArray(item.editions)
+    && (item.source_url === null || typeof item.source_url === 'string'))
+}
+
+function isLiturgicalWorkVersion(value: unknown): value is LiturgicalWorkVersion {
+  return isRecord(value)
+    && typeof value.slug === 'string'
+    && typeof value.title === 'string'
+    && typeof value.language === 'string'
+    && typeof value.edition === 'string'
+    && typeof value.edition_title === 'string'
+    && typeof value.orthography === 'string'
+    && typeof value.reader_profile === 'string'
+    && Array.isArray(value.blocks)
+    && value.blocks.every((block) => isRecord(block)
+      && typeof block.id === 'string'
+      && typeof block.kind === 'string'
+      && typeof block.text === 'string')
+    && typeof value.credit === 'string'
+    && typeof value.source_url === 'string'
+    && typeof value.content_hash === 'string'
+    && typeof value.review_status === 'string'
 }
 
 function isCalendarDay(value: unknown): value is CalendarDay {

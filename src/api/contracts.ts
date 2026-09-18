@@ -1,6 +1,7 @@
 export interface LanguageSummary {
   code: string
   name: string
+  native_name?: string
 }
 
 export interface TranslationSummary {
@@ -72,6 +73,45 @@ export interface PrayerDetail extends Omit<PrayerSummary, 'excerpt'> {
   body: string
   source_url: string | null
   sections: Array<{ id: number; title: string | null; sort_order: number }>
+}
+
+export interface LiturgicalEditionSummary {
+  code: string
+  title: string
+  language: string
+  orthography: string
+  reader_profile: string
+}
+
+export interface LiturgicalWorkSummary {
+  id: number
+  slug: string
+  title: string
+  collections: string[]
+  available_languages: string[]
+  editions: LiturgicalEditionSummary[]
+  source_url: string | null
+}
+
+export interface LiturgicalBlock {
+  id: string
+  kind: string
+  text: string
+}
+
+export interface LiturgicalWorkVersion {
+  slug: string
+  title: string
+  language: string
+  edition: string
+  edition_title: string
+  orthography: string
+  reader_profile: string
+  blocks: LiturgicalBlock[]
+  credit: string
+  source_url: string
+  content_hash: string
+  review_status: string
 }
 
 export interface CalendarReadingPassage {

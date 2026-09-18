@@ -2,13 +2,18 @@ import { describe, expect, it } from 'vitest'
 import { createConfiguration, sectionsForPreset, type ConfigurationDraft } from './configuration'
 
 const draft: ConfigurationDraft = {
+  interfaceLanguage: 'ru',
   setupMode: 'quick',
   preset: 'daily',
   sections: ['calendar', 'bible', 'calendar', 'prayers'],
-  translationCode: ' BQ_RUSSIAN_RST_STRONG ',
+  translationCodes: [' BQ_RUSSIAN_RST_STRONG ', 'BQ_GERMAN_ELBERFELD_STRONG'],
   morningPrayer: true,
   eveningPrayer: false,
   prayerBook: true,
+  akathists: true,
+  canons: false,
+  horologion: false,
+  prayerLanguageCodes: ['ru', 'de'],
   calendarLevel: 'major',
   notificationsEnabled: true,
   notificationTime: '07:30',
@@ -20,6 +25,8 @@ describe('app configuration', () => {
 
     expect(configuration.sections).toEqual(['bible', 'prayers', 'calendar'])
     expect(configuration.bible.translationCode).toBe('BQ_RUSSIAN_RST_STRONG')
+    expect(configuration.bible.translationCodes).toEqual(['BQ_RUSSIAN_RST_STRONG', 'BQ_GERMAN_ELBERFELD_STRONG'])
+    expect(configuration.interfaceLanguage).toBe('ru')
     expect(configuration.createdAt).toBe('2026-09-18T10:00:00.000Z')
   })
 

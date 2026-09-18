@@ -7,25 +7,28 @@ import MobileShell from '@/components/MobileShell.vue'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { createDailyContentService } from '@/services/dailyContentService'
 import { contentText } from '@/services/contentText'
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
 const service = createDailyContentService(bibleApi, createIndexedDbDailyContentRepository())
+const { messages: text } = useI18n()
 const prayer = ref<PrayerDetail>()
-const message = ref('Загружаем молитву…')
+const message = ref('')
 const body = computed(() => prayer.value ? contentText(prayer.value.body) : '')
 
 onMounted(async () => {
+  message.value = text.value.prayers.loadingPrayer
   const id = Number(route.params.id)
   if (!Number.isInteger(id) || id < 1) {
-    message.value = 'Молитва не найдена.'
+    message.value = text.value.prayers.notFound
     return
   }
   try {
     const result = await service.openPrayer(id)
     prayer.value = result.data
-    message.value = result.offline ? 'Нет сети — открыта сохранённая молитва.' : 'Молитва сохранена для чтения без сети.'
+    message.value = result.offline ? text.value.prayers.openedOffline : text.value.prayers.savedOffline
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось открыть молитву.'
+    message.value = error instanceof Error ? error.message : text.value.prayers.openFailed
   }
 })
 </script>

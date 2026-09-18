@@ -19,10 +19,10 @@ export default defineConfig({
         'app-icons/setup.png',
       ],
       manifest: {
-        name: 'Bible Desktop — Моё приложение',
+        name: 'Bible Desktop',
         short_name: 'Bible Desktop',
-        description: 'Персональное приложение Bible Desktop',
-        lang: 'ru',
+        description: 'Personal Bible Desktop application',
+        lang: 'mul',
         theme_color: '#4a6b8a',
         background_color: '#f7f5f1',
         display: 'standalone',

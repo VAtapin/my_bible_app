@@ -8,7 +8,9 @@ import { loadNotificationPreferences } from './notifications/preferences'
 import { flushProfileSyncQueue } from './profile/profileSync'
 import { installGlobalErrorDiagnostics, recordProductMetric, recordSanitizedError } from './diagnostics/productDiagnostics'
 import './styles.css'
+import { initializeInterfaceLanguage } from './i18n'
 
+initializeInterfaceLanguage()
 registerSW({ immediate: true })
 installGlobalErrorDiagnostics()
 recordProductMetric('app_opened')

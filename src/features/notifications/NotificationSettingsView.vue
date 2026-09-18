@@ -13,17 +13,18 @@ import {
 import { applyNotificationSchedule, getNotificationDiagnostics, type NotificationDiagnostics } from '@/notifications/notificationService'
 import { useProfileStore } from '@/stores/profileStore'
 import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
-
-const categoryLabels: Record<NotificationCategoryId, { title: string; description: string }> = {
-  morning: { title: 'Утренняя молитва', description: 'Спокойное начало дня' },
-  evening: { title: 'Вечерняя молитва', description: 'Правило перед сном' },
-  reading: { title: 'Чтение Библии', description: 'Продолжить с последнего места' },
-  calendar: { title: 'Церковный календарь', description: 'Память и чтения дня' },
-}
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
 const profile = useProfileStore()
+const { messages: text } = useI18n()
+const categoryLabels = computed<Record<NotificationCategoryId, { title: string; description: string }>>(() => ({
+  morning: { title: text.value.notifications.morning, description: text.value.notifications.morningHint },
+  evening: { title: text.value.notifications.evening, description: text.value.notifications.eveningHint },
+  reading: { title: text.value.notifications.reading, description: text.value.notifications.readingHint },
+  calendar: { title: text.value.notifications.calendar, description: text.value.notifications.calendarHint },
+}))
 const preferences = ref<NotificationPreferences>(defaultNotificationPreferences())
 const diagnostics = ref<NotificationDiagnostics>()
 const message = ref('')
@@ -53,15 +54,15 @@ async function save(): Promise<void> {
     const result = await applyNotificationSchedule(preferences.value, true)
     recordProductMetric('notification_schedule_saved')
     message.value = result === 'scheduled'
-      ? 'Расписание обновлено на ближайшие 14 дней.'
+      ? text.value.notifications.scheduleUpdated
       : result === 'unsupported'
-        ? 'Настройки сохранены. Системные уведомления работают в Android и iOS.'
-        : 'Настройки сохранены, но системное разрешение не предоставлено.'
+        ? text.value.notifications.saved
+        : text.value.notifications.denied
     await refreshDiagnostics()
     if (isOnboarding.value) window.setTimeout(() => { void router.push('/today') }, 700)
   } catch (error) {
     recordSanitizedError('notification_schedule')
-    message.value = error instanceof Error ? error.message : 'Не удалось обновить уведомления.'
+    message.value = error instanceof Error ? error.message : text.value.notifications.failed
   } finally {
     busy.value = false
   }
@@ -75,9 +76,9 @@ async function refreshDiagnostics(): Promise<void> {
 <template>
   <MobileShell :back-to="isOnboarding ? '/today' : '/setup/manual?edit=1'">
     <section class="simple-page notification-page">
-      <p class="eyebrow dark-eyebrow">Напоминания</p>
-      <h1>Ваш ритм</h1>
-      <p>Включите только нужные категории. Системное разрешение будет запрошено после сохранения.</p>
+      <p class="eyebrow dark-eyebrow">{{ text.notifications.eyebrow }}</p>
+      <h1>{{ text.notifications.title }}</h1>
+      <p>{{ text.notifications.intro }}</p>
 
       <section class="notification-list">
         <div v-for="category in notificationCategoryIds" :key="category" class="notification-row">
@@ -86,22 +87,22 @@ async function refreshDiagnostics(): Promise<void> {
             <input v-model="preferences.categories[category].enabled" type="checkbox" />
           </label>
           <label v-if="preferences.categories[category].enabled" class="time-row">
-            <span>Время</span>
+            <span>{{ text.notifications.time }}</span>
             <input v-model="preferences.categories[category].time" type="time" />
           </label>
         </div>
       </section>
 
       <button class="primary-action" type="button" :disabled="busy" @click="save">
-        {{ busy ? 'Сохраняем…' : 'Сохранить расписание' }}
+        {{ busy ? text.notifications.saving : text.notifications.save }}
       </button>
       <p v-if="message" class="status" role="status">{{ message }}</p>
 
       <section v-if="diagnostics" class="diagnostics-card">
-        <div><span>Платформа</span><strong>{{ diagnostics.platform }}</strong></div>
-        <div><span>Системное разрешение</span><strong>{{ diagnostics.supported ? diagnostics.permission : 'только Android/iOS' }}</strong></div>
-        <div><span>Запланировано</span><strong>{{ diagnostics.pending }}</strong></div>
-        <div><span>Push-обновления</span><strong>сервер готов, нужна регистрация APNs/FCM</strong></div>
+        <div><span>{{ text.notifications.platform }}</span><strong>{{ diagnostics.platform }}</strong></div>
+        <div><span>{{ text.notifications.permission }}</span><strong>{{ diagnostics.supported ? diagnostics.permission : text.notifications.nativeOnly }}</strong></div>
+        <div><span>{{ text.notifications.pending }}</span><strong>{{ diagnostics.pending }}</strong></div>
+        <div><span>{{ text.notifications.push }}</span><strong>{{ text.notifications.pushStatus }}</strong></div>
       </section>
     </section>
   </MobileShell>

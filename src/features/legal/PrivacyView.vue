@@ -1,43 +1,46 @@
 <script setup lang="ts">
 import MobileShell from '@/components/MobileShell.vue'
+import { useI18n } from '@/i18n'
+
+const { messages: text } = useI18n()
 </script>
 
 <template>
   <MobileShell :show-navigation="false" back-to="/">
     <article class="simple-page legal-page">
-      <p class="eyebrow dark-eyebrow">Приватность</p>
-      <h1>Политика конфиденциальности</h1>
-      <p>Последнее обновление: 18 сентября 2026 года.</p>
+      <p class="eyebrow dark-eyebrow">{{ text.privacy.eyebrow }}</p>
+      <h1>{{ text.privacy.title }}</h1>
+      <p>{{ text.privacy.updated }}</p>
 
       <section>
-        <h2>Какие данные использует приложение</h2>
-        <p>На устройстве хранятся выбранные разделы, настройки уведомлений, загруженные тексты, место чтения, закладки и агрегированные диагностические счётчики. Содержание чтения, молитв и поисковых запросов в аналитику не записывается.</p>
+        <h2>{{ text.privacy.dataTitle }}</h2>
+        <p>{{ text.privacy.dataText }}</p>
       </section>
 
       <section>
-        <h2>Персональный профиль</h2>
-        <p>Если вы добровольно создаёте персональную ссылку, сервер Bible Desktop хранит конфигурацию приложения, случайный ID профиля, номер ревизии и служебные даты. Секрет ссылки хранится на сервере только как хеш. Код восстановления заменяется после использования.</p>
-        <p>Загруженные тексты Библии, закладки и локальная диагностическая сводка в серверный профиль не отправляются.</p>
+        <h2>{{ text.privacy.profileTitle }}</h2>
+        <p>{{ text.privacy.profileText }}</p>
+        <p>{{ text.privacy.localText }}</p>
       </section>
 
       <section>
-        <h2>Уведомления и технические данные</h2>
-        <p>Локальные уведомления создаются на устройстве после вашего разрешения. При последующем включении удалённых push-уведомлений токен устройства будет храниться сервером в зашифрованном виде и может быть отозван. Сервер может обрабатывать IP-адрес и стандартные технические журналы для безопасности и устранения сбоев.</p>
+        <h2>{{ text.privacy.notificationTitle }}</h2>
+        <p>{{ text.privacy.notificationText }}</p>
       </section>
 
       <section>
-        <h2>Управление данными</h2>
-        <p>В разделе «Профиль и перенос» можно экспортировать серверную конфигурацию, удалить серверный профиль и отдельно удалить локальную конфигурацию. Загруженный контент и закладки очищаются в разделе «Офлайн».</p>
+        <h2>{{ text.privacy.controlTitle }}</h2>
+        <p>{{ text.privacy.controlText }}</p>
       </section>
 
       <section>
-        <h2>Передача третьим сторонам</h2>
-        <p>Приложение не продаёт данные и не содержит рекламных SDK. Apple и Google обрабатывают необходимые платформенные данные при установке приложения и доставке системных уведомлений в соответствии со своими правилами.</p>
+        <h2>{{ text.privacy.thirdTitle }}</h2>
+        <p>{{ text.privacy.thirdText }}</p>
       </section>
 
       <section>
-        <h2>Контакт</h2>
-        <p>Оператор сервиса — Bible Desktop. Вопросы о данных и удалении можно направить через <a href="https://bible-desktop.com/pages/contacts" target="_blank" rel="noopener noreferrer">страницу контактов Bible Desktop</a>.</p>
+        <h2>{{ text.privacy.contactTitle }}</h2>
+        <p>{{ text.privacy.contactBefore }} <a href="https://bible-desktop.com/pages/contacts" target="_blank" rel="noopener noreferrer">{{ text.privacy.contactLink }}</a>.</p>
       </section>
     </article>
   </MobileShell>

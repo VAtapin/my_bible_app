@@ -16,13 +16,13 @@ export function createDailyContentService(api: BibleApi, repository: DailyConten
         return { data: stored.data, offline: true }
       }
     },
-    async openCalendarDay(date: string): Promise<{ data: CalendarDay; offline: boolean }> {
+    async openCalendarDay(date: string, language = 'ru'): Promise<{ data: CalendarDay; offline: boolean }> {
       try {
-        const data = await api.getCalendarDay(date)
-        await repository.putCalendarDay({ key: date, savedAt: new Date().toISOString(), data })
+        const data = await api.getCalendarDay(date, language)
+        await repository.putCalendarDay({ key: `${language}:${date}`, savedAt: new Date().toISOString(), data })
         return { data, offline: false }
       } catch (networkError) {
-        const stored = await repository.getCalendarDay(date)
+        const stored = await repository.getCalendarDay(`${language}:${date}`) ?? await repository.getCalendarDay(date)
         if (!stored) throw networkError
         return { data: stored.data, offline: true }
       }
@@ -32,12 +32,13 @@ export function createDailyContentService(api: BibleApi, repository: DailyConten
       days: number,
       onProgress: (current: number, total: number) => void,
       signal?: AbortSignal,
+      language = 'ru',
     ): Promise<void> {
       for (let index = 0; index < days; index += 1) {
         if (signal?.aborted) throw new DOMException('Загрузка остановлена.', 'AbortError')
         const date = addCalendarDays(startDate, index)
-        const data = await api.getCalendarDay(date)
-        await repository.putCalendarDay({ key: date, savedAt: new Date().toISOString(), data })
+        const data = await api.getCalendarDay(date, language)
+        await repository.putCalendarDay({ key: `${language}:${date}`, savedAt: new Date().toISOString(), data })
         onProgress(index + 1, days)
       }
     },

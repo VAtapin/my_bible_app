@@ -3,6 +3,7 @@ import { LocalNotifications } from '@capacitor/local-notifications'
 import type { Router } from 'vue-router'
 import type { NotificationPreferences } from './preferences'
 import { buildRollingSchedule } from './schedule'
+import { getInterfaceLanguage } from '@/i18n'
 
 export interface NotificationDiagnostics {
   platform: string
@@ -31,7 +32,7 @@ export async function applyNotificationSchedule(
     await LocalNotifications.cancel({ notifications: owned.map(({ id }) => ({ id })) })
   }
 
-  const notifications = buildRollingSchedule(preferences)
+  const notifications = buildRollingSchedule(preferences, new Date(), 14, getInterfaceLanguage())
   if (notifications.length) await LocalNotifications.schedule({ notifications })
   return 'scheduled'
 }

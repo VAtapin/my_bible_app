@@ -22,13 +22,17 @@ class MemoryStorage implements Storage {
 }
 
 const configuration: AppConfiguration = {
-  version: 1,
+  version: 2,
+  interfaceLanguage: 'ru',
   setupMode: 'manual',
   preset: null,
   sections: ['bible'],
-  bible: { translationCode: 'RST' },
-  prayers: { morning: false, evening: false, prayerBook: false },
-  calendar: { level: 'major' },
+  bible: { translationCode: 'RST', translationCodes: ['RST', 'ELB'] },
+  prayers: {
+    morning: false, evening: false, prayerBook: false, akathists: true,
+    canons: false, horologion: false, languageCodes: ['ru', 'de'],
+  },
+  calendar: { level: 'major', languageCode: 'ru' },
   notifications: { enabled: false, time: '08:00' },
   createdAt: '2026-09-18T00:00:00.000Z',
   updatedAt: '2026-09-18T00:00:00.000Z',
@@ -62,7 +66,7 @@ describe('profile sync', () => {
     saveProfileSecret('session-secret')
     enqueueProfileSync(configuration)
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: {
-      profile_id: '11111111-1111-4111-8111-111111111111', schema_version: 1, revision: 2,
+      profile_id: '11111111-1111-4111-8111-111111111111', schema_version: 2, revision: 2,
       configuration, created_at: '2026-09-18T00:00:00Z', updated_at: '2026-09-18T00:01:00Z',
     } }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     vi.stubGlobal('fetch', fetcher)

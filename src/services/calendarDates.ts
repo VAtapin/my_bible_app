@@ -15,9 +15,9 @@ export function addCalendarDays(date: string, amount: number): string {
   return next.toISOString().slice(0, 10)
 }
 
-export function formatCalendarDate(date: string): string {
+export function formatCalendarDate(date: string, locale = 'ru-RU'): string {
   const [year, month, day] = date.split('-').map(Number)
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',

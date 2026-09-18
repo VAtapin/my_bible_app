@@ -7,6 +7,7 @@ import TodayView from '@/features/today/TodayView.vue'
 import StorageView from '@/features/storage/StorageView.vue'
 import PrayerListView from '@/features/prayers/PrayerListView.vue'
 import PrayerView from '@/features/prayers/PrayerView.vue'
+import LiturgicalWorkView from '@/features/prayers/LiturgicalWorkView.vue'
 import CalendarView from '@/features/calendar/CalendarView.vue'
 import NotificationSettingsView from '@/features/notifications/NotificationSettingsView.vue'
 import ProfileSettingsView from '@/features/profile/ProfileSettingsView.vue'
@@ -62,6 +63,11 @@ export const router = createRouter({
       path: '/prayers/:id',
       name: 'prayer',
       component: PrayerView,
+    },
+    {
+      path: '/liturgical/:slug/:language',
+      name: 'liturgical-work',
+      component: LiturgicalWorkView,
     },
     {
       path: '/calendar',

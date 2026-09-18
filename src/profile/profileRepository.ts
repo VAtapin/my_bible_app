@@ -1,4 +1,4 @@
-import { isAppConfiguration, type AppConfiguration } from './configuration'
+import { migrateAppConfiguration, type AppConfiguration } from './configuration'
 
 const storageKey = 'bible-desktop:profile:v1'
 
@@ -23,8 +23,8 @@ export function createLocalProfileRepository(storage: KeyValueStorage): ProfileR
       }
 
       try {
-        const value: unknown = JSON.parse(serialized)
-        return isAppConfiguration(value) ? value : undefined
+      const value: unknown = JSON.parse(serialized)
+      return migrateAppConfiguration(value)
       } catch {
         return undefined
       }

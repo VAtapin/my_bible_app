@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { AppConfiguration } from '@/profile/configuration'
 import { createLocalProfileRepository } from '@/profile/profileRepository'
 import { enqueueProfileSync } from '@/profile/profileSync'
+import { setInterfaceLanguage } from '@/i18n'
 
 export const useProfileStore = defineStore('profile', () => {
   const configuration = ref<AppConfiguration>()
@@ -14,12 +15,14 @@ export const useProfileStore = defineStore('profile', () => {
 
   function load(): AppConfiguration | undefined {
     configuration.value = repository().load()
+    if (configuration.value) setInterfaceLanguage(configuration.value.interfaceLanguage)
     loaded.value = true
     return configuration.value
   }
 
   function save(value: AppConfiguration): void {
     repository().save(value)
+    setInterfaceLanguage(value.interfaceLanguage)
     enqueueProfileSync(value)
     configuration.value = value
     loaded.value = true

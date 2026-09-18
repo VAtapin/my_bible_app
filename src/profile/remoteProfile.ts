@@ -1,4 +1,4 @@
-import { isAppConfiguration, type AppConfiguration } from './configuration'
+import { migrateAppConfiguration, type AppConfiguration } from './configuration'
 
 export interface RemoteProfileData {
   profile_id: string
@@ -20,7 +20,7 @@ export const remoteProfileApi = {
   create(configuration: AppConfiguration): Promise<RemoteProfileCredentials> {
     return request('/v1/profiles', {
       method: 'POST',
-      body: JSON.stringify({ schema_version: 1, configuration }),
+      body: JSON.stringify({ schema_version: 2, configuration }),
     }, isRemoteProfileCredentials)
   },
   get(profileId: string, secret: string): Promise<RemoteProfileData> {
@@ -32,7 +32,7 @@ export const remoteProfileApi = {
     return request(`/v1/profiles/${encodeURIComponent(profileId)}`, {
       method: 'PUT',
       headers: { 'X-Profile-Secret': secret },
-      body: JSON.stringify({ schema_version: 1, revision, configuration }),
+      body: JSON.stringify({ schema_version: 2, revision, configuration }),
     }, isRemoteProfileData)
   },
   recover(recoveryCode: string): Promise<RemoteProfileCredentials> {
@@ -75,10 +75,12 @@ async function request<T>(
 }
 
 function isRemoteProfileData(value: unknown): value is RemoteProfileData {
-  return typeof value === 'object' && value !== null
-    && typeof (value as RemoteProfileData).profile_id === 'string'
-    && typeof (value as RemoteProfileData).revision === 'number'
-    && isAppConfiguration((value as RemoteProfileData).configuration)
+  if (typeof value !== 'object' || value === null) return false
+  const profile = value as RemoteProfileData
+  const configuration = migrateAppConfiguration(profile.configuration)
+  if (typeof profile.profile_id !== 'string' || typeof profile.revision !== 'number' || !configuration) return false
+  profile.configuration = configuration
+  return true
 }
 
 function isRemoteProfileCredentials(value: unknown): value is RemoteProfileCredentials {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ru } from '@/i18n/ru'
+import { useI18n } from '@/i18n'
 
 withDefaults(defineProps<{
   showNavigation?: boolean
@@ -12,6 +12,7 @@ withDefaults(defineProps<{
 })
 
 const route = useRoute()
+const { messages: text } = useI18n()
 const isOnline = ref(navigator.onLine)
 
 function updateConnectionStatus(): void {
@@ -32,19 +33,19 @@ onUnmounted(() => {
 <template>
   <div class="mobile-app">
     <header class="app-header">
-      <RouterLink v-if="backTo" :to="backTo" class="back-link" :aria-label="ru.navigation.back">
+      <RouterLink v-if="backTo" :to="backTo" class="back-link" :aria-label="text.navigation.back">
         <span aria-hidden="true">←</span>
       </RouterLink>
       <div class="brand-lockup">
         <img src="/brand/bible-desktop-mark.png" alt="" />
         <span>
-          <strong>{{ ru.brand }}</strong>
-          <small>{{ ru.brandSubtitle }}</small>
+          <strong>{{ text.brand }}</strong>
+          <small>{{ text.brandSubtitle }}</small>
         </span>
       </div>
       <div class="connection" :class="{ offline: !isOnline }">
         <span aria-hidden="true"></span>
-        {{ isOnline ? ru.online : ru.offline }}
+        {{ isOnline ? text.online : text.offline }}
       </div>
     </header>
 
@@ -52,18 +53,18 @@ onUnmounted(() => {
       <slot />
     </main>
 
-    <nav v-if="showNavigation" class="bottom-nav" :aria-label="ru.navigation.label">
+    <nav v-if="showNavigation" class="bottom-nav" :aria-label="text.navigation.label">
       <RouterLink to="/today" :class="{ active: route.path === '/today' }">
         <img src="/app-icons/calendar.png" alt="" />
-        <span>{{ ru.navigation.today }}</span>
+        <span>{{ text.navigation.today }}</span>
       </RouterLink>
       <RouterLink to="/reader" :class="{ active: route.path === '/reader' }">
         <img src="/app-icons/library.png" alt="" />
-        <span>{{ ru.navigation.reading }}</span>
+        <span>{{ text.navigation.reading }}</span>
       </RouterLink>
       <RouterLink to="/setup/manual?edit=1" :class="{ active: route.path.startsWith('/setup') }">
         <img src="/app-icons/setup.png" alt="" />
-        <span>{{ ru.navigation.settings }}</span>
+        <span>{{ text.navigation.settings }}</span>
       </RouterLink>
     </nav>
   </div>
