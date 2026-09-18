@@ -26,6 +26,48 @@ class BibleApiClient internal constructor(
         return response.body<ApiEnvelope<List<TranslationSummary>>>().data
     }
 
+    suspend fun getBooks(translationCode: String): List<BibleBook> {
+        val response = client.get("$baseUrl/translations/$translationCode/books")
+        return response.body<ApiEnvelope<BibleBooksPayload>>().data.books
+    }
+
+    suspend fun getChapter(
+        translationCode: String,
+        bookSlug: String,
+        chapterNumber: Int,
+    ): BibleChapter {
+        val response = client.get(
+            "$baseUrl/translations/$translationCode/books/$bookSlug/chapters/$chapterNumber",
+        )
+        return response.body<ApiEnvelope<BibleChapter>>().data
+    }
+
+    suspend fun getPrayers(language: String): List<PrayerSummary> {
+        val response = client.get("$baseUrl/prayers") {
+            parameter("language", language)
+        }
+        return response.body<ApiEnvelope<List<PrayerSummary>>>().data
+            .filter { it.languageCode == language }
+    }
+
+    suspend fun getPrayer(id: Long): PrayerDetail {
+        val response = client.get("$baseUrl/prayers/$id")
+        return response.body<ApiEnvelope<PrayerDetail>>().data
+    }
+
+    suspend fun getCalendarDay(
+        date: String,
+        language: String,
+        profile: String = "typikon-strict",
+    ): CalendarDay {
+        val response = client.get("$baseUrl/calendar/day") {
+            parameter("date", date)
+            parameter("lang", language)
+            parameter("profile", profile)
+        }
+        return response.body<ApiEnvelope<CalendarDay>>().data
+    }
+
     fun close() {
         client.close()
     }

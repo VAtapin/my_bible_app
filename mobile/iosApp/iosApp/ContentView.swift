@@ -2,48 +2,66 @@ import Foundation
 import SharedLogic
 import SwiftUI
 
-private enum LanguageFilter: String, CaseIterable, Identifiable {
+enum SetupRoute: String {
+    case welcome
+    case sections
+    case translations
+    case summary
+    case home
+    case bible
+    case prayers
+    case calendar
+}
+
+enum TranslationFilter: String, CaseIterable, Identifiable {
     case all
     case russian = "ru"
     case german = "de"
 
     var id: String { rawValue }
-    var apiCode: String? { self == .all ? nil : rawValue }
+    var code: String? { self == .all ? nil : rawValue }
+}
 
-    var title: LocalizedStringKey {
-        switch self {
-        case .all: "language.all"
-        case .russian: "language.russian"
-        case .german: "language.german"
-        }
-    }
+struct SectionChoice: Identifiable {
+    let id: String
+    let titleKey: String
+    let subtitleKey: String
+    let symbol: String
+
+    static let all = [
+        SectionChoice(id: "bible", titleKey: "section.bible", subtitleKey: "section.bible.subtitle", symbol: "book.closed"),
+        SectionChoice(id: "prayer", titleKey: "section.prayer", subtitleKey: "section.prayer.subtitle", symbol: "cross"),
+        SectionChoice(id: "calendar", titleKey: "section.calendar", subtitleKey: "section.calendar.subtitle", symbol: "calendar"),
+        SectionChoice(id: "study", titleKey: "section.study", subtitleKey: "section.study.subtitle", symbol: "bookmark"),
+        SectionChoice(id: "reminders", titleKey: "section.reminders", subtitleKey: "section.reminders.subtitle", symbol: "bell"),
+    ]
 }
 
 @MainActor
-private final class TranslationListModel: ObservableObject {
+final class TranslationListModel: ObservableObject {
     @Published var translations: [TranslationSummary] = []
     @Published var isLoading = false
-    @Published var errorMessage: String?
+    @Published var hasError = false
 
     private let loader = TranslationsLoader()
     private var requestID = UUID()
 
-    func load(language: String?) {
+    func load() {
         let currentRequest = UUID()
         requestID = currentRequest
         isLoading = true
-        errorMessage = nil
+        hasError = false
 
         loader.load(
-            language: language,
+            language: nil,
             onSuccess: { [weak self] values in
                 guard let self, self.requestID == currentRequest else { return }
                 self.translations = values
                 self.isLoading = false
             },
-            onError: { [weak self] message in
+            onError: { [weak self] _ in
                 guard let self, self.requestID == currentRequest else { return }
-                self.errorMessage = message
+                self.hasError = true
                 self.isLoading = false
             }
         )
@@ -55,152 +73,152 @@ private final class TranslationListModel: ObservableObject {
 }
 
 struct ContentView: View {
-    @StateObject private var model = TranslationListModel()
-    @State private var filter = LanguageFilter.all
+    @AppStorage("setupComplete") private var setupComplete = false
+    @AppStorage("uiLanguage") private var language = "ru"
+    @AppStorage("sections") private var sectionsCSV = "bible,prayer,calendar"
+    @AppStorage("translations") private var translationsCSV = ""
 
-    private let navy = Color(red: 41 / 255, green: 74 / 255, blue: 101 / 255)
-    private let primaryBlue = Color(red: 74 / 255, green: 107 / 255, blue: 138 / 255)
-    private let cream = Color(red: 247 / 255, green: 245 / 255, blue: 241 / 255)
-    private let gold = Color(red: 185 / 255, green: 154 / 255, blue: 90 / 255)
+    @StateObject private var model = TranslationListModel()
+    @State private var route = SetupRoute.welcome
+    @State private var filter = TranslationFilter.all
+    @State private var didRestoreRoute = false
+
+    private var selectedSections: Set<String> {
+        Set(sectionsCSV.split(separator: ",").map(String.init))
+    }
+
+    private var selectedTranslationCodes: Set<String> {
+        Set(translationsCSV.split(separator: ",").map(String.init))
+    }
+
+    private var selectedTranslations: [TranslationSummary] {
+        model.translations
+            .filter { selectedTranslationCodes.contains($0.code) }
+            .sorted { lhs, rhs in
+                let lhsPreferred = lhs.language.code == language
+                let rhsPreferred = rhs.language.code == language
+                return lhsPreferred == rhsPreferred ? lhs.name < rhs.name : lhsPreferred
+            }
+    }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                header
-                content
-            }
-            .background(cream.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
-        }
-        .tint(primaryBlue)
-        .task(id: filter) {
-            model.load(language: filter.apiCode)
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("app.name")
-                .font(.system(size: 25, weight: .semibold, design: .serif))
-                .foregroundStyle(navy)
-            Text("app.subtitle")
-                .font(.subheadline)
-                .foregroundStyle(primaryBlue)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(Color.white.shadow(color: .black.opacity(0.08), radius: 4, y: 2))
-    }
-
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Rectangle()
-                .fill(gold)
-                .frame(height: 2)
-                .padding(.top, 22)
-
-            Text("translations.title")
-                .font(.system(size: 30, weight: .semibold, design: .serif))
-                .foregroundStyle(navy)
-                .padding(.top, 14)
-
-            Text("translations.description")
-                .font(.subheadline)
-                .foregroundStyle(primaryBlue)
-                .padding(.top, 4)
-
-            Picker("language.label", selection: $filter) {
-                ForEach(LanguageFilter.allCases) { option in
-                    Text(option.title).tag(option)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
-
-            stateContent
-        }
-        .padding(.horizontal, 20)
-    }
-
-    @ViewBuilder
-    private var stateContent: some View {
-        if model.isLoading {
-            VStack(spacing: 14) {
-                ProgressView()
-                Text("translations.loading")
-                    .foregroundStyle(primaryBlue)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if model.errorMessage != nil {
-            VStack(spacing: 12) {
-                Text("translations.error")
-                    .font(.headline)
-                    .foregroundStyle(navy)
-                Button("action.retry") {
-                    model.load(language: filter.apiCode)
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if model.translations.isEmpty {
-            Text("translations.empty")
-                .foregroundStyle(primaryBlue)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .padding(.top, 24)
-        } else {
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(model.translations, id: \.code) { translation in
-                        translationCard(translation)
+        Group {
+            switch route {
+            case .welcome:
+                WelcomeView(
+                    language: language,
+                    onLanguageChange: { language = $0 },
+                    onQuick: {
+                        sectionsCSV = "bible,prayer,calendar"
+                        route = .translations
+                    },
+                    onManual: { route = .sections }
+                )
+            case .sections:
+                SectionsSetupView(
+                    language: language,
+                    selected: selectedSections,
+                    onLanguageChange: { language = $0 },
+                    onToggle: toggleSection,
+                    onBack: { route = .welcome },
+                    onNext: {
+                        route = selectedSections.contains("bible") ? .translations : .summary
                     }
-                }
-                .padding(.bottom, 28)
+                )
+            case .translations:
+                TranslationsSetupView(
+                    language: language,
+                    translations: model.translations,
+                    isLoading: model.isLoading,
+                    hasError: model.hasError,
+                    selectedCodes: selectedTranslationCodes,
+                    filter: filter,
+                    onFilterChange: { filter = $0 },
+                    onToggle: toggleTranslation,
+                    onRetry: model.load,
+                    onBack: { route = .sections },
+                    onNext: { route = .summary }
+                )
+            case .summary:
+                SetupSummaryView(
+                    language: language,
+                    selectedSections: selectedSections,
+                    selectedTranslations: selectedTranslations,
+                    onBack: {
+                        route = selectedSections.contains("bible") ? .translations : .sections
+                    },
+                    onCreate: {
+                        setupComplete = true
+                        route = .home
+                    }
+                )
+            case .home:
+                TodayView(
+                    language: language,
+                    selectedSections: selectedSections,
+                    selectedTranslations: selectedTranslations,
+                    onEdit: { route = .sections },
+                    onOpenBible: { route = .bible },
+                    onOpenPrayers: { route = .prayers },
+                    onOpenCalendar: { route = .calendar }
+                )
+            case .bible:
+                BibleBrowserView(
+                    language: language,
+                    translations: selectedTranslations,
+                    onBack: { route = .home }
+                )
+            case .prayers:
+                PrayersView(language: language, onBack: { route = .home })
+            case .calendar:
+                CalendarView(language: language, onBack: { route = .home })
+            }
+        }
+        .tint(AppPalette.navy)
+        .task {
+            if model.translations.isEmpty {
+                model.load()
+            }
+            guard !didRestoreRoute else { return }
+            didRestoreRoute = true
+            route = setupComplete ? .home : .welcome
+        }
+        .onChange(of: model.translations.count) { _ in
+            ensureRecommendedTranslation()
+        }
+        .onChange(of: route) { newRoute in
+            if newRoute == .translations {
+                ensureRecommendedTranslation()
             }
         }
     }
 
-    private func translationCard(_ translation: TranslationSummary) -> some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(translation.name)
-                    .font(.headline)
-                    .foregroundStyle(navy)
-                Text([translation.shortName, translation.code]
-                    .compactMap { $0 }
-                    .uniqued()
-                    .joined(separator: " · "))
-                    .font(.caption)
-                    .foregroundStyle(primaryBlue)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(translation.language.code.uppercased())
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Color(red: 125 / 255, green: 161 / 255, blue: 194 / 255))
-                if translation.isDefault {
-                    Text("translations.default")
-                        .font(.caption2)
-                        .foregroundStyle(gold)
-                }
-            }
+    private func toggleSection(_ id: String) {
+        var values = selectedSections
+        if !values.insert(id).inserted {
+            values.remove(id)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(red: 237 / 255, green: 230 / 255, blue: 214 / 255), lineWidth: 1)
-        )
+        sectionsCSV = values.sorted().joined(separator: ",")
     }
-}
 
-private extension Array where Element: Hashable {
-    func uniqued() -> [Element] {
-        var seen = Set<Element>()
-        return filter { seen.insert($0).inserted }
+    private func toggleTranslation(_ code: String) {
+        var values = selectedTranslationCodes
+        if !values.insert(code).inserted {
+            values.remove(code)
+        }
+        translationsCSV = values.sorted().joined(separator: ",")
+    }
+
+    private func ensureRecommendedTranslation() {
+        guard selectedTranslationCodes.isEmpty, !model.translations.isEmpty else { return }
+        let recommended = model.translations.first {
+            $0.language.code == language && $0.isDefault
+        } ?? model.translations.first {
+            $0.language.code == language
+        } ?? model.translations.first
+
+        if let recommended {
+            translationsCSV = recommended.code
+        }
     }
 }
