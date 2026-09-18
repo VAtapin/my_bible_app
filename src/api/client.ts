@@ -1,4 +1,12 @@
-import type { ApiEnvelope, BibleBook, BibleChapter, TranslationSummary } from './contracts'
+import type {
+  ApiEnvelope,
+  BibleBook,
+  BibleChapter,
+  CalendarDay,
+  PrayerDetail,
+  PrayerSummary,
+  TranslationSummary,
+} from './contracts'
 
 export type ApiErrorKind = 'offline' | 'timeout' | 'http' | 'invalid-response'
 
@@ -17,6 +25,9 @@ export interface BibleApi {
   getTranslations(language?: string): Promise<TranslationSummary[]>
   getBooks(translationCode: string): Promise<BibleBook[]>
   getChapter(translationCode: string, bookSlug: string, chapter: number): Promise<BibleChapter>
+  getPrayers(language?: string): Promise<PrayerSummary[]>
+  getPrayer(id: number): Promise<PrayerDetail>
+  getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
 }
 
 interface ApiClientOptions {
@@ -76,6 +87,16 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
         `/translations/${encodeURIComponent(translationCode)}/books/${encodeURIComponent(bookSlug)}/chapters/${chapter}`,
         isBibleChapter,
       )
+    },
+    getPrayers(language = 'ru') {
+      return request<PrayerSummary[]>(`/prayers?language=${encodeURIComponent(language)}`, isPrayerList)
+    },
+    getPrayer(id) {
+      return request<PrayerDetail>(`/prayers/${id}`, isPrayerDetail)
+    },
+    getCalendarDay(date, language = 'ru', profile = 'typikon-strict') {
+      const query = new URLSearchParams({ date, lang: language, profile })
+      return request<CalendarDay>(`/calendar/day?${query}`, isCalendarDay)
     },
   }
 }
@@ -154,4 +175,65 @@ function isLanguageSummary(value: unknown): value is TranslationSummary['languag
 
 function isNullableString(value: unknown): value is string | null {
   return typeof value === 'string' || value === null
+}
+
+function isPrayerList(value: unknown): value is PrayerSummary[] {
+  return Array.isArray(value) && value.every(isPrayerSummary)
+}
+
+function isPrayerSummary(value: unknown): value is PrayerSummary {
+  return isRecord(value)
+    && typeof value.id === 'number'
+    && typeof value.language_code === 'string'
+    && typeof value.category === 'string'
+    && isNullableString(value.liturgy_key)
+    && typeof value.title === 'string'
+    && isNullableString(value.short_title)
+    && isNullableString(value.intro)
+    && typeof value.excerpt === 'string'
+}
+
+function isPrayerDetail(value: unknown): value is PrayerDetail {
+  return isRecord(value)
+    && typeof value.id === 'number'
+    && typeof value.language_code === 'string'
+    && typeof value.category === 'string'
+    && isNullableString(value.liturgy_key)
+    && typeof value.title === 'string'
+    && isNullableString(value.short_title)
+    && isNullableString(value.intro)
+    && typeof value.body === 'string'
+    && isNullableString(value.source_url)
+    && Array.isArray(value.sections)
+}
+
+function isCalendarDay(value: unknown): value is CalendarDay {
+  return isRecord(value)
+    && typeof value.date === 'string'
+    && typeof value.old_style_date === 'string'
+    && typeof value.pascha_date === 'string'
+    && typeof value.liturgical_period === 'string'
+    && typeof value.source === 'string'
+    && isRecord(value.metadata)
+    && Array.isArray(value.events)
+    && value.events.every(isCalendarEvent)
+    && Array.isArray(value.fasting_events)
+    && value.fasting_events.every(isCalendarEvent)
+    && Array.isArray(value.readings)
+    && value.readings.every(isCalendarReading)
+}
+
+function isCalendarEvent(value: unknown): value is CalendarDay['events'][number] {
+  return isRecord(value)
+    && typeof value.id === 'string'
+    && typeof value.name === 'string'
+    && typeof value.is_fasting === 'boolean'
+}
+
+function isCalendarReading(value: unknown): value is CalendarDay['readings'][number] {
+  return isRecord(value)
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.display_ref === 'string'
+    && typeof value.passage_ref === 'string'
 }

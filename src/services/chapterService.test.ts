@@ -24,6 +24,7 @@ describe('chapter service', () => {
       getChapter: vi.fn(async () => chapter),
       getBooks: vi.fn(),
       getTranslations: vi.fn(),
+      getPrayers: vi.fn(), getPrayer: vi.fn(), getCalendarDay: vi.fn(),
     } satisfies BibleApi
     const service = createChapterService(api, repository)
 
@@ -42,7 +43,10 @@ describe('chapter service', () => {
       list: vi.fn(async () => stored ? [stored] : []),
       delete: vi.fn(async () => { stored = undefined }),
     }
-    const api = { getChapter: vi.fn(), getBooks: vi.fn(), getTranslations: vi.fn() } satisfies BibleApi
+    const api = {
+      getChapter: vi.fn(), getBooks: vi.fn(), getTranslations: vi.fn(),
+      getPrayers: vi.fn(), getPrayer: vi.fn(), getCalendarDay: vi.fn(),
+    } satisfies BibleApi
     const service = createChapterService(api, repository)
 
     expect(await service.listStored()).toHaveLength(1)

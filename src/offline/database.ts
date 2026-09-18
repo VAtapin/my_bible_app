@@ -1,10 +1,12 @@
 const databaseName = 'my-bible-app'
-const databaseVersion = 2
+const databaseVersion = 3
 
 export const offlineStores = {
   chapters: 'chapters',
   bookmarks: 'bookmarks',
   state: 'state',
+  prayers: 'prayers',
+  calendar: 'calendar',
 } as const
 
 export function openOfflineDatabase(): Promise<IDBDatabase> {
@@ -21,6 +23,12 @@ export function openOfflineDatabase(): Promise<IDBDatabase> {
       }
       if (!database.objectStoreNames.contains(offlineStores.state)) {
         database.createObjectStore(offlineStores.state, { keyPath: 'key' })
+      }
+      if (!database.objectStoreNames.contains(offlineStores.prayers)) {
+        database.createObjectStore(offlineStores.prayers, { keyPath: 'key' })
+      }
+      if (!database.objectStoreNames.contains(offlineStores.calendar)) {
+        database.createObjectStore(offlineStores.calendar, { keyPath: 'key' })
       }
     }
     request.onsuccess = () => resolve(request.result)

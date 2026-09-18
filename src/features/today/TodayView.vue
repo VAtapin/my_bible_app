@@ -36,16 +36,16 @@ onMounted(() => {
           <span><strong>{{ ru.sections.bible.title }}</strong><small>{{ ru.today.bibleAction }}</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
-        <div v-if="sections.includes('prayers')" class="module-card">
+        <RouterLink v-if="sections.includes('prayers')" class="module-card available" to="/prayers">
           <span class="module-icon"><img :src="ru.sections.prayers.icon" alt="" /></span>
-          <span><strong>{{ ru.sections.prayers.title }}</strong><small>{{ ru.today.configured }}</small></span>
-          <span class="module-status">{{ ru.today.nextStage }}</span>
-        </div>
-        <div v-if="sections.includes('calendar')" class="module-card">
+          <span><strong>{{ ru.sections.prayers.title }}</strong><small>Молитвослов и сохранённые правила</small></span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
+        <RouterLink v-if="sections.includes('calendar')" class="module-card available" to="/calendar">
           <span class="module-icon"><img :src="ru.sections.calendar.icon" alt="" /></span>
-          <span><strong>{{ ru.sections.calendar.title }}</strong><small>{{ ru.today.configured }}</small></span>
-          <span class="module-status">{{ ru.today.nextStage }}</span>
-        </div>
+          <span><strong>{{ ru.sections.calendar.title }}</strong><small>Память, пост и чтения дня</small></span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
         <div v-if="sections.includes('study')" class="module-card">
           <span class="module-icon"><img :src="ru.sections.study.icon" alt="" /></span>
           <span><strong>{{ ru.sections.study.title }}</strong><small>{{ ru.today.configured }}</small></span>

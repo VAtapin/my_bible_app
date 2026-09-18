@@ -5,6 +5,9 @@ import SetupView from '@/features/onboarding/SetupView.vue'
 import RestoreView from '@/features/onboarding/RestoreView.vue'
 import TodayView from '@/features/today/TodayView.vue'
 import StorageView from '@/features/storage/StorageView.vue'
+import PrayerListView from '@/features/prayers/PrayerListView.vue'
+import PrayerView from '@/features/prayers/PrayerView.vue'
+import CalendarView from '@/features/calendar/CalendarView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -45,6 +48,21 @@ export const router = createRouter({
       path: '/storage',
       name: 'storage',
       component: StorageView,
+    },
+    {
+      path: '/prayers',
+      name: 'prayers',
+      component: PrayerListView,
+    },
+    {
+      path: '/prayers/:id',
+      name: 'prayer',
+      component: PrayerView,
+    },
+    {
+      path: '/calendar',
+      name: 'calendar',
+      component: CalendarView,
     },
     {
       path: '/:pathMatch(.*)*',

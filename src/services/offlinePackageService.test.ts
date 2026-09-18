@@ -44,6 +44,7 @@ describe('offline package service', () => {
       getTranslations: vi.fn(),
       getBooks: vi.fn(async () => [{ slug: 'genesis', name: 'Бытие', short_name: null, order: 1, chapters_count: 2 }]),
       getChapter: vi.fn(async (_translation: string, _book: string, number: number) => chapter(number)),
+      getPrayers: vi.fn(), getPrayer: vi.fn(), getCalendarDay: vi.fn(),
     } satisfies BibleApi
     const progress = vi.fn()
 

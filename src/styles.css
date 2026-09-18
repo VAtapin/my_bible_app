@@ -1274,6 +1274,264 @@ select {
   text-align: center;
 }
 
+.content-catalog {
+  display: grid;
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.content-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 82px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  padding: 12px 14px;
+  color: var(--ink);
+  background: var(--white);
+  box-shadow: 0 5px 16px rgb(45 74 100 / 6%);
+  text-decoration: none;
+}
+
+.content-card strong,
+.content-card small {
+  display: block;
+}
+
+.content-card em {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--brand-blue-soft);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.content-card strong {
+  font-size: 14px;
+}
+
+.content-card small {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.prayer-reading {
+  padding: 14px 6px 34px;
+}
+
+.prayer-reading h1 {
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 8vw, 42px);
+  font-weight: 500;
+  line-height: 1.08;
+}
+
+.prayer-intro {
+  border-left: 3px solid var(--brand-gold);
+  padding-left: 13px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.prayer-body {
+  margin-top: 24px;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.calendar-hero {
+  border-radius: 22px;
+  padding: 22px 18px;
+  color: var(--white);
+  background: linear-gradient(145deg, #3e607f, var(--brand-blue));
+  box-shadow: 0 12px 26px rgb(45 74 100 / 19%);
+}
+
+.calendar-date-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.calendar-date-row h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.calendar-date-row small {
+  display: block;
+  margin-top: 6px;
+  color: #dbe7f0;
+  font-size: 10px;
+}
+
+.calendar-date-row button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 13px;
+  color: var(--white);
+  background: rgb(255 255 255 / 10%);
+  font-size: 20px;
+}
+
+.calendar-hero > p:last-child {
+  margin: 14px 0 0;
+  color: #e4edf5;
+  font-size: 12px;
+  text-align: center;
+}
+
+.calendar-section {
+  margin-top: 20px;
+}
+
+.calendar-section h2 {
+  margin-bottom: 10px;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.fasting-card {
+  border-radius: 16px;
+  padding: 15px 16px;
+  background: var(--brand-cream);
+}
+
+.fasting-card h2 {
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.fasting-card p {
+  margin: 0;
+  color: #5f625f;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.calendar-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--white);
+}
+
+.calendar-list article {
+  padding: 13px 14px;
+}
+
+.calendar-list article + article {
+  border-top: 1px solid var(--line);
+}
+
+.calendar-list strong,
+.calendar-list small {
+  display: block;
+}
+
+.calendar-list strong {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.calendar-list small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.reading-link-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reading-link-card > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.reading-link-card a {
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 14px 10px;
+  color: var(--brand-blue);
+  background: #edf3f7;
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.calendar-offline-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  padding: 14px;
+  background: var(--white);
+}
+
+.calendar-offline-card strong,
+.calendar-offline-card small {
+  display: block;
+}
+
+.calendar-offline-card strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.calendar-offline-card small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.calendar-offline-card button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--white);
+  background: var(--brand-blue);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.calendar-offline-card progress {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--brand-blue);
+}
+
 @media (max-width: 520px) {
   .app-content {
     padding: 14px 12px 24px;

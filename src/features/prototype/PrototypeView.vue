@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import type { BibleBook, BibleChapter, TranslationSummary } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import MobileShell from '@/components/MobileShell.vue'
@@ -13,6 +14,7 @@ const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
 const chapterService = createChapterService(bibleApi, chapterRepository)
 const packageService = createOfflinePackageService(bibleApi, chapterRepository, libraryRepository)
+const route = useRoute()
 
 const translations = ref<TranslationSummary[]>([])
 const books = ref<BibleBook[]>([])
@@ -44,14 +46,19 @@ onMounted(async () => {
     ])
     translations.value = catalog
     bookmarks.value = savedBookmarks
-    translationCode.value = savedLocation?.translationCode
+    translationCode.value = typeof route.query.translation === 'string' ? route.query.translation : savedLocation?.translationCode
       ?? catalog.find((item) => item.is_default)?.code
       ?? catalog[0]?.code
       ?? ''
-    await loadBooks(savedLocation?.bookSlug)
-    chapterNumber.value = savedLocation?.chapter ?? 1
-    message.value = savedLocation ? 'Последнее место восстановлено.' : 'Выберите книгу и главу.'
-    if (savedLocation) await openChapter()
+    const requestedBook = typeof route.query.book === 'string' ? route.query.book : savedLocation?.bookSlug
+    const requestedChapter = Number(route.query.chapter)
+    await loadBooks(requestedBook)
+    chapterNumber.value = Number.isInteger(requestedChapter) && requestedChapter > 0
+      ? requestedChapter
+      : savedLocation?.chapter ?? 1
+    const hasTarget = Boolean(requestedBook || savedLocation)
+    message.value = hasTarget ? 'Место чтения восстановлено.' : 'Выберите книгу и главу.'
+    if (hasTarget) await openChapter()
   } catch (error) {
     message.value = errorMessage(error)
   } finally {
