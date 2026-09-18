@@ -86,4 +86,9 @@
     <string name="calendar_error">Der Kalender konnte nicht geladen werden.</string>
     <string name="calendar_previous">Vorheriger Tag</string>
     <string name="calendar_next">Nächster Tag</string>
+    <string name="more_title">Mehr</string>
+    <string name="settings_title">App-Einstellungen</string>
+    <string name="settings_subtitle">Sprache, Bereiche und Übersetzungen</string>
+    <string name="bookmark_delete">Lesezeichen löschen</string>
+    <string name="bookmark_open">Stelle öffnen</string>
 </resources>

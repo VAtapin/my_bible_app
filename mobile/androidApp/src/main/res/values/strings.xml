@@ -86,4 +86,9 @@
     <string name="calendar_error">Не удалось загрузить календарь.</string>
     <string name="calendar_previous">Предыдущий день</string>
     <string name="calendar_next">Следующий день</string>
+    <string name="more_title">Ещё</string>
+    <string name="settings_title">Настройки приложения</string>
+    <string name="settings_subtitle">Язык, разделы и переводы</string>
+    <string name="bookmark_delete">Удалить закладку</string>
+    <string name="bookmark_open">Открыть место</string>
 </resources>

@@ -109,6 +109,7 @@ internal fun TodayScreen(
     onOpenBible: () -> Unit,
     onOpenPrayers: () -> Unit,
     onOpenCalendar: () -> Unit,
+    onOpenMore: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -186,12 +187,14 @@ internal fun TodayScreen(
                         R.string.nav_bible -> onOpenBible
                         R.string.nav_prayers -> onOpenPrayers
                         R.string.nav_calendar -> onOpenCalendar
+                        R.string.nav_more -> onOpenMore
                         else -> ({ })
                     },
                     enabled = selected || when (label) {
                         R.string.nav_bible -> "bible" in selectedSections
                         R.string.nav_prayers -> "prayer" in selectedSections
                         R.string.nav_calendar -> "calendar" in selectedSections
+                        R.string.nav_more -> true
                         else -> false
                     },
                     icon = { Icon(icon, contentDescription = null) },

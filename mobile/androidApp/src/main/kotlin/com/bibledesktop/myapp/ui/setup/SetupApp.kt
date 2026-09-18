@@ -87,8 +87,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.bible.BibleReader
+import com.bibledesktop.myapp.ui.bible.BookmarkEntry
 import com.bibledesktop.myapp.ui.daily.CalendarScreen
 import com.bibledesktop.myapp.ui.daily.PrayersScreen
+import com.bibledesktop.myapp.ui.more.MoreScreen
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Gold
 import com.bibledesktop.myapp.ui.theme.Ink
@@ -111,6 +113,7 @@ private enum class Route {
     Bible,
     Prayers,
     Calendar,
+    More,
 }
 
 internal enum class TranslationFilter(val code: String?) {
@@ -277,6 +280,7 @@ fun SetupApp() {
             onOpenBible = { route = Route.Bible },
             onOpenPrayers = { route = Route.Prayers },
             onOpenCalendar = { route = Route.Calendar },
+            onOpenMore = { route = Route.More },
         )
 
         Route.Bible -> BibleReader(
@@ -300,6 +304,20 @@ fun SetupApp() {
             language = language,
             client = client,
             onBack = { route = Route.Home },
+        )
+
+        Route.More -> MoreScreen(
+            language = language,
+            onBack = { route = Route.Home },
+            onSettings = { route = Route.Sections },
+            onOpenBookmark = { bookmark: BookmarkEntry ->
+                preferences.edit()
+                    .putString("lastTranslation", bookmark.translationCode)
+                    .putString("lastBookSlug", bookmark.bookSlug)
+                    .putInt("lastChapter", bookmark.chapter)
+                    .apply()
+                route = Route.Bible
+            },
         )
     }
 }

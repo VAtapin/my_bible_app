@@ -97,18 +97,24 @@ fun BibleReader(
         context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
     }
     var translationCode by rememberSaveable {
-        mutableStateOf(translations.firstOrNull()?.code.orEmpty())
+        val saved = preferences.getString("lastTranslation", null)
+        mutableStateOf(
+            saved?.takeIf { value -> translations.any { it.code == value } }
+                ?: translations.firstOrNull()?.code.orEmpty(),
+        )
     }
-    var selectedBookSlug by rememberSaveable { mutableStateOf<String?>(null) }
-    var selectedChapter by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedBookSlug by rememberSaveable {
+        mutableStateOf(preferences.getString("lastBookSlug", null))
+    }
+    var selectedChapter by rememberSaveable {
+        mutableStateOf(preferences.getInt("lastChapter", 0).takeIf { it > 0 })
+    }
     var booksState by remember { mutableStateOf<LoadState<List<BibleBook>>>(LoadState.Loading) }
     var chapterState by remember { mutableStateOf<LoadState<BibleChapter>>(LoadState.Loading) }
     var booksRetry by remember { mutableStateOf(0) }
     var chapterRetry by remember { mutableStateOf(0) }
     var fontSize by rememberSaveable { mutableFloatStateOf(preferences.getFloat("readerFontSize", 19f)) }
-    var bookmarkedRefs by remember {
-        mutableStateOf(preferences.getStringSet("bookmarks", emptySet()).orEmpty().toSet())
-    }
+    var bookmarkEntries by remember { mutableStateOf(BookmarkStore.load(context)) }
 
     LaunchedEffect(translations, translationCode) {
         if (translationCode.isBlank() || translations.none { it.code == translationCode }) {
@@ -136,6 +142,16 @@ fun BibleReader(
             onSuccess = { LoadState.Ready(it) },
             onFailure = { LoadState.Error },
         )
+    }
+
+    LaunchedEffect(translationCode, selectedBookSlug, selectedChapter) {
+        val bookSlug = selectedBookSlug ?: return@LaunchedEffect
+        val chapterNumber = selectedChapter ?: return@LaunchedEffect
+        preferences.edit()
+            .putString("lastTranslation", translationCode)
+            .putString("lastBookSlug", bookSlug)
+            .putInt("lastChapter", chapterNumber)
+            .apply()
     }
 
     val selectedBook = (booksState as? LoadState.Ready)?.value
@@ -183,7 +199,7 @@ fun BibleReader(
             chapterNumber = chapterNumber,
             chaptersCount = selectedBook.chaptersCount,
             fontSize = fontSize,
-            bookmarkedRefs = bookmarkedRefs,
+            bookmarkedKeys = bookmarkEntries.map { "${it.translationCode}:${it.reference}" }.toSet(),
             onBack = { selectedChapter = null },
             onRetry = { chapterRetry += 1 },
             onPrevious = { selectedChapter = (chapterNumber - 1).coerceAtLeast(1) },
@@ -196,11 +212,8 @@ fun BibleReader(
                 fontSize = (fontSize + 1f).coerceAtMost(28f)
                 preferences.edit().putFloat("readerFontSize", fontSize).apply()
             },
-            onBookmark = { verse ->
-                bookmarkedRefs = bookmarkedRefs.toMutableSet().apply {
-                    if (!add(verse.osisRef)) remove(verse.osisRef)
-                }
-                preferences.edit().putStringSet("bookmarks", bookmarkedRefs).apply()
+            onBookmark = { chapter, verse ->
+                bookmarkEntries = BookmarkStore.toggle(context, bookmarkEntries, chapter, verse)
             },
             onShare = { chapter, verse -> shareVerse(context, chapter, verse) },
         )
@@ -369,14 +382,14 @@ private fun ChapterScreen(
     chapterNumber: Int,
     chaptersCount: Int,
     fontSize: Float,
-    bookmarkedRefs: Set<String>,
+    bookmarkedKeys: Set<String>,
     onBack: () -> Unit,
     onRetry: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onFontSmaller: () -> Unit,
     onFontLarger: () -> Unit,
-    onBookmark: (BibleVerse) -> Unit,
+    onBookmark: (BibleChapter, BibleVerse) -> Unit,
     onShare: (BibleChapter, BibleVerse) -> Unit,
 ) {
     Column(
@@ -409,8 +422,8 @@ private fun ChapterScreen(
                         chapter = state.value,
                         verse = verse,
                         fontSize = fontSize,
-                        bookmarked = verse.osisRef in bookmarkedRefs,
-                        onBookmark = { onBookmark(verse) },
+                        bookmarked = "${state.value.translation.code}:${verse.osisRef}" in bookmarkedKeys,
+                        onBookmark = { onBookmark(state.value, verse) },
                         onShare = { onShare(state.value, verse) },
                     )
                 }
