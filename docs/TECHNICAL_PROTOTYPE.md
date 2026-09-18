@@ -69,9 +69,26 @@ macOS с Xcode. Само добавление и синхронизация об
 - API: `https://bible-desktop.com/api`;
 - среда сборки: Plesk Node.js 22.
 
-Первичную настройку document root и HTTPS нужно выполнить в Plesk. После того
-как репозиторий клонирован и ветка `main` имеет настроенный upstream, обновление
-выполняется из SSH/Plesk terminal:
+Первичную настройку document root и HTTPS нужно выполнить в Plesk. Так как
+каталог субдомена уже создан, но Git в нём ещё не развёрнут, первое развёртывание
+выполняется из SSH/Plesk terminal так:
+
+```bash
+cd /var/www/vhosts/bible-desktop.com/my_app && \
+git init && \
+git remote add origin https://github.com/VAtapin/my_bible_app.git && \
+git fetch origin main && \
+git checkout --track origin/main && \
+export PATH="/opt/plesk/node/22/bin:$PATH" && \
+bash scripts/deploy-production.sh
+```
+
+Шаги соединены через `&&`: при конфликте с уже существующим файлом checkout
+останавливается, а установка зависимостей и сборка не запускаются. Команда ничего
+не удаляет автоматически; конфликтующий стандартный файл Plesk нужно сначала
+проверить и обработать вручную.
+
+После первого успешного checkout дальнейшие обновления выполняются командой:
 
 ```bash
 cd /var/www/vhosts/bible-desktop.com/my_app && \

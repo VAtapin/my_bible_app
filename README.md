@@ -173,7 +173,23 @@ PWA предназначена для `https://my.bible-desktop.com`. На се�
 располагается в `/var/www/vhosts/bible-desktop.com/my_app`, а document root
 субдомена должен указывать на каталог `dist` внутри проекта.
 
-После первичной настройки Plesk приложение обновляется командой:
+Первое развёртывание в уже созданном, но ещё не подключённом к Git каталоге:
+
+```bash
+cd /var/www/vhosts/bible-desktop.com/my_app && \
+git init && \
+git remote add origin https://github.com/VAtapin/my_bible_app.git && \
+git fetch origin main && \
+git checkout --track origin/main && \
+export PATH="/opt/plesk/node/22/bin:$PATH" && \
+bash scripts/deploy-production.sh
+```
+
+Команда не удаляет существующие файлы. Если в каталоге есть стандартная
+страница Plesk с именем, совпадающим с файлом репозитория, `git checkout`
+остановится и потребует сначала вручную разобрать этот конфликт.
+
+Последующие обновления выполняются короче:
 
 ```bash
 cd /var/www/vhosts/bible-desktop.com/my_app && \
