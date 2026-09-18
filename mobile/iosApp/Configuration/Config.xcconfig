@@ -1,0 +1,8 @@
+// Add the Apple Developer Team ID locally or in CI. Do not commit signing keys.
+TEAM_ID=
+
+PRODUCT_NAME=Bible Desktop
+PRODUCT_BUNDLE_IDENTIFIER=com.bibledesktop.myapp
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=0.1.0

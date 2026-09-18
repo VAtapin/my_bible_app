@@ -16,3 +16,10 @@ android/local.properties
 ios/App/Pods/
 ios/App/DerivedData/
 ios/App/App/public/
+
+# Native Kotlin Multiplatform build output and local SDK configuration
+mobile/.gradle/
+mobile/build/
+mobile/androidApp/build/
+mobile/sharedLogic/build/
+mobile/local.properties

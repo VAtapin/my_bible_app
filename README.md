@@ -1,11 +1,11 @@
 # Bible Desktop — Моё приложение
 
-Персональное приложение на базе Bible Desktop: пользователь выбирает только те
+Персональный продукт на базе Bible Desktop: пользователь выбирает только те
 разделы, которыми действительно пользуется, получает единый профиль и может
 работать с ним в браузере, Android и iOS — в том числе без интернета.
 
-> MVP реализован в общей Vue/Capacitor-кодовой базе. До публичного выпуска
-> остаются нативные device-проверки, подписанные store-сборки и реальный пилот.
+> PWA реализована на Vue. Полностью нативные Android- и iOS-клиенты создаются в
+> `mobile/` на Jetpack Compose и SwiftUI с общей Kotlin Multiplatform-логикой.
 
 ## Идея
 
@@ -52,28 +52,18 @@
 Нативные сборки должны давать самостоятельную ценность и не быть простой
 WebView-обёрткой сайта.
 
-## Рекомендуемый стек
+## Технологический стек
 
-Предварительное направление, которое необходимо подтвердить техническим
-прототипом:
+- PWA: Vue 3, TypeScript, Vite, Pinia, Vue Router, IndexedDB и Service Worker;
+- Android: Kotlin и Jetpack Compose;
+- iOS: Swift и SwiftUI;
+- общая мобильная логика: Kotlin Multiplatform, Ktor и kotlinx.serialization;
+- данные: существующий типизированный Bible Desktop API;
+- офлайн: платформенные базы за общими репозиториями.
 
-- Vue 3;
-- TypeScript;
-- Vite;
-- Capacitor для Android и iOS;
-- Pinia для состояния;
-- Vue Router;
-- SQLite на мобильных платформах;
-- IndexedDB для PWA;
-- Capacitor Local Notifications и Push Notifications;
-- Service Worker для PWA;
-- Vitest и Playwright;
-- собственный типизированный API-клиент Bible Desktop.
-
-Такой стек согласуется с существующим Vue-фронтендом Bible Desktop и позволяет
-поддерживать один продуктовый интерфейс, сохраняя нативные возможности платформ.
-Окончательное решение принимается после проверки офлайна, уведомлений и сборок
-на реальных iPhone и Android-устройствах.
+Capacitor-оболочки, созданные на этапе веб-прототипа, больше не являются целевой
+архитектурой устанавливаемых приложений. Они будут удалены после переноса и
+проверки соответствующих сценариев в `mobile/`.
 
 ## Источник данных
 
@@ -120,6 +110,7 @@ D:\Projekte\BibleDesktop
 
 - [Полный продуктовый и технический план](docs/PLAN.md)
 - [Технический прототип этапа 0](docs/TECHNICAL_PROTOTYPE.md)
+- [Архитектура нативных Android/iOS-приложений](docs/NATIVE_MOBILE_ARCHITECTURE.md)
 - [Дизайн-система и фирменные материалы](docs/DESIGN_SYSTEM.md)
 - [Локальный профиль и конструктор](docs/LOCAL_PROFILE.md)
 - [Материалы для App Store и Google Play](docs/STORE_RELEASE.md)
@@ -131,8 +122,12 @@ D:\Projekte\BibleDesktop
 ## Структура репозитория
 
 ```text
-android/                 Capacitor-проект Android
-ios/                     Capacitor-проект iOS
+android/                 прежний Capacitor-прототип Android (временно)
+ios/                     прежний Capacitor-прототип iOS (временно)
+mobile/
+  androidApp/            нативный Android UI на Jetpack Compose
+  iosApp/                нативный iOS UI на SwiftUI
+  sharedLogic/           общие API, данные и прикладная логика KMP
 src/
   api/                   типизированный клиент Bible Desktop
   app/                   запуск, маршрутизация и композиция приложения
@@ -151,10 +146,10 @@ docs/                    продуктовая и техническая док
 
 ## Разработка
 
-Web-разработка использует Node.js 22. Нативные оболочки зафиксированы на новом
-стеке Capacitor 9 alpha: Android Gradle Plugin 9.2.1, Gradle 9.4.1, JDK 25,
-compile/target SDK 37 и min SDK 26; iOS deployment target — 16.0. На Windows
-проверена сборка debug APK, а для iOS по-прежнему требуется macOS с Xcode.
+Web-разработка использует Node.js 22. Нативный Android-проект использует Kotlin
+2.4.20, Android Gradle Plugin 9.2.1, Gradle 9.4.1, JDK 25, compile/target SDK 37
+и min SDK 26. Нативный iOS-проект использует SwiftUI и deployment target 16.0;
+для его сборки требуется macOS с Xcode.
 
 ```bash
 npm ci
@@ -167,16 +162,16 @@ npm run dev
 npm run check
 ```
 
-Синхронизация общей web-сборки с Android и iOS:
+Сборка и тест общей мобильной логики и Android-приложения:
 
-```bash
-npm run cap:sync
+```powershell
+cd mobile
+.\gradlew.bat :sharedLogic:testAndroidHostTest :androidApp:assembleDebug
 ```
 
-Debug APK собирается из `android/` командой `gradlew.bat assembleDebug`. На
-текущей рабочей машине Android Studio, JDK 25, SDK 37 и эмулятор
-`BibleDesktop_API_37` уже установлены; локальный `android/local.properties`
-указывает на пользовательский Android SDK и не сохраняется в Git.
+Подробности находятся в [mobile/README.md](mobile/README.md). На текущей рабочей
+машине Android Studio, JDK 25, SDK 37 и эмулятор `BibleDesktop_API_37` уже
+установлены.
 
 Адрес API задаётся переменной `VITE_API_BASE_URL`; пример находится в
 `.env.example`.
@@ -216,10 +211,9 @@ bash scripts/deploy-production.sh
 
 ## Статус
 
-Реализованы клиентские этапы 1–5: конструктор, Библия, молитвы, календарь,
-offline, локальные уведомления, защищённый профиль, восстановление, экспорт и
-удаление. Для подготовки выпуска добавлены privacy-экран, обезличенная локальная
-диагностика, тест миграции IndexedDB и release/store/pilot-документация.
-Android- и iOS-проекты используют общую кодовую базу. Android debug APK уже
-собирается новым toolchain; подписанные Android/iOS-сборки, Xcode-сборка и
-проверка на физических устройствах остаются обязательным внешним этапом.
+PWA содержит клиентские этапы 1–5: конструктор, Библию, молитвы, календарь,
+offline, уведомления и профиль. Для нативного направления создан новый KMP-
+каркас: Android и iOS имеют отдельный платформенный UI, а первый общий клиент
+загружает живой каталог переводов из production API с RU/DE-интерфейсом.
+Android debug APK собран и проверен на API 37; iOS-сборка и проверка на
+физических устройствах требуют macOS и дальнейшей реализации сценариев.

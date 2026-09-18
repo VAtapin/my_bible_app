@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bible Desktop</string>
+    <string name="app_subtitle">Gottes Wort für jeden Tag</string>
+    <string name="translations_title">Bibelübersetzungen</string>
+    <string name="translations_description">Direkt aus der Bible Desktop API geladen</string>
+    <string name="language_all">Alle</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_german">Deutsch</string>
+    <string name="loading">Übersetzungen werden geladen…</string>
+    <string name="retry">Erneut versuchen</string>
+    <string name="empty">Für diese Sprache wurden noch keine Übersetzungen gefunden.</string>
+    <string name="default_translation">Standard</string>
+    <string name="load_error">Die Übersetzungen konnten nicht geladen werden.</string>
+</resources>

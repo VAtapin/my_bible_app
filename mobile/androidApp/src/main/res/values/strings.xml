@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bible Desktop</string>
+    <string name="app_subtitle">Слово Божие каждый день</string>
+    <string name="translations_title">Переводы Библии</string>
+    <string name="translations_description">Данные загружены напрямую из Bible Desktop API</string>
+    <string name="language_all">Все</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_german">Deutsch</string>
+    <string name="loading">Загрузка переводов…</string>
+    <string name="retry">Повторить</string>
+    <string name="empty">Для этого языка переводы пока не найдены.</string>
+    <string name="default_translation">Основной</string>
+    <string name="load_error">Не удалось загрузить список переводов.</string>
+</resources>

@@ -1,0 +1,13 @@
+"app.name" = "Bible Desktop";
+"app.subtitle" = "Gottes Wort für jeden Tag";
+"translations.title" = "Bibelübersetzungen";
+"translations.description" = "Direkt aus der Bible Desktop API geladen";
+"translations.loading" = "Übersetzungen werden geladen…";
+"translations.error" = "Die Übersetzungen konnten nicht geladen werden.";
+"translations.empty" = "Für diese Sprache wurden noch keine Übersetzungen gefunden.";
+"translations.default" = "Standard";
+"language.label" = "Sprache";
+"language.all" = "Alle";
+"language.russian" = "Русский";
+"language.german" = "Deutsch";
+"action.retry" = "Erneut versuchen";

@@ -1,0 +1,13 @@
+"app.name" = "Bible Desktop";
+"app.subtitle" = "Слово Божие каждый день";
+"translations.title" = "Переводы Библии";
+"translations.description" = "Данные загружены напрямую из Bible Desktop API";
+"translations.loading" = "Загрузка переводов…";
+"translations.error" = "Не удалось загрузить список переводов.";
+"translations.empty" = "Для этого языка переводы пока не найдены.";
+"translations.default" = "Основной";
+"language.label" = "Язык";
+"language.all" = "Все";
+"language.russian" = "Русский";
+"language.german" = "Deutsch";
+"action.retry" = "Повторить";
