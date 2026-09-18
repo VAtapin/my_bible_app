@@ -155,6 +155,10 @@ fun SetupApp() {
     }
 
     var language by rememberSaveable { mutableStateOf(initialLanguage) }
+    var setupComplete by rememberSaveable {
+        mutableStateOf(preferences.getBoolean("setupComplete", false))
+    }
+    var quickSetup by rememberSaveable { mutableStateOf(false) }
     var selectedSectionIds by rememberSaveable {
         mutableStateOf(preferences.getString("sections", "bible,prayer,calendar").orEmpty())
     }
@@ -163,7 +167,7 @@ fun SetupApp() {
     }
     var route by rememberSaveable {
         mutableStateOf(
-            if (preferences.getBoolean("setupComplete", false)) Route.Home else Route.Welcome,
+            if (setupComplete) Route.Home else Route.Welcome,
         )
     }
     var translationFilter by rememberSaveable { mutableStateOf(TranslationFilter.All) }
@@ -205,8 +209,8 @@ fun SetupApp() {
         enabled = route == Route.Sections || route == Route.Translations || route == Route.Summary,
     ) {
         route = when (route) {
-            Route.Sections -> Route.Welcome
-            Route.Translations -> Route.Sections
+            Route.Sections -> if (setupComplete) Route.Home else Route.Welcome
+            Route.Translations -> if (quickSetup) Route.Welcome else Route.Sections
             Route.Summary -> if ("bible" in selectedSections) Route.Translations else Route.Sections
             else -> route
         }
@@ -217,10 +221,14 @@ fun SetupApp() {
             language = language,
             onLanguageChange = { language = it },
             onQuick = {
+                quickSetup = true
                 selectedSectionIds = "bible,prayer,calendar"
                 route = Route.Translations
             },
-            onManual = { route = Route.Sections },
+            onManual = {
+                quickSetup = false
+                route = Route.Sections
+            },
         )
 
         Route.Sections -> SectionsScreen(
@@ -228,8 +236,9 @@ fun SetupApp() {
             selected = selectedSections,
             onLanguageChange = { language = it },
             onToggle = { id -> selectedSectionIds = toggleCsv(selectedSections, id) },
-            onBack = { route = Route.Welcome },
+            onBack = { route = if (setupComplete) Route.Home else Route.Welcome },
             onNext = {
+                quickSetup = false
                 route = if ("bible" in selectedSections) Route.Translations else Route.Summary
             },
         )
@@ -241,7 +250,7 @@ fun SetupApp() {
             selectedCodes = selectedTranslations,
             onFilterChange = { translationFilter = it },
             onToggle = { code -> selectedTranslationCodes = toggleCsv(selectedTranslations, code) },
-            onBack = { route = Route.Sections },
+            onBack = { route = if (quickSetup) Route.Welcome else Route.Sections },
             onRetry = { reloadKey += 1 },
             onNext = { route = Route.Summary },
         )
@@ -264,6 +273,7 @@ fun SetupApp() {
                     .putString("sections", selectedSectionIds)
                     .putString("translations", selectedTranslationCodes)
                     .apply()
+                setupComplete = true
                 route = Route.Home
             },
         )
@@ -276,7 +286,10 @@ fun SetupApp() {
                 .orEmpty()
                 .filter { it.code in selectedTranslations }
                 .sortedBy { if (it.language.code == language) 0 else 1 },
-            onEdit = { route = Route.Sections },
+            onEdit = {
+                quickSetup = false
+                route = Route.Sections
+            },
             onOpenBible = { route = Route.Bible },
             onOpenPrayers = { route = Route.Prayers },
             onOpenCalendar = { route = Route.Calendar },
@@ -309,7 +322,10 @@ fun SetupApp() {
         Route.More -> MoreScreen(
             language = language,
             onBack = { route = Route.Home },
-            onSettings = { route = Route.Sections },
+            onSettings = {
+                quickSetup = false
+                route = Route.Sections
+            },
             onOpenBookmark = { bookmark: BookmarkEntry ->
                 preferences.edit()
                     .putString("lastTranslation", bookmark.translationCode)

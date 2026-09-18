@@ -82,6 +82,7 @@ struct ContentView: View {
     @State private var route = SetupRoute.welcome
     @State private var filter = TranslationFilter.all
     @State private var didRestoreRoute = false
+    @State private var quickSetup = false
 
     private var selectedSections: Set<String> {
         Set(sectionsCSV.split(separator: ",").map(String.init))
@@ -109,10 +110,14 @@ struct ContentView: View {
                     language: language,
                     onLanguageChange: { language = $0 },
                     onQuick: {
+                        quickSetup = true
                         sectionsCSV = "bible,prayer,calendar"
                         route = .translations
                     },
-                    onManual: { route = .sections }
+                    onManual: {
+                        quickSetup = false
+                        route = .sections
+                    }
                 )
             case .sections:
                 SectionsSetupView(
@@ -120,8 +125,9 @@ struct ContentView: View {
                     selected: selectedSections,
                     onLanguageChange: { language = $0 },
                     onToggle: toggleSection,
-                    onBack: { route = .welcome },
+                    onBack: { route = setupComplete ? .home : .welcome },
                     onNext: {
+                        quickSetup = false
                         route = selectedSections.contains("bible") ? .translations : .summary
                     }
                 )
@@ -136,7 +142,7 @@ struct ContentView: View {
                     onFilterChange: { filter = $0 },
                     onToggle: toggleTranslation,
                     onRetry: model.load,
-                    onBack: { route = .sections },
+                    onBack: { route = quickSetup ? .welcome : .sections },
                     onNext: { route = .summary }
                 )
             case .summary:
@@ -157,7 +163,10 @@ struct ContentView: View {
                     language: language,
                     selectedSections: selectedSections,
                     selectedTranslations: selectedTranslations,
-                    onEdit: { route = .sections },
+                    onEdit: {
+                        quickSetup = false
+                        route = .sections
+                    },
                     onOpenBible: { route = .bible },
                     onOpenPrayers: { route = .prayers },
                     onOpenCalendar: { route = .calendar }
