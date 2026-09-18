@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">My Bible App</string>
-    <string name="title_activity_main">My Bible App</string>
+    <string name="app_name">Bible Desktop</string>
+    <string name="title_activity_main">Bible Desktop</string>
     <string name="package_name">com.bibledesktop.myapp</string>
     <string name="custom_url_scheme">com.bibledesktop.myapp</string>
 </resources>

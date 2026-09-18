@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
+import { ru } from '@/i18n/ru'
 
 export async function schedulePrototypeNotification(): Promise<'scheduled' | 'unsupported' | 'denied'> {
   if (!Capacitor.isNativePlatform()) {
@@ -19,8 +20,8 @@ export async function schedulePrototypeNotification(): Promise<'scheduled' | 'un
     notifications: [
       {
         id: 1,
-        title: 'My Bible App',
-        body: 'Тестовое напоминание работает.',
+        title: ru.notificationTitle,
+        body: ru.notificationBody,
         schedule: { at: new Date(Date.now() + 10_000) },
       },
     ],

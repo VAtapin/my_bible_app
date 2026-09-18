@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.bibledesktop.myapp',
-  appName: 'My Bible App',
+  appName: 'Bible Desktop',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
