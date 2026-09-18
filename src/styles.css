@@ -1586,6 +1586,126 @@ select {
   text-align: right;
 }
 
+.profile-page,
+.restore-page {
+  padding-top: 12px;
+}
+
+.profile-panel,
+.restore-card {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 17px;
+  background: var(--white);
+  box-shadow: 0 6px 18px rgb(45 74 100 / 6%);
+}
+
+.profile-panel h2,
+.restore-card h2 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.profile-panel > p,
+.restore-card > p {
+  margin-bottom: 13px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.profile-facts {
+  margin: 12px 0 0;
+}
+
+.profile-facts > div {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.profile-facts dt {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.profile-facts dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.secret-panel {
+  border-color: rgb(185 154 90 / 45%);
+  background: #fffdf7;
+}
+
+.secret-panel code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 12px;
+  padding: 11px;
+  color: var(--ink);
+  background: var(--brand-cream);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.secret-panel button,
+.profile-actions button {
+  min-height: 44px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--brand-blue);
+  background: #f7fafc;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.profile-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.account-panel {
+  background: #edf3f7;
+}
+
+.restore-card .primary-action {
+  margin-top: 12px;
+}
+
+.restore-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 17px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.restore-divider::before,
+.restore-divider::after {
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+  content: "";
+}
+
 @media (max-width: 520px) {
   .app-content {
     padding: 14px 12px 24px;

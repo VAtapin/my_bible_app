@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { AppConfiguration } from '@/profile/configuration'
 import { createLocalProfileRepository } from '@/profile/profileRepository'
+import { enqueueProfileSync } from '@/profile/profileSync'
 
 export const useProfileStore = defineStore('profile', () => {
   const configuration = ref<AppConfiguration>()
@@ -19,6 +20,7 @@ export const useProfileStore = defineStore('profile', () => {
 
   function save(value: AppConfiguration): void {
     repository().save(value)
+    enqueueProfileSync(value)
     configuration.value = value
     loaded.value = true
   }

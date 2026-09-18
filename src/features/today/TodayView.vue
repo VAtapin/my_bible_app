@@ -56,6 +56,11 @@ onMounted(() => {
           <span><strong>Напоминания</strong><small>Категории, время и состояние разрешений</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
+        <RouterLink class="module-card available" to="/profile">
+          <span class="module-icon"><img src="/icons/bookmarks.png" alt="" /></span>
+          <span><strong>Профиль и перенос</strong><small>Ссылка, синхронизация, экспорт и удаление</small></span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
       </div>
     </section>
 

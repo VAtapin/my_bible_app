@@ -5,6 +5,7 @@ import App from './App.vue'
 import { router } from './app/router'
 import { initializeNotifications } from './notifications/notificationService'
 import { loadNotificationPreferences } from './notifications/preferences'
+import { flushProfileSyncQueue } from './profile/profileSync'
 import './styles.css'
 
 registerSW({ immediate: true })
@@ -12,3 +13,5 @@ registerSW({ immediate: true })
 createApp(App).use(createPinia()).use(router).mount('#app')
 
 void router.isReady().then(() => initializeNotifications(router, loadNotificationPreferences()))
+window.addEventListener('online', () => { void flushProfileSyncQueue().catch(() => undefined) })
+void flushProfileSyncQueue().catch(() => undefined)

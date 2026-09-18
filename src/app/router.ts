@@ -9,6 +9,7 @@ import PrayerListView from '@/features/prayers/PrayerListView.vue'
 import PrayerView from '@/features/prayers/PrayerView.vue'
 import CalendarView from '@/features/calendar/CalendarView.vue'
 import NotificationSettingsView from '@/features/notifications/NotificationSettingsView.vue'
+import ProfileSettingsView from '@/features/profile/ProfileSettingsView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -69,6 +70,11 @@ export const router = createRouter({
       path: '/notifications',
       name: 'notifications',
       component: NotificationSettingsView,
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileSettingsView,
     },
     {
       path: '/:pathMatch(.*)*',
