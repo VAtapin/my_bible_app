@@ -10,6 +10,7 @@ import {
   saveRemoteProfileMeta,
 } from '@/profile/profileSync'
 import { useProfileStore } from '@/stores/profileStore'
+import { recordSanitizedError } from '@/diagnostics/productDiagnostics'
 
 const router = useRouter()
 const profile = useProfileStore()
@@ -62,6 +63,7 @@ async function run(action: () => Promise<void>, navigate = true): Promise<void> 
     await action()
     if (navigate) window.setTimeout(() => { void router.push('/today') }, 700)
   } catch (error) {
+    recordSanitizedError('profile_restore')
     message.value = error instanceof Error ? error.message : 'Не удалось восстановить профиль.'
   } finally {
     busy.value = false

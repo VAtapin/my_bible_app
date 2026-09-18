@@ -14,6 +14,7 @@ import {
   saveRemoteProfileMeta,
 } from '@/profile/profileSync'
 import { useProfileStore } from '@/stores/profileStore'
+import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
 
 const profile = useProfileStore()
 const router = useRouter()
@@ -35,6 +36,7 @@ async function createRemote(): Promise<void> {
     remoteMeta.value = { profileId: created.profile_id, revision: created.revision }
     secret.value = created.secret
     recoveryCode.value = created.recovery_code
+    recordProductMetric('profile_created')
     saveRemoteProfileMeta(remoteMeta.value)
     saveProfileSecret(created.secret)
     message.value = 'Профиль создан. Сохраните ссылку и новый код восстановления.'
@@ -97,6 +99,7 @@ async function run(action: () => Promise<void>): Promise<void> {
   try {
     await action()
   } catch (error) {
+    recordSanitizedError('profile_sync')
     message.value = error instanceof Error ? error.message : 'Операция не выполнена.'
   } finally {
     busy.value = false
@@ -154,6 +157,8 @@ async function run(action: () => Promise<void>): Promise<void> {
         <h2>Аккаунт — необязательно</h2>
         <p>Привязка к аккаунту появится после выбора общей схемы авторизации Bible Desktop. Профиль и восстановление работают без неё.</p>
       </section>
+
+      <RouterLink class="text-action" to="/privacy">Политика конфиденциальности</RouterLink>
 
       <button class="text-action danger-text" type="button" @click="deleteLocal">Удалить локальный профиль</button>
       <p v-if="message" class="status" role="status">{{ message }}</p>

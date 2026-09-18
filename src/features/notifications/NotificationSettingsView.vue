@@ -12,6 +12,7 @@ import {
 } from '@/notifications/preferences'
 import { applyNotificationSchedule, getNotificationDiagnostics, type NotificationDiagnostics } from '@/notifications/notificationService'
 import { useProfileStore } from '@/stores/profileStore'
+import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
 
 const categoryLabels: Record<NotificationCategoryId, { title: string; description: string }> = {
   morning: { title: 'Утренняя молитва', description: 'Спокойное начало дня' },
@@ -50,6 +51,7 @@ async function save(): Promise<void> {
     preferences.value.updatedAt = new Date().toISOString()
     saveNotificationPreferences(preferences.value)
     const result = await applyNotificationSchedule(preferences.value, true)
+    recordProductMetric('notification_schedule_saved')
     message.value = result === 'scheduled'
       ? 'Расписание обновлено на ближайшие 14 дней.'
       : result === 'unsupported'
@@ -58,6 +60,7 @@ async function save(): Promise<void> {
     await refreshDiagnostics()
     if (isOnboarding.value) window.setTimeout(() => { void router.push('/today') }, 700)
   } catch (error) {
+    recordSanitizedError('notification_schedule')
     message.value = error instanceof Error ? error.message : 'Не удалось обновить уведомления.'
   } finally {
     busy.value = false
@@ -98,7 +101,7 @@ async function refreshDiagnostics(): Promise<void> {
         <div><span>Платформа</span><strong>{{ diagnostics.platform }}</strong></div>
         <div><span>Системное разрешение</span><strong>{{ diagnostics.supported ? diagnostics.permission : 'только Android/iOS' }}</strong></div>
         <div><span>Запланировано</span><strong>{{ diagnostics.pending }}</strong></div>
-        <div><span>Push-обновления</span><strong>ожидают серверный endpoint</strong></div>
+        <div><span>Push-обновления</span><strong>сервер готов, нужна регистрация APNs/FCM</strong></div>
       </section>
     </section>
   </MobileShell>

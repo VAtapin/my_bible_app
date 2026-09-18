@@ -1,5 +1,5 @@
-const databaseName = 'my-bible-app'
-const databaseVersion = 3
+export const offlineDatabaseName = 'my-bible-app'
+export const offlineDatabaseVersion = 3
 
 export const offlineStores = {
   chapters: 'chapters',
@@ -11,7 +11,7 @@ export const offlineStores = {
 
 export function openOfflineDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(databaseName, databaseVersion)
+    const request = indexedDB.open(offlineDatabaseName, offlineDatabaseVersion)
 
     request.onupgradeneeded = () => {
       const database = request.result

@@ -61,6 +61,11 @@ onMounted(() => {
           <span><strong>Профиль и перенос</strong><small>Ссылка, синхронизация, экспорт и удаление</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
+        <RouterLink class="module-card available" to="/diagnostics">
+          <span class="module-icon"><img src="/icons/setup.png" alt="" /></span>
+          <span><strong>Диагностика</strong><small>Локальная обезличенная сводка для поддержки</small></span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
       </div>
     </section>
 

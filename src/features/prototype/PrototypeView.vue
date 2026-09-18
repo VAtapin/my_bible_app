@@ -9,6 +9,7 @@ import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepo
 import { bookmarkKey, type Bookmark } from '@/offline/libraryRepository'
 import { createChapterService } from '@/services/chapterService'
 import { createOfflinePackageService, type PackageProgress } from '@/services/offlinePackageService'
+import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -170,8 +171,10 @@ async function downloadTranslation(): Promise<void> {
     )
     packageVersion.value = `${result.chapterCount} глав · ${formatDate(result.downloadedAt)}`
     packageUpdateAvailable.value = false
+    recordProductMetric('offline_download_completed')
     message.value = 'Перевод полностью загружен и доступен без сети.'
   } catch (error) {
+    if (!(error instanceof DOMException && error.name === 'AbortError')) recordSanitizedError('offline_download')
     message.value = error instanceof DOMException && error.name === 'AbortError'
       ? 'Загрузка остановлена. Готовая версия пакета не изменена.'
       : errorMessage(error)

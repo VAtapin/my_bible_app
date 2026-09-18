@@ -57,6 +57,7 @@ button:disabled {
 }
 
 button:focus-visible,
+a:focus-visible,
 input:focus-visible,
 select:focus-visible {
   outline: 3px solid rgb(125 161 194 / 42%);
@@ -598,6 +599,15 @@ select {
 .reassurance {
   margin: 12px 0 0;
   color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.privacy-link {
+  display: block;
+  min-height: 44px;
+  padding: 12px;
+  color: var(--brand-blue);
   font-size: 11px;
   text-align: center;
 }
@@ -1704,6 +1714,34 @@ select {
   flex: 1;
   background: var(--line);
   content: "";
+}
+
+.legal-page section {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.legal-page h2 {
+  margin: 0 0 7px;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+}
+
+.legal-page section p {
+  margin: 0 0 9px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.legal-page a {
+  color: var(--brand-blue);
+}
+
+.diagnostics-page .profile-facts > div {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 @media (max-width: 520px) {

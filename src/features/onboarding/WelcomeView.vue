@@ -45,5 +45,6 @@ onMounted(() => {
     </section>
 
     <p class="reassurance">{{ ru.welcome.reassurance }}</p>
+    <RouterLink class="privacy-link" to="/privacy">Конфиденциальность</RouterLink>
   </MobileShell>
 </template>

@@ -12,6 +12,7 @@ import {
   type SetupMode,
 } from '@/profile/configuration'
 import { useProfileStore } from '@/stores/profileStore'
+import { recordProductMetric } from '@/diagnostics/productDiagnostics'
 
 const props = defineProps<{ mode: SetupMode }>()
 const route = useRoute()
@@ -35,6 +36,7 @@ const selectedSectionLabels = computed(() => sections.value.map((id) => ru.secti
 
 onMounted(() => {
   const existing = profile.load()
+  if (!editing.value) recordProductMetric('constructor_opened')
   if (!existing || !editing.value) {
     return
   }
@@ -88,6 +90,7 @@ function save(): void {
       notificationTime: notificationTime.value,
     }, profile.configuration)
     profile.save(configuration)
+    if (!editing.value) recordProductMetric('constructor_completed')
     void router.push(notificationsEnabled.value ? '/notifications?onboarding=1' : '/today')
   } catch (error) {
     message.value = error instanceof Error && error.message === 'sections-required'
