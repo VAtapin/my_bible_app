@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 import type { BibleChapter } from '@/api/contracts'
 import { bibleApi } from '@/api'
+import MobileShell from '@/components/MobileShell.vue'
 import { ru } from '@/i18n/ru'
 import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
 import { createChapterService } from '@/services/chapterService'
@@ -15,21 +16,6 @@ const chapterNumber = ref(1)
 const chapter = ref<BibleChapter>()
 const message = ref('')
 const busy = ref(false)
-const isOnline = ref(navigator.onLine)
-
-function updateConnectionStatus(): void {
-  isOnline.value = navigator.onLine
-}
-
-onMounted(() => {
-  window.addEventListener('online', updateConnectionStatus)
-  window.addEventListener('offline', updateConnectionStatus)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('online', updateConnectionStatus)
-  window.removeEventListener('offline', updateConnectionStatus)
-})
 
 async function download(): Promise<void> {
   await run(async () => {
@@ -70,22 +56,7 @@ async function run(action: () => Promise<void>): Promise<void> {
 </script>
 
 <template>
-  <div class="mobile-app">
-    <header class="app-header">
-      <div class="brand-lockup">
-        <img src="/brand/bible-desktop-mark.png" alt="" />
-        <span>
-          <strong>{{ ru.brand }}</strong>
-          <small>{{ ru.brandSubtitle }}</small>
-        </span>
-      </div>
-      <div class="connection" :class="{ offline: !isOnline }">
-        <span aria-hidden="true"></span>
-        {{ isOnline ? ru.online : ru.offline }}
-      </div>
-    </header>
-
-    <main class="app-content">
+  <MobileShell>
       <section class="hero">
         <p class="eyebrow">{{ ru.eyebrow }}</p>
         <h1>{{ ru.title }}</h1>
@@ -106,7 +77,7 @@ async function run(action: () => Promise<void>): Promise<void> {
             <span>{{ ru.translation }}</span>
             <input v-model.trim="translationCode" list="translation-options" autocomplete="off" />
             <datalist id="translation-options">
-              <option value="BQ_RUSSIAN_RST_STRONG">Синодальный перевод</option>
+              <option value="BQ_RUSSIAN_RST_STRONG">{{ ru.translationName }}</option>
             </datalist>
           </label>
           <label>
@@ -126,6 +97,11 @@ async function run(action: () => Promise<void>): Promise<void> {
           {{ busy ? ru.loading : ru.download }}
         </button>
 
+        <div class="card-actions">
+          <button :disabled="busy" type="button" @click="openOffline">{{ ru.openOffline }}</button>
+          <button :disabled="busy" type="button" @click="testNotification">{{ ru.notification }}</button>
+        </div>
+
         <p v-if="message" class="status" role="status" aria-live="polite">{{ message }}</p>
       </section>
 
@@ -141,21 +117,5 @@ async function run(action: () => Promise<void>): Promise<void> {
           </li>
         </ol>
       </article>
-    </main>
-
-    <nav class="bottom-nav" aria-label="Основная навигация">
-      <button class="active" type="button" aria-current="page">
-        <img src="/icons/library.png" alt="" />
-        <span>{{ ru.reading }}</span>
-      </button>
-      <button :disabled="busy" type="button" @click="openOffline">
-        <img src="/icons/bookmarks.png" alt="" />
-        <span>{{ ru.openOffline }}</span>
-      </button>
-      <button :disabled="busy" type="button" @click="testNotification">
-        <img src="/icons/prayers.png" alt="" />
-        <span>{{ ru.notification }}</span>
-      </button>
-    </nav>
-  </div>
+  </MobileShell>
 </template>
