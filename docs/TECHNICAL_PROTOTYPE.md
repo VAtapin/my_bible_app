@@ -59,11 +59,38 @@ npm run cap:sync
 macOS с Xcode. Само добавление и синхронизация обеих Capacitor-платформ работает
 на текущем Windows-окружении.
 
+## Production PWA
+
+Для PWA зафиксированы:
+
+- адрес: `https://my.bible-desktop.com`;
+- каталог проекта: `/var/www/vhosts/bible-desktop.com/my_app`;
+- document root субдомена: `/var/www/vhosts/bible-desktop.com/my_app/dist`;
+- API: `https://bible-desktop.com/api`;
+- среда сборки: Plesk Node.js 22.
+
+Первичную настройку document root и HTTPS нужно выполнить в Plesk. После того
+как репозиторий клонирован и ветка `main` имеет настроенный upstream, обновление
+выполняется из SSH/Plesk terminal:
+
+```bash
+cd /var/www/vhosts/bible-desktop.com/my_app && \
+export PATH="/opt/plesk/node/22/bin:$PATH" && \
+bash scripts/deploy-production.sh
+```
+
+Скрипт использует только fast-forward pull, устанавливает точные зависимости из
+lock-файла, создаёт production-сборку и проверяет наличие `dist/index.html` и
+service worker. Файл `public/.htaccess` попадает в сборку и обеспечивает SPA
+fallback для прямого открытия внутренних URL через Apache.
+
 ## Следующая проверка на устройствах
 
-1. Выбрать и подключить SQLite-адаптер за `ChapterRepository`.
-2. Перенести одну главу из API в SQLite и открыть её после полного перезапуска
+1. Развернуть текущую PWA-сборку на `my.bible-desktop.com` и проверить установку,
+   HTTPS, service worker и IndexedDB после перезапуска без сети.
+2. Выбрать и подключить SQLite-адаптер за `ChapterRepository`.
+3. Перенести одну главу из API в SQLite и открыть её после полного перезапуска
    приложения без сети.
-3. Проверить тестовое локальное уведомление на физическом Android-устройстве.
-4. Повторить сценарии на iPhone/macOS.
-5. После подтверждения зафиксировать минимальные версии Android и iOS.
+4. Проверить тестовое локальное уведомление на физическом Android-устройстве.
+5. Повторить сценарии на iPhone/macOS.
+6. После подтверждения зафиксировать минимальные версии Android и iOS.

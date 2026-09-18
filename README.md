@@ -167,6 +167,23 @@ npm run cap:sync
 Адрес API задаётся переменной `VITE_API_BASE_URL`; пример находится в
 `.env.example`.
 
+## Production PWA
+
+PWA предназначена для `https://my.bible-desktop.com`. На сервере проект
+располагается в `/var/www/vhosts/bible-desktop.com/my_app`, а document root
+субдомена должен указывать на каталог `dist` внутри проекта.
+
+После первичной настройки Plesk приложение обновляется командой:
+
+```bash
+cd /var/www/vhosts/bible-desktop.com/my_app && \
+export PATH="/opt/plesk/node/22/bin:$PATH" && \
+bash scripts/deploy-production.sh
+```
+
+Скрипт выполняет fast-forward pull, `npm ci`, production build и проверку
+основных файлов PWA. PHP, Composer и миграции этому клиентскому проекту не нужны.
+
 ## Статус
 
 Создан общий Vue/TypeScript/PWA/Capacitor-каркас. Прототип получает реальную

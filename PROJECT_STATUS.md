@@ -13,6 +13,8 @@
 - Созданы и синхронизированы нативные проекты `android/` и `ios/`.
 - Подтверждены production API, CORS и рабочая глава
   `BQ_RUSSIAN_RST_STRONG / genesis / 1`.
+- Подготовлены Plesk deployment-скрипт и SPA fallback для публикации PWA на
+  `https://my.bible-desktop.com`.
 
 ## Текущее состояние
 
@@ -28,6 +30,8 @@
   интерфейсом `ChapterRepository` после device-проверки SQLite-библиотеки.
 - Контент и бизнес-логика остаются в Bible Desktop; новый проект является
   клиентом его публичного API.
+- Production-каталог проекта — `/var/www/vhosts/bible-desktop.com/my_app`,
+  document root субдомена — `/var/www/vhosts/bible-desktop.com/my_app/dist`.
 - Зафиксирован Capacitor 8.4.3: эта согласованная версия не содержит найденную
   npm audit-уязвимость ветки CLI 8.5.x.
 
@@ -42,9 +46,9 @@
 
 ## Рекомендуется следующим
 
-Подключить SQLite-адаптер и на физическом Android-устройстве проверить полный
-сценарий: загрузка главы, перезапуск без сети, чтение из SQLite и локальное
-уведомление. Затем повторить на iOS и зафиксировать минимальные версии ОС.
+Развернуть PWA на `my.bible-desktop.com` и на телефоне проверить установку,
+service worker и IndexedDB после перезапуска без сети. Затем подключить
+SQLite-адаптер и проверить тот же сценарий на физическом Android-устройстве.
 
 ## Проверки
 
@@ -52,9 +56,10 @@
 - `npm run check` — typecheck, 4 модульных теста и production PWA build прошли.
 - `npx cap sync` — Android и iOS синхронизированы.
 - Живой production API-запрос — переводы, книги, глава и CORS подтверждены.
+- Production build содержит `.htaccess`, `index.html`, manifest и service worker.
 - Android Gradle build не запускался: в окружении нет JDK и Android SDK.
 - iOS build не запускался: текущая среда Windows не поддерживает Xcode.
 
 ## Последний связанный commit
 
-- Технический прототип этапа 0 (текущий commit).
+- Подготовка PWA deployment на `my.bible-desktop.com` (текущий commit).
