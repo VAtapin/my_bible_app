@@ -14,21 +14,21 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run test && npm run build",
-    "cap:sync": "npm run build && cap sync",
+    "cap:sync": "npm run build && cap sync && node scripts/normalize-ios-package-paths.mjs",
     "cap:open:android": "cap open android",
     "cap:open:ios": "cap open ios"
   },
   "dependencies": {
-    "@capacitor/core": "8.4.3",
-    "@capacitor/local-notifications": "8.3.1",
+    "@capacitor/core": "9.0.0-alpha.6",
+    "@capacitor/local-notifications": "9.0.0-alpha.2",
     "pinia": "4.0.3",
     "vue": "3.5.43",
     "vue-router": "5.3.1"
   },
   "devDependencies": {
-    "@capacitor/android": "8.4.3",
-    "@capacitor/cli": "8.4.3",
-    "@capacitor/ios": "8.4.3",
+    "@capacitor/android": "9.0.0-alpha.6",
+    "@capacitor/cli": "9.0.0-alpha.6",
+    "@capacitor/ios": "9.0.0-alpha.6",
     "@types/node": "26.6.1",
     "@vitejs/plugin-vue": "6.0.9",
     "fake-indexeddb": "6.2.5",

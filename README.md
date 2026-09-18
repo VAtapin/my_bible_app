@@ -151,7 +151,10 @@ docs/                    продуктовая и техническая док
 
 ## Разработка
 
-Требуется Node.js 22 или новее.
+Web-разработка использует Node.js 22. Нативные оболочки зафиксированы на новом
+стеке Capacitor 9 alpha: Android Gradle Plugin 9.2.1, Gradle 9.4.1, JDK 25,
+compile/target SDK 37 и min SDK 26; iOS deployment target — 16.0. На Windows
+проверена сборка debug APK, а для iOS по-прежнему требуется macOS с Xcode.
 
 ```bash
 npm ci
@@ -169,6 +172,11 @@ npm run check
 ```bash
 npm run cap:sync
 ```
+
+Debug APK собирается из `android/` командой `gradlew.bat assembleDebug`. На
+текущей рабочей машине Android Studio, JDK 25, SDK 37 и эмулятор
+`BibleDesktop_API_37` уже установлены; локальный `android/local.properties`
+указывает на пользовательский Android SDK и не сохраняется в Git.
 
 Адрес API задаётся переменной `VITE_API_BASE_URL`; пример находится в
 `.env.example`.
@@ -212,5 +220,6 @@ bash scripts/deploy-production.sh
 offline, локальные уведомления, защищённый профиль, восстановление, экспорт и
 удаление. Для подготовки выпуска добавлены privacy-экран, обезличенная локальная
 диагностика, тест миграции IndexedDB и release/store/pilot-документация.
-Android- и iOS-проекты используют общую кодовую базу; их подписанные сборки и
+Android- и iOS-проекты используют общую кодовую базу. Android debug APK уже
+собирается новым toolchain; подписанные Android/iOS-сборки, Xcode-сборка и
 проверка на физических устройствах остаются обязательным внешним этапом.

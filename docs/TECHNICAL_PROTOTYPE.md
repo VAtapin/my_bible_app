@@ -41,7 +41,7 @@
 
 ## Локальный запуск
 
-Требуется Node.js 22 или новее:
+Требуется Node.js 22:
 
 ```bash
 npm ci
@@ -55,9 +55,12 @@ npm run check
 npm run cap:sync
 ```
 
-Для Android дополнительно нужны JDK и Android SDK. Для сборки iOS требуется
-macOS с Xcode. Само добавление и синхронизация обеих Capacitor-платформ работает
-на текущем Windows-окружении.
+Нативный стек проекта: Capacitor 9.0.0-alpha.6, Local Notifications
+9.0.0-alpha.2, Android Gradle Plugin 9.2.1, Gradle 9.4.1 и JDK 25. Android
+собирается с compile SDK 37, target SDK 37 и min SDK 26. На текущей Windows-машине
+установлены Android Studio 2026.1.4, Android SDK 37 и эмулятор
+`BibleDesktop_API_37`; `assembleDebug` и Android unit tests проходят. iOS
+использует deployment target 16.0; его реальная сборка требует macOS с Xcode.
 
 ## Production PWA
 
@@ -110,4 +113,5 @@ fallback для прямого открытия внутренних URL чер�
    приложения без сети.
 4. Проверить тестовое локальное уведомление на физическом Android-устройстве.
 5. Повторить сценарии на iPhone/macOS.
-6. После подтверждения зафиксировать минимальные версии Android и iOS.
+6. Подтвердить на реальных устройствах зафиксированные минимальные версии:
+   Android 8.0 / API 26 и iOS 16.
