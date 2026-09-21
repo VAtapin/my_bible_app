@@ -35,7 +35,7 @@ const resetProgress = async () => {
     <section class="settings-card card">
       <div class="setting-block">
         <label>{{ t('interfaceLanguage') }}</label>
-        <div class="segmented"><button :class="{ active: profileStore.profile?.locale === 'ru' }" @click="setLanguage('ru')">Русский</button><button :class="{ active: profileStore.profile?.locale === 'de' }" @click="setLanguage('de')">Deutsch</button></div>
+        <div class="segmented"><button :class="{ active: profileStore.profile?.locale === 'cu' }" @click="setLanguage('cu')">Цр҃к.-сл.</button><button :class="{ active: profileStore.profile?.locale === 'ru' }" @click="setLanguage('ru')">Русский</button><button :class="{ active: profileStore.profile?.locale === 'de' }" @click="setLanguage('de')">Deutsch</button></div>
       </div>
       <div class="setting-block">
         <label>{{ t('goal') }}</label>

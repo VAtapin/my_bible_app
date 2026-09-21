@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toSlavonicClockValue, toSlavonicNumeral } from './slavonicNumerals'
+import { decomposeSlavonicNumeral, toSlavonicClockValue, toSlavonicNumeral } from './slavonicNumerals'
 
 describe('Church Slavonic numerals', () => {
   it('uses the reversed order for values from eleven through nineteen', () => {
@@ -15,8 +15,13 @@ describe('Church Slavonic numerals', () => {
   })
 
   it('shows the absence of a positional zero in the clock', () => {
-    expect(toSlavonicClockValue(0, 0)).toEqual({ hours: '—', minutes: '—' })
-    expect(toSlavonicClockValue(14, 5)).toEqual({ hours: 'ді҃', minutes: 'є҃' })
+    expect(toSlavonicClockValue(0, 0, 0)).toEqual({ hours: '—', minutes: '—', seconds: '—' })
+    expect(toSlavonicClockValue(14, 5, 12)).toEqual({ hours: 'ді҃', minutes: 'є҃', seconds: 'ві҃' })
+  })
+
+  it('returns the visible construction steps in their written order', () => {
+    expect(decomposeSlavonicNumeral(12)).toEqual([{ value: 2, glyph: 'в' }, { value: 10, glyph: 'і' }])
+    expect(decomposeSlavonicNumeral(742)).toEqual([{ value: 700, glyph: 'ѱ' }, { value: 40, glyph: 'м' }, { value: 2, glyph: 'в' }])
   })
 
   it('rejects unsupported values', () => {

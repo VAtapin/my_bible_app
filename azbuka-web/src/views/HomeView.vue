@@ -4,6 +4,7 @@ import { letters } from '@/data/letters'
 import { useI18n } from '@/i18n'
 import { useProfileStore } from '@/stores/profile'
 import { localDateKey } from '@/domain/date'
+import { localizedText } from '@/domain/types'
 import SlavonicClock from '@/components/SlavonicClock.vue'
 
 const profileStore = useProfileStore()
@@ -39,7 +40,7 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
       </div>
       <div class="hero-letter" aria-hidden="true">
         <span>{{ nextLetter.glyph }}</span>
-        <small>{{ nextLetter.name[profileStore.profile?.locale ?? 'ru'] }}</small>
+        <small>{{ localizedText(nextLetter.name, profileStore.profile?.locale ?? 'cu') }}</small>
       </div>
     </section>
 
@@ -61,7 +62,7 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
       <div class="section-heading"><div><p class="eyebrow">{{ t('alphabet') }}</p><h2>{{ t('continue') }}</h2></div><RouterLink to="/alphabet" class="text-link">{{ t('learn') }} →</RouterLink></div>
       <div class="letter-preview-row">
         <RouterLink v-for="letter in letters.slice(0, 6)" :key="letter.id" :to="`/alphabet/${letter.id}`" class="mini-letter" :class="{ done: profileStore.profile?.learnedLetterIds.includes(letter.id) }">
-          <span>{{ letter.glyph }}</span><small>{{ letter.name[profileStore.profile?.locale ?? 'ru'] }}</small>
+          <span>{{ letter.glyph }}</span><small>{{ localizedText(letter.name, profileStore.profile?.locale ?? 'cu') }}</small>
         </RouterLink>
       </div>
     </section>

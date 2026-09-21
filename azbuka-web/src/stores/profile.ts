@@ -70,7 +70,7 @@ export const useProfileStore = defineStore('profile', () => {
   }
 
   const reset = async () => {
-    const locale = profile.value?.locale ?? 'ru'
+    const locale = profile.value?.locale ?? 'cu'
     const goal = profile.value?.dailyGoal ?? 10
     await clearProfile()
     profile.value = { ...defaultProfile(), locale, dailyGoal: goal }

@@ -7,11 +7,12 @@ import { applyAnswer, initialAnswerState } from '@/domain/practiceFlow'
 import { letterById } from '@/data/letters'
 import { useI18n } from '@/i18n'
 import { useProfileStore } from '@/stores/profile'
+import { localizedText } from '@/domain/types'
 
 const router = useRouter()
 const profileStore = useProfileStore()
 const { t } = useI18n()
-const locale = computed(() => profileStore.profile?.locale ?? 'ru')
+const locale = computed(() => profileStore.profile?.locale ?? 'cu')
 const questions = ref(createSession(locale.value, profileStore.profile?.dailyGoal ?? 10))
 const index = ref(0)
 const answerState = ref(initialAnswerState())
@@ -29,7 +30,7 @@ const currentLetter = computed(() => letterById(current.value.letterId)!)
 const resolved = computed(() => answerState.value.phase === 'resolved')
 const feedbackVisible = computed(() => answerState.value.phase !== 'idle')
 const corrected = computed(() => resolved.value && answerState.value.firstTryCorrect === false)
-const instruction = computed(() => current.value.kind === 'glyph-to-name' ? t('chooseName') : current.value.kind === 'name-to-glyph' ? t('chooseGlyph') : t('chooseNumber'))
+const instruction = computed(() => current.value.kind === 'glyph-to-name' ? t('chooseName') : t('chooseGlyph'))
 const successMessage = computed(() => {
   if (corrected.value) return t('corrected')
   if (sessionStreak.value >= 4) return t('excellent')
@@ -39,7 +40,7 @@ const successMessage = computed(() => {
 const optionAriaLabel = (optionId: string, visibleLabel: string) => {
   if (current.value.kind !== 'name-to-glyph') return visibleLabel
   const optionLetter = letterById(optionId)
-  return optionLetter ? `${optionLetter.name[locale.value]} — ${visibleLabel}` : visibleLabel
+  return optionLetter ? `${localizedText(optionLetter.name, locale.value)} — ${visibleLabel}` : visibleLabel
 }
 
 const clearAdvanceTimer = () => {
@@ -159,7 +160,7 @@ onBeforeUnmount(clearAdvanceTimer)
       <footer v-if="feedbackVisible" class="answer-feedback" :class="resolved ? 'positive' : 'negative'" role="status" aria-live="polite">
         <div>
           <strong>{{ resolved ? successMessage : t('wrong') }}</strong>
-          <span v-if="answerState.phase === 'wrong'">{{ t('tapCorrect') }}: {{ currentLetter.name[locale] }} — {{ currentLetter.glyph }}</span>
+          <span v-if="answerState.phase === 'wrong'">{{ t('tapCorrect') }}: {{ localizedText(currentLetter.name, locale) }} — {{ currentLetter.glyph }}</span>
           <span v-else-if="earnedPoints">+{{ earnedPoints }} {{ t('pointsLabel') }} · {{ t('autoNext') }}</span>
           <span v-else>{{ t('correctedHint') }} · {{ t('autoNext') }}</span>
         </div>

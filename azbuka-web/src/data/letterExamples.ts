@@ -4,7 +4,6 @@ export interface LetterExample {
   text: string
   translation: LocalizedText
   source: LocalizedText
-  audioSrc?: string
 }
 
 const examples = {

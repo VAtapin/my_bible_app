@@ -6,6 +6,7 @@ const { t } = useI18n()
 const items = [
   { to: '/', icon: 'home' as const, label: 'home' as const },
   { to: '/alphabet', icon: 'alphabet' as const, label: 'learn' as const },
+  { to: '/numbers', icon: 'numbers' as const, label: 'numbers' as const },
   { to: '/practice', icon: 'practice' as const, label: 'practice' as const },
   { to: '/profile', icon: 'profile' as const, label: 'profile' as const }
 ]

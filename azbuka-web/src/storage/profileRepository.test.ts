@@ -8,6 +8,10 @@ describe('profile repository', () => {
     await clearProfile()
   })
 
+  it('starts with a Church Slavonic interface', () => {
+    expect(defaultProfile().locale).toBe('cu')
+  })
+
   it('persists a user profile in IndexedDB', async () => {
     const profile = { ...defaultProfile(), locale: 'de' as const, learnedLetterIds: ['az'] }
 

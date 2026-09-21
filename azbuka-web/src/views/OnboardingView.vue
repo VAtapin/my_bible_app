@@ -8,7 +8,7 @@ import { useProfileStore } from '@/stores/profile'
 const router = useRouter()
 const profileStore = useProfileStore()
 const { setLocale, t } = useI18n()
-const selectedLocale = ref<Locale>('ru')
+const selectedLocale = ref<Locale>('cu')
 const selectedGoal = ref(10)
 
 const chooseLocale = (locale: Locale) => {
@@ -35,6 +35,7 @@ const complete = async () => {
       <p class="muted">{{ t('onboardingText') }}</p>
 
       <div class="segmented language-choice" role="group" :aria-label="t('interfaceLanguage')">
+        <button :class="{ active: selectedLocale === 'cu' }" @click="chooseLocale('cu')">Цр҃к.-сл.</button>
         <button :class="{ active: selectedLocale === 'ru' }" @click="chooseLocale('ru')">Русский</button>
         <button :class="{ active: selectedLocale === 'de' }" @click="chooseLocale('de')">Deutsch</button>
       </div>

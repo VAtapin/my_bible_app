@@ -22,4 +22,10 @@ describe('exercise engine', () => {
     expect(isCorrectAnswer(question!, question!.correctOptionId)).toBe(true)
     expect(isCorrectAnswer(question!, 'not-the-answer')).toBe(false)
   })
+
+  it('keeps number exercises out of alphabet practice', () => {
+    const session = createSession('cu', 30, deterministicRandom)
+
+    expect(session.every((question) => question.kind === 'glyph-to-name' || question.kind === 'name-to-glyph')).toBe(true)
+  })
 })

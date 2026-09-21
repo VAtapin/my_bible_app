@@ -6,7 +6,7 @@ const STORE_NAME = 'profile'
 const PROFILE_KEY = 'primary'
 
 export const defaultProfile = (): UserProfile => ({
-  locale: 'ru',
+  locale: 'cu',
   dailyGoal: 10,
   learnedLetterIds: [],
   answered: 0,

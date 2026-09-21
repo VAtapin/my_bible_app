@@ -15,9 +15,8 @@ const profileStore = useProfileStore()
       <p>{{ t('practiceIntro') }}</p>
     </header>
     <section class="practice-setup card">
-      <div class="setup-row"><div><strong>{{ t('namesMode') }}</strong><span>{{ profileStore.profile?.locale === 'de' ? 'Zeichen ↔ Name' : 'Знак ↔ имя' }}</span></div><span class="status-dot active">✓</span></div>
-      <div class="setup-row"><div><strong>{{ t('numbersMode') }}</strong><span>{{ profileStore.profile?.locale === 'de' ? 'Zahlenwerte bis 900' : 'Числовые значения до 900' }}</span></div><span class="status-dot active">✓</span></div>
-      <div class="setup-row"><div><strong>{{ profileStore.profile?.dailyGoal }} {{ t('questions') }}</strong><span>{{ profileStore.profile?.locale === 'de' ? 'Ohne Zeitdruck' : 'Без ограничения времени' }}</span></div><span class="status-dot">∞</span></div>
+      <div class="setup-row"><div><strong>{{ t('namesMode') }}</strong><span>{{ t('signAndName') }}</span></div><span class="status-dot active">✓</span></div>
+      <div class="setup-row"><div><strong>{{ profileStore.profile?.dailyGoal }} {{ t('questions') }}</strong><span>{{ t('noTimeLimit') }}</span></div><span class="status-dot">∞</span></div>
       <RouterLink to="/practice/session" class="primary-button full">{{ t('start') }}</RouterLink>
     </section>
   </main>
