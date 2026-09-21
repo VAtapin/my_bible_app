@@ -10,6 +10,8 @@ const messages = {
     welcomeText: 'Короткие занятия знакомят с названиями букв, их смыслом и числовыми значениями.',
     continue: 'Продолжить обучение', startPractice: 'Начать тренировку',
     today: 'Сегодня', dailyGoal: 'Цель на день', questions: 'вопросов',
+    slavonicClock: 'Церковнославянские часы', clockIntro: 'Текущее время, записанное буквенной цифирью.',
+    clockReference: 'обычная запись', clockZeroNote: '— означает ноль: отдельного знака для него в цифири нет.',
     alphabet: 'Церковнославянская азбука', alphabetIntro: 'Нажмите на букву, чтобы открыть карточку.',
     learned: 'изучено', back: 'Назад', letterName: 'Название', meaning: 'Смысл имени',
     transliteration: 'Чтение', number: 'Числовое значение', noNumber: 'не используется',
@@ -29,7 +31,11 @@ const messages = {
     onboardingTitle: 'Начнём с удобного языка', onboardingText: 'Его можно изменить в профиле в любое время.',
     begin: 'Начать обучение', install: 'Можно установить', installText: 'Но это необязательно — приложение полностью работает в браузере.',
     offline: 'Доступно без сети после первого открытия', loading: 'Загружаем ваш прогресс…',
-    audioPreview: 'Прослушать название', speechUnavailable: 'Озвучивание недоступно в этом браузере',
+    audioPreview: 'Прослушать название', audioExample: 'Прослушать пример',
+    exampleWithLetter: 'Пример с буквой', readInContext: 'Буква в живом тексте',
+    exampleCorpus: 'Источник текста: Библия церковнославянская, 1900 · корпус Bible Desktop',
+    systemVoiceNotice: 'Пока используется системный голос; собственная запись диктора готовится.',
+    speechUnavailable: 'Озвучивание недоступно в этом браузере',
     mastered: 'Изучено букв', totalAnswers: 'Всего ответов'
   },
   de: {
@@ -40,6 +46,8 @@ const messages = {
     welcomeText: 'Kurze Einheiten erklären Buchstabennamen, ihre Bedeutung und Zahlenwerte.',
     continue: 'Weiterlernen', startPractice: 'Übung starten',
     today: 'Heute', dailyGoal: 'Tagesziel', questions: 'Fragen',
+    slavonicClock: 'Kirchenslawische Uhr', clockIntro: 'Die aktuelle Zeit in kirchenslawischen Buchstabenzahlen.',
+    clockReference: 'gewohnte Schreibweise', clockZeroNote: '— steht für null; dafür gibt es in der Ziffernschrift kein eigenes Zeichen.',
     alphabet: 'Kirchenslawisches Alphabet', alphabetIntro: 'Tippe auf einen Buchstaben, um seine Karte zu öffnen.',
     learned: 'gelernt', back: 'Zurück', letterName: 'Name', meaning: 'Bedeutung des Namens',
     transliteration: 'Lesung', number: 'Zahlenwert', noNumber: 'nicht verwendet',
@@ -59,7 +67,11 @@ const messages = {
     onboardingTitle: 'Wähle zuerst deine Sprache', onboardingText: 'Du kannst sie später jederzeit im Profil ändern.',
     begin: 'Lernen beginnen', install: 'Installierbar', installText: 'Das ist optional — die App funktioniert vollständig im Browser.',
     offline: 'Nach dem ersten Öffnen offline verfügbar', loading: 'Dein Fortschritt wird geladen…',
-    audioPreview: 'Namen anhören', speechUnavailable: 'Sprachausgabe ist in diesem Browser nicht verfügbar',
+    audioPreview: 'Namen anhören', audioExample: 'Beispiel anhören',
+    exampleWithLetter: 'Beispiel mit dem Buchstaben', readInContext: 'Der Buchstabe im Text',
+    exampleCorpus: 'Textquelle: Kirchenslawische Bibel, 1900 · Bible-Desktop-Korpus',
+    systemVoiceNotice: 'Vorläufig wird die Systemstimme verwendet; eine eigene Sprecheraufnahme folgt.',
+    speechUnavailable: 'Sprachausgabe ist in diesem Browser nicht verfügbar',
     mastered: 'Gelernte Buchstaben', totalAnswers: 'Antworten insgesamt'
   }
 } as const

@@ -4,6 +4,7 @@ import { letters } from '@/data/letters'
 import { useI18n } from '@/i18n'
 import { useProfileStore } from '@/stores/profile'
 import { localDateKey } from '@/domain/date'
+import SlavonicClock from '@/components/SlavonicClock.vue'
 
 const profileStore = useProfileStore()
 const { t } = useI18n()
@@ -41,6 +42,8 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
         <small>{{ nextLetter.name[profileStore.profile?.locale ?? 'ru'] }}</small>
       </div>
     </section>
+
+    <SlavonicClock />
 
     <section class="dashboard-grid">
       <article class="progress-card">
