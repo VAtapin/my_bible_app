@@ -1,0 +1,32 @@
+{
+  "name": "@bible-desktop/azbuka-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "pinia": "4.0.3",
+    "vue": "3.5.43",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.1",
+    "@vitejs/plugin-vue": "6.0.9",
+    "fake-indexeddb": "6.2.5",
+    "typescript": "6.0.3",
+    "vite": "8.3.0",
+    "vite-plugin-pwa": "1.3.0",
+    "vitest": "5.0.1",
+    "vue-tsc": "3.3.11"
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4a6b8a"/>
+  <path d="M112 135c62-24 110-13 144 22 34-35 82-46 144-22v250c-61-17-109-7-144 29-35-36-83-46-144-29V135Z" fill="#f7f5f1" stroke="#b99a5a" stroke-width="12"/>
+  <path d="M256 160v250" stroke="#b99a5a" stroke-width="9"/>
+  <text x="184" y="324" text-anchor="middle" font-family="Georgia,serif" font-size="168" fill="#29465d">А</text>
+  <path d="M317 229h61M347 199v61" stroke="#b99a5a" stroke-width="10" stroke-linecap="round"/>
+</svg>

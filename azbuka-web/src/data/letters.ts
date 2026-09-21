@@ -1,0 +1,43 @@
+import type { Letter } from '@/domain/types'
+
+export const letters: Letter[] = [
+  { id: 'az', glyph: 'а', name: { ru: 'Аз', de: 'As' }, transliteration: 'a', meaning: { ru: 'я', de: 'ich' }, numericValue: 1, group: 'basic' },
+  { id: 'buki', glyph: 'б', name: { ru: 'Буки', de: 'Buki' }, transliteration: 'b', meaning: { ru: 'буквы, книги', de: 'Buchstaben, Bücher' }, numericValue: null, group: 'basic' },
+  { id: 'vedi', glyph: 'в', name: { ru: 'Веди', de: 'Wedi' }, transliteration: 'v', meaning: { ru: 'знаю, ведаю', de: 'ich weiß' }, numericValue: 2, group: 'basic' },
+  { id: 'glagol', glyph: 'г', name: { ru: 'Глаголь', de: 'Glagol' }, transliteration: 'g', meaning: { ru: 'говори', de: 'sprich' }, numericValue: 3, group: 'basic' },
+  { id: 'dobro', glyph: 'д', name: { ru: 'Добро', de: 'Dobro' }, transliteration: 'd', meaning: { ru: 'добро', de: 'das Gute' }, numericValue: 4, group: 'basic' },
+  { id: 'yest', glyph: 'є', name: { ru: 'Есть', de: 'Jest' }, transliteration: 'e', meaning: { ru: 'есть, существует', de: 'es ist' }, numericValue: 5, group: 'basic' },
+  { id: 'zhivete', glyph: 'ж', name: { ru: 'Живете', de: 'Schiwete' }, transliteration: 'ž', meaning: { ru: 'живите', de: 'lebt' }, numericValue: null, group: 'basic' },
+  { id: 'zelo', glyph: 'ѕ', name: { ru: 'Зело', de: 'Selo' }, transliteration: 'dz', meaning: { ru: 'весьма', de: 'sehr' }, numericValue: 6, group: 'historic' },
+  { id: 'zemlya', glyph: 'з', name: { ru: 'Земля', de: 'Semlja' }, transliteration: 'z', meaning: { ru: 'земля', de: 'Erde' }, numericValue: 7, group: 'basic' },
+  { id: 'izhe', glyph: 'и', name: { ru: 'Иже', de: 'Ische' }, transliteration: 'i', meaning: { ru: 'который', de: 'welcher' }, numericValue: 8, group: 'basic' },
+  { id: 'fita', glyph: 'ѳ', name: { ru: 'Фита', de: 'Fita' }, transliteration: 'th', meaning: { ru: 'историческая буква', de: 'historischer Buchstabe' }, numericValue: 9, group: 'historic' },
+  { id: 'i-decimal', glyph: 'і', name: { ru: 'И десятеричное', de: 'Dezimales I' }, transliteration: 'i', meaning: { ru: 'и', de: 'i' }, numericValue: 10, group: 'numeral' },
+  { id: 'kako', glyph: 'к', name: { ru: 'Како', de: 'Kako' }, transliteration: 'k', meaning: { ru: 'как', de: 'wie' }, numericValue: 20, group: 'basic' },
+  { id: 'lyudi', glyph: 'л', name: { ru: 'Люди', de: 'Ljudi' }, transliteration: 'l', meaning: { ru: 'люди', de: 'Menschen' }, numericValue: 30, group: 'basic' },
+  { id: 'myslete', glyph: 'м', name: { ru: 'Мыслете', de: 'Myslete' }, transliteration: 'm', meaning: { ru: 'мыслите', de: 'denkt' }, numericValue: 40, group: 'basic' },
+  { id: 'nash', glyph: 'н', name: { ru: 'Наш', de: 'Nasch' }, transliteration: 'n', meaning: { ru: 'наш', de: 'unser' }, numericValue: 50, group: 'basic' },
+  { id: 'ksi', glyph: 'ѯ', name: { ru: 'Кси', de: 'Xi' }, transliteration: 'ks', meaning: { ru: 'кси', de: 'xi' }, numericValue: 60, group: 'historic' },
+  { id: 'on', glyph: 'о', name: { ru: 'Он', de: 'On' }, transliteration: 'o', meaning: { ru: 'тот', de: 'jener' }, numericValue: 70, group: 'basic' },
+  { id: 'pokoy', glyph: 'п', name: { ru: 'Покой', de: 'Pokoj' }, transliteration: 'p', meaning: { ru: 'покой', de: 'Ruhe' }, numericValue: 80, group: 'basic' },
+  { id: 'cherv', glyph: 'ч', name: { ru: 'Червь', de: 'Tscherw' }, transliteration: 'č', meaning: { ru: 'червь', de: 'Wurm' }, numericValue: 90, group: 'basic' },
+  { id: 'rtsy', glyph: 'р', name: { ru: 'Рцы', de: 'Rzy' }, transliteration: 'r', meaning: { ru: 'скажи', de: 'sage' }, numericValue: 100, group: 'basic' },
+  { id: 'slovo', glyph: 'с', name: { ru: 'Слово', de: 'Slowo' }, transliteration: 's', meaning: { ru: 'слово', de: 'Wort' }, numericValue: 200, group: 'basic' },
+  { id: 'tverdo', glyph: 'т', name: { ru: 'Твердо', de: 'Twerdo' }, transliteration: 't', meaning: { ru: 'твёрдо', de: 'fest' }, numericValue: 300, group: 'basic' },
+  { id: 'uk', glyph: 'ꙋ', name: { ru: 'Ук', de: 'Uk' }, transliteration: 'u', meaning: { ru: 'у', de: 'u' }, numericValue: 400, group: 'historic' },
+  { id: 'fert', glyph: 'ф', name: { ru: 'Ферт', de: 'Fert' }, transliteration: 'f', meaning: { ru: 'ф', de: 'f' }, numericValue: 500, group: 'basic' },
+  { id: 'kher', glyph: 'х', name: { ru: 'Хер', de: 'Cher' }, transliteration: 'ch', meaning: { ru: 'х', de: 'ch' }, numericValue: 600, group: 'basic' },
+  { id: 'psi', glyph: 'ѱ', name: { ru: 'Пси', de: 'Psi' }, transliteration: 'ps', meaning: { ru: 'пси', de: 'psi' }, numericValue: 700, group: 'historic' },
+  { id: 'omega', glyph: 'ѡ', name: { ru: 'Омега', de: 'Omega' }, transliteration: 'ō', meaning: { ru: 'омега', de: 'Omega' }, numericValue: 800, group: 'historic' },
+  { id: 'tsy', glyph: 'ц', name: { ru: 'Цы', de: 'Zy' }, transliteration: 'c', meaning: { ru: 'ц', de: 'z' }, numericValue: 900, group: 'basic' },
+  { id: 'sha', glyph: 'ш', name: { ru: 'Ша', de: 'Scha' }, transliteration: 'š', meaning: { ru: 'ша', de: 'scha' }, numericValue: null, group: 'basic' },
+  { id: 'shta', glyph: 'щ', name: { ru: 'Шта', de: 'Schta' }, transliteration: 'št', meaning: { ru: 'ща', de: 'schta' }, numericValue: null, group: 'basic' },
+  { id: 'yer', glyph: 'ъ', name: { ru: 'Ер', de: 'Jer' }, transliteration: 'ŭ', meaning: { ru: 'твёрдый редуцированный', de: 'harter Jer' }, numericValue: null, group: 'historic' },
+  { id: 'yery', glyph: 'ы', name: { ru: 'Еры', de: 'Jery' }, transliteration: 'y', meaning: { ru: 'ы', de: 'y' }, numericValue: null, group: 'historic' },
+  { id: 'yer-soft', glyph: 'ь', name: { ru: 'Ерь', de: 'Jerj' }, transliteration: 'ĭ', meaning: { ru: 'мягкий редуцированный', de: 'weicher Jer' }, numericValue: null, group: 'historic' },
+  { id: 'yat', glyph: 'ѣ', name: { ru: 'Ять', de: 'Jat' }, transliteration: 'ě', meaning: { ru: 'историческая гласная', de: 'historischer Vokal' }, numericValue: null, group: 'historic' },
+  { id: 'yu', glyph: 'ю', name: { ru: 'Ю', de: 'Ju' }, transliteration: 'ju', meaning: { ru: 'ю', de: 'ju' }, numericValue: null, group: 'basic' },
+  { id: 'ya', glyph: 'ꙗ', name: { ru: 'Я', de: 'Ja' }, transliteration: 'ja', meaning: { ru: 'я', de: 'ja' }, numericValue: null, group: 'historic' }
+]
+
+export const letterById = (id: string): Letter | undefined => letters.find((letter) => letter.id === id)
