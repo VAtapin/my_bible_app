@@ -109,6 +109,7 @@ D:\Projekte\BibleDesktop
 ## Документация
 
 - [Полный продуктовый и технический план](docs/PLAN.md)
+- [ТЗ отдельного приложения «Церковнославянская азбука»](docs/AZBUKA_PRODUCT_SPEC.md)
 - [Технический прототип этапа 0](docs/TECHNICAL_PROTOTYPE.md)
 - [Архитектура нативных Android/iOS-приложений](docs/NATIVE_MOBILE_ARCHITECTURE.md)
 - [Дизайн-система и фирменные материалы](docs/DESIGN_SYSTEM.md)
