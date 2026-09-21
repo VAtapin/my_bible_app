@@ -126,30 +126,64 @@ h2 { font-size: clamp(1.35rem, 4vw, 2rem); margin-bottom: .35rem; }
 .practice-setup .primary-button { margin-top: 12px; }
 
 .session-page { min-height: 100vh; padding: 20px max(20px, env(safe-area-inset-left)) 120px; background: var(--paper); }
-.session-header { max-width: 820px; margin: 0 auto; display: grid; grid-template-columns: 48px 1fr 54px; align-items: center; gap: 16px; }
+.session-header { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: 48px minmax(90px, 1fr) auto; align-items: center; gap: 16px; }
 .icon-button { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 15px; background: #fff; cursor: pointer; }
 .session-progress { height: 9px; overflow: hidden; border-radius: 10px; background: #dfe8ed; }
 .session-progress span { display: block; height: 100%; border-radius: inherit; background: var(--ink-soft); transition: width .25s ease; }
-.session-header > strong { color: #718597; text-align: right; }
+.session-scoreboard { display: flex; align-items: center; gap: 8px; color: #718597; }
+.session-scoreboard > span, .session-scoreboard > strong { min-height: 34px; padding: 7px 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 12px; background: #fff; font-size: .78rem; white-space: nowrap; }
+.session-scoreboard > span { color: #8a7546; transition: transform .2s ease, background .2s ease; }
+.session-scoreboard > span.active { background: #f7edcf; color: #8b681d; transform: scale(1.05); }
+.session-scoreboard small { font-size: .65rem; font-weight: 700; }
+.session-scoreboard b { min-width: 42px; text-align: right; }
 .question-card { max-width: 820px; margin: 55px auto 0; text-align: center; }
 .question-prompt { min-height: 150px; display: grid; place-items: center; font-family: Georgia, serif; font-size: clamp(2.4rem, 9vw, 5.6rem); }
 .question-prompt.glyph { font-family: Ponomar, Georgia, serif; font-size: clamp(7rem, 24vw, 13rem); line-height: 1; }
 .answer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; margin-top: 26px; }
-.answer-grid button { min-height: 74px; padding: 15px; border: 2px solid var(--line); border-radius: 20px; background: #fff; font-weight: 750; cursor: pointer; transition: .15s ease; }
+.answer-grid button { min-height: 74px; padding: 15px 50px 15px 15px; border: 2px solid var(--line); border-radius: 20px; background: #fff; font-weight: 750; cursor: pointer; position: relative; transition: transform .15s ease, border-color .15s ease, background .15s ease, opacity .15s ease; }
 .answer-grid button:hover:not(.correct):not(.wrong) { border-color: var(--sky); }
 .answer-grid.glyphs button { min-height: 110px; font-family: Ponomar, serif; font-size: 3.8rem; font-weight: 400; }
 .answer-grid button.correct { border-color: var(--success); background: #e6f3ed; color: #226850; }
 .answer-grid button.wrong { border-color: var(--danger); background: #f9e9e7; color: #853e39; }
+.answer-grid button.waiting { animation: correct-pulse 1.05s ease-in-out infinite; }
+.answer-grid button.locked { opacity: .55; }
+.answer-mark { width: 30px; height: 30px; display: grid; place-items: center; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); border-radius: 50%; background: rgb(255 255 255 / 82%); font-family: Inter, sans-serif; font-size: 1.15rem; }
+.question-card.is-wrong { animation: question-shake .32s ease both; }
+.question-enter-active, .question-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.question-enter-from { opacity: 0; transform: translateX(28px); }
+.question-leave-to { opacity: 0; transform: translateX(-20px); }
 .answer-feedback { width: min(100%, 900px); min-height: 96px; padding: 18px 24px; display: flex; align-items: center; gap: 24px; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); border-radius: 24px; box-shadow: 0 18px 50px rgb(25 52 77 / 22%); }
 .answer-feedback.positive { background: #e0f1e9; color: #226850; }
 .answer-feedback.negative { background: #f7e7e4; color: #803d38; }
 .answer-feedback div { display: grid; gap: 4px; }
-.answer-feedback span { font-family: Ponomar, Georgia, serif; font-size: 1.05rem; }
+.answer-feedback span { font-size: .92rem; }
 .answer-feedback .primary-button { margin-left: auto; }
+.answer-feedback .correction-cue { margin-left: auto; font-family: Inter, sans-serif; font-size: .78rem; font-weight: 800; }
+.auto-advance-line { height: 4px; position: absolute; left: 24px; right: 24px; bottom: 0; overflow: hidden; border-radius: 4px; background: rgb(34 104 80 / 13%); }
+.auto-advance-line::after { content: ''; height: 100%; display: block; background: var(--success); animation: auto-advance 1.8s linear forwards; transform-origin: left; }
+.success-burst { width: 1px; height: 1px; position: fixed; z-index: 25; left: 50%; top: 48%; pointer-events: none; }
+.success-burst i { width: 8px; height: 8px; position: absolute; border-radius: 2px; background: var(--gold); animation: particle-pop .7s ease-out both; }
+.success-burst i:nth-child(2n) { background: var(--success); }
+.success-burst i:nth-child(3n) { background: var(--sky); }
+.success-burst i:nth-child(1) { --x: -100px; --y: -75px; }
+.success-burst i:nth-child(2) { --x: -55px; --y: -115px; animation-delay: .04s; }
+.success-burst i:nth-child(3) { --x: 0; --y: -130px; animation-delay: .08s; }
+.success-burst i:nth-child(4) { --x: 65px; --y: -105px; animation-delay: .03s; }
+.success-burst i:nth-child(5) { --x: 105px; --y: -55px; animation-delay: .1s; }
+.success-burst i:nth-child(6) { --x: 90px; --y: 35px; animation-delay: .06s; }
+.success-burst i:nth-child(7) { --x: -90px; --y: 35px; animation-delay: .09s; }
+.success-burst i:nth-child(8) { --x: 25px; --y: 65px; animation-delay: .02s; }
 .result-card { min-height: 100vh; display: grid; place-content: center; justify-items: center; text-align: center; }
 .result-medal { width: 110px; height: 110px; margin-bottom: 24px; display: grid; place-items: center; border-radius: 36px; background: var(--ink-soft); color: #fff; font-size: 3rem; box-shadow: var(--shadow); }
 .result-score { margin: 12px 0 30px; font-family: Georgia, serif; font-size: 4.5rem; }
+.result-badges { margin: -12px 0 28px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.result-badges span { padding: 8px 12px; border-radius: 12px; background: #edf2f5; color: var(--ink-soft); font-size: .78rem; font-weight: 800; }
 .result-actions { display: flex; gap: 12px; }
+
+@keyframes correct-pulse { 50% { transform: scale(1.025); box-shadow: 0 8px 28px rgb(60 138 112 / 18%); } }
+@keyframes question-shake { 25% { transform: translateX(-7px); } 55% { transform: translateX(6px); } 80% { transform: translateX(-3px); } }
+@keyframes auto-advance { to { transform: scaleX(0); } }
+@keyframes particle-pop { from { opacity: 1; transform: translate(0, 0) rotate(0); } to { opacity: 0; transform: translate(var(--x), var(--y)) rotate(160deg); } }
 
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 10px 0 20px; }
 .stat-grid article { min-height: 125px; padding: 22px; display: grid; align-content: center; border: 1px solid var(--line); border-radius: 23px; background: #fff; }
@@ -212,6 +246,13 @@ h2 { font-size: clamp(1.35rem, 4vw, 2rem); margin-bottom: .35rem; }
   .answer-grid button { min-height: 64px; }
   .answer-grid.glyphs { grid-template-columns: repeat(2, 1fr); }
   .answer-feedback { width: calc(100% - 24px); bottom: 12px; }
+  .session-header { grid-template-columns: 46px 1fr; gap: 10px; }
+  .session-scoreboard { grid-column: 1 / -1; justify-content: flex-end; margin-top: -2px; }
+  .session-scoreboard b { margin-left: auto; order: -1; text-align: left; }
+  .answer-feedback { min-height: 108px; padding: 16px 18px; gap: 12px; }
+  .answer-feedback span { font-size: .92rem; }
+  .answer-feedback .primary-button { min-width: 100px; padding-inline: 13px; }
+  .answer-feedback .correction-cue { max-width: 130px; text-align: right; }
   .onboarding-page { grid-template-columns: 1fr; }
   .onboarding-art { min-height: 280px; }
   .onboarding-art::before { width: 250px; height: 250px; }
