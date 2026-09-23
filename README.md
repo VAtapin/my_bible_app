@@ -179,14 +179,24 @@ cd mobile
 
 ## Production PWA
 
-PWA предназначена для `https://my.bible-desktop.com`. На сервере проект
-располагается в `/var/www/vhosts/bible-desktop.com/my_app`, а document root
-субдомена должен указывать на каталог `dist` внутри проекта.
+Одна production-сборка PWA обслуживает четыре домена:
+
+- `https://biblia-app.ru` по умолчанию открывает русский интерфейс;
+- `https://bible-app.de` — канонический адрес немецкого интерфейса;
+- `https://biblia-app.de` также по умолчанию открывает немецкий интерфейс;
+- `https://bible-app.online` выбирает RU/DE по языку браузера.
+
+Сохранённый ручной выбор пользователя имеет приоритет над языком
+домена. Переключение на DE внутри production-приложения открывает
+`bible-app.de`, а переключение на RU — `biblia-app.ru`, с сохранением маршрута,
+query и hash. Все домены направлены на один каталог
+`/var/www/vhosts/biblia-app.ru/httpdocs`; Document Root должен указывать на
+`/var/www/vhosts/biblia-app.ru/httpdocs/dist`.
 
 Первое развёртывание в уже созданном, но ещё не подключённом к Git каталоге:
 
 ```bash
-cd /var/www/vhosts/bible-desktop.com/my_app && \
+cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 git init && \
 git remote add origin https://github.com/VAtapin/my_bible_app.git && \
 git fetch origin main && \
@@ -202,7 +212,7 @@ bash scripts/deploy-production.sh
 Последующие обновления выполняются короче:
 
 ```bash
-cd /var/www/vhosts/bible-desktop.com/my_app && \
+cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 export PATH="/opt/plesk/node/22/bin:$PATH" && \
 bash scripts/deploy-production.sh
 ```

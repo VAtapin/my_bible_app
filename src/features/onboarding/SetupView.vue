@@ -5,7 +5,7 @@ import MobileShell from '@/components/MobileShell.vue'
 import { bibleApi } from '@/api'
 import type { TranslationSummary } from '@/api/contracts'
 import { useI18n } from '@/i18n'
-import type { InterfaceLanguage } from '@/i18n/locale'
+import { languageSwitchUrl, type InterfaceLanguage } from '@/i18n/locale'
 import {
   createConfiguration,
   sectionsForPreset,
@@ -103,6 +103,12 @@ onMounted(async () => {
 })
 
 function changeInterfaceLanguage(value: InterfaceLanguage): void {
+  const targetUrl = languageSwitchUrl(value)
+  if (targetUrl) {
+    window.location.assign(targetUrl)
+    return
+  }
+
   const previousLanguage = interfaceLanguage.value
   interfaceLanguage.value = value
   setLanguage(value)

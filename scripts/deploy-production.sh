@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-readonly app_dir="/var/www/vhosts/bible-desktop.com/my_app"
+readonly app_dir="/var/www/vhosts/biblia-app.ru/httpdocs"
 readonly node_bin="/opt/plesk/node/22/bin"
 
 cd "$app_dir"
@@ -23,4 +23,4 @@ for icon in bookmarks calendar library prayers setup; do
     test -s "dist/app-icons/${icon}.png"
 done
 
-echo "My Bible App build is ready in $app_dir/dist"
+echo "Bible App build is ready in $app_dir/dist"

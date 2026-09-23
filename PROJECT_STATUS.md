@@ -2,8 +2,9 @@
 
 ## Реализовано
 
-- PWA на Vue 3/TypeScript остаётся самостоятельным браузерным клиентом для
-  `https://my.bible-desktop.com`.
+- PWA на Vue 3/TypeScript остаётся одним самостоятельным браузерным клиентом
+  для `https://biblia-app.ru`, `https://biblia-app.de`,
+  `https://bible-app.de` и `https://bible-app.online`.
 - В `mobile/` развивается отдельное Kotlin Multiplatform-приложение без WebView:
   Jetpack Compose для Android, SwiftUI для iOS, общий Ktor API-клиент и модели.
 - Реализован фирменный RU/DE onboarding по согласованному UI: быстрый и ручной
@@ -82,6 +83,11 @@ Production deployment на `azbuka.bible-desktop.com` ещё не выполня
 ## Важные решения
 
 - PWA, Android и iOS — три клиента одного Bible Desktop API.
+- Домен `biblia-app.ru` задаёт RU по умолчанию, `biblia-app.de` и
+  `bible-app.de` — DE, а `bible-app.online` определяет RU/DE по языку браузера;
+  ручной сохранённый выбор всегда имеет приоритет.
+- Каноническая ссылка на немецкий интерфейс внутри приложения —
+  `https://bible-app.de`; для RU используется `https://biblia-app.ru`.
 - Для отдельного образовательного продукта «Церковнославянская азбука»
   подготовлено ТЗ в `docs/AZBUKA_PRODUCT_SPEC.md`. Продукт не является модулем
   текущего приложения: рекомендуемый application/bundle ID —
@@ -148,6 +154,8 @@ Production deployment на `azbuka.bible-desktop.com` ещё не выполня
 
 ## Проверки
 
+- Доменные правила RU/DE покрыты unit-тестами; полный `npm run check`
+  проходит.
 - ТЗ «Церковнославянская азбука» проверено на полноту структуры, согласованность
   идентификатора, поддержку Android/iOS/Web и отсутствие требований копировать
   материалы референса.
@@ -201,4 +209,5 @@ Production deployment на `azbuka.bible-desktop.com` ещё не выполня
   контекстные примеры всех букв.
 - `146f89d9ed68a5d9372954244b220cfc50f00b4b` — церковнославянский интерфейс по
   умолчанию, секунды и отдельный учебный инструмент цифири.
-- Текущий commit: актуализация README после разделения азбуки и цифири.
+- Текущий commit: доменные языковые значения по умолчанию и
+  production-путь `biblia-app.ru`.

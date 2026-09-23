@@ -1,6 +1,6 @@
 import { computed, readonly, ref } from 'vue'
 import { de } from './de'
-import { languageFromBrowser, type InterfaceLanguage } from './locale'
+import { languageForHostname, type InterfaceLanguage } from './locale'
 import { ru } from './ru'
 
 export type MessageShape<T> = {
@@ -27,7 +27,7 @@ export function getMessages(language = currentLanguage.value): MessageShape<type
 
 export function initializeInterfaceLanguage(): InterfaceLanguage {
   const stored = window.localStorage.getItem(languageStorageKey)
-  return setInterfaceLanguage(stored === 'de' || stored === 'ru' ? stored : languageFromBrowser())
+  return setInterfaceLanguage(stored === 'de' || stored === 'ru' ? stored : languageForHostname())
 }
 
 export function setInterfaceLanguage(language: InterfaceLanguage): InterfaceLanguage {
