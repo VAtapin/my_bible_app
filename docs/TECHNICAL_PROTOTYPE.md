@@ -2,7 +2,8 @@
 
 ## Что уже проверено
 
-- Публичный API Bible Desktop доступен по `https://bible-desktop.com/api`.
+- Публичный API Bible Desktop доступен по адресу из
+  `config/api-base-url.txt`.
 - API разрешает запросы с отдельного web-origin (`Access-Control-Allow-Origin: *`).
 - Подтверждена рабочая цепочка:
   `GET /translations` → `GET /translations/{code}/books` →
@@ -69,7 +70,7 @@ npm run cap:sync
 - адрес: `https://my.bible-desktop.com`;
 - каталог проекта: `/var/www/vhosts/bible-desktop.com/my_app`;
 - document root субдомена: `/var/www/vhosts/bible-desktop.com/my_app/dist`;
-- API: `https://bible-desktop.com/api`;
+- API: адрес из `config/api-base-url.txt`;
 - среда сборки: Plesk Node.js 22.
 
 Первичную настройку document root и HTTPS нужно выполнить в Plesk. Так как

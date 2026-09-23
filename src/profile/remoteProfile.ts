@@ -1,4 +1,5 @@
 import { migrateAppConfiguration, type AppConfiguration } from './configuration'
+import { apiBaseUrl } from '@/config/api'
 
 export interface RemoteProfileData {
   profile_id: string
@@ -13,8 +14,6 @@ export interface RemoteProfileCredentials extends RemoteProfileData {
   secret: string
   recovery_code: string
 }
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'https://bible-desktop.com/api').replace(/\/$/, '')
 
 export const remoteProfileApi = {
   create(configuration: AppConfiguration): Promise<RemoteProfileCredentials> {

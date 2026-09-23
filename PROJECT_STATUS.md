@@ -83,6 +83,8 @@ Production deployment на `azbuka.bible-desktop.com` ещё не выполня
 ## Важные решения
 
 - PWA, Android и iOS — три клиента одного Bible Desktop API.
+- Базовый URL API для PWA задаётся в `config/api-base-url.txt`;
+  web-сборка также поддерживает override через `VITE_API_BASE_URL`.
 - Домен `biblia-app.ru` задаёт RU по умолчанию, `biblia-app.de` и
   `bible-app.de` — DE, а `bible-app.online` определяет RU/DE по языку браузера;
   ручной сохранённый выбор всегда имеет приоритет.
@@ -154,6 +156,7 @@ Production deployment на `azbuka.bible-desktop.com` ещё не выполня
 
 ## Проверки
 
+- Единая web-конфигурация API проходит `npm run check`.
 - Доменные правила RU/DE покрыты unit-тестами; полный `npm run check`
   проходит.
 - ТЗ «Церковнославянская азбука» проверено на полноту структуры, согласованность
@@ -209,5 +212,4 @@ Production deployment на `azbuka.bible-desktop.com` ещё не выполня
   контекстные примеры всех букв.
 - `146f89d9ed68a5d9372954244b220cfc50f00b4b` — церковнославянский интерфейс по
   умолчанию, секунды и отдельный учебный инструмент цифири.
-- Текущий commit: доменные языковые значения по умолчанию и
-  production-путь `biblia-app.ru`.
+- Текущий commit: единая сменная конфигурация домена API для PWA.
