@@ -47,3 +47,11 @@ export function bookmarkKey(
 ): string {
   return `${translationCode}:${bookSlug}:${chapter}:${verse}`
 }
+
+export function parseBookmarkKey(key: string): Pick<Bookmark, 'translationCode' | 'bookSlug' | 'chapter' | 'verse'> | undefined {
+  const parts = /^([^:]+):([^:]+):(\d+):(\d+)$/.exec(key)
+  if (!parts) return undefined
+  const chapter = Number(parts[3]), verse = Number(parts[4])
+  if (!Number.isSafeInteger(chapter) || chapter < 1 || !Number.isSafeInteger(verse) || verse < 1) return undefined
+  return { translationCode: parts[1]!, bookSlug: parts[2]!, chapter, verse }
+}

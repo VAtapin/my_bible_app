@@ -12,6 +12,7 @@ export const de: MessageShape<typeof ru> = {
     warm: 'Warm', warmDescription: 'Cremefarben mit grünen und terrakottafarbenen Akzenten',
   },
   readerActions: {
+    myBookmarks: 'Meine Lesezeichen', myNotes: 'Meine Notizen',
     actions: 'Versaktionen', search: 'In der Bibel suchen', addNote: 'Notiz hinzufügen', copyLink: 'Link kopieren',
     saveNote: 'Notiz speichern', noteSaved: 'Notiz auf dem Gerät gespeichert.', noteFailed: 'Die Notiz konnte nicht gespeichert oder geöffnet werden.',
     noteLocal: 'Die Notiz bleibt nur auf diesem Gerät.', searchHint: 'Wörter oder Bibelstelle', find: 'Suchen',
@@ -142,6 +143,7 @@ export const de: MessageShape<typeof ru> = {
     bookmarkRemoved: 'Lesezeichen für Vers {verse} wurde entfernt.',
   },
   storage: {
+    notes: 'Notizen', noNotes: 'Noch keine Notizen.', editNote: 'Bearbeiten', cancelEdit: 'Abbrechen', personalLocal: 'In diesem Browser auf dieser Domain gespeichert. Daten werden nicht automatisch zwischen Domains übertragen.', loadFailed: 'Gespeicherte Einträge konnten nicht geöffnet werden. Bitte erneut versuchen.', retry: 'Erneut versuchen',
     eyebrow: 'Offline', title: 'Speicher', intro: 'Verwalten Sie geladene Texte getrennt von Lesezeichen und Profil.',
     savedChapters: 'Kapitel gespeichert', approximateSize: 'ungefähre Größe', bookmarks: 'Lesezeichen', content: 'Inhalte',
     packages: 'Offline-Pakete', deleteAll: 'Alles löschen', ready: 'Bereit', noPackages: 'Noch keine vollständige Übersetzung geladen.',

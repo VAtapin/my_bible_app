@@ -47,11 +47,6 @@ function startLongPress(event: PointerEvent, number: number): void {
   longPress.start(event.clientX, event.clientY)
 }
 function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
-async function bookmarkSelected(): Promise<void> {
-  const verse = chapter.value?.verses.find((item) => item.number === selectedVerse.value)
-  if (verse) await run(() => toggleBookmark(verse))
-  else message.value = text.value.readerActions.selectVerse
-}
 
 const translations = ref<TranslationSummary[]>([])
 const books = ref<BibleBook[]>([])
@@ -343,13 +338,13 @@ function formatDate(value: string): string {
           <RouterLink to="/more"><AppIcon name="theme" /><span>{{ text.readerActions.theme }}</span></RouterLink>
         </template>
         <template v-else>
-          <button type="button" :disabled="busy || !chapter" @click="bookmarkSelected"><AppIcon name="bookmark" /><span>{{ text.readerActions.bookmark }}</span></button>
-          <button type="button" :disabled="!chapter" @click="actions?.open('note')"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
+          <RouterLink to="/storage?tab=bookmarks"><AppIcon name="bookmark" /><span>{{ text.storage.bookmarks }}</span></RouterLink>
+          <RouterLink to="/storage?tab=notes"><AppIcon name="note" /><span>{{ text.storage.notes }}</span></RouterLink>
           <button v-if="appearance.theme.value === 'classic'" type="button" disabled :title="text.readerActions.audioUnavailable"><AppIcon name="audio" /><span>{{ text.readerActions.audio }}</span></button>
         </template>
         <button type="button" :disabled="!chapter" @click="actions?.open('share')"><AppIcon name="share" /><span>{{ text.readerActions.share }}</span></button>
-        <button v-if="appearance.theme.value === 'warm'" type="button" :disabled="!chapter" @click="actions?.open('note')"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
-        <button type="button" :disabled="!chapter" @click="actions?.open()"><AppIcon name="more" /><span>{{ text.navigation.more }}</span></button>
+        <RouterLink v-if="appearance.theme.value === 'warm'" to="/storage?tab=notes"><AppIcon name="note" /><span>{{ text.storage.notes }}</span></RouterLink>
+        <button type="button" @click="actions?.open()"><AppIcon name="more" /><span>{{ text.navigation.more }}</span></button>
       </nav>
     </template>
   </MobileShell>

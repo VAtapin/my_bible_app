@@ -1,3 +1,9 @@
+import type { Bookmark } from '@/offline/libraryRepository'
+
+export function savedVerseLink(location: Pick<Bookmark, 'translationCode' | 'bookSlug' | 'chapter' | 'verse'>) {
+  return { path: '/reader', query: { translation: location.translationCode, book: location.bookSlug, chapter: String(location.chapter), verse: String(location.verse) } }
+}
+
 export function verseTarget(value: unknown, numbers: number[]): number | undefined {
   if (typeof value !== 'string' || !/^\d+$/.test(value)) return undefined
   const number = Number(value)

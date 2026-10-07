@@ -18,6 +18,8 @@ const items = [
   <MobileShell back-to="/today">
     <h1 class="compact-page-title">{{ text.appearance.settingsTitle }}</h1>
     <div class="module-list">
+      <RouterLink to="/storage?tab=bookmarks" class="module-card available"><span class="module-icon"><img src="/app-icons/bookmarks.png" alt="" /></span><strong>{{ text.readerActions.myBookmarks }}</strong><span aria-hidden="true">→</span></RouterLink>
+      <RouterLink to="/storage?tab=notes" class="module-card available"><span class="module-icon"><img src="/app-icons/setup.png" alt="" /></span><strong>{{ text.readerActions.myNotes }}</strong><span aria-hidden="true">→</span></RouterLink>
       <RouterLink v-for="item in items" :key="item.route" :to="item.route" class="module-card available">
         <span class="module-icon"><img :src="`/app-icons/${item.icon}.png`" alt="" /></span>
         <span><strong>{{ text.today[item.title] }}</strong><small>{{ text.today[item.description] }}</small></span><span aria-hidden="true">→</span>

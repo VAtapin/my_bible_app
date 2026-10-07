@@ -23,7 +23,7 @@ const reference = computed(() => props.chapter ? `${props.chapter.book.name} ${p
 const noteKey = computed(() => props.chapter && verse.value ? bookmarkKey(props.chapter.translation.code, props.chapter.book.slug, props.chapter.chapter.number, verse.value.number) : undefined)
 
 async function open(action: 'menu' | 'note' | 'share' = 'menu', selectedText = ''): Promise<void> {
-  if (!props.chapter) return
+  if (!props.chapter && action !== 'menu') return
   if (action === 'note' && !verse.value) { emit('message', text.value.readerActions.selectVerse); return }
   mode.value = action
   snippet.value = selectedText.trim()
@@ -41,7 +41,11 @@ async function saveNote(): Promise<void> {
   if (!noteKey.value || !draft.value.trim()) return
   busy.value = true
   try {
-    await repository.save({ key: noteKey.value, text: draft.value.trim(), updatedAt: new Date().toISOString() })
+    const chapter = props.chapter!, selected = verse.value!
+    await repository.save({ key: noteKey.value, text: draft.value.trim(), updatedAt: new Date().toISOString(), location: {
+      translationCode: chapter.translation.code, translationName: chapter.translation.name,
+      bookSlug: chapter.book.slug, bookName: chapter.book.name, chapter: chapter.chapter.number, verse: selected.number,
+    }, verseText: selected.plain_text })
     dialog.value?.close()
     emit('message', text.value.readerActions.noteSaved)
   } catch { error.value = text.value.readerActions.noteFailed }
@@ -72,8 +76,10 @@ defineExpose({ open })
   <dialog ref="dialog" class="verse-dialog" :aria-label="mode === 'note' ? text.readerActions.note : text.readerActions.actions" @click="($event.target === dialog) && !busy && dialog?.close()">
     <header><strong>{{ reference }}</strong><button type="button" :disabled="busy" :aria-label="text.calendar.close" @click="dialog?.close()">×</button></header>
     <template v-if="mode === 'menu'">
-      <button type="button" class="verse-menu-action" @click="mode = 'share'">{{ text.readerActions.share }}</button>
-      <button type="button" class="verse-menu-action" @click="search">{{ text.readerActions.search }}</button>
+      <RouterLink class="verse-menu-action" to="/storage?tab=bookmarks" @click="dialog?.close()">{{ text.readerActions.myBookmarks }}</RouterLink>
+      <RouterLink class="verse-menu-action" to="/storage?tab=notes" @click="dialog?.close()">{{ text.readerActions.myNotes }}</RouterLink>
+      <button type="button" class="verse-menu-action" :disabled="!chapter" @click="mode = 'share'">{{ text.readerActions.share }}</button>
+      <button type="button" class="verse-menu-action" :disabled="!chapter" @click="search">{{ text.readerActions.search }}</button>
       <button type="button" class="verse-menu-action" :disabled="!verse" @click="open('note', snippet)">{{ text.readerActions.addNote }}</button>
       <small v-if="!verse">{{ text.readerActions.selectVerse }}</small>
     </template>
