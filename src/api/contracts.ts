@@ -145,6 +145,7 @@ export interface CalendarEvent {
 }
 
 export interface CalendarDay {
+  icons?: Array<{ id: number; title: string; image_url: string | null; credit?: string | null }>
   date: string
   old_style_date: string
   pascha_date: string

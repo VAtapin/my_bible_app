@@ -2,6 +2,16 @@ import { describe, expect, it, vi } from 'vitest'
 import { ApiError, createBibleApi } from './client'
 
 describe('Bible API client', () => {
+  it.each([undefined, [], [{ id: 1, title: 'Икона дня', image_url: 'https://example.test/icon.jpg', credit: null }]])('accepts calendar icons without breaking older calendar responses: %j', async (icons) => {
+    const day = { date: '2026-10-07', old_style_date: '2026-09-24', pascha_date: '2026-04-12', liturgical_period: '', source: 'calendar', metadata: {}, events: [], fasting_events: [], readings: [], icons }
+    const api = createBibleApi({ baseUrl: 'https://example.test/api', fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: day }))) })
+    expect((await api.getCalendarDay('2026-10-07')).icons).toEqual(icons)
+  })
+  it('rejects malformed icon metadata', async () => {
+    const day = { date: '2026-10-07', old_style_date: '2026-09-24', pascha_date: '2026-04-12', liturgical_period: '', source: 'calendar', metadata: {}, events: [], fasting_events: [], readings: [], icons: [{ id: 1, title: 'Икона', image_url: {} }] }
+    const api = createBibleApi({ baseUrl: 'https://example.test/api', fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: day }))) })
+    await expect(api.getCalendarDay('2026-10-07')).rejects.toMatchObject({ kind: 'invalid-response' })
+  })
   it('loads a chapter using the confirmed Bible Desktop route', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ name: 'home' | 'alphabet' | 'numbers' | 'practice' | 'profile' | 'arrow' | 'check' }>()
+defineProps<{ name: 'home' | 'alphabet' | 'numbers' | 'practice' | 'profile' | 'arrow' | 'check' | 'bookmark' | 'note' | 'audio' | 'share' | 'more' | 'size' | 'theme' }>()
 </script>
 
 <template>
@@ -10,6 +10,13 @@ defineProps<{ name: 'home' | 'alphabet' | 'numbers' | 'practice' | 'profile' | '
     <path v-else-if="name === 'practice'" d="M5 4h14v16H5V4Zm3 4h8M8 12h5m-5 4h3M16.5 14.5l1 1 2-2" />
     <path v-else-if="name === 'profile'" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9c.4-4.2 3-6.5 7-6.5s6.6 2.3 7 6.5" />
     <path v-else-if="name === 'arrow'" d="m14.5 5-7 7 7 7" />
+    <path v-else-if="name === 'bookmark'" d="M6 3h12v18l-6-4-6 4V3Z" />
+    <path v-else-if="name === 'note'" d="M5 3h14v13l-5 5H5V3Zm9 18v-5h5M8 7h8M8 11h6" />
+    <path v-else-if="name === 'audio'" d="m4 9 4 0 4-4v14l-4-4H4V9Zm11-1a7 7 0 0 1 0 8m3-11a11 11 0 0 1 0 14" />
+    <path v-else-if="name === 'share'" d="M18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM6 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.5 10.5l7-3m-7 6 7 3" />
+    <path v-else-if="name === 'more'" d="M4 6h16M4 12h16M4 18h16" />
+    <path v-else-if="name === 'size'" d="m3 19 6-14 6 14M5 15h8m3 4 3-8 3 8m-5-3h4" />
+    <path v-else-if="name === 'theme'" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" />
     <path v-else d="m5 12 4 4L19 6" />
   </svg>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { bibleApi } from '@/api'
@@ -22,6 +22,7 @@ import { recordProductMetric } from '@/diagnostics/productDiagnostics'
 import { initialSetupStep, stepAfterPreset, stepBeforeSummary } from './setupFlow'
 import EducationOptions from './EducationOptions.vue'
 import CalendarOptions from './CalendarOptions.vue'
+import { learningApps } from '@/features/education/learningApps'
 
 const props = defineProps<{ mode: SetupMode }>()
 const route = useRoute()
@@ -46,11 +47,14 @@ const prayerLanguageCodes = ref<string[]>([interfaceLanguage.value])
 const calendarLevel = ref<CalendarLevel>('major')
 const calendarHome = ref(defaultCalendarHome())
 const educationPluginIds = ref<EducationPluginId[]>([])
-const showEducationClock = ref(true)
 const showEducationProgress = ref(true)
 const notificationsEnabled = ref(false)
 const notificationTime = ref('08:00')
 const message = ref('')
+watch(educationPluginIds, (ids) => {
+  sections.value = sections.value.filter((id) => id !== 'study')
+  if (ids.length) sections.value.push('study')
+})
 
 const editing = computed(() => route.query.edit === '1')
 const selectedSectionLabels = computed(() => sections.value.flatMap((id) => id === 'study'
@@ -101,8 +105,7 @@ onMounted(async () => {
     calendarHome.value = { ...(existing.calendar.home ?? defaultCalendarHome()) }
     const education = educationSettings(existing)
     educationPluginIds.value = [...education.pluginIds]
-    showEducationClock.value = education.showClock
-    showEducationProgress.value = education.showProgress
+    showEducationProgress.value = existing.education?.showProgress ?? true
     notificationsEnabled.value = existing.notifications.enabled
     notificationTime.value = existing.notifications.time
     step.value = 'details'
@@ -198,7 +201,6 @@ function save(): void {
       calendarLevel: calendarLevel.value,
       calendarHome: calendarHome.value,
       educationPluginIds: educationPluginIds.value,
-      showEducationClock: showEducationClock.value,
       showEducationProgress: showEducationProgress.value,
       notificationsEnabled: notificationsEnabled.value,
       notificationTime: notificationTime.value,
@@ -268,7 +270,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       <p class="section-intro">{{ text.setup.sectionsIntro }}</p>
       <div class="section-selector">
         <button
-          v-for="id in (['bible', 'prayers', 'calendar', 'study'] as AppSectionId[])"
+          v-for="id in (['bible', 'prayers', 'calendar'] as AppSectionId[])"
           :key="id"
           type="button"
           :class="{ selected: sections.includes(id) }"
@@ -278,6 +280,11 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
           <img :src="text.sections[id].icon" alt="" />
           <span><strong>{{ text.sections[id].title }}</strong><small>{{ text.sections[id].description }}</small></span>
           <span class="selection-mark" aria-hidden="true">{{ sections.includes(id) ? '✓' : '+' }}</span>
+        </button>
+        <button v-for="app in learningApps" :key="app.id" type="button" :class="{ selected: educationPluginIds.includes(app.id) }" :aria-pressed="educationPluginIds.includes(app.id)" @click="educationPluginIds = educationPluginIds.includes(app.id) ? educationPluginIds.filter((id) => id !== app.id) : [...educationPluginIds, app.id]">
+          <img :src="app.icon" alt="" />
+          <span><strong>{{ text.education.apps[app.id].title }}</strong><small>{{ text.education.apps[app.id].description }}</small></span>
+          <span class="selection-mark" aria-hidden="true">{{ educationPluginIds.includes(app.id) ? '✓' : '+' }}</span>
         </button>
       </div>
 
@@ -311,7 +318,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       </div>
 
       <CalendarOptions v-if="sections.includes('calendar')" v-model:level="calendarLevel" v-model:home="calendarHome" />
-      <EducationOptions v-if="sections.includes('study')" v-model:plugin-ids="educationPluginIds" v-model:show-clock="showEducationClock" v-model:show-progress="showEducationProgress" />
+      <EducationOptions v-if="sections.includes('study')" v-model:plugin-ids="educationPluginIds" v-model:show-progress="showEducationProgress" :show-selection="false" />
 
       <div class="option-group">
         <h3>{{ text.setup.notificationsTitle }}</h3>
@@ -363,7 +370,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       </dl>
       <template v-if="mode === 'quick'">
         <CalendarOptions v-if="sections.includes('calendar')" v-model:level="calendarLevel" v-model:home="calendarHome" />
-        <EducationOptions v-if="sections.includes('study')" v-model:plugin-ids="educationPluginIds" v-model:show-clock="showEducationClock" v-model:show-progress="showEducationProgress" />
+        <EducationOptions v-if="preset === 'education'" v-model:plugin-ids="educationPluginIds" v-model:show-progress="showEducationProgress" />
       </template>
       <p v-if="message" class="form-error" role="alert">{{ message }}</p>
       <button class="primary-action" type="button" @click="save">{{ editing ? text.setup.save : text.setup.create }}</button>

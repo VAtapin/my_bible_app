@@ -1,0 +1,125 @@
+/* Shared skins: the default blends the three approved layouts. */
+.mobile-app {
+  --brand-blue: #345f83;
+  --brand-blue-soft: #7798b5;
+  --brand-cream: #f1eadd;
+  --brand-surface: #faf8f3;
+  --ink: #1e3950;
+  --muted: #62778b;
+  --line: #dce4eb;
+  --heading-font: Georgia, "Times New Roman", serif;
+}
+.brand-lockup { text-decoration: none; color: var(--ink); }
+.brand-lockup:hover { opacity: .85; }
+.today-hero { padding: 18px 20px; border-radius: 18px; background: linear-gradient(125deg, #2f587c, #557da0); box-shadow: 0 6px 18px #2d4a641a; }
+.today-hero .eyebrow { margin-bottom: 6px; font-size: 9px; }
+.today-hero h1 { margin: 0; color: #fff; font: 500 clamp(20px, 5vw, 27px)/1.3 var(--heading-font); letter-spacing: 0; }
+.civil-date, .old-style-date { white-space: nowrap; }
+.today-clock-link { margin: 12px 0 0; width: fit-content; max-width: 100%; }
+.today-hero .compact-clock .clock-slavonic { color: #fff; font-size: 32px; }
+.today-hero .compact-clock .clock-seconds { color: #d8e9dc; }
+.today-hero .compact-clock .clock-slavonic b { color: #e5c885; }
+.today-hero .compact-clock .clock-familiar { color: #e0eaf2; }
+.today-verse { display: block; margin-top: 14px; color: #fff; text-decoration: none; }
+.today-verse blockquote { margin: 0; font: 16px/1.45 var(--heading-font); }
+.today-verse cite { display: block; margin-top: 6px; font-size: 11px; font-style: normal; opacity: .85; }
+.today-section { margin-top: 12px; }
+.module-list { gap: 9px; }
+.module-card { min-height: 68px; border-radius: 14px; padding: 10px 12px; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 10px; box-shadow: 0 3px 10px #2d4a6408; }
+.module-icon { width: 40px; height: 40px; border-radius: 10px; }
+.module-icon img { width: 32px; height: 32px; }
+.module-card.available { border-color: var(--line); }
+.calendar-module { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
+.calendar-module > .module-card { border: 0; box-shadow: none; }
+.calendar-module .day-summary { margin: 0; padding: 0 12px 12px; border: 0; border-radius: 0; background: none; }
+.calendar-module .day-fasting { margin-top: 0; padding: 7px 9px; }
+.day-events { margin-top: 8px; }
+.day-readings { margin-top: 9px; }
+.day-readings a, .day-readings span { min-height: 36px; display: inline-flex; align-items: center; }
+.icon-day-card { display: flex; gap: 14px; padding: 14px; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
+.icon-day-card img { width: 86px; height: 110px; object-fit: contain; border-radius: 9px; }
+.icon-day-card > span { flex: 1; min-width: 0; }
+.icon-day-card strong, .icon-day-card small, .icon-day-card a { display: block; }
+.icon-day-card strong { font-size: 14px; }
+.icon-day-card small { font-size: 11px; color: var(--muted); }
+.icon-day-card a { margin-top: 10px; color: var(--brand-blue); font-size: 12px; text-decoration: none; }
+.icon-day-card blockquote { margin: 8px 0; font-size: 13px; line-height: 1.45; }
+.bottom-nav { min-height: calc(62px + env(safe-area-inset-bottom)); padding: 5px 6px calc(5px + env(safe-area-inset-bottom)); gap: 1px; }
+.bottom-nav a, .bottom-nav button { min-height: 50px; display: grid; place-items: center; align-content: center; gap: 3px; border: 0; border-radius: 10px; padding: 4px 1px; color: var(--muted); background: transparent; text-decoration: none; }
+.bottom-nav a.active { color: var(--brand-blue); background: #e6eef5; }
+.bottom-nav img { width: 26px; height: 26px; }
+.bottom-nav .app-icon { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.bottom-nav span { font-size: 9px; font-weight: 600; }
+.bottom-nav button:disabled { cursor: not-allowed; }
+.mobile-app .embedded-azbuka { --ink: inherit; --line: inherit; --white: inherit; --ink-soft: var(--brand-blue); --sky: var(--brand-blue-soft); --paper: var(--brand-surface); --cream: var(--brand-cream); --gold: var(--brand-gold); color: var(--ink); }
+[data-theme="warm"] .embedded-azbuka .primary-button { background: #b85c43; }
+[data-theme="modern"] .embedded-azbuka :is(h1,h2) { font-family: var(--heading-font); }
+.reading-card { font-size: var(--reading-size, 19px); }
+.reading-card ol { font-size: var(--reading-size, 19px); }
+.reading-header:has(.reader-size-button) { grid-template-columns: 36px minmax(0, 1fr) 36px 36px; gap: 5px; }
+.reading-header p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 9px; margin: 0 0 5px; }
+.reading-header h2 { margin: 0; font: 600 23px/1.25 var(--heading-font); }
+.reading-header h2 small { display: block; margin-top: 4px; font-size: 15px; font-weight: 500; }
+.reading-header button { min-width: 36px; }
+.reader-size-button { border: 1px solid var(--line); border-radius: 8px; padding: 6px; color: var(--brand-blue); background: var(--white); }
+.chapter-picker > summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; color: var(--brand-blue); font-size: 13px; font-weight: 600; }
+.chapter-picker[open] > summary { margin-bottom: 14px; }
+.reader-status { margin: 8px 4px; font-size: 11px; }
+.welcome-hero > img { width: 190px; height: 190px; margin-bottom: 12px; border-radius: 22px; }
+.setup-heading h1 { font-size: 26px; line-height: 1.2; }
+.setup-heading .eyebrow { display: none; }
+.setup-heading > p { font-size: 12px; }
+.setup-card h2 { font-size: 21px; }
+.section-selector button { min-height: 64px; padding-top: 10px; padding-bottom: 10px; }
+.verse-text { border: 0; padding: 0; color: inherit; background: none; font: inherit; line-height: inherit; text-align: left; }
+.selected-verse { background: #dceaf5; border-radius: 8px; }
+.appearance-options { margin: 24px 0 0; padding: 0; border: 0; }
+.appearance-options legend { margin-bottom: 12px; font: 600 22px var(--heading-font); color: var(--ink); }
+.appearance-choice { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); cursor: pointer; }
+.appearance-choice.selected { border-color: var(--brand-blue); }
+.appearance-choice input { accent-color: var(--brand-blue); }
+.appearance-choice strong, .appearance-choice small { display: block; }
+.appearance-choice strong { color: var(--ink); font-size: 13px; }
+.appearance-choice small { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+.theme-swatch { display: flex; flex: 0 0 48px; height: 32px; overflow: hidden; border: 1px solid #00000012; border-radius: 8px; }
+.theme-swatch i { flex: 1; background: #345f83; }
+.theme-swatch i:nth-child(2) { background: #faf8f3; }
+.theme-swatch i:nth-child(3) { background: #d4af6b; }
+.modern .theme-swatch i:first-child { background: #1e5aa8; }
+.modern .theme-swatch i:nth-child(3) { background: #d9e6f7; }
+.warm .theme-swatch i:first-child { background: #486a67; }
+.warm .theme-swatch i:nth-child(2) { background: #f8f3e7; }
+.warm .theme-swatch i:nth-child(3) { background: #b85c43; }
+.mobile-app[data-theme="modern"] { --brand-blue: #1e5aa8; --brand-blue-soft: #8ca3c0; --brand-surface: #edf4fb; --brand-cream: #f6f1e8; --ink: #2c3e50; --heading-font: "Segoe UI", system-ui, sans-serif; }
+[data-theme="modern"] .today-hero { background: #d9e6f7; box-shadow: none; }
+[data-theme="modern"] .today-hero h1, [data-theme="modern"] .today-hero .eyebrow { color: var(--ink); }
+[data-theme="modern"] .today-hero .compact-clock .clock-slavonic { color: #1e5aa8; }
+[data-theme="modern"] .today-hero .compact-clock .clock-seconds { color: #337458; }
+[data-theme="modern"] .today-hero .compact-clock .clock-familiar { color: var(--muted); }
+[data-theme="modern"] .today-verse { color: var(--ink); }
+[data-theme="modern"] .module-card { border-radius: 12px; }
+[data-theme="modern"] :is(h1,h2,.compact-page-title,.brand-lockup strong) { font-family: var(--heading-font); }
+[data-theme="modern"] .bottom-nav a.active { background: #d9e6f7; }
+.mobile-app[data-theme="warm"] { --brand-blue: #486a67; --brand-blue-soft: #839c91; --brand-surface: #f8f3e7; --brand-cream: #efe5d1; --brand-gold: #c9a962; --ink: #1f2937; --text: #334039; --muted: #7c7467; --line: #e4dbc9; --white: #fffaf1; }
+[data-theme="warm"] .app-header, [data-theme="warm"] .bottom-nav { background: #faf5e9; }
+[data-theme="warm"] .today-hero { color: var(--ink); background: linear-gradient(90deg, #f3e9d5f5, #f3e9d5cf), url('/brand/app-icon-512.png') right center / 180px auto no-repeat; border: 1px solid var(--line); box-shadow: 0 4px 14px #71552a10; }
+[data-theme="warm"] .today-hero h1, [data-theme="warm"] .today-hero .eyebrow, [data-theme="warm"] .today-verse { color: var(--ink); }
+[data-theme="warm"] .today-hero .compact-clock .clock-slavonic { color: #486a67; }
+[data-theme="warm"] .today-hero .compact-clock .clock-seconds { color: #b85c43; }
+[data-theme="warm"] .today-hero .compact-clock .clock-familiar { color: var(--muted); }
+[data-theme="warm"] .primary-action, [data-theme="warm"] .primary-choice { background: #b85c43; }
+[data-theme="warm"] .module-icon { background: #e4ebe3; }
+[data-theme="warm"] .module-card[href="/prayers"] .module-icon { background: #f3e5c5; }
+[data-theme="warm"] .calendar-module .module-icon { background: #f4e0d5; }
+[data-theme="warm"] .bottom-nav a.active { color: #b85c43; background: #f1e7d6; }
+[data-theme="warm"] .selected-verse { background: #efe5d1; }
+@media (max-width: 360px) {
+  .app-header { padding-left: 12px; padding-right: 12px; }
+  .brand-lockup strong { font-size: 16px; }
+  .brand-lockup small { font-size: 9px; }
+  .connection { font-size: 9px; }
+  .module-action { font-size: 10px; }
+  .today-hero { padding: 15px; }
+  .today-hero h1 { font-size: 18px; }
+  .bottom-nav span { font-size: 8px; }
+}

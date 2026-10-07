@@ -4,7 +4,7 @@ import type { CalendarHomeSettings, CalendarLevel } from '@/profile/configuratio
 const level = defineModel<CalendarLevel>('level', { required: true })
 const home = defineModel<CalendarHomeSettings>('home', { required: true })
 const { messages: text } = useI18n()
-const keys = ['oldStyle', 'fasting', 'commemorations', 'readings', 'compact'] as const
+const keys = ['fasting', 'commemorations', 'readings', 'compact'] as const
 </script>
 <template>
   <div class="option-group">

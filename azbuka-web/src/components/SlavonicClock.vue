@@ -4,7 +4,7 @@ import { toSlavonicClockValue } from '../domain/slavonicNumerals'
 import { useI18n } from '../i18n'
 
 const { t } = useI18n()
-withDefaults(defineProps<{ compact?: boolean; label?: string }>(), { compact: false, label: undefined })
+withDefaults(defineProps<{ compact?: boolean; label?: string; showLabel?: boolean }>(), { compact: false, label: undefined, showLabel: true })
 const now = ref(new Date())
 let timer: number | null = null
 
@@ -22,7 +22,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="slavonic-clock card" :class="{ 'compact-clock': compact }" :aria-label="label ?? t('slavonicClock')">
-    <div class="clock-copy">
+    <div v-if="showLabel" class="clock-copy">
       <p class="eyebrow">{{ label ?? t('slavonicClock') }}</p>
     </div>
     <div class="clock-face">

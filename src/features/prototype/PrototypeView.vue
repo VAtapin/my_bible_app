@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import type { BibleBook, BibleChapter, TranslationSummary } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import MobileShell from '@/components/MobileShell.vue'
@@ -12,6 +12,8 @@ import { createOfflinePackageService, type PackageProgress } from '@/services/of
 import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
 import { useProfileStore } from '@/stores/profileStore'
 import { formatMessage, useI18n } from '@/i18n'
+import { useAppearance } from '@/profile/appearance'
+import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -20,6 +22,27 @@ const packageService = createOfflinePackageService(bibleApi, chapterRepository, 
 const route = useRoute()
 const profile = useProfileStore()
 const { language, messages: text } = useI18n()
+const appearance = useAppearance()
+const selectedVerse = ref<number>()
+const fontSize = ref(19)
+const pickerOpen = ref(true)
+function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
+async function bookmarkSelected(): Promise<void> {
+  const verse = chapter.value?.verses.find((item) => item.number === selectedVerse.value)
+  if (verse) await run(() => toggleBookmark(verse))
+  else message.value = text.value.readerActions.selectVerse
+}
+async function shareReading(): Promise<void> {
+  if (!chapter.value) return
+  const url = new URL('/reader', window.location.origin)
+  url.search = new URLSearchParams({ translation: translationCode.value, book: bookSlug.value, chapter: String(chapterNumber.value) }).toString()
+  const verse = chapter.value.verses.find((item) => item.number === selectedVerse.value)
+  const title = `${chapter.value.book.name} ${chapterNumber.value}${verse ? `:${verse.number}` : ''}`
+  try {
+    if (navigator.share) await navigator.share({ title, text: verse?.plain_text, url: url.href })
+    else { await navigator.clipboard.writeText(url.href); message.value = text.value.readerActions.shared }
+  } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) message.value = text.value.readerActions.shareFailed }
+}
 
 const translations = ref<TranslationSummary[]>([])
 const books = ref<BibleBook[]>([])
@@ -107,6 +130,7 @@ function changeBook(): void {
 }
 
 async function openChapter(): Promise<void> {
+  selectedVerse.value = undefined
   const book = selectedBook.value
   if (!book || chapterNumber.value < 1 || chapterNumber.value > book.chapters_count) {
     message.value = text.value.reader.invalidChapter
@@ -122,6 +146,7 @@ async function openChapter(): Promise<void> {
       if (!chapter.value) throw networkError
       message.value = text.value.reader.openedOffline
     }
+    pickerOpen.value = false
     await libraryRepository.saveReadingLocation({
       translationCode: translationCode.value,
       bookSlug: bookSlug.value,
@@ -222,14 +247,15 @@ function formatDate(value: string): string {
 </script>
 
 <template>
-  <MobileShell>
-    <section class="reader-heading">
+  <MobileShell back-to="/today">
+    <section v-if="!chapter" class="reader-heading">
       <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
       <span><p class="eyebrow dark-eyebrow">{{ text.reader.eyebrow }}</p><h1>{{ text.reader.title }}</h1></span>
       <RouterLink class="storage-link" to="/storage">{{ text.reader.offline }}</RouterLink>
     </section>
 
-    <section class="chapter-card" aria-labelledby="chapter-form-title">
+    <details class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
+      <summary>{{ text.reader.chooseChapter }} <span aria-hidden="true">⌄</span></summary>
       <h2 id="chapter-form-title" class="visually-hidden">{{ text.reader.chooseChapter }}</h2>
       <div class="fields">
         <label class="translation-field">
@@ -263,23 +289,40 @@ function formatDate(value: string): string {
         <span :style="{ width: `${(packageProgress.current / packageProgress.total) * 100}%` }"></span>
         <small>{{ packageProgress.bookName }}, {{ packageProgress.chapter }} · {{ packageProgress.current }}/{{ packageProgress.total }}</small>
       </div>
-      <p v-if="message" class="status" role="status" aria-live="polite">{{ message }}</p>
-    </section>
+    </details>
+    <p v-if="message && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
 
-    <article v-if="chapter" class="reading-card">
+    <article v-if="chapter" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
       <header class="reading-header">
         <button type="button" :disabled="busy || chapterNumber <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
-        <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}, {{ text.reader.chapterLabel }} {{ chapter.chapter.number }}</h2></span>
+        <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}<small>{{ text.reader.chapterLabel }} {{ chapter.chapter.number }}</small></h2></span>
+        <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
         <button type="button" :disabled="busy || chapterNumber >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
       <ol>
-        <li v-for="verse in chapter.verses" :key="verse.id">
+        <li v-for="verse in chapter.verses" :key="verse.id" :class="{ 'selected-verse': selectedVerse === verse.number }">
           <button class="bookmark-button" :class="{ active: bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) }" type="button" :aria-label="formatMessage(text.reader.bookmark, { verse: verse.number })" @click="toggleBookmark(verse)">
             {{ bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) ? '★' : '☆' }}
           </button>
-          <span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text }}
+          <button class="verse-text" type="button" :aria-pressed="selectedVerse === verse.number" @click="selectedVerse = verse.number"><span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text }}</button>
         </li>
       </ol>
     </article>
+    <template #footer>
+      <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">
+        <template v-if="appearance.theme.value === 'warm'">
+          <button type="button" @click="changeFontSize"><AppIcon name="size" /><span>{{ text.readerActions.size }}</span></button>
+          <RouterLink to="/more"><AppIcon name="theme" /><span>{{ text.readerActions.theme }}</span></RouterLink>
+        </template>
+        <template v-else>
+          <button type="button" :disabled="busy || !chapter" @click="bookmarkSelected"><AppIcon name="bookmark" /><span>{{ text.readerActions.bookmark }}</span></button>
+          <button type="button" disabled :title="text.readerActions.noteUnavailable"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
+          <button v-if="appearance.theme.value === 'classic'" type="button" disabled :title="text.readerActions.audioUnavailable"><AppIcon name="audio" /><span>{{ text.readerActions.audio }}</span></button>
+        </template>
+        <button type="button" :disabled="!chapter" @click="shareReading"><AppIcon name="share" /><span>{{ text.readerActions.share }}</span></button>
+        <button v-if="appearance.theme.value === 'warm'" type="button" disabled :title="text.readerActions.noteUnavailable"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
+        <RouterLink v-else to="/more"><AppIcon name="more" /><span>{{ text.navigation.more }}</span></RouterLink>
+      </nav>
+    </template>
   </MobileShell>
 </template>

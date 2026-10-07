@@ -4,7 +4,19 @@ import type { ru } from './ru'
 export const de: MessageShape<typeof ru> = {
   brand: 'Bible Desktop', brandSubtitle: 'Meine App', online: 'Online', offline: 'Offline',
   translationName: 'Bibelübersetzung',
-  navigation: { label: 'Hauptnavigation', back: 'Zurück', today: 'Heute', reading: 'Lesen', settings: 'Einrichten', education: 'Lernen', more: 'Mehr' },
+  navigation: { label: 'Hauptnavigation', back: 'Zurück', today: 'Heute', reading: 'Lesen', settings: 'Einrichten', education: 'Lernen', more: 'Mehr', prayers: 'Gebete', calendar: 'Kalender' },
+  appearance: {
+    settingsTitle: 'Einstellungen', title: 'Darstellung',
+    classic: 'Standard', classicDescription: 'Blauer Tagesbereich, helle Karten und klassische Überschriften',
+    modern: 'Hell · Entwurf 2', modernDescription: 'Klarer blauer Stil und Ikone des Tages',
+    warm: 'Warm · Entwurf 3', warmDescription: 'Cremefarben mit grünen und terrakottafarbenen Akzenten',
+  },
+  readerActions: {
+    bookmark: 'Lesezeichen', note: 'Notiz', audio: 'Audio', share: 'Teilen', size: 'Größe', theme: 'Thema',
+    selectVerse: 'Wählen Sie einen Vers durch Antippen des Textes.',
+    shared: 'Link kopiert.', shareFailed: 'Teilen fehlgeschlagen. Bitte erneut versuchen.',
+    noteUnavailable: 'Notizen sind noch nicht verfügbar.', audioUnavailable: 'Audioaufnahmen sind noch nicht verfügbar.',
+  },
   welcome: {
     eyebrow: 'Persönliche App', title: 'Mein Bible Desktop',
     intro: 'Stellen Sie Ihre App so zusammen, dass sie nur das enthält, was Sie wirklich nutzen.',

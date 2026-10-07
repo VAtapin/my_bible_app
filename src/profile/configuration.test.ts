@@ -20,6 +20,12 @@ const draft: ConfigurationDraft = {
 }
 
 describe('app configuration', () => {
+  it('always enables the clock when Azbuka is selected, including legacy false settings', () => {
+    const configuration = createConfiguration({ ...draft, sections: ['study'], educationPluginIds: ['azbuka'], showEducationClock: false })
+    expect(configuration.education?.showClock).toBe(true)
+    configuration.education!.showClock = false
+    expect(educationSettings(migrateAppConfiguration(JSON.parse(JSON.stringify(configuration)))).showClock).toBe(true)
+  })
   it('preserves explicit plugin and dashboard preferences across serialization', () => {
     const configuration = createConfiguration({ ...draft, sections: ['study', 'calendar'], educationPluginIds: ['azbuka', 'azbuka'], showEducationClock: true, showEducationProgress: false, calendarHome: { ...defaultCalendarHome(), oldStyle: false, compact: false } })
     const restored = migrateAppConfiguration(JSON.parse(JSON.stringify(configuration)))!

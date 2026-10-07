@@ -282,6 +282,10 @@ function isCalendarDay(value: unknown): value is CalendarDay {
     && value.fasting_events.every(isCalendarEvent)
     && Array.isArray(value.readings)
     && value.readings.every(isCalendarReading)
+    && (value.icons === undefined || (Array.isArray(value.icons) && value.icons.every((icon) => isRecord(icon)
+      && typeof icon.id === 'number' && typeof icon.title === 'string'
+      && (icon.image_url === null || typeof icon.image_url === 'string')
+      && (icon.credit === undefined || icon.credit === null || typeof icon.credit === 'string'))))
 }
 
 function isCalendarEvent(value: unknown): value is CalendarDay['events'][number] {

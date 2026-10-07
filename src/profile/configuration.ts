@@ -130,7 +130,7 @@ export function createConfiguration(
     calendar: { level: draft.calendarLevel, languageCode: draft.interfaceLanguage, home: draft.calendarHome ?? defaultCalendarHome() },
     education: {
       pluginIds,
-      showClock: draft.showEducationClock ?? true,
+      showClock: pluginIds.includes('azbuka'),
       showProgress: draft.showEducationProgress ?? true,
     },
     notifications: {
@@ -208,7 +208,8 @@ export function defaultCalendarHome(): CalendarHomeSettings {
 
 export function educationSettings(configuration?: AppConfiguration): EducationSettings {
   if (!configuration?.sections.includes('study')) return { pluginIds: [], showClock: false, showProgress: false }
-  return configuration.education ?? { pluginIds: ['azbuka'], showClock: true, showProgress: true }
+  const settings = configuration.education ?? { pluginIds: ['azbuka'], showClock: true, showProgress: true }
+  return { ...settings, showClock: settings.pluginIds.includes('azbuka') }
 }
 
 function isCalendarHome(value: unknown): value is CalendarHomeSettings {

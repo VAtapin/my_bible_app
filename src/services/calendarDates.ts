@@ -23,3 +23,11 @@ export function formatCalendarDate(date: string, locale = 'ru-RU'): string {
     year: 'numeric',
   }).format(new Date(Date.UTC(year, month - 1, day, 12)))
 }
+
+export function formatTodayDate(date: string, oldStyleDate?: string, locale = 'ru-RU'): string {
+  function format(value: string, weekday: boolean): string {
+    const [year, month, day] = value.split('-').map(Number)
+    return new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: weekday ? 'long' : undefined, day: 'numeric', month: 'long' }).format(new Date(Date.UTC(year, month - 1, day, 12)))
+  }
+  return `${format(date, true)}${oldStyleDate ? ` (${format(oldStyleDate, false)})` : ''}`
+}
