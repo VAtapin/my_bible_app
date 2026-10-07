@@ -44,6 +44,24 @@
 .icon-day-card small { font-size: 11px; color: var(--muted); }
 .icon-day-card a { margin-top: 10px; color: var(--brand-blue); font-size: 12px; text-decoration: none; }
 .icon-day-card blockquote { margin: 8px 0; font-size: 13px; line-height: 1.45; }
+.icon-day-card p { margin: 8px 0 0; font-size: 13px; line-height: 1.4; }
+.day-icon-button { flex: 0 0 auto; align-self: start; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.day-icon-button img { display: block; }
+.icon-dialog { max-width: min(680px, 94vw); max-height: 92dvh; padding: 14px; border: 1px solid var(--line); border-radius: 16px; color: var(--ink); background: var(--white); }
+.icon-dialog::backdrop { background: #142537b8; }
+.icon-viewer header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.icon-viewer header button { flex: 0 0 44px; height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font-size: 24px; }
+.icon-viewer > img { display: block; width: 100%; height: auto; max-height: 73dvh; object-fit: contain; }
+.calendar-view-switch { display: flex; gap: 6px; margin-bottom: 12px; }
+.calendar-view-switch button { flex: 1; min-height: 36px; border: 1px solid #ffffff70; border-radius: 8px; color: #fff; background: #ffffff12; }
+.calendar-view-switch button.active { background: #fff; color: var(--brand-blue); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 12px; }
+.calendar-grid small { text-align: center; }
+.calendar-grid button { min-width: 0; min-height: 38px; padding: 4px 0; border: 1px solid transparent; border-radius: 8px; color: #fff; background: #ffffff12; }
+.calendar-grid button.today { border-color: #e5c885; }
+.calendar-grid button.selected { background: #fff; color: var(--brand-blue); font-weight: 700; }
+.calendar-icons { flex-wrap: wrap; }
+.calendar-icons > span { flex-basis: 100%; }
 .bottom-nav { min-height: calc(62px + env(safe-area-inset-bottom)); padding: 5px 6px calc(5px + env(safe-area-inset-bottom)); gap: 1px; }
 .bottom-nav a, .bottom-nav button { min-height: 50px; display: grid; place-items: center; align-content: center; gap: 3px; border: 0; border-radius: 10px; padding: 4px 1px; color: var(--muted); background: transparent; text-decoration: none; }
 .bottom-nav a.active { color: var(--brand-blue); background: #e6eef5; }

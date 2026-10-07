@@ -12,9 +12,9 @@ import { createDailyContentService } from '@/services/dailyContentService'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { createChapterService } from '@/services/chapterService'
 import { loadRandomVerse } from '@/services/randomVerse'
-import { loadGospelExcerpt } from '@/services/dailyReading'
-import { calendarReadingLink } from '@/services/calendarPresentation'
-import { useAppearance } from '@/profile/appearance'
+import { calendarEvents } from '@/services/calendarPresentation'
+import { rankedCalendarIcons } from '@/services/calendarIcons'
+import DayIcon from '@/components/DayIcon.vue'
 import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
 import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
 import { chapterKey } from '@/offline/chapterRepository'
@@ -41,28 +41,22 @@ const calendarOffline = ref(false)
 const dailyService = createDailyContentService(bibleApi, createIndexedDbDailyContentRepository())
 const dateLabel = computed(() => formatTodayDate(date.value, day.value?.old_style_date, language.value === 'de' ? 'de-DE' : 'ru-RU'))
 const verse = ref<Awaited<ReturnType<typeof loadRandomVerse>>>()
-const gospel = ref<Awaited<ReturnType<typeof loadGospelExcerpt>>>()
 const chapters = createChapterService(bibleApi, createIndexedDbChapterRepository())
 const verseTranslation = computed(() => profile.configuration?.bible.translationCodes.find((code) => code.includes(language.value === 'de' ? 'GERMAN' : 'RUSSIAN'))
   ?? (language.value === 'de' ? 'BQ_GERMAN_ELBERFELD_STRONG' : 'BQ_RUSSIAN_RST_STRONG'))
-const appearance = useAppearance()
-const icon = computed(() => day.value?.icons?.find((item) => item.image_url))
+const icon = computed(() => day.value ? rankedCalendarIcons(day.value)[0] : undefined)
+const dayEvents = computed(() => calendarEvents(day.value?.events ?? [], profile.configuration?.calendar.level ?? 'all'))
+const visibleEvents = computed(() => calendarHome.value.compact ? dayEvents.value.slice(0, 3) : dayEvents.value)
 let calendarGeneration = 0
 watch(() => [date.value, profile.configuration?.calendar.languageCode], async () => {
   if (!profile.configuration) return
   const generation = ++calendarGeneration
   day.value = undefined
-  gospel.value = undefined
   calendarLoading.value = true
   calendarFailed.value = false
   try {
     const result = await dailyService.openCalendarDay(date.value, profile.configuration.calendar.languageCode)
     if (generation === calendarGeneration) { day.value = result.data; calendarOffline.value = result.offline }
-    if (profile.configuration?.sections.includes('calendar') && calendarHome.value.readings) {
-      void loadGospelExcerpt(chapters, result.data.readings, verseTranslation.value).then((excerpt) => {
-        if (generation === calendarGeneration) gospel.value = excerpt
-      }).catch(() => { if (generation === calendarGeneration) gospel.value = undefined })
-    }
   } catch { if (generation === calendarGeneration) calendarFailed.value = true }
   finally { if (generation === calendarGeneration) calendarLoading.value = false }
 }, { immediate: true })
@@ -112,12 +106,12 @@ onUnmounted(() => {
       </RouterLink>
       <RouterLink v-if="verse" class="today-verse" :to="verse.route"><blockquote>«{{ verse.text }}»</blockquote><cite>{{ verse.reference }}</cite></RouterLink>
     </header>
-    <article v-if="appearance.theme.value === 'modern' && sections.includes('calendar') && day && (icon || (calendarHome.readings && day.readings.length))" class="icon-day-card">
-      <img v-if="icon" :src="icon.image_url!" :alt="icon.title" @error="($event.target as HTMLImageElement).hidden = true" />
+    <article v-if="sections.includes('calendar') && day && (icon || (calendarHome.commemorations && visibleEvents.length))" class="icon-day-card">
+      <DayIcon v-if="icon" :key="icon.id" :icon="icon" />
       <span>
         <strong v-if="icon">{{ icon.title }}</strong><small v-if="icon?.credit">{{ icon.credit }}</small>
-        <template v-if="calendarHome.readings && gospel"><small>{{ gospel.reference }}</small><blockquote>«{{ gospel.text }}»</blockquote><RouterLink :to="gospel.route">{{ text.calendar.open }} →</RouterLink></template>
-        <template v-else-if="calendarHome.readings"><RouterLink v-for="reading in day.readings.slice(0, 2)" :key="reading.id" :to="calendarReadingLink(reading) ?? '/calendar'">{{ reading.display_ref || reading.title }} →</RouterLink></template>
+        <template v-if="calendarHome.commemorations"><p v-for="event in visibleEvents" :key="event.id">{{ event.name }}</p></template>
+        <RouterLink to="/calendar">{{ text.today.allCommemorations }} →</RouterLink>
       </span>
     </article>
 
@@ -146,7 +140,7 @@ onUnmounted(() => {
             <span class="module-icon"><img :src="text.sections.calendar.icon" alt="" /></span>
             <span><strong>{{ text.sections.calendar.title }}</strong></span><span aria-hidden="true">→</span>
           </RouterLink>
-          <CalendarSummary :day="day" :loading="calendarLoading" :failed="calendarFailed" :offline="calendarOffline" :settings="profile.configuration.calendar" />
+          <CalendarSummary :day="day" :loading="calendarLoading" :failed="calendarFailed" :offline="calendarOffline" :settings="{ ...profile.configuration.calendar, home: { ...calendarHome, commemorations: false } }" />
         </article>
       </div>
     </section>

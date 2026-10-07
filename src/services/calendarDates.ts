@@ -31,3 +31,20 @@ export function formatTodayDate(date: string, oldStyleDate?: string, locale = 'r
   }
   return `${format(date, true)}${oldStyleDate ? ` (${format(oldStyleDate, false)})` : ''}`
 }
+
+export type CalendarViewMode = 'day' | 'week' | 'month'
+export function calendarPeriodDates(date: string, mode: CalendarViewMode): string[] {
+  if (mode === 'day') return [date]
+  const current = new Date(`${date}T12:00:00Z`)
+  const start = mode === 'week' ? addCalendarDays(date, -((current.getUTCDay() + 6) % 7)) : `${date.slice(0, 8)}01`
+  const count = mode === 'week' ? 7 : new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 0)).getUTCDate()
+  return Array.from({ length: count }, (_, index) => addCalendarDays(start, index))
+}
+export function moveCalendarPeriod(date: string, amount: number, mode: CalendarViewMode): string {
+  if (mode !== 'month') return addCalendarDays(date, amount * (mode === 'week' ? 7 : 1))
+  const current = new Date(`${date}T12:00:00Z`)
+  const target = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + amount, 1, 12))
+  const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate()
+  target.setUTCDate(Math.min(current.getUTCDate(), last))
+  return target.toISOString().slice(0, 10)
+}

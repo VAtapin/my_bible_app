@@ -3,6 +3,7 @@ import type {
   BibleBook,
   BibleChapter,
   CalendarDay,
+  CalendarIconDetail,
   LanguageSummary,
   LiturgicalWorkSummary,
   LiturgicalWorkVersion,
@@ -34,6 +35,7 @@ export interface BibleApi {
   getLiturgicalWorks(collection: string): Promise<LiturgicalWorkSummary[]>
   getLiturgicalVersion(slug: string, language: string, edition?: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
+  getCalendarIcon(id: number): Promise<CalendarIconDetail>
 }
 
 interface ApiClientOptions {
@@ -118,6 +120,10 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
     getCalendarDay(date, language = 'ru', profile = 'typikon-strict') {
       const query = new URLSearchParams({ date, lang: language, profile })
       return request<CalendarDay>(`/calendar/day?${query}`, isCalendarDay)
+    },
+    getCalendarIcon(id) {
+      return request<CalendarIconDetail>(`/calendar/icons/${id}`, (value): value is CalendarIconDetail => isRecord(value)
+        && typeof value.id === 'number' && Array.isArray(value.calendarRecordIds) && value.calendarRecordIds.every((id) => typeof id === 'string'))
     },
   }
 }

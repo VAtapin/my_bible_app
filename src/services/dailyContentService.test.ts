@@ -37,6 +37,19 @@ function api(): BibleApi {
 }
 
 describe('daily content service', () => {
+  it('enriches multiple day icons with their exact calendar record associations and caches them', async () => {
+    const source = api()
+    source.getCalendarDay = vi.fn(async () => ({ ...calendarDay, icons: [
+      { id: 1, title: 'First', image_url: '/1' }, { id: 2, title: 'Second', image_url: '/2' },
+    ] }))
+    source.getCalendarIcon = vi.fn(async (id) => ({ id, calendarRecordIds: [`memory-${id}`] }))
+    const service = createDailyContentService(source, repository())
+    expect((await service.openCalendarDay('2026-09-18')).data.icons?.[1]?.calendar_record_ids).toEqual(['memory-2'])
+    await service.openCalendarDay('2026-09-18')
+    expect(source.getCalendarIcon).toHaveBeenCalledTimes(2)
+    source.getCalendarIcon = vi.fn(async () => { throw new Error('offline') })
+    expect((await createDailyContentService(source, repository()).openCalendarDay('2026-09-18')).data.icons).toHaveLength(2)
+  })
   it('stores prayers and calendar days after a network read', async () => {
     const storage = repository()
     const service = createDailyContentService(api(), storage)

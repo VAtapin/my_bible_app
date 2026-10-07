@@ -4,6 +4,7 @@ import type { DailyContentRepository } from '@/offline/dailyContentRepository'
 import { addCalendarDays } from './calendarDates'
 
 export function createDailyContentService(api: BibleApi, repository: DailyContentRepository) {
+  const iconMappings = new Map<number, string[]>()
   return {
     async openPrayer(id: number): Promise<{ data: PrayerDetail; offline: boolean }> {
       try {
@@ -19,6 +20,16 @@ export function createDailyContentService(api: BibleApi, repository: DailyConten
     async openCalendarDay(date: string, language = 'ru'): Promise<{ data: CalendarDay; offline: boolean }> {
       try {
         const data = await api.getCalendarDay(date, language)
+        if ((data.icons?.length ?? 0) > 1) {
+          await Promise.all(data.icons!.map(async (icon) => {
+            if (icon.calendar_record_ids) return
+            try {
+              const ids = iconMappings.get(icon.id) ?? (await api.getCalendarIcon(icon.id)).calendarRecordIds
+              iconMappings.set(icon.id, ids)
+              icon.calendar_record_ids = ids
+            } catch { /* A missing catalogue must not hide the actual day or its icons. */ }
+          }))
+        }
         await repository.putCalendarDay({ key: `${language}:${date}`, savedAt: new Date().toISOString(), data })
         return { data, offline: false }
       } catch (networkError) {

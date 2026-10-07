@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { CalendarDay } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import MobileShell from '@/components/MobileShell.vue'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
-import { addCalendarDays, calendarDateInTimeZone, formatCalendarDate } from '@/services/calendarDates'
+import { calendarDateInTimeZone, formatCalendarDate, calendarPeriodDates, moveCalendarPeriod, type CalendarViewMode } from '@/services/calendarDates'
+import { rankedCalendarIcons } from '@/services/calendarIcons'
+import DayIcon from '@/components/DayIcon.vue'
 import { createDailyContentService } from '@/services/dailyContentService'
 import { calendarEvents, calendarReadingLink as readingLink, fastingNote } from '@/services/calendarPresentation'
 import { useProfileStore } from '@/stores/profileStore'
@@ -21,7 +23,13 @@ const busy = ref(false)
 const horizonProgress = ref(0)
 const horizonController = ref<AbortController>()
 
-const events = computed(() => calendarEvents(day.value?.events ?? [], profile.configuration?.calendar.level ?? 'all'))
+const events = computed(() => calendarEvents(day.value?.events ?? [], 'all'))
+const icons = computed(() => day.value ? rankedCalendarIcons(day.value) : [])
+const mode = ref<CalendarViewMode>('day')
+const periodDates = computed(() => calendarPeriodDates(date.value, mode.value))
+const monthOffset = computed(() => (new Date(`${periodDates.value[0]}T12:00:00Z`).getUTCDay() + 6) % 7)
+const weekdays = computed(() => Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(language.value === 'de' ? 'de-DE' : 'ru-RU', { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 0, 5 + index)))))
+let generation = 0
 
 onMounted(async () => {
   profile.load()
@@ -30,23 +38,30 @@ onMounted(async () => {
 })
 
 async function openDay(): Promise<void> {
+  const requestGeneration = ++generation
+  day.value = undefined
+  message.value = text.value.calendar.loading
   busy.value = true
   try {
     const calendarLanguage = profile.configuration?.calendar.languageCode ?? language.value
     const result = await service.openCalendarDay(date.value, calendarLanguage)
+    if (requestGeneration !== generation) return
     day.value = result.data
     message.value = result.offline ? text.value.calendar.offline : text.value.calendar.saved
   } catch (error) {
+    if (requestGeneration !== generation) return
     message.value = error instanceof Error ? error.message : text.value.calendar.failed
   } finally {
-    busy.value = false
+    if (requestGeneration === generation) busy.value = false
   }
 }
 
 async function moveDay(offset: number): Promise<void> {
-  date.value = addCalendarDays(date.value, offset)
+  date.value = moveCalendarPeriod(date.value, offset, mode.value)
   await openDay()
 }
+async function selectDate(value: string): Promise<void> { date.value = value; await openDay() }
+onUnmounted(() => { generation++; horizonController.value?.abort() })
 
 async function downloadHorizon(): Promise<void> {
   horizonController.value = new AbortController()
@@ -76,17 +91,29 @@ function stopHorizonDownload(): void {
   <MobileShell>
     <section class="calendar-hero">
       <p class="eyebrow">{{ text.calendar.eyebrow }}</p>
+      <div class="calendar-view-switch" role="group" :aria-label="text.calendar.view">
+        <button v-for="option in (['day', 'week', 'month'] as const)" :key="option" type="button" :aria-pressed="mode === option" :class="{ active: mode === option }" @click="mode = option">{{ text.calendar[option] }}</button>
+      </div>
       <div class="calendar-date-row">
         <button type="button" :disabled="busy" :aria-label="text.calendar.previous" @click="moveDay(-1)">←</button>
         <span><h1>{{ formatCalendarDate(date, language === 'de' ? 'de-DE' : 'ru-RU') }}</h1><small v-if="day">{{ text.calendar.oldStyle }}: {{ formatCalendarDate(day.old_style_date, language === 'de' ? 'de-DE' : 'ru-RU') }}</small></span>
         <button type="button" :disabled="busy" :aria-label="text.calendar.next" @click="moveDay(1)">→</button>
       </div>
       <p v-if="day">{{ day.liturgical_period }}</p>
+      <div v-if="mode !== 'day'" class="calendar-grid" :aria-label="text.calendar[mode]">
+        <small v-for="weekday in weekdays" :key="weekday">{{ weekday }}</small>
+        <span v-for="blank in (mode === 'month' ? monthOffset : 0)" :key="`blank-${blank}`"></span>
+        <button v-for="item in periodDates" :key="item" type="button" :aria-label="formatCalendarDate(item, language === 'de' ? 'de-DE' : 'ru-RU')" :aria-pressed="item === date" :class="{ selected: item === date, today: item === calendarDateInTimeZone() }" :disabled="busy" @click="selectDate(item)">{{ Number(item.slice(-2)) }}</button>
+      </div>
     </section>
 
     <p v-if="message" class="status" role="status">{{ message }}</p>
 
     <template v-if="day">
+      <article v-if="icons.length" class="icon-day-card calendar-icons">
+        <DayIcon v-for="icon in icons" :key="`${date}-${icon.id}`" :icon="icon" />
+        <span><strong>{{ icons[0]?.title }}</strong></span>
+      </article>
       <section v-if="day.fasting_events.length" class="calendar-section fasting-card">
         <h2>{{ text.calendar.fasting }}</h2>
         <p v-for="item in day.fasting_events" :key="item.id">{{ fastingNote(item) }}</p>

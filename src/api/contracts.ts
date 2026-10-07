@@ -145,7 +145,7 @@ export interface CalendarEvent {
 }
 
 export interface CalendarDay {
-  icons?: Array<{ id: number; title: string; image_url: string | null; credit?: string | null }>
+  icons?: CalendarIcon[]
   date: string
   old_style_date: string
   pascha_date: string
@@ -156,3 +156,13 @@ export interface CalendarDay {
   fasting_events: CalendarEvent[]
   readings: CalendarReading[]
 }
+
+export interface CalendarIcon {
+  id: number
+  title: string
+  image_url: string | null
+  credit?: string | null
+  description?: string | null
+  calendar_record_ids?: string[]
+}
+export interface CalendarIconDetail { id: number; calendarRecordIds: string[] }
