@@ -1,13 +1,18 @@
 export interface PrayerSegment { text: string; emphasis: boolean; strong: boolean }
 export interface PrayerBlock { heading: boolean; segments: PrayerSegment[] }
 
+/** Repair detached combining marks without changing the text's spelling or edition. */
+export function normalizePrayerText(value: string): string {
+  return value.replace(/(\p{L}\p{M}*)[ \t\u00a0]+(?=\p{M})/gu, '$1')
+}
+
 function decodeText(value: string): string {
   const entities: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', laquo: '«', raquo: '»', hellip: '…' }
-  return value.replace(/&(#x[\da-f]+|#\d+|\w+);/gi, (original, name: string) => {
+  return normalizePrayerText(value.replace(/&(#x[\da-f]+|#\d+|\w+);/gi, (original, name: string) => {
     if (!name.startsWith('#')) return entities[name.toLowerCase()] ?? original
     const code = name[1]?.toLowerCase() === 'x' ? Number.parseInt(name.slice(2), 16) : Number(name.slice(1))
     return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : '�'
-  }).replace(/(\p{L})[ \t]+(?=\p{M})/gu, '$1')
+  }))
 }
 
 /** Only text and typographic structure reach Vue interpolation; never source HTML or attributes. */

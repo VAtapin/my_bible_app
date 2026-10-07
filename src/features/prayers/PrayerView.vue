@@ -34,7 +34,7 @@ onMounted(async () => {
 
 <template>
   <MobileShell back-to="/prayers">
-    <article v-if="prayer" class="prayer-reading" :class="{ 'traditional-prayer': prayer.language_code === 'cu' }" :lang="prayer.language_code.startsWith('cu') ? 'cu' : prayer.language_code">
+    <article v-if="prayer" class="prayer-reading" :class="{ 'traditional-prayer': prayer.language_code === 'cu', 'civil-prayer': prayer.language_code === 'cu-civil' }" :lang="prayer.language_code.startsWith('cu') ? 'cu' : prayer.language_code">
       <h1>{{ prayer.title }}</h1>
       <PrayerContent v-if="prayer.intro" :content="prayer.intro" />
       <PrayerContent :content="prayer.body" />

@@ -3,6 +3,7 @@ import { onUnmounted, ref, watch } from 'vue'
 import { bibleApi } from '@/api'
 import type { CalendarServicePlan } from '@/api/contracts'
 import { useI18n } from '@/i18n'
+import { normalizePrayerText } from '@/services/prayerContent'
 const props = defineProps<{ date: string; calendarLanguage: string }>()
 const { messages: text } = useI18n()
 const plan = ref<CalendarServicePlan>()
@@ -28,13 +29,13 @@ onUnmounted(() => { generation++ })
     <p v-if="loading || failed" class="reader-status" role="status">{{ loading ? text.calendar.loading : text.calendar.serviceFailed }}</p>
     <template v-if="plan">
       <p v-if="plan.properCoverage?.message" class="calendar-event-description">{{ plan.properCoverage.message }}</p>
-      <div class="calendar-service-list" :class="{ 'slavonic-unicode': plan.textLanguage === 'cu' }">
+      <div class="calendar-service-list" :class="{ 'slavonic-unicode': plan.textLanguage === 'cu', 'slavonic-civil': plan.textLanguage === 'cu-civil' }" :lang="plan.textLanguage.startsWith('cu') ? 'cu' : plan.textLanguage">
         <details v-for="(item, index) in plan.assignments" :key="`${item.textId}-${index}`">
           <summary>{{ item.title }} <small>{{ item.slot === 'troparion-of-day' ? text.calendar.troparion : item.slot === 'kontakion-of-day' ? text.calendar.kontakion : '' }}</small></summary>
           <small v-if="item.insert === false">{{ text.calendar.referenceText }}</small>
-          <p v-if="item.rubric">{{ item.rubric }}</p><p>{{ item.text }}</p>
+          <p v-if="item.rubric">{{ normalizePrayerText(item.rubric) }}</p><p>{{ normalizePrayerText(item.text) }}</p>
         </details>
-        <details v-for="item in plan.expansions" :key="item.id"><summary>{{ item.title }}</summary><p>{{ item.text }}</p></details>
+        <details v-for="item in plan.expansions" :key="item.id"><summary>{{ item.title }}</summary><p>{{ normalizePrayerText(item.text) }}</p></details>
       </div>
     </template>
   </section>

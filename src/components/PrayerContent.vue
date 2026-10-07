@@ -6,7 +6,7 @@ const blocks = computed(() => prayerBlocks(props.content))
 </script>
 <template>
   <div class="prayer-content">
-    <component :is="block.heading ? 'h2' : 'p'" v-for="(block, index) in blocks" :key="index">
+    <component :is="block.heading ? 'h2' : 'p'" v-for="(block, index) in blocks" :key="index" :class="{ 'prayer-text-heading': block.heading }">
       <span v-for="(segment, part) in block.segments" :key="part" :class="{ 'prayer-emphasis': segment.emphasis, 'prayer-strong': segment.strong }">{{ segment.text }}</span>
     </component>
   </div>

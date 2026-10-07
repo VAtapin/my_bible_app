@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { prayerBlocks, prayerExcerpt } from './prayerContent'
-import { prayerEdition } from './prayerEditions'
+import { normalizePrayerText, prayerBlocks, prayerExcerpt } from './prayerContent'
+import { prayerEdition, prayerLanguageLabel } from './prayerEditions'
+import { ru } from '@/i18n/ru'
+import { de } from '@/i18n/de'
 import type { LiturgicalWorkSummary } from '@/api/contracts'
 
 describe('prayer presentation', () => {
@@ -18,6 +20,18 @@ describe('prayer presentation', () => {
   it('preserves line breaks and repairs spaces before combining accents', () => {
     expect(prayerExcerpt('<p>Го ́споди</p><p>поми́луй</p>')).toBe('Го́споди поми́луй')
     expect(prayerBlocks('Первый\n\nВторой')).toHaveLength(2)
+  })
+  it('repairs liturgical API text without changing words, paragraphs or traditional spelling', () => {
+    expect(normalizePrayerText('Го \u0301споди, поми \u0301луй.\n\nСла \u0301ва Тебе \u0301.')).toBe('Го́споди, поми́луй.\n\nСла́ва Тебе́.')
+    expect(normalizePrayerText('а\u0486\u00a0\u0301 б\t\u0483')).toBe('а\u0486\u0301 б\u0483')
+    const original = 'Прїиди́те, поклони́мсѧ цр҃е́ви на́шемꙋ бг҃ꙋ.\nѰало́мъ кд҃.'
+    expect(normalizePrayerText(original)).toBe(original)
+  })
+  it('labels the selected language rather than exposing API source branding', () => {
+    expect(prayerLanguageLabel('cu', ru.setup)).toBe('Церковнославянский')
+    expect(prayerLanguageLabel('cu-civil', ru.setup)).toBe('Церковнославянский · гражданский')
+    expect(prayerLanguageLabel('de', de.setup)).toBe('Deutsch')
+    expect(prayerLanguageLabel('cu-civil', de.setup)).toBe(de.setup.churchSlavonicCivil)
   })
   it('does not mistake civil orthography for traditional Church Slavonic', () => {
     const work: LiturgicalWorkSummary = { id: 1, slug: 'hours', title: 'Hours', collections: [], available_languages: ['cu'], source_url: null, editions: [

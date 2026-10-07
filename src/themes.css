@@ -1,4 +1,11 @@
 /* Shared skins: the default blends the three approved layouts. */
+@font-face {
+  font-family: 'Monomakh Unicode';
+  src: url('/fonts/MonomakhUnicode.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
 .mobile-app {
   --brand-blue: #345f83;
   --brand-blue-soft: #7798b5;
@@ -121,6 +128,7 @@
 .calendar-service-list small { font: 10px/1.4 system-ui, sans-serif; color: var(--muted); }
 .calendar-service-list p { font: 17px/1.55 Georgia, serif; white-space: pre-line; }
 .calendar-service-list.slavonic-unicode p { font-family: Ponomar, serif; font-size: 21px; }
+.calendar-service-list.slavonic-civil p { font-family: 'Monomakh Unicode', serif; font-synthesis: none; }
 .icon-image-navigation { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .icon-image-navigation button { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font-size: 22px; }
 .today-hero { padding: 12px 14px; }
@@ -178,6 +186,10 @@
 .prayer-emphasis { font-style: italic; }
 .prayer-strong { font-weight: 700; }
 .prayer-reading.traditional-prayer .prayer-content, .prayer-reading.traditional-prayer.liturgical-reading > p:not(.eyebrow, .source-credit), .mobile-app .traditional-prayer h2 { font-family: Ponomar, serif; font-size: 24px; line-height: 1.65; }
+.prayer-reading.civil-prayer .prayer-content, .prayer-reading.civil-prayer.liturgical-reading > p:not(.eyebrow, .source-credit) { font-family: 'Monomakh Unicode', serif; font-synthesis: none; }
+/* Text headings belong to the selected edition, not to the interface skin. */
+.mobile-app .prayer-reading.traditional-prayer .prayer-text-heading { font-family: Ponomar, serif; font-weight: 400; font-synthesis: none; }
+.mobile-app .prayer-reading.civil-prayer .prayer-text-heading { font-family: 'Monomakh Unicode', serif; font-weight: 400; font-synthesis: none; }
 .appearance-options { margin: 16px 0 0; padding: 0; border: 0; }
 .appearance-options legend { margin-bottom: 8px; font: 600 18px var(--heading-font); color: var(--ink); }
 .appearance-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }

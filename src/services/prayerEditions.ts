@@ -1,4 +1,10 @@
 import type { LiturgicalEditionSummary, LiturgicalWorkSummary } from '@/api/contracts'
+
+export function prayerLanguageLabel(language: string, labels: { russian: string; german: string; churchSlavonic: string; churchSlavonicCivil: string }): string {
+  const names: Record<string, string> = { ru: labels.russian, de: labels.german, cu: labels.churchSlavonic, 'cu-civil': labels.churchSlavonicCivil }
+  return names[language] ?? language.toUpperCase()
+}
+
 export function prayerEdition(work: LiturgicalWorkSummary, language: string): LiturgicalEditionSummary | undefined {
   return work.editions.find((edition) => {
     if (language === 'cu') return edition.language === 'cu' && edition.orthography === 'traditional'

@@ -6,14 +6,13 @@ import MobileShell from '@/components/MobileShell.vue'
 import { useI18n } from '@/i18n'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { useProfileStore } from '@/stores/profileStore'
-import { prayerEdition } from '@/services/prayerEditions'
+import { prayerEdition, prayerLanguageLabel } from '@/services/prayerEditions'
 import { prayerExcerpt } from '@/services/prayerContent'
 
 interface WorkCard extends LiturgicalWorkSummary {
   language: string
   collection: 'akathists' | 'canons' | 'horologion' | 'prayers'
   edition: string
-  editionTitle: string
 }
 
 const repository = createIndexedDbDailyContentRepository()
@@ -51,7 +50,7 @@ onMounted(async () => {
       return languages.flatMap((candidate) => {
         const edition = prayerEdition(work, candidate)
         if (!edition || (collection === 'prayers' && prayers.value.some((prayer) => prayer.title === work.title && prayer.language_code === candidate))) return []
-        return [{ ...work, language: edition.language, collection, edition: edition.code, editionTitle: edition.title }]
+        return [{ ...work, language: edition.language, collection, edition: edition.code }]
       })
     }))
     message.value = prayers.value.length || works.value.length ? '' : text.value.prayers.empty
@@ -114,7 +113,7 @@ function isEvening(prayer: PrayerSummary): boolean {
       </RouterLink>
       <RouterLink v-for="work in works" :key="`${work.collection}-${work.slug}-${work.edition}`" class="content-card" :to="{ path: `/liturgical/${work.slug}/${work.language}`, query: { edition: work.edition } }">
         <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span>
-        <span><em>{{ collectionLabel(work.collection) }}</em><strong>{{ work.title }}</strong><small>{{ work.editionTitle }}</small></span>
+        <span><em>{{ collectionLabel(work.collection) }}</em><strong>{{ work.title }}</strong><small>{{ prayerLanguageLabel(work.language, text.setup) }}</small></span>
         <span aria-hidden="true">→</span>
       </RouterLink>
     </section>
