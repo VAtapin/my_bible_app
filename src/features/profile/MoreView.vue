@@ -25,11 +25,13 @@ const items = [
     </div>
     <fieldset class="appearance-options">
       <legend>{{ text.appearance.title }}</legend>
+      <div class="appearance-choices">
       <label v-for="theme in themes" :key="theme" :class="['appearance-choice', theme, { selected: appearance.theme.value === theme }]">
-        <input type="radio" name="appearance" :value="theme" :checked="appearance.theme.value === theme" @change="appearance.setTheme(theme)" />
+        <input type="radio" name="appearance" :value="theme" :aria-label="text.appearance[theme]" :aria-describedby="`appearance-description-${theme}`" :checked="appearance.theme.value === theme" @change="appearance.setTheme(theme)" />
         <span class="theme-swatch" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span><strong>{{ text.appearance[theme] }}</strong><small>{{ text.appearance[`${theme}Description`] }}</small></span>
+        <span class="appearance-caption"><strong>{{ text.appearance[theme] }}</strong><small :id="`appearance-description-${theme}`" class="visually-hidden">{{ text.appearance[`${theme}Description`] }}</small></span>
       </label>
+      </div>
     </fieldset>
   </MobileShell>
 </template>

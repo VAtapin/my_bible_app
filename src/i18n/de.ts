@@ -8,8 +8,8 @@ export const de: MessageShape<typeof ru> = {
   appearance: {
     settingsTitle: 'Einstellungen', title: 'Darstellung',
     classic: 'Standard', classicDescription: 'Blauer Tagesbereich, helle Karten und klassische Überschriften',
-    modern: 'Hell · Entwurf 2', modernDescription: 'Klarer blauer Stil und Ikone des Tages',
-    warm: 'Warm · Entwurf 3', warmDescription: 'Cremefarben mit grünen und terrakottafarbenen Akzenten',
+    modern: 'Hell', modernDescription: 'Klarer blauer Stil und Ikone des Tages',
+    warm: 'Warm', warmDescription: 'Cremefarben mit grünen und terrakottafarbenen Akzenten',
   },
   readerActions: {
     bookmark: 'Lesezeichen', note: 'Notiz', audio: 'Audio', share: 'Teilen', size: 'Größe', theme: 'Thema',

@@ -18,8 +18,8 @@ export const ru = {
   appearance: {
     settingsTitle: 'Настройки', title: 'Оформление',
     classic: 'Стандартное', classicDescription: 'Голубой блок дня, светлые карточки и классические заголовки',
-    modern: 'Светлое · макет 2', modernDescription: 'Чистый синий стиль и икона дня',
-    warm: 'Тёплое · макет 3', warmDescription: 'Кремовые оттенки, зелёные и терракотовые акценты',
+    modern: 'Светлое', modernDescription: 'Чистый синий стиль и икона дня',
+    warm: 'Тёплое', warmDescription: 'Кремовые оттенки, зелёные и терракотовые акценты',
   },
   readerActions: {
     bookmark: 'Закладка', note: 'Заметка', audio: 'Аудио', share: 'Поделиться', size: 'Размер', theme: 'Тема',
