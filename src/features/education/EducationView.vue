@@ -1,38 +1,31 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { useI18n } from '@/i18n'
+import { useProfileStore } from '@/stores/profileStore'
+import { educationSettings } from '@/profile/configuration'
 import { learningApps } from './learningApps'
 
 const { messages: text } = useI18n()
+const profile = useProfileStore()
+const apps = computed(() => learningApps.filter((app) => educationSettings(profile.configuration).pluginIds.includes(app.id)))
+onMounted(() => profile.load())
 </script>
 
 <template>
-  <MobileShell :back-to="'/today'">
-    <section class="today-hero">
-      <p class="eyebrow">{{ text.education.eyebrow }}</p>
+  <MobileShell back-to="/today">
+    <header class="section-heading-row">
       <h1>{{ text.education.title }}</h1>
-      <p>{{ text.education.intro }}</p>
-    </section>
-
-    <section class="today-section">
-      <div v-for="app in learningApps" :key="app.id" class="module-card available education-app-card">
+      <RouterLink to="/setup/manual?edit=1">{{ text.today.customize }}</RouterLink>
+    </header>
+    <div class="module-list">
+      <RouterLink v-for="app in apps" :key="app.id" class="module-card available" :to="app.route">
         <span class="module-icon"><img :src="app.icon" alt="" /></span>
-        <span>
-          <strong>{{ text.education.apps[app.id].title }}</strong>
-          <small>{{ text.education.apps[app.id].description }} · {{ text.education.types[app.launch.type] }}</small>
-        </span>
-        <a
-          v-if="app.launch.type === 'standalone' || app.launch.type === 'bot'"
-          class="education-open-label"
-          :href="app.launch.href"
-          target="_blank"
-          rel="noopener noreferrer"
-        >{{ text.education.open }}</a>
-        <RouterLink v-else class="education-open-label" :to="app.launch.route">
-          {{ text.education.open }}
-        </RouterLink>
-      </div>
-    </section>
+        <span><strong>{{ text.education.apps[app.id].title }}</strong><small>{{ text.education.apps[app.id].description }}</small></span>
+        <span aria-hidden="true">→</span>
+      </RouterLink>
+      <p v-if="!apps.length">{{ text.education.empty }}</p>
+    </div>
   </MobileShell>
 </template>

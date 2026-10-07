@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createConfiguration, sectionsForPreset, type ConfigurationDraft } from './configuration'
+import { createConfiguration, sectionsForPreset, educationSettings, isAppConfiguration, migrateAppConfiguration, defaultCalendarHome, type ConfigurationDraft } from './configuration'
 
 const draft: ConfigurationDraft = {
   interfaceLanguage: 'ru',
@@ -20,6 +20,30 @@ const draft: ConfigurationDraft = {
 }
 
 describe('app configuration', () => {
+  it('preserves explicit plugin and dashboard preferences across serialization', () => {
+    const configuration = createConfiguration({ ...draft, sections: ['study', 'calendar'], educationPluginIds: ['azbuka', 'azbuka'], showEducationClock: true, showEducationProgress: false, calendarHome: { ...defaultCalendarHome(), oldStyle: false, compact: false } })
+    const restored = migrateAppConfiguration(JSON.parse(JSON.stringify(configuration)))!
+    expect(educationSettings(restored)).toEqual({ pluginIds: ['azbuka'], showClock: true, showProgress: false })
+    expect(restored.calendar.home).toEqual({ oldStyle: false, compact: false, fasting: true, readings: true, commemorations: true })
+  })
+
+  it('keeps old education profiles compatible without overwriting them', () => {
+    const configuration = createConfiguration({ ...draft, sections: ['study'] })
+    delete configuration.education
+    delete configuration.calendar.home
+    expect(migrateAppConfiguration(configuration)).toBe(configuration)
+    expect(educationSettings(configuration).pluginIds).toEqual(['azbuka'])
+    expect(configuration.education).toBeUndefined()
+  })
+
+  it('does not show disabled plugins or accept malformed display settings', () => {
+    const configuration = createConfiguration({ ...draft, educationPluginIds: ['azbuka'] })
+    expect(educationSettings(configuration)).toEqual({ pluginIds: [], showClock: false, showProgress: false })
+    expect(isAppConfiguration({ ...configuration, education: { pluginIds: ['unknown'], showClock: true, showProgress: true } })).toBe(false)
+    expect(isAppConfiguration({ ...configuration, calendar: { ...configuration.calendar, home: { ...defaultCalendarHome(), fasting: 'yes' } } })).toBe(false)
+    expect(() => createConfiguration({ ...draft, sections: ['study'], educationPluginIds: [] })).toThrow('education-required')
+  })
+
   it('creates a normalized versioned configuration', () => {
     const configuration = createConfiguration(draft, undefined, new Date('2026-09-18T10:00:00.000Z'))
 

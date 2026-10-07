@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { azbukaPath, azbukaIcon } from '../integration'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Locale } from '@/domain/types'
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
+import type { Locale } from '../domain/types'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
 
 const router = useRouter()
 const profileStore = useProfileStore()
@@ -18,7 +19,7 @@ const chooseLocale = (locale: Locale) => {
 
 const complete = async () => {
   await profileStore.create(selectedLocale.value, selectedGoal.value)
-  await router.replace('/')
+  await router.replace(azbukaPath('/'))
 }
 </script>
 
@@ -26,7 +27,7 @@ const complete = async () => {
   <main class="onboarding-page">
     <div class="onboarding-art" aria-hidden="true">
       <div class="halo"></div>
-      <img src="/icon.svg" alt="" />
+      <img :src="azbukaIcon()" alt="" />
       <span class="ornament">☦</span>
     </div>
     <section class="onboarding-card">

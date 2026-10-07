@@ -4,10 +4,11 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'fonts/Ponomar-Regular.ttf', 'fonts/OFL-Ponomar.txt'],
       manifest: {
         name: 'Азбука с цифирью',

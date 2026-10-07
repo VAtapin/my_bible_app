@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { SLAVONIC_NUMERAL_GROUPS, decomposeSlavonicNumeral, toSlavonicNumeral } from '@/domain/slavonicNumerals'
-import { useI18n } from '@/i18n'
+import { SLAVONIC_NUMERAL_GROUPS, decomposeSlavonicNumeral, toSlavonicNumeral } from '../domain/slavonicNumerals'
+import { useI18n } from '../i18n'
 
 const { t } = useI18n()
 const selectedNumber = ref(12)

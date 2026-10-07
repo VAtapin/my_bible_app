@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { azbukaPath } from '../integration'
 import AppIcon from './AppIcon.vue'
-import { useI18n } from '@/i18n'
+import { useI18n } from '../i18n'
 
 const { t } = useI18n()
 const items = [
@@ -14,7 +15,7 @@ const items = [
 
 <template>
   <nav class="bottom-nav" aria-label="Main navigation">
-    <RouterLink v-for="item in items" :key="item.to" :to="item.to" class="nav-item">
+    <RouterLink v-for="item in items" :key="item.to" :to="azbukaPath(item.to)" class="nav-item">
       <AppIcon :name="item.icon" />
       <span>{{ t(item.label) }}</span>
     </RouterLink>

@@ -8,6 +8,19 @@ export type PresetId = typeof presetIds[number]
 
 export type SetupMode = 'quick' | 'manual'
 export type CalendarLevel = 'major' | 'all'
+export type EducationPluginId = 'azbuka'
+export interface EducationSettings {
+  pluginIds: EducationPluginId[]
+  showClock: boolean
+  showProgress: boolean
+}
+export interface CalendarHomeSettings {
+  oldStyle: boolean
+  fasting: boolean
+  commemorations: boolean
+  readings: boolean
+  compact: boolean
+}
 export const prayerContentIds = ['morning', 'evening', 'prayerBook', 'akathists', 'canons', 'horologion'] as const
 export type PrayerContentId = typeof prayerContentIds[number]
 
@@ -33,7 +46,9 @@ export interface AppConfiguration {
   calendar: {
     level: CalendarLevel
     languageCode: string
+    home?: CalendarHomeSettings
   }
+  education?: EducationSettings
   notifications: {
     enabled: boolean
     time: string
@@ -56,13 +71,17 @@ export interface ConfigurationDraft {
   horologion: boolean
   prayerLanguageCodes: string[]
   calendarLevel: CalendarLevel
+  calendarHome?: CalendarHomeSettings
+  educationPluginIds?: EducationPluginId[]
+  showEducationClock?: boolean
+  showEducationProgress?: boolean
   notificationsEnabled: boolean
   notificationTime: string
 }
 
 const presetSections: Record<PresetId, AppSectionId[]> = {
   daily: ['bible', 'prayers', 'calendar'],
-  bible: ['bible', 'study'],
+  bible: ['bible'],
   prayer: ['prayers'],
   calendar: ['calendar'],
   education: ['study'],
@@ -85,6 +104,10 @@ export function createConfiguration(
   const timestamp = now.toISOString()
   const translationCodes = uniqueNonEmpty(draft.translationCodes)
   const prayerLanguageCodes = uniqueNonEmpty(draft.prayerLanguageCodes)
+  const pluginIds = sections.includes('study')
+    ? [...new Set((draft.educationPluginIds ?? ['azbuka']).filter((id) => id === 'azbuka'))]
+    : []
+  if (sections.includes('study') && !pluginIds.length) throw new Error('education-required')
   return {
     version: 2,
     interfaceLanguage: draft.interfaceLanguage,
@@ -104,7 +127,12 @@ export function createConfiguration(
       horologion: draft.horologion,
       languageCodes: prayerLanguageCodes.length ? prayerLanguageCodes : [draft.interfaceLanguage],
     },
-    calendar: { level: draft.calendarLevel, languageCode: draft.interfaceLanguage },
+    calendar: { level: draft.calendarLevel, languageCode: draft.interfaceLanguage, home: draft.calendarHome ?? defaultCalendarHome() },
+    education: {
+      pluginIds,
+      showClock: draft.showEducationClock ?? true,
+      showProgress: draft.showEducationProgress ?? true,
+    },
     notifications: {
       enabled: draft.notificationsEnabled,
       time: isTime(draft.notificationTime) ? draft.notificationTime : '08:00',
@@ -141,6 +169,8 @@ export function isAppConfiguration(value: unknown): value is AppConfiguration {
     && isRecord(value.calendar)
     && (value.calendar.level === 'major' || value.calendar.level === 'all')
     && typeof value.calendar.languageCode === 'string'
+    && (value.calendar.home === undefined || isCalendarHome(value.calendar.home))
+    && (value.education === undefined || isEducationSettings(value.education))
     && isRecord(value.notifications)
     && typeof value.notifications.enabled === 'boolean'
     && typeof value.notifications.time === 'string'
@@ -170,6 +200,25 @@ export function migrateAppConfiguration(value: unknown): AppConfiguration | unde
     },
     calendar: { ...value.calendar, languageCode: 'ru' },
   }
+}
+
+export function defaultCalendarHome(): CalendarHomeSettings {
+  return { oldStyle: true, fasting: true, commemorations: true, readings: true, compact: true }
+}
+
+export function educationSettings(configuration?: AppConfiguration): EducationSettings {
+  if (!configuration?.sections.includes('study')) return { pluginIds: [], showClock: false, showProgress: false }
+  return configuration.education ?? { pluginIds: ['azbuka'], showClock: true, showProgress: true }
+}
+
+function isCalendarHome(value: unknown): value is CalendarHomeSettings {
+  return isRecord(value) && ['oldStyle', 'fasting', 'commemorations', 'readings', 'compact'].every((key) => typeof value[key] === 'boolean')
+}
+
+function isEducationSettings(value: unknown): value is EducationSettings {
+  return isRecord(value) && Array.isArray(value.pluginIds)
+    && value.pluginIds.every((id) => id === 'azbuka')
+    && typeof value.showClock === 'boolean' && typeof value.showProgress === 'boolean'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import type { CalendarDay, CalendarEvent, CalendarReading } from '@/api/contracts'
+import type { CalendarDay } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import MobileShell from '@/components/MobileShell.vue'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { addCalendarDays, calendarDateInTimeZone, formatCalendarDate } from '@/services/calendarDates'
 import { createDailyContentService } from '@/services/dailyContentService'
-import { readerTarget } from '@/services/bibleReferences'
+import { calendarEvents, calendarReadingLink as readingLink, fastingNote } from '@/services/calendarPresentation'
 import { useProfileStore } from '@/stores/profileStore'
 import { useI18n } from '@/i18n'
 
@@ -21,12 +21,7 @@ const busy = ref(false)
 const horizonProgress = ref(0)
 const horizonController = ref<AbortController>()
 
-const events = computed(() => {
-  const values = day.value?.events ?? []
-  return profile.configuration?.calendar.level === 'major'
-    ? values.filter((event) => event.type || event.is_icon_commemoration)
-    : values
-})
+const events = computed(() => calendarEvents(day.value?.events ?? [], profile.configuration?.calendar.level ?? 'all'))
 
 onMounted(async () => {
   profile.load()
@@ -51,19 +46,6 @@ async function openDay(): Promise<void> {
 async function moveDay(offset: number): Promise<void> {
   date.value = addCalendarDays(date.value, offset)
   await openDay()
-}
-
-function readingLink(reading: CalendarReading): { path: string; query: Record<string, string> } | undefined {
-  const passage = reading.reading?.passages[0]
-  const target = passage && readerTarget(passage.book, passage.start.chapter)
-  return target ? { path: '/reader', query: target } : undefined
-}
-
-function fastingNote(event: CalendarEvent): string {
-  const metadata = event.metadata
-  return metadata && !Array.isArray(metadata) && typeof metadata.meal_note === 'string'
-    ? metadata.meal_note
-    : event.name
 }
 
 async function downloadHorizon(): Promise<void> {

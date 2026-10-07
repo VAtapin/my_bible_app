@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import { azbukaPath } from '../integration'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AppIcon from '@/components/AppIcon.vue'
-import { createSession } from '@/domain/exerciseEngine'
-import { applyAnswer, initialAnswerState } from '@/domain/practiceFlow'
-import { letterById } from '@/data/letters'
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
-import { localizedText } from '@/domain/types'
+import AppIcon from '../components/AppIcon.vue'
+import { createSession } from '../domain/exerciseEngine'
+import { applyAnswer, initialAnswerState } from '../domain/practiceFlow'
+import { letterById } from '../data/letters'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
+import { localizedText } from '../domain/types'
 
 const router = useRouter()
 const profileStore = useProfileStore()
@@ -124,7 +125,7 @@ onBeforeUnmount(clearAdvanceTimer)
   <main class="session-page">
     <template v-if="!finished">
       <header class="session-header">
-        <button class="icon-button" :aria-label="t('back')" @click="router.push('/practice')"><AppIcon name="arrow" /></button>
+        <button class="icon-button" :aria-label="t('back')" @click="router.push(azbukaPath('/practice'))"><AppIcon name="arrow" /></button>
         <div class="session-progress"><span :style="{ width: `${((index + (resolved ? 1 : 0)) / questions.length) * 100}%` }"></span></div>
         <div class="session-scoreboard">
           <span :class="{ active: sessionStreak > 1 }" :title="t('streakLabel')">✦ {{ sessionStreak }}</span>
@@ -176,7 +177,7 @@ onBeforeUnmount(clearAdvanceTimer)
       <p>{{ t('resultText') }}</p>
       <strong class="result-score">{{ correctCount }} / {{ questions.length }}</strong>
       <div class="result-badges"><span>✦ {{ points }} {{ t('pointsLabel') }}</span><span>↗ {{ t('bestStreak') }}: {{ bestSessionStreak }}</span></div>
-      <div class="result-actions"><button class="primary-button" @click="restart">{{ t('retry') }}</button><button class="secondary-button" @click="router.push('/')">{{ t('home') }}</button></div>
+      <div class="result-actions"><button class="primary-button" @click="restart">{{ t('retry') }}</button><button class="secondary-button" @click="router.push(azbukaPath('/'))">{{ t('home') }}</button></div>
     </section>
   </main>
 </template>

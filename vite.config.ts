@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -6,6 +7,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     vue(),
+    {
+      name: 'shared-azbuka-font-license',
+      generateBundle() {
+        this.emitFile({ type: 'asset', fileName: 'fonts/OFL-Ponomar.txt', source: readFileSync(new URL('./azbuka-web/public/fonts/OFL-Ponomar.txt', import.meta.url), 'utf8') })
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
@@ -43,6 +50,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        globPatterns: ['**/*.{js,css,html,png,svg,ttf,txt}'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
@@ -54,13 +62,14 @@ export default defineConfig({
     }),
   ],
   resolve: {
+    dedupe: ['vue', 'pinia', 'vue-router'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'azbuka-web/src/**/*.test.ts'],
     clearMocks: true,
   },
 })

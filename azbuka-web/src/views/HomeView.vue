@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { azbukaPath, azbukaIcon } from '../integration'
 import { computed } from 'vue'
-import { letters } from '@/data/letters'
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
-import { localDateKey } from '@/domain/date'
-import { localizedText } from '@/domain/types'
-import SlavonicClock from '@/components/SlavonicClock.vue'
+import { letters } from '../data/letters'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
+import { localDateKey } from '../domain/date'
+import { localizedText } from '../domain/types'
+import SlavonicClock from '../components/SlavonicClock.vue'
 
 const profileStore = useProfileStore()
 const { t } = useI18n()
@@ -23,25 +24,14 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
 <template>
   <main class="page home-page">
     <header class="topbar">
-      <div class="brand-mark"><img src="/icon.svg" alt="" /></div>
+      <div class="brand-mark"><img :src="azbukaIcon()" alt="" /></div>
       <div><p class="brand-title">{{ t('appName') }}</p><p class="brand-subtitle">{{ t('appSubtitle') }}</p></div>
-      <RouterLink to="/profile" class="avatar" :aria-label="t('profile')">{{ profileStore.profile?.locale.toUpperCase() }}</RouterLink>
+      <RouterLink :to="azbukaPath('/profile')" class="avatar" :aria-label="t('profile')">{{ profileStore.profile?.locale.toUpperCase() }}</RouterLink>
     </header>
 
-    <section class="hero-card">
-      <div class="hero-copy">
-        <p class="eyebrow">{{ t('today') }}</p>
-        <h1>{{ t('welcome') }}</h1>
-        <p>{{ t('welcomeText') }}</p>
-        <div class="hero-actions">
-          <RouterLink :to="`/alphabet/${nextLetter.id}`" class="primary-button">{{ t('continue') }}</RouterLink>
-          <RouterLink to="/practice" class="secondary-button">{{ t('startPractice') }}</RouterLink>
-        </div>
-      </div>
-      <div class="hero-letter" aria-hidden="true">
-        <span>{{ nextLetter.glyph }}</span>
-        <small>{{ localizedText(nextLetter.name, profileStore.profile?.locale ?? 'cu') }}</small>
-      </div>
+    <section class="learning-actions">
+          <RouterLink :to="azbukaPath(`/alphabet/${nextLetter.id}`)" class="primary-button">{{ t('continue') }}</RouterLink>
+          <RouterLink :to="azbukaPath('/practice')" class="secondary-button">{{ t('startPractice') }}</RouterLink>
     </section>
 
     <SlavonicClock />
@@ -59,9 +49,9 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
     </section>
 
     <section class="preview-section">
-      <div class="section-heading"><div><p class="eyebrow">{{ t('alphabet') }}</p><h2>{{ t('continue') }}</h2></div><RouterLink to="/alphabet" class="text-link">{{ t('learn') }} →</RouterLink></div>
+      <div class="section-heading"><div><p class="eyebrow">{{ t('alphabet') }}</p><h2>{{ t('continue') }}</h2></div><RouterLink :to="azbukaPath('/alphabet')" class="text-link">{{ t('learn') }} →</RouterLink></div>
       <div class="letter-preview-row">
-        <RouterLink v-for="letter in letters.slice(0, 6)" :key="letter.id" :to="`/alphabet/${letter.id}`" class="mini-letter" :class="{ done: profileStore.profile?.learnedLetterIds.includes(letter.id) }">
+        <RouterLink v-for="letter in letters.slice(0, 6)" :key="letter.id" :to="azbukaPath(`/alphabet/${letter.id}`)" class="mini-letter" :class="{ done: profileStore.profile?.learnedLetterIds.includes(letter.id) }">
           <span>{{ letter.glyph }}</span><small>{{ localizedText(letter.name, profileStore.profile?.locale ?? 'cu') }}</small>
         </RouterLink>
       </div>

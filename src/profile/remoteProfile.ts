@@ -43,7 +43,7 @@ export const remoteProfileApi = {
   export(profileId: string, secret: string): Promise<unknown> {
     return request(`/v1/profiles/${encodeURIComponent(profileId)}/export`, {
       headers: { 'X-Profile-Secret': secret },
-    }, () => true)
+    }, (_value: unknown): _value is unknown => true)
   },
   async delete(profileId: string, secret: string): Promise<void> {
     const response = await fetch(`${apiBaseUrl}/v1/profiles/${encodeURIComponent(profileId)}`, {

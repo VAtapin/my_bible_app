@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
+import { azbukaPath } from '../integration'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
 
 const { t } = useI18n()
 const profileStore = useProfileStore()
@@ -17,7 +18,7 @@ const profileStore = useProfileStore()
     <section class="practice-setup card">
       <div class="setup-row"><div><strong>{{ t('namesMode') }}</strong><span>{{ t('signAndName') }}</span></div><span class="status-dot active">✓</span></div>
       <div class="setup-row"><div><strong>{{ profileStore.profile?.dailyGoal }} {{ t('questions') }}</strong><span>{{ t('noTimeLimit') }}</span></div><span class="status-dot">∞</span></div>
-      <RouterLink to="/practice/session" class="primary-button full">{{ t('start') }}</RouterLink>
+      <RouterLink :to="azbukaPath('/practice/session')" class="primary-button full">{{ t('start') }}</RouterLink>
     </section>
   </main>
 </template>

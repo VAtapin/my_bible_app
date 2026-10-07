@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import { azbukaPath } from '../integration'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AppIcon from '@/components/AppIcon.vue'
-import { letterById, letters } from '@/data/letters'
-import { letterExampleById } from '@/data/letterExamples'
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
-import { localizedText } from '@/domain/types'
+import AppIcon from '../components/AppIcon.vue'
+import { letterById, letters } from '../data/letters'
+import { letterExampleById } from '../data/letterExamples'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
+import { localizedText } from '../domain/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,7 +33,7 @@ const exampleSegments = computed(() => {
 
 <template>
   <main v-if="letter" class="page letter-page">
-    <button class="back-button" @click="router.back()"><AppIcon name="arrow" />{{ t('back') }}</button>
+    <button class="back-button" @click="router.push(azbukaPath('/alphabet'))"><AppIcon name="arrow" />{{ t('back') }}</button>
     <section class="letter-hero">
       <div class="large-glyph" :aria-label="localizedText(letter.name, locale)">{{ letter.glyph }}</div>
       <div class="letter-summary">
@@ -60,8 +61,8 @@ const exampleSegments = computed(() => {
       <button class="primary-button" :class="{ completed: isLearned }" @click="profileStore.markLearned(letter.id)">
         <AppIcon v-if="isLearned" name="check" />{{ isLearned ? t('learnedDone') : t('markLearned') }}
       </button>
-      <RouterLink :to="`/alphabet/${nextLetter.id}`" class="secondary-button">{{ t('nextLetter') }} →</RouterLink>
+      <RouterLink :to="azbukaPath(`/alphabet/${nextLetter.id}`)" class="secondary-button">{{ t('nextLetter') }} →</RouterLink>
     </div>
   </main>
-  <main v-else class="page"><RouterLink to="/alphabet" class="primary-button">{{ t('back') }}</RouterLink></main>
+  <main v-else class="page"><RouterLink :to="azbukaPath('/alphabet')" class="primary-button">{{ t('back') }}</RouterLink></main>
 </template>

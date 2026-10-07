@@ -1,4 +1,4 @@
-import type { Letter } from '@/domain/types'
+import type { Letter } from '../domain/types'
 
 export const letters: Letter[] = [
   { id: 'az', glyph: 'а', name: { ru: 'Аз', de: 'As' }, transliteration: 'a', meaning: { ru: 'я', de: 'ich' }, numericValue: 1, group: 'basic' },

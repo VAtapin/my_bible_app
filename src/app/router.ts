@@ -14,6 +14,11 @@ import ProfileSettingsView from '@/features/profile/ProfileSettingsView.vue'
 import PrivacyView from '@/features/legal/PrivacyView.vue'
 import DiagnosticsView from '@/features/diagnostics/DiagnosticsView.vue'
 import EducationView from '@/features/education/EducationView.vue'
+import MoreView from '@/features/profile/MoreView.vue'
+import { configureAzbukaIntegration } from '../../azbuka-web/src/integration'
+import { azbukaRoutes } from '../../azbuka-web/src/routes'
+
+configureAzbukaIntegration('/education/azbuka')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -95,10 +100,16 @@ export const router = createRouter({
       name: 'diagnostics',
       component: DiagnosticsView,
     },
+    { path: '/more', name: 'more', component: MoreView },
     {
       path: '/education',
       name: 'education',
       component: EducationView,
+    },
+    {
+      path: '/education/azbuka',
+      component: () => import('@/features/education/AzbukaLayout.vue'),
+      children: azbukaRoutes.map((route) => ({ ...route, path: route.path.replace(/^\//, ''), name: `azbuka-${String(route.name)}` })),
     },
     {
       path: '/:pathMatch(.*)*',

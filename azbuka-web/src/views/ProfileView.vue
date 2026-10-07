@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { azbukaIcon } from '../integration'
 import { ref } from 'vue'
-import type { Locale } from '@/domain/types'
-import { letters } from '@/data/letters'
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
+import type { Locale } from '../domain/types'
+import { letters } from '../data/letters'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
 
 const { t } = useI18n()
 const profileStore = useProfileStore()
@@ -41,7 +42,7 @@ const resetProgress = async () => {
         <label>{{ t('goal') }}</label>
         <div class="segmented"><button v-for="goal in [5, 10, 15]" :key="goal" :class="{ active: profileStore.profile?.dailyGoal === goal }" @click="profileStore.changeGoal(goal)">{{ goal }}</button></div>
       </div>
-      <div class="install-banner"><img src="/icon.svg" alt="" /><div><strong>{{ t('install') }}</strong><span>{{ t('installText') }}</span></div></div>
+      <div class="install-banner"><img :src="azbukaIcon()" alt="" /><div><strong>{{ t('install') }}</strong><span>{{ t('installText') }}</span></div></div>
       <button class="danger-button" @click="resetProgress">{{ resetArmed ? t('resetConfirm') : t('reset') }}</button>
     </section>
   </main>

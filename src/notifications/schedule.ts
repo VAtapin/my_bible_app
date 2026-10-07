@@ -34,7 +34,7 @@ export function buildRollingSchedule(
       const at = localDateTime(date, preference.time)
       if (at <= now) continue
       const info = categoryInfo[category]
-      notifications.push({
+      const notification: LocalNotificationSchema & { isExactNotification: boolean } = {
         id: notificationId(date, info.id),
         title: info.title,
         body: info.body,
@@ -42,7 +42,8 @@ export function buildRollingSchedule(
         isExactNotification: false,
         autoCancel: true,
         extra: { source: 'bible-desktop-schedule', category, route: info.route, date },
-      })
+      }
+      notifications.push(notification)
     }
   }
 

@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
-import type { Locale } from '@/domain/types'
+import { isAzbukaEmbedded } from './integration'
+import type { Locale } from './domain/types'
 
 const messages = {
   cu: {
@@ -142,8 +143,10 @@ export const useI18n = () => {
   const locale = computed(() => activeLocale.value)
   const setLocale = (next: Locale) => {
     activeLocale.value = next
-    document.documentElement.lang = next
-    document.title = messages[next].appName
+    if (!isAzbukaEmbedded()) {
+      document.documentElement.lang = next
+      document.title = messages[next].appName
+    }
   }
   return { locale, setLocale, t }
 }

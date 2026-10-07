@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from '@/i18n'
+import { useProfileStore } from '@/stores/profileStore'
+import { educationSettings } from '@/profile/configuration'
 
 withDefaults(defineProps<{
   showNavigation?: boolean
@@ -14,12 +16,16 @@ withDefaults(defineProps<{
 const route = useRoute()
 const { messages: text } = useI18n()
 const isOnline = ref(navigator.onLine)
+const profile = useProfileStore()
+const hasReading = computed(() => profile.configuration?.sections.includes('bible'))
+const hasEducation = computed(() => educationSettings(profile.configuration).pluginIds.length > 0)
 
 function updateConnectionStatus(): void {
   isOnline.value = navigator.onLine
 }
 
 onMounted(() => {
+  if (!profile.loaded) profile.load()
   window.addEventListener('online', updateConnectionStatus)
   window.addEventListener('offline', updateConnectionStatus)
 })
@@ -58,13 +64,16 @@ onUnmounted(() => {
         <img src="/app-icons/calendar.png" alt="" />
         <span>{{ text.navigation.today }}</span>
       </RouterLink>
-      <RouterLink to="/reader" :class="{ active: route.path === '/reader' }">
+      <RouterLink v-if="hasReading" to="/reader" :class="{ active: route.path === '/reader' }">
         <img src="/app-icons/library.png" alt="" />
         <span>{{ text.navigation.reading }}</span>
       </RouterLink>
-      <RouterLink to="/setup/manual?edit=1" :class="{ active: route.path.startsWith('/setup') }">
+      <RouterLink v-if="hasEducation" to="/education" :class="{ active: route.path.startsWith('/education') }">
+        <img src="/app-icons/library.png" alt="" /><span>{{ text.navigation.education }}</span>
+      </RouterLink>
+      <RouterLink to="/more" :class="{ active: ['/more', '/profile', '/storage', '/notifications', '/diagnostics'].includes(route.path) || route.path.startsWith('/setup') }">
         <img src="/app-icons/setup.png" alt="" />
-        <span>{{ text.navigation.settings }}</span>
+        <span>{{ text.navigation.more }}</span>
       </RouterLink>
     </nav>
   </div>

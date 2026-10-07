@@ -1,16 +1,5 @@
-export type LearningApp = {
-  id: 'azbuka'
-  icon: string
-  launch:
-    | { type: 'standalone'; href: string }
-    | { type: 'plugin'; route: string }
-    | { type: 'bot'; href: string }
-}
+import type { EducationPluginId } from '@/profile/configuration'
 
-export const learningApps: LearningApp[] = [
-  {
-    id: 'azbuka',
-    icon: '/app-icons/library.png',
-    launch: { type: 'standalone', href: 'https://azbuka.bible-desktop.com/' },
-  },
+export const learningApps: Array<{ id: EducationPluginId; icon: string; route: string }> = [
+  { id: 'azbuka', icon: '/app-icons/library.png', route: '/education/azbuka' },
 ]

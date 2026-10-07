@@ -1,4 +1,4 @@
-import { letters } from '@/data/letters'
+import { letters } from '../data/letters'
 import { localizedText, type ExerciseKind, type ExerciseQuestion, type Letter, type Locale } from './types'
 
 const shuffle = <T>(items: T[], random: () => number): T[] => {

@@ -9,6 +9,9 @@ import { languageSwitchUrl, type InterfaceLanguage } from '@/i18n/locale'
 import {
   createConfiguration,
   sectionsForPreset,
+  defaultCalendarHome,
+  educationSettings,
+  type EducationPluginId,
   type AppSectionId,
   type CalendarLevel,
   type PresetId,
@@ -17,6 +20,8 @@ import {
 import { useProfileStore } from '@/stores/profileStore'
 import { recordProductMetric } from '@/diagnostics/productDiagnostics'
 import { initialSetupStep, stepAfterPreset, stepBeforeSummary } from './setupFlow'
+import EducationOptions from './EducationOptions.vue'
+import CalendarOptions from './CalendarOptions.vue'
 
 const props = defineProps<{ mode: SetupMode }>()
 const route = useRoute()
@@ -39,12 +44,18 @@ const canons = ref(false)
 const horologion = ref(false)
 const prayerLanguageCodes = ref<string[]>([interfaceLanguage.value])
 const calendarLevel = ref<CalendarLevel>('major')
+const calendarHome = ref(defaultCalendarHome())
+const educationPluginIds = ref<EducationPluginId[]>([])
+const showEducationClock = ref(true)
+const showEducationProgress = ref(true)
 const notificationsEnabled = ref(false)
 const notificationTime = ref('08:00')
 const message = ref('')
 
 const editing = computed(() => route.query.edit === '1')
-const selectedSectionLabels = computed(() => sections.value.map((id) => text.value.sections[id].title))
+const selectedSectionLabels = computed(() => sections.value.flatMap((id) => id === 'study'
+  ? educationPluginIds.value.map((pluginId) => text.value.education.apps[pluginId].title)
+  : [text.value.sections[id].title]))
 const selectedTranslationNames = computed(() => translationCodes.value.map((code) => (
   translations.value.find((item) => item.code === code)?.name ?? code
 )))
@@ -87,6 +98,11 @@ onMounted(async () => {
     horologion.value = existing.prayers.horologion
     prayerLanguageCodes.value = [...existing.prayers.languageCodes]
     calendarLevel.value = existing.calendar.level
+    calendarHome.value = { ...(existing.calendar.home ?? defaultCalendarHome()) }
+    const education = educationSettings(existing)
+    educationPluginIds.value = [...education.pluginIds]
+    showEducationClock.value = education.showClock
+    showEducationProgress.value = education.showProgress
     notificationsEnabled.value = existing.notifications.enabled
     notificationTime.value = existing.notifications.time
     step.value = 'details'
@@ -124,6 +140,7 @@ function changeInterfaceLanguage(value: InterfaceLanguage): void {
 function choosePreset(value: PresetId): void {
   preset.value = value
   sections.value = sectionsForPreset(value)
+  educationPluginIds.value = value === 'education' ? ['azbuka'] : []
   step.value = stepAfterPreset(props.mode)
 }
 
@@ -151,6 +168,10 @@ function togglePrayerLanguage(code: string): void {
 }
 
 function showSummary(): void {
+  if (sections.value.includes('study') && !educationPluginIds.value.length) {
+    message.value = text.value.education.selectRequired
+    return
+  }
   if (sections.value.length === 0) {
     message.value = text.value.setup.sectionRequired
     return
@@ -175,6 +196,10 @@ function save(): void {
       horologion: horologion.value,
       prayerLanguageCodes: prayerLanguageCodes.value,
       calendarLevel: calendarLevel.value,
+      calendarHome: calendarHome.value,
+      educationPluginIds: educationPluginIds.value,
+      showEducationClock: showEducationClock.value,
+      showEducationProgress: showEducationProgress.value,
       notificationsEnabled: notificationsEnabled.value,
       notificationTime: notificationTime.value,
     }, profile.configuration)
@@ -182,7 +207,9 @@ function save(): void {
     if (!editing.value) recordProductMetric('constructor_completed')
     void router.push(notificationsEnabled.value ? '/notifications?onboarding=1' : '/today')
   } catch (error) {
-    message.value = error instanceof Error && error.message === 'sections-required'
+    message.value = error instanceof Error && error.message === 'education-required'
+      ? text.value.education.selectRequired
+      : error instanceof Error && error.message === 'sections-required'
       ? text.value.setup.sectionRequired
       : text.value.unknownError
   }
@@ -283,17 +310,8 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
         </div>
       </div>
 
-      <div v-if="sections.includes('calendar')" class="option-group">
-        <h3>{{ text.setup.calendarTitle }}</h3>
-        <label class="option-row radio-row">
-          <input v-model="calendarLevel" type="radio" value="major" />
-          <span>{{ text.setup.calendarMajor }}</span>
-        </label>
-        <label class="option-row radio-row">
-          <input v-model="calendarLevel" type="radio" value="all" />
-          <span>{{ text.setup.calendarAll }}</span>
-        </label>
-      </div>
+      <CalendarOptions v-if="sections.includes('calendar')" v-model:level="calendarLevel" v-model:home="calendarHome" />
+      <EducationOptions v-if="sections.includes('study')" v-model:plugin-ids="educationPluginIds" v-model:show-clock="showEducationClock" v-model:show-progress="showEducationProgress" />
 
       <div class="option-group">
         <h3>{{ text.setup.notificationsTitle }}</h3>
@@ -343,6 +361,11 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
         <div v-if="sections.includes('prayers')"><dt>{{ text.setup.summaryPrayerContent }}</dt><dd>{{ selectedPrayerLabels.join(', ') }}</dd></div>
         <div><dt>{{ text.setup.summaryNotifications }}</dt><dd>{{ notificationsEnabled ? notificationTime : text.setup.disabled }}</dd></div>
       </dl>
+      <template v-if="mode === 'quick'">
+        <CalendarOptions v-if="sections.includes('calendar')" v-model:level="calendarLevel" v-model:home="calendarHome" />
+        <EducationOptions v-if="sections.includes('study')" v-model:plugin-ids="educationPluginIds" v-model:show-clock="showEducationClock" v-model:show-progress="showEducationProgress" />
+      </template>
+      <p v-if="message" class="form-error" role="alert">{{ message }}</p>
       <button class="primary-action" type="button" @click="save">{{ editing ? text.setup.save : text.setup.create }}</button>
       <button class="text-action" type="button" @click="step = stepBeforeSummary(mode)">
         {{ mode === 'quick' ? text.setup.changePreset : text.setup.change }}

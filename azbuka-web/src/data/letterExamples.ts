@@ -1,4 +1,4 @@
-import type { LocalizedText } from '@/domain/types'
+import type { LocalizedText } from '../domain/types'
 
 export interface LetterExample {
   text: string

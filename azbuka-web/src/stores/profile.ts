@@ -1,11 +1,11 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { Locale, UserProfile } from '@/domain/types'
-import { clearProfile, defaultProfile, loadProfile, saveProfile } from '@/storage/profileRepository'
-import { useI18n } from '@/i18n'
-import { localDateKey, previousLocalDateKey } from '@/domain/date'
+import type { Locale, UserProfile } from '../domain/types'
+import { clearProfile, defaultProfile, loadProfile, saveProfile } from '../storage/profileRepository'
+import { useI18n } from '../i18n'
+import { localDateKey, previousLocalDateKey } from '../domain/date'
 
-export const useProfileStore = defineStore('profile', () => {
+export const useProfileStore = defineStore('azbuka-profile', () => {
   const profile = ref<UserProfile | null>(null)
   const initialized = ref(false)
   const { setLocale } = useI18n()

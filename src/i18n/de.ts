@@ -4,7 +4,7 @@ import type { ru } from './ru'
 export const de: MessageShape<typeof ru> = {
   brand: 'Bible Desktop', brandSubtitle: 'Meine App', online: 'Online', offline: 'Offline',
   translationName: 'Bibelübersetzung',
-  navigation: { label: 'Hauptnavigation', back: 'Zurück', today: 'Heute', reading: 'Lesen', settings: 'Einrichten' },
+  navigation: { label: 'Hauptnavigation', back: 'Zurück', today: 'Heute', reading: 'Lesen', settings: 'Einrichten', education: 'Lernen', more: 'Mehr' },
   welcome: {
     eyebrow: 'Persönliche App', title: 'Mein Bible Desktop',
     intro: 'Stellen Sie Ihre App so zusammen, dass sie nur das enthält, was Sie wirklich nutzen.',
@@ -38,6 +38,8 @@ export const de: MessageShape<typeof ru> = {
     prayerBook: 'Gebetbuch', akathists: 'Akathiste', canons: 'Kanones', horologion: 'Stundengebet',
     calendarTitle: 'Kirchenkalender', calendarMajor: 'Hochfeste und wichtige Gedenktage',
     calendarAll: 'Alle verfügbaren Gedenktage', notificationsTitle: 'Erinnerungen',
+    homeDisplay: 'Auf der Startseite',
+    calendarHome: { oldStyle: 'Datum nach altem Stil', fasting: 'Fasten und Mahlzeiten', commemorations: 'Feste und Gedenktage', readings: 'Tageslesungen', compact: 'Kurze Übersicht' },
     notificationsToggle: 'Täglich erinnern',
     notificationsHint: 'Die Systemberechtigung wird erst nach dem Erstellen angefragt', notificationTime: 'Uhrzeit',
     sectionRequired: 'Wählen Sie mindestens einen Bereich.', continue: 'Zusammenfassung anzeigen',
@@ -70,9 +72,15 @@ export const de: MessageShape<typeof ru> = {
     notificationsDescription: 'Kategorien, Uhrzeiten und Berechtigungen', profileTitle: 'Profil und Übertragung',
     profileDescription: 'Link, Synchronisierung, Export und Löschen', diagnosticsTitle: 'Diagnose',
     diagnosticsDescription: 'Anonyme lokale Übersicht für den Support',
+    calendarDay: 'Kirchentag', details: 'Details', allCommemorations: 'Alle Gedenktage', continue: 'Fortsetzen',
+    storageTitle: 'Offline-Speicher', storageDescription: 'Gespeicherte Texte und Lesezeichen', setupDescription: 'Bereiche, Apps und Startseite',
   },
   education: {
     eyebrow: 'Lernen', title: 'Lern-Apps',
+    empty: 'Wählen Sie eine Lern-App in den Einstellungen.', selectRequired: 'Wählen Sie mindestens eine Lern-App.',
+    showClock: 'Uhr mit Sekunden auf der Startseite', showProgress: 'Lernfortschritt auf der Startseite',
+    clockTitle: 'Kirchenslawische Uhr', progress: '{count} von {total} Buchstaben gelernt', goal: 'Heute: {count} von {total} Aufgaben',
+    loadFailed: 'Das Lernprofil konnte nicht geöffnet werden.', retry: 'Erneut versuchen',
     intro: 'Eigenständige Apps und Werkzeuge im Ökosystem Biblia App.',
     open: 'App öffnen',
     types: { standalone: 'Eigenständige App', plugin: 'Plugin', bot: 'Bot' },

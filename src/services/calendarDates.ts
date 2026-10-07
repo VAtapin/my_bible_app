@@ -1,4 +1,4 @@
-export function calendarDateInTimeZone(date = new Date(), timeZone = 'Europe/Berlin'): string {
+export function calendarDateInTimeZone(date = new Date(), timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',

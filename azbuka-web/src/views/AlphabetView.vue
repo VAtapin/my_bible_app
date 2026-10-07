@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { azbukaPath } from '../integration'
 import { computed, ref } from 'vue'
-import { letters } from '@/data/letters'
-import { useI18n } from '@/i18n'
-import { useProfileStore } from '@/stores/profile'
-import { localizedText } from '@/domain/types'
+import { letters } from '../data/letters'
+import { useI18n } from '../i18n'
+import { useProfileStore } from '../stores/profile'
+import { localizedText } from '../domain/types'
 
 const { t } = useI18n()
 const profileStore = useProfileStore()
@@ -25,7 +26,7 @@ const locale = computed(() => profileStore.profile?.locale ?? 'cu')
       <button :class="{ active: filter === 'historic' }" @click="filter = 'historic'">{{ t('filterHistoric') }}</button>
     </div>
     <section class="alphabet-grid">
-      <RouterLink v-for="letter in visibleLetters" :key="letter.id" :to="`/alphabet/${letter.id}`" class="letter-tile" :class="{ learned: profileStore.profile?.learnedLetterIds.includes(letter.id) }" :aria-label="`${localizedText(letter.name, locale)} — ${letter.glyph}`">
+      <RouterLink v-for="letter in visibleLetters" :key="letter.id" :to="azbukaPath(`/alphabet/${letter.id}`)" class="letter-tile" :class="{ learned: profileStore.profile?.learnedLetterIds.includes(letter.id) }" :aria-label="`${localizedText(letter.name, locale)} — ${letter.glyph}`">
         <span class="tile-check" v-if="profileStore.profile?.learnedLetterIds.includes(letter.id)">✓</span>
         <strong>{{ letter.glyph }}</strong>
         <span>{{ localizedText(letter.name, locale) }}</span>

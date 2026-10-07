@@ -1,17 +1,23 @@
 {
   "compilerOptions": {
     "composite": true,
+    "tsBuildInfoFile": "./node_modules/.cache/my-bible-app.tsbuildinfo",
     "target": "ES2022",
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] },
+    "ignoreDeprecations": "6.0",
+    "skipLibCheck": true,
     "strict": true,
     "jsx": "preserve",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client", "vite-plugin-pwa/client", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "azbuka-web/src/**/*.ts", "azbuka-web/src/**/*.vue"],
+  "exclude": ["**/*.test.ts"]
 }

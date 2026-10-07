@@ -1,4 +1,4 @@
-import type { UserProfile } from '@/domain/types'
+import type { UserProfile } from '../domain/types'
 
 const DATABASE_NAME = 'azbuka-web'
 const DATABASE_VERSION = 1
