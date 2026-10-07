@@ -5,6 +5,8 @@
 - PWA на Vue 3/TypeScript остаётся одним самостоятельным браузерным клиентом
   для `https://biblia-app.ru`, `https://biblia-app.de`,
   `https://bible-app.de` и `https://bible-app.online`.
+- Поддомен `https://my.bible-desktop.com` удалён и больше не используется;
+  актуальные адреса PWA перечислены выше.
 - В `mobile/` развивается отдельное Kotlin Multiplatform-приложение без WebView:
   Jetpack Compose для Android, SwiftUI для iOS, общий Ktor API-клиент и модели.
 - Реализован фирменный RU/DE onboarding по согласованному UI: быстрый и ручной
