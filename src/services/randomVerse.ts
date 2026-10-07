@@ -10,12 +10,12 @@ export function chooseVerse(chapter: BibleChapter, random = Math.random) {
   return {
     text: verse.plain_text,
     reference: `${chapter.book.short_name?.split(/[\s,;|]+/)[0] || chapter.book.name} ${chapter.chapter.number}:${verse.number}`,
-    route: { path: '/reader', query: { translation: chapter.translation.code, book: chapter.book.slug, chapter: String(chapter.chapter.number) } },
+    route: { path: '/reader', query: { translation: chapter.translation.code, book: chapter.book.slug, chapter: String(chapter.chapter.number), verse: String(verse.number) } },
   }
 }
 
 export async function loadRandomVerse(service: ChapterService, translation: string, random = Math.random) {
-  const passages = [{ book: 'psalms', chapter: 22 }, { book: 'john', chapter: 1 }, { book: 'matthew', chapter: 6 }, { book: '1-corinthians', chapter: 13 }]
+  const passages = [{ book: 'psalms', chapter: 22 }, { book: 'john', chapter: 1 }, { book: 'matthew', chapter: 6 }, { book: '1corinthians', chapter: 13 }]
   const target = passages[Math.min(passages.length - 1, Math.floor(random() * passages.length))]!
   let chapter = await service.readOffline(translation, target.book, target.chapter)
   if (!chapter) {

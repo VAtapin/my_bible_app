@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import type { BibleBook, BibleChapter, TranslationSummary } from '@/api/contracts'
 import { bibleApi } from '@/api'
@@ -14,6 +14,8 @@ import { useProfileStore } from '@/stores/profileStore'
 import { formatMessage, useI18n } from '@/i18n'
 import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
+import VerseActions from './VerseActions.vue'
+import { createLongPress, verseTarget } from '@/services/readerActions'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -26,22 +28,29 @@ const appearance = useAppearance()
 const selectedVerse = ref<number>()
 const fontSize = ref(19)
 const pickerOpen = ref(true)
+const actions = ref<InstanceType<typeof VerseActions>>()
+const readingElement = ref<HTMLElement>()
+let pressedVerse: number | undefined
+const longPress = createLongPress(() => { if (pressedVerse !== undefined) void openVerseMenu(pressedVerse) })
+onUnmounted(() => longPress.cancel())
+async function openVerseMenu(number: number, event?: MouseEvent): Promise<void> {
+  selectedVerse.value = number
+  const selection = window.getSelection()
+  const target = event?.currentTarget as HTMLElement | undefined
+  const snippet = target && selection?.anchorNode && selection.focusNode && target.contains(selection.anchorNode) && target.contains(selection.focusNode) ? selection.toString() : ''
+  await nextTick()
+  await actions.value?.open('menu', snippet)
+}
+function startLongPress(event: PointerEvent, number: number): void {
+  if (event.pointerType === 'mouse') return
+  pressedVerse = number
+  longPress.start(event.clientX, event.clientY)
+}
 function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
 async function bookmarkSelected(): Promise<void> {
   const verse = chapter.value?.verses.find((item) => item.number === selectedVerse.value)
   if (verse) await run(() => toggleBookmark(verse))
   else message.value = text.value.readerActions.selectVerse
-}
-async function shareReading(): Promise<void> {
-  if (!chapter.value) return
-  const url = new URL('/reader', window.location.origin)
-  url.search = new URLSearchParams({ translation: translationCode.value, book: bookSlug.value, chapter: String(chapterNumber.value) }).toString()
-  const verse = chapter.value.verses.find((item) => item.number === selectedVerse.value)
-  const title = `${chapter.value.book.name} ${chapterNumber.value}${verse ? `:${verse.number}` : ''}`
-  try {
-    if (navigator.share) await navigator.share({ title, text: verse?.plain_text, url: url.href })
-    else { await navigator.clipboard.writeText(url.href); message.value = text.value.readerActions.shared }
-  } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) message.value = text.value.readerActions.shareFailed }
 }
 
 const translations = ref<TranslationSummary[]>([])
@@ -93,7 +102,7 @@ onMounted(async () => {
       : savedLocation?.chapter ?? 1
     const hasTarget = Boolean(requestedBook || savedLocation)
     message.value = hasTarget ? text.value.reader.locationRestored : text.value.reader.chooseBook
-    if (hasTarget) await openChapter()
+    if (hasTarget) await openChapter(route.query.verse)
   } catch (error) {
     message.value = errorMessage(error)
   } finally {
@@ -129,7 +138,7 @@ function changeBook(): void {
   chapter.value = undefined
 }
 
-async function openChapter(): Promise<void> {
+async function openChapter(target?: unknown): Promise<void> {
   selectedVerse.value = undefined
   const book = selectedBook.value
   if (!book || chapterNumber.value < 1 || chapterNumber.value > book.chapters_count) {
@@ -147,6 +156,9 @@ async function openChapter(): Promise<void> {
       message.value = text.value.reader.openedOffline
     }
     pickerOpen.value = false
+    selectedVerse.value = verseTarget(target, chapter.value.verses.map((item) => item.number))
+    await nextTick()
+    if (selectedVerse.value !== undefined) readingElement.value?.querySelector(`[data-verse="${selectedVerse.value}"]`)?.scrollIntoView({ block: 'center', behavior: 'instant' })
     await libraryRepository.saveReadingLocation({
       translationCode: translationCode.value,
       bookSlug: bookSlug.value,
@@ -155,6 +167,21 @@ async function openChapter(): Promise<void> {
     })
   })
 }
+
+watch(() => route.query, async (query) => {
+  const requestedBook = query.book
+  const requestedTranslation = query.translation
+  if (typeof requestedBook !== 'string' || !translationCode.value) return
+  longPress.cancel()
+  await run(async () => {
+    if (typeof requestedTranslation === 'string' && requestedTranslation !== translationCode.value) { translationCode.value = requestedTranslation; await loadBooks(requestedBook) }
+    if (!books.value.some((book) => book.slug === requestedBook)) return
+    bookSlug.value = requestedBook
+    const number = Number(query.chapter)
+    chapterNumber.value = Number.isInteger(number) && number > 0 ? number : 1
+    await openChapter(query.verse)
+  })
+})
 
 async function moveChapter(offset: number): Promise<void> {
   const book = selectedBook.value
@@ -292,7 +319,7 @@ function formatDate(value: string): string {
     </details>
     <p v-if="message && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
 
-    <article v-if="chapter" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
+    <article v-if="chapter" ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
       <header class="reading-header">
         <button type="button" :disabled="busy || chapterNumber <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
         <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}<small>{{ text.reader.chapterLabel }} {{ chapter.chapter.number }}</small></h2></span>
@@ -300,14 +327,15 @@ function formatDate(value: string): string {
         <button type="button" :disabled="busy || chapterNumber >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
       <ol>
-        <li v-for="verse in chapter.verses" :key="verse.id" :class="{ 'selected-verse': selectedVerse === verse.number }">
+        <li v-for="verse in chapter.verses" :key="verse.id" :data-verse="verse.number" :class="{ 'selected-verse': selectedVerse === verse.number }">
           <button class="bookmark-button" :class="{ active: bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) }" type="button" :aria-label="formatMessage(text.reader.bookmark, { verse: verse.number })" @click="toggleBookmark(verse)">
             {{ bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) ? '★' : '☆' }}
           </button>
-          <button class="verse-text" type="button" :aria-pressed="selectedVerse === verse.number" @click="selectedVerse = verse.number"><span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text }}</button>
+          <button class="verse-text" type="button" :aria-pressed="selectedVerse === verse.number" @click="selectedVerse = verse.number" @contextmenu.prevent="openVerseMenu(verse.number, $event)" @pointerdown="startLongPress($event, verse.number)" @pointermove="longPress.move($event.clientX, $event.clientY)" @pointerup="longPress.cancel()" @pointercancel="longPress.cancel()" @pointerleave="longPress.cancel()"><span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text }}</button>
         </li>
       </ol>
     </article>
+    <VerseActions ref="actions" :chapter="chapter" :selected-verse="selectedVerse" @message="message = $event" />
     <template #footer>
       <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">
         <template v-if="appearance.theme.value === 'warm'">
@@ -316,12 +344,12 @@ function formatDate(value: string): string {
         </template>
         <template v-else>
           <button type="button" :disabled="busy || !chapter" @click="bookmarkSelected"><AppIcon name="bookmark" /><span>{{ text.readerActions.bookmark }}</span></button>
-          <button type="button" disabled :title="text.readerActions.noteUnavailable"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
+          <button type="button" :disabled="!chapter" @click="actions?.open('note')"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
           <button v-if="appearance.theme.value === 'classic'" type="button" disabled :title="text.readerActions.audioUnavailable"><AppIcon name="audio" /><span>{{ text.readerActions.audio }}</span></button>
         </template>
-        <button type="button" :disabled="!chapter" @click="shareReading"><AppIcon name="share" /><span>{{ text.readerActions.share }}</span></button>
-        <button v-if="appearance.theme.value === 'warm'" type="button" disabled :title="text.readerActions.noteUnavailable"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
-        <RouterLink v-else to="/more"><AppIcon name="more" /><span>{{ text.navigation.more }}</span></RouterLink>
+        <button type="button" :disabled="!chapter" @click="actions?.open('share')"><AppIcon name="share" /><span>{{ text.readerActions.share }}</span></button>
+        <button v-if="appearance.theme.value === 'warm'" type="button" :disabled="!chapter" @click="actions?.open('note')"><AppIcon name="note" /><span>{{ text.readerActions.note }}</span></button>
+        <button type="button" :disabled="!chapter" @click="actions?.open()"><AppIcon name="more" /><span>{{ text.navigation.more }}</span></button>
       </nav>
     </template>
   </MobileShell>

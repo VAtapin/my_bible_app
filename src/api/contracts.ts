@@ -166,3 +166,14 @@ export interface CalendarIcon {
   calendar_record_ids?: string[]
 }
 export interface CalendarIconDetail { id: number; calendarRecordIds: string[] }
+
+export interface VerseSearchResult {
+  verse_id: number
+  reference: string
+  translation: { code: string }
+  book: { slug: string }
+  chapter_number: number
+  verse_number: number
+  snippet: string
+}
+export interface VerseSearchResponse { results: VerseSearchResult[] }

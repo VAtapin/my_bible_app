@@ -12,6 +12,10 @@ export const de: MessageShape<typeof ru> = {
     warm: 'Warm', warmDescription: 'Cremefarben mit grünen und terrakottafarbenen Akzenten',
   },
   readerActions: {
+    actions: 'Versaktionen', search: 'In der Bibel suchen', addNote: 'Notiz hinzufügen', copyLink: 'Link kopieren',
+    saveNote: 'Notiz speichern', noteSaved: 'Notiz auf dem Gerät gespeichert.', noteFailed: 'Die Notiz konnte nicht gespeichert oder geöffnet werden.',
+    noteLocal: 'Die Notiz bleibt nur auf diesem Gerät.', searchHint: 'Wörter oder Bibelstelle', find: 'Suchen',
+    noResults: 'Keine Ergebnisse.', searchFailed: 'Suche nicht verfügbar. Bitte die API-Verbindung prüfen.',
     bookmark: 'Lesezeichen', note: 'Notiz', audio: 'Audio', share: 'Teilen', size: 'Größe', theme: 'Thema',
     selectVerse: 'Wählen Sie einen Vers durch Antippen des Textes.',
     shared: 'Link kopiert.', shareFailed: 'Teilen fehlgeschlagen. Bitte erneut versuchen.',
@@ -189,9 +193,9 @@ export const de: MessageShape<typeof ru> = {
   },
   privacy: {
     eyebrow: 'Datenschutz', title: 'Datenschutzerklärung', updated: 'Letzte Aktualisierung: 18. September 2026.',
-    dataTitle: 'Welche Daten die App verwendet', dataText: 'Auf dem Gerät werden ausgewählte Bereiche, Erinnerungseinstellungen, geladene Texte, Lesestelle, Lesezeichen und zusammengefasste Diagnosezähler gespeichert. Inhalte von Bibellesen, Gebeten und Suchanfragen werden nicht in der Analyse erfasst.',
+    dataTitle: 'Welche Daten die App verwendet', dataText: 'Auf dem Gerät werden ausgewählte Bereiche, Erinnerungseinstellungen, geladene Texte, Lesestelle, Lesezeichen, Versnotizen und zusammengefasste Diagnosezähler gespeichert. Inhalte von Bibellesen, Gebeten, Notizen und Suchanfragen werden nicht in der Analyse erfasst.',
     profileTitle: 'Persönliches Profil', profileText: 'Wenn Sie freiwillig einen persönlichen Link erstellen, speichert Bible Desktop die App-Konfiguration, eine zufällige Profil-ID, die Revision und technische Zeitangaben. Das Link-Geheimnis liegt auf dem Server nur als Hash vor. Der Wiederherstellungscode wird nach der Nutzung ersetzt.',
-    localText: 'Geladene Bibeltexte, Lesezeichen und die lokale Diagnoseübersicht werden nicht an das Serverprofil übertragen.',
+    localText: 'Geladene Bibeltexte, Lesezeichen, Versnotizen und die lokale Diagnoseübersicht werden nicht an das Serverprofil übertragen.',
     notificationTitle: 'Benachrichtigungen und technische Daten', notificationText: 'Lokale Benachrichtigungen werden nach Ihrer Zustimmung auf dem Gerät erstellt. Bei später aktivierten Push-Nachrichten wird das Gerätetoken verschlüsselt auf dem Server gespeichert und kann widerrufen werden. Für Sicherheit und Fehlerbehebung können IP-Adresse und übliche technische Protokolle verarbeitet werden.',
     controlTitle: 'Daten verwalten', controlText: 'Unter „Profil und Übertragung“ können Sie die Serverkonfiguration exportieren sowie Serverprofil und lokale Konfiguration getrennt löschen. Geladene Inhalte und Lesezeichen werden unter „Offline“ verwaltet.',
     thirdTitle: 'Weitergabe an Dritte', thirdText: 'Die App verkauft keine Daten und enthält keine Werbe-SDKs. Apple und Google verarbeiten die für Installation und Systembenachrichtigungen notwendigen Plattformdaten nach ihren Regeln.',

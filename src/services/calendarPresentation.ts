@@ -15,5 +15,5 @@ export function fastingNote(event: CalendarEvent): string {
 export function calendarReadingLink(reading: CalendarReading) {
   const passage = reading.reading?.passages[0]
   const target = passage && readerTarget(passage.book, passage.start.chapter)
-  return target ? { path: '/reader', query: target } : undefined
+  return target ? { path: '/reader', query: { ...target, ...(passage?.start.verse ? { verse: String(passage.start.verse) } : {}) } } : undefined
 }

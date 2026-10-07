@@ -14,7 +14,7 @@ describe('shared calendar presentation', () => {
   })
   it('links parsed readings to the internal reader and leaves unknown references unlinked', () => {
     const reading: CalendarReading = { id: 'reading', type: 'gospel', title: 'Gospel', display_ref: 'Лк.4:1-15', passage_ref: '', date_rule_type: '', reading: { schemaVersion: 1, parseStatus: 'parsed', passages: [{ book: 'Luke', start: { chapter: 4, verse: 1 }, end: { chapter: 4, verse: 15 } }] } }
-    expect(calendarReadingLink(reading)).toEqual({ path: '/reader', query: { book: 'luke', chapter: '4' } })
+    expect(calendarReadingLink(reading)).toEqual({ path: '/reader', query: { book: 'luke', chapter: '4', verse: '1' } })
     expect(calendarReadingLink({ ...reading, reading: undefined })).toBeUndefined()
   })
 })

@@ -2,6 +2,16 @@ import { describe, expect, it, vi } from 'vitest'
 import { ApiError, createBibleApi } from './client'
 
 describe('Bible API client', () => {
+  it('searches the confirmed Bible API and validates links to exact result verses', async () => {
+    const result = { verse_id: 12, reference: 'Ин. 1:12', translation: { code: 'RST' }, book: { slug: 'john' }, chapter_number: 1, verse_number: 12, snippet: 'Слово' }
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: { results: [result] } })))
+    const api = createBibleApi({ baseUrl: 'https://example.test/api', fetcher })
+    expect((await api.searchVerses('Слово', 'RST')).results).toEqual([result])
+    const url = new URL(String(fetcher.mock.calls[0]?.[0]))
+    expect(url.pathname).toBe('/api/search/verses')
+    expect(url.searchParams.get('q')).toBe('Слово')
+    expect(url.searchParams.get('translation')).toBe('RST')
+  })
   it.each([undefined, [], [{ id: 1, title: 'Икона дня', image_url: 'https://example.test/icon.jpg', credit: null }]])('accepts calendar icons without breaking older calendar responses: %j', async (icons) => {
     const day = { date: '2026-10-07', old_style_date: '2026-09-24', pascha_date: '2026-04-12', liturgical_period: '', source: 'calendar', metadata: {}, events: [], fasting_events: [], readings: [], icons }
     const api = createBibleApi({ baseUrl: 'https://example.test/api', fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: day }))) })

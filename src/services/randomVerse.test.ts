@@ -15,7 +15,7 @@ function service(): ChapterService {
 }
 describe('real daily verses', () => {
   it('selects an actual verse with its reference and internal reader link', () => {
-    expect(chooseVerse(chapter, () => .9)).toEqual({ text: 'Текст 2', reference: 'Ин. 1:2', route: { path: '/reader', query: { translation: 'RST', book: 'john', chapter: '1' } } })
+    expect(chooseVerse(chapter, () => .9)).toEqual({ text: 'Текст 2', reference: 'Ин. 1:2', route: { path: '/reader', query: { translation: 'RST', book: 'john', chapter: '1', verse: '2' } } })
     expect(chooseVerse({ ...chapter, verses: [] })).toBeUndefined()
     expect(chooseVerse({ ...chapter, book: { ...chapter.book, short_name: 'Ин. Иоан. John Jn' } }, () => 0)?.reference).toBe('Ин. 1:1')
   })

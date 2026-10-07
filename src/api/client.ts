@@ -10,6 +10,7 @@ import type {
   PrayerDetail,
   PrayerSummary,
   TranslationSummary,
+  VerseSearchResponse,
 } from './contracts'
 
 export type ApiErrorKind = 'offline' | 'timeout' | 'http' | 'invalid-response'
@@ -36,6 +37,7 @@ export interface BibleApi {
   getLiturgicalVersion(slug: string, language: string, edition?: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
   getCalendarIcon(id: number): Promise<CalendarIconDetail>
+  searchVerses(query: string, translation: string): Promise<VerseSearchResponse>
 }
 
 interface ApiClientOptions {
@@ -124,6 +126,16 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
     getCalendarIcon(id) {
       return request<CalendarIconDetail>(`/calendar/icons/${id}`, (value): value is CalendarIconDetail => isRecord(value)
         && typeof value.id === 'number' && Array.isArray(value.calendarRecordIds) && value.calendarRecordIds.every((id) => typeof id === 'string'))
+    },
+    searchVerses(query, translation) {
+      const params = new URLSearchParams({ q: query, translation, limit: '30' })
+      return request<VerseSearchResponse>(`/search/verses?${params}`, (value): value is VerseSearchResponse => isRecord(value)
+        && Array.isArray(value.results) && value.results.every((item) => isRecord(item)
+          && typeof item.verse_id === 'number' && typeof item.reference === 'string'
+          && isRecord(item.translation) && typeof item.translation.code === 'string'
+          && isRecord(item.book) && typeof item.book.slug === 'string'
+          && typeof item.chapter_number === 'number' && typeof item.verse_number === 'number'
+          && typeof item.snippet === 'string'))
     },
   }
 }

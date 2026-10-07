@@ -91,6 +91,21 @@
 .section-selector button { min-height: 64px; padding-top: 10px; padding-bottom: 10px; }
 .verse-text { border: 0; padding: 0; color: inherit; background: none; font: inherit; line-height: inherit; text-align: left; }
 .selected-verse { background: #dceaf5; border-radius: 8px; }
+.verse-text { user-select: text; touch-action: pan-y; -webkit-touch-callout: none; }
+.verse-dialog { width: min(380px, 92vw); max-height: 85dvh; overflow: auto; margin: auto; padding: 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--ink); background: var(--white); }
+.verse-dialog::backdrop { background: #14253780; }
+.verse-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 14px; }
+.verse-dialog header button { width: 44px; height: 44px; border: 0; border-radius: 8px; font-size: 24px; background: var(--brand-surface); color: var(--ink); }
+.verse-menu-action { display: block; width: 100%; min-height: 44px; margin: 5px 0; padding: 10px 12px; text-align: left; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--white); }
+.verse-menu-action:disabled { opacity: .5; }
+.verse-dialog textarea { display: block; width: 100%; padding: 10px; margin: 8px 0; font-family: inherit; font-size: 16px; line-height: 1.5; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--white); resize: vertical; }
+.verse-dialog small { display: block; font-size: 11px; color: var(--muted); margin: 8px 0; }
+.bible-search-title { font-size: 24px; }
+.bible-search-form { display: flex; align-items: stretch; gap: 8px; margin-bottom: 16px; }
+.bible-search-form input { min-width: 0; flex: 1; }
+.bible-search-form .primary-action { width: auto; margin: 0; padding: 10px 16px; }
+.search-result { display: block; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); color: var(--ink); text-decoration: none; }
+.search-result p { font: 17px/1.5 Georgia, serif; margin: 8px 0 0; }
 .prayer-reading .prayer-content, .prayer-reading.liturgical-reading > p:not(.eyebrow, .source-credit) { font: 19px/1.7 Georgia, 'Times New Roman', serif; white-space: pre-line; overflow-wrap: anywhere; }
 .prayer-content p { margin: 0 0 16px; }
 .prayer-emphasis { font-style: italic; }
