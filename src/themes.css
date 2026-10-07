@@ -73,6 +73,11 @@
 .section-selector button { min-height: 64px; padding-top: 10px; padding-bottom: 10px; }
 .verse-text { border: 0; padding: 0; color: inherit; background: none; font: inherit; line-height: inherit; text-align: left; }
 .selected-verse { background: #dceaf5; border-radius: 8px; }
+.prayer-reading .prayer-content, .prayer-reading.liturgical-reading > p:not(.eyebrow, .source-credit) { font: 19px/1.7 Georgia, 'Times New Roman', serif; white-space: pre-line; overflow-wrap: anywhere; }
+.prayer-content p { margin: 0 0 16px; }
+.prayer-emphasis { font-style: italic; }
+.prayer-strong { font-weight: 700; }
+.prayer-reading.traditional-prayer .prayer-content, .prayer-reading.traditional-prayer.liturgical-reading > p:not(.eyebrow, .source-credit), .mobile-app .traditional-prayer h2 { font-family: Ponomar, serif; font-size: 24px; line-height: 1.65; }
 .appearance-options { margin: 16px 0 0; padding: 0; border: 0; }
 .appearance-options legend { margin-bottom: 8px; font: 600 18px var(--heading-font); color: var(--ink); }
 .appearance-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }

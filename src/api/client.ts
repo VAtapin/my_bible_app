@@ -32,7 +32,7 @@ export interface BibleApi {
   getPrayers(language?: string): Promise<PrayerSummary[]>
   getPrayer(id: number): Promise<PrayerDetail>
   getLiturgicalWorks(collection: string): Promise<LiturgicalWorkSummary[]>
-  getLiturgicalVersion(slug: string, language: string): Promise<LiturgicalWorkVersion>
+  getLiturgicalVersion(slug: string, language: string, edition?: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
 }
 
@@ -109,9 +109,9 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
         isLiturgicalWorkList,
       )
     },
-    getLiturgicalVersion(slug, language) {
+    getLiturgicalVersion(slug, language, edition) {
       return request<LiturgicalWorkVersion>(
-        `/liturgical/works/${encodeURIComponent(slug)}/versions/${encodeURIComponent(language)}`,
+        `/liturgical/works/${encodeURIComponent(slug)}/versions/${encodeURIComponent(language)}${edition ? `?edition=${encodeURIComponent(edition)}` : ''}`,
         isLiturgicalWorkVersion,
       )
     },

@@ -57,6 +57,7 @@ export const ru = {
     russian: 'Русский',
     german: 'Deutsch',
     churchSlavonic: 'Церковнославянский',
+    churchSlavonicCivil: 'Церковнославянский · гражданский',
     presetTitle: 'С чего начнём?',
     presetIntro: 'Выберите ближайший вам вариант. Это только удобная основа.',
     sectionsTitle: 'Что добавить?',

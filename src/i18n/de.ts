@@ -36,7 +36,7 @@ export const de: MessageShape<typeof ru> = {
     intro: 'Wählen Sie jetzt das Wichtigste – alles bleibt später änderbar.',
     interfaceLanguageTitle: 'App-Sprache',
     interfaceLanguageIntro: 'Ändert Menüs und Beschriftungen. Lesesprachen werden separat gewählt.',
-    russian: 'Русский', german: 'Deutsch', churchSlavonic: 'Kirchenslawisch', presetTitle: 'Womit möchten Sie beginnen?',
+    russian: 'Русский', german: 'Deutsch', churchSlavonic: 'Kirchenslawisch', churchSlavonicCivil: 'Kirchenslawisch · Zivilschrift', presetTitle: 'Womit möchten Sie beginnen?',
     presetIntro: 'Wählen Sie die passendste Vorlage. Sie ist nur ein bequemer Ausgangspunkt.',
     sectionsTitle: 'Was möchten Sie hinzufügen?',
     sectionsIntro: 'Behalten Sie nur die Bereiche, die Sie verwenden möchten.',

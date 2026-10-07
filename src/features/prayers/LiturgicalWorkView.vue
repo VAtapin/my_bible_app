@@ -21,7 +21,7 @@ onMounted(async () => {
   }
   message.value = text.value.prayers.loadingPrayer
   try {
-    work.value = await bibleApi.getLiturgicalVersion(slug, workLanguage)
+    work.value = await bibleApi.getLiturgicalVersion(slug, workLanguage, typeof route.query.edition === 'string' ? route.query.edition : undefined)
     message.value = ''
   } catch (error) {
     message.value = error instanceof Error ? error.message : text.value.prayers.openFailed
@@ -31,7 +31,7 @@ onMounted(async () => {
 
 <template>
   <MobileShell back-to="/prayers">
-    <article v-if="work" class="prayer-reading liturgical-reading">
+    <article v-if="work" class="prayer-reading liturgical-reading" :class="{ 'traditional-prayer': work.orthography === 'traditional' && work.language === 'cu' }" :lang="work.language.startsWith('cu') ? 'cu' : work.language">
       <p class="eyebrow dark-eyebrow">{{ work.language.toUpperCase() }} · {{ work.edition_title }}</p>
       <h1>{{ work.title }}</h1>
       <template v-for="block in visibleBlocks" :key="block.id">

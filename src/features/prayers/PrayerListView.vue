@@ -6,10 +6,14 @@ import MobileShell from '@/components/MobileShell.vue'
 import { useI18n } from '@/i18n'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { useProfileStore } from '@/stores/profileStore'
+import { prayerEdition } from '@/services/prayerEditions'
+import { prayerExcerpt } from '@/services/prayerContent'
 
 interface WorkCard extends LiturgicalWorkSummary {
   language: string
-  collection: 'akathists' | 'canons' | 'horologion'
+  collection: 'akathists' | 'canons' | 'horologion' | 'prayers'
+  edition: string
+  editionTitle: string
 }
 
 const repository = createIndexedDbDailyContentRepository()
@@ -33,6 +37,7 @@ onMounted(async () => {
       .filter(matchesPrayerSettings)
 
     const collections = [
+      settings?.prayerBook || settings?.morning || settings?.evening ? 'prayers' : null,
       settings?.akathists ? 'akathists' : null,
       settings?.canons ? 'canons' : null,
       settings?.horologion ? 'horologion' : null,
@@ -42,14 +47,18 @@ onMounted(async () => {
       items: await bibleApi.getLiturgicalWorks(collection),
     })))
     works.value = workResults.flatMap(({ collection, items }) => items.flatMap((work) => {
-      const workLanguage = languages.find((candidate) => work.available_languages.includes(candidate))
-      return workLanguage ? [{ ...work, language: workLanguage, collection }] : []
+      if (collection === 'prayers' && !settings?.prayerBook && !((settings?.morning && /утрен|morgen/i.test(work.title)) || (settings?.evening && /сон грядущим|вечер|abend|nacht/i.test(work.title)))) return []
+      return languages.flatMap((candidate) => {
+        const edition = prayerEdition(work, candidate)
+        if (!edition || (collection === 'prayers' && prayers.value.some((prayer) => prayer.title === work.title && prayer.language_code === candidate))) return []
+        return [{ ...work, language: edition.language, collection, edition: edition.code, editionTitle: edition.title }]
+      })
     }))
     message.value = prayers.value.length || works.value.length ? '' : text.value.prayers.empty
   } catch (error) {
     const saved = await repository.listPrayers()
     prayers.value = saved
-      .map(({ data }) => ({ ...data, excerpt: data.intro ?? contentExcerpt(data.body) }))
+      .map(({ data }) => ({ ...data, excerpt: prayerExcerpt(data.intro ?? data.body) }))
       .filter((prayer) => languages.includes(prayer.language_code))
       .filter(matchesPrayerSettings)
     message.value = saved.length
@@ -77,7 +86,7 @@ function ruleLabel(prayer: PrayerSummary): string | undefined {
 }
 
 function collectionLabel(collection: WorkCard['collection']): string {
-  return text.value.prayers[collection]
+  return collection === 'prayers' ? text.value.prayers.prayerBook : text.value.prayers[collection]
 }
 
 function isMorning(prayer: PrayerSummary): boolean {
@@ -88,9 +97,6 @@ function isEvening(prayer: PrayerSummary): boolean {
   return prayer.category === 'evening' || /(сон грядущим|вечер|abend|nacht)/i.test(prayer.title)
 }
 
-function contentExcerpt(value: string): string {
-  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)
-}
 </script>
 
 <template>
@@ -103,12 +109,12 @@ function contentExcerpt(value: string): string {
     <section v-if="prayers.length || works.length" class="content-catalog">
       <RouterLink v-for="prayer in displayPrayers" :key="`prayer-${prayer.id}`" class="content-card" :to="`/prayers/${prayer.id}`">
         <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span>
-        <span><em>{{ ruleLabel(prayer) ?? text.prayers.prayerBook }} · {{ prayer.language_code.toUpperCase() }}</em><strong>{{ prayer.title }}</strong><small>{{ prayer.excerpt }}</small></span>
+        <span><em>{{ ruleLabel(prayer) ?? text.prayers.prayerBook }} · {{ prayer.language_code.toUpperCase() }}</em><strong>{{ prayer.title }}</strong><small>{{ prayerExcerpt(prayer.excerpt) }}</small></span>
         <span aria-hidden="true">→</span>
       </RouterLink>
-      <RouterLink v-for="work in works" :key="`${work.collection}-${work.slug}-${work.language}`" class="content-card" :to="`/liturgical/${work.slug}/${work.language}`">
+      <RouterLink v-for="work in works" :key="`${work.collection}-${work.slug}-${work.edition}`" class="content-card" :to="{ path: `/liturgical/${work.slug}/${work.language}`, query: { edition: work.edition } }">
         <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span>
-        <span><em>{{ collectionLabel(work.collection) }} · {{ work.language.toUpperCase() }}</em><strong>{{ work.title }}</strong><small>{{ work.editions.find((edition) => edition.language === work.language)?.title }}</small></span>
+        <span><em>{{ collectionLabel(work.collection) }}</em><strong>{{ work.title }}</strong><small>{{ work.editionTitle }}</small></span>
         <span aria-hidden="true">→</span>
       </RouterLink>
     </section>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { PrayerDetail } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import MobileShell from '@/components/MobileShell.vue'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { createDailyContentService } from '@/services/dailyContentService'
-import { contentText } from '@/services/contentText'
+import PrayerContent from '@/components/PrayerContent.vue'
 import { useI18n } from '@/i18n'
 
 const route = useRoute()
@@ -14,7 +14,6 @@ const service = createDailyContentService(bibleApi, createIndexedDbDailyContentR
 const { messages: text } = useI18n()
 const prayer = ref<PrayerDetail>()
 const message = ref('')
-const body = computed(() => prayer.value ? contentText(prayer.value.body) : '')
 
 onMounted(async () => {
   message.value = text.value.prayers.loadingPrayer
@@ -35,11 +34,10 @@ onMounted(async () => {
 
 <template>
   <MobileShell back-to="/prayers">
-    <article v-if="prayer" class="prayer-reading">
-      <p class="eyebrow dark-eyebrow">{{ prayer.category }}</p>
+    <article v-if="prayer" class="prayer-reading" :class="{ 'traditional-prayer': prayer.language_code === 'cu' }" :lang="prayer.language_code.startsWith('cu') ? 'cu' : prayer.language_code">
       <h1>{{ prayer.title }}</h1>
-      <p v-if="prayer.intro" class="prayer-intro">{{ prayer.intro }}</p>
-      <p class="prayer-body">{{ body }}</p>
+      <PrayerContent v-if="prayer.intro" :content="prayer.intro" />
+      <PrayerContent :content="prayer.body" />
       <p class="status" role="status">{{ message }}</p>
     </article>
     <p v-else class="status" role="status">{{ message }}</p>

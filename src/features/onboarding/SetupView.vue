@@ -313,7 +313,8 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
         <div class="language-selector compact" role="group" :aria-label="text.setup.prayerLanguagesTitle">
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('ru') }" :aria-pressed="prayerLanguageCodes.includes('ru')" @click="togglePrayerLanguage('ru')">{{ text.setup.russian }}</button>
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('de') }" :aria-pressed="prayerLanguageCodes.includes('de')" @click="togglePrayerLanguage('de')">{{ text.setup.german }}</button>
-          <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu-civil') }" :aria-pressed="prayerLanguageCodes.includes('cu-civil')" @click="togglePrayerLanguage('cu-civil')">{{ text.setup.churchSlavonic }}</button>
+          <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu') }" :aria-pressed="prayerLanguageCodes.includes('cu')" @click="togglePrayerLanguage('cu')">{{ text.setup.churchSlavonic }}</button>
+          <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu-civil') }" :aria-pressed="prayerLanguageCodes.includes('cu-civil')" @click="togglePrayerLanguage('cu-civil')">{{ text.setup.churchSlavonicCivil }}</button>
         </div>
       </div>
 
