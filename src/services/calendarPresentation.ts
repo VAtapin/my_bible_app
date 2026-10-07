@@ -4,7 +4,9 @@ import { readerTarget } from './bibleReferences'
 
 export function calendarEvents(events: CalendarEvent[], level: CalendarLevel): CalendarEvent[] {
   const values = events.filter((event) => !event.is_fasting)
-  return level === 'major' ? values.filter((event) => event.type || event.is_icon_commemoration) : values
+  return level === 'major' ? values.filter((event) => event.type_code !== undefined
+    ? event.type_code <= 2 || event.type_code === 9 || event.is_icon_commemoration
+    : event.type || event.is_icon_commemoration) : values
 }
 
 export function fastingNote(event: CalendarEvent): string {

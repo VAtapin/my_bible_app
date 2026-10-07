@@ -1,0 +1,1 @@
+https://kalender.georg-kloster.ru/api/v1/calendar

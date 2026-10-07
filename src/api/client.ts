@@ -4,6 +4,7 @@ import type {
   BibleChapter,
   CalendarDay,
   CalendarIconDetail,
+  CalendarServicePlan,
   LanguageSummary,
   LiturgicalWorkSummary,
   LiturgicalWorkVersion,
@@ -37,6 +38,7 @@ export interface BibleApi {
   getLiturgicalVersion(slug: string, language: string, edition?: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
   getCalendarIcon(id: number): Promise<CalendarIconDetail>
+  getCalendarService(date: string, language: string): Promise<CalendarServicePlan>
   searchVerses(query: string, translation: string): Promise<VerseSearchResponse>
 }
 
@@ -126,6 +128,13 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
     getCalendarIcon(id) {
       return request<CalendarIconDetail>(`/calendar/icons/${id}`, (value): value is CalendarIconDetail => isRecord(value)
         && typeof value.id === 'number' && Array.isArray(value.calendarRecordIds) && value.calendarRecordIds.every((id) => typeof id === 'string'))
+    },
+    getCalendarService(date, language) {
+      const params = new URLSearchParams({ date, lang: language, office: 'sixth-hour', expansion: 'full', profile: 'typikon-strict' })
+      return request<CalendarServicePlan>(`/calendar/service?${params}`, (value): value is CalendarServicePlan => isRecord(value)
+        && value.date === date && typeof value.textLanguage === 'string'
+        && Array.isArray(value.assignments) && value.assignments.every((item) => isRecord(item) && typeof item.title === 'string' && typeof item.text === 'string' && typeof item.slot === 'string')
+        && Array.isArray(value.expansions) && value.expansions.every((item) => isRecord(item) && typeof item.id === 'string' && typeof item.title === 'string' && typeof item.text === 'string'))
     },
     searchVerses(query, translation) {
       const params = new URLSearchParams({ q: query, translation, limit: '30' })

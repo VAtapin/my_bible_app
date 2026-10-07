@@ -16,7 +16,7 @@ const visibleEvents = computed(() => home.value.compact ? events.value.slice(0, 
 const readings = computed(() => home.value.compact ? props.day?.readings.slice(0, 2) ?? [] : props.day?.readings ?? [])
 </script>
 <template>
-  <section class="day-summary">
+  <section v-if="loading || failed || offline || (home.fasting && day?.fasting_events.length) || (home.commemorations && visibleEvents.length) || (home.readings && readings.length)" class="day-summary">
     <p v-if="loading" role="status">{{ text.calendar.loading }}</p>
     <p v-else-if="failed" role="status">{{ text.calendar.failed }}</p>
     <template v-else-if="day">

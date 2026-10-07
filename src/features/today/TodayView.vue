@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { CalendarDay } from '@/api/contracts'
-import { bibleApi } from '@/api'
+import { bibleApi, kalendarApi } from '@/api'
 import { RouterLink, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { useI18n, formatMessage } from '@/i18n'
 import { useProfileStore } from '@/stores/profileStore'
 import { defaultCalendarHome, educationSettings } from '@/profile/configuration'
 import { calendarDateInTimeZone, formatTodayDate } from '@/services/calendarDates'
-import { createDailyContentService } from '@/services/dailyContentService'
+import { createCalendarContentService } from '@/services/kalendarContent'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { createChapterService } from '@/services/chapterService'
 import { loadRandomVerse } from '@/services/randomVerse'
 import { calendarEvents } from '@/services/calendarPresentation'
 import { rankedCalendarIcons } from '@/services/calendarIcons'
 import DayIcon from '@/components/DayIcon.vue'
+import CalendarGrid from '@/components/CalendarGrid.vue'
+import FastingSummary from '@/components/FastingSummary.vue'
 import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
 import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
 import { chapterKey } from '@/offline/chapterRepository'
@@ -33,19 +35,21 @@ const education = computed(() => educationSettings(profile.configuration))
 const hasAzbuka = computed(() => education.value.pluginIds.includes('azbuka'))
 const calendarHome = computed(() => profile.configuration?.calendar.home ?? defaultCalendarHome())
 const now = ref(new Date())
-const date = computed(() => calendarDateInTimeZone(now.value))
+const today = computed(() => calendarDateInTimeZone(now.value))
+const date = ref(today.value)
+watch(today, (value, previous) => { if (date.value === previous) date.value = value })
 const day = ref<CalendarDay>()
 const calendarLoading = ref(false)
 const calendarFailed = ref(false)
 const calendarOffline = ref(false)
-const dailyService = createDailyContentService(bibleApi, createIndexedDbDailyContentRepository())
+const dailyService = createCalendarContentService(kalendarApi, bibleApi, createIndexedDbDailyContentRepository())
 const dateLabel = computed(() => formatTodayDate(date.value, day.value?.old_style_date, language.value === 'de' ? 'de-DE' : 'ru-RU'))
 const verse = ref<Awaited<ReturnType<typeof loadRandomVerse>>>()
 const chapters = createChapterService(bibleApi, createIndexedDbChapterRepository())
 const verseTranslation = computed(() => profile.configuration?.bible.translationCodes.find((code) => code.includes(language.value === 'de' ? 'GERMAN' : 'RUSSIAN'))
   ?? (language.value === 'de' ? 'BQ_GERMAN_ELBERFELD_STRONG' : 'BQ_RUSSIAN_RST_STRONG'))
 const icon = computed(() => day.value ? rankedCalendarIcons(day.value)[0] : undefined)
-const dayEvents = computed(() => calendarEvents(day.value?.events ?? [], profile.configuration?.calendar.level ?? 'all'))
+const dayEvents = computed(() => calendarEvents(day.value?.events ?? [], 'all'))
 const visibleEvents = computed(() => calendarHome.value.compact ? dayEvents.value.slice(0, 3) : dayEvents.value)
 let calendarGeneration = 0
 watch(() => [date.value, profile.configuration?.calendar.languageCode], async () => {
@@ -64,7 +68,7 @@ const readingLocation = ref<ReadingLocation>()
 const readingLabel = ref('')
 const readerLink = computed(() => readingLocation.value ? { path: '/reader', query: { translation: readingLocation.value.translationCode, book: readingLocation.value.bookSlug, chapter: String(readingLocation.value.chapter) } } : '/reader')
 const learnedCount = computed(() => azbuka.profile?.learnedLetterIds.length ?? 0)
-const goalCount = computed(() => azbuka.profile?.todayDate === date.value ? azbuka.profile.todayAnswered : 0)
+const goalCount = computed(() => azbuka.profile?.todayDate === today.value ? azbuka.profile.todayAnswered : 0)
 const prayerLabel = computed(() => {
   const settings = profile.configuration?.prayers
   if (now.value.getHours() >= 18 && settings?.evening) return text.value.setup.eveningPrayer
@@ -91,6 +95,7 @@ onMounted(async () => {
   await Promise.allSettled(tasks)
 })
 onUnmounted(() => {
+  calendarGeneration++
   if (timer !== undefined) window.clearInterval(timer)
   window.removeEventListener('focus', refreshDate)
 })
@@ -98,8 +103,8 @@ onUnmounted(() => {
 
 <template>
   <MobileShell>
+    <CalendarGrid v-if="sections.includes('calendar')" :date="date" :calendar-language="profile.configuration?.calendar.languageCode ?? language" compact @select="date = $event" />
     <header class="today-hero">
-      <p class="eyebrow">{{ text.today.eyebrow }}</p>
       <h1><span class="civil-date">{{ dateLabel.split(' (')[0] }}</span><span v-if="dateLabel.includes(' (')" class="old-style-date">{{ ` (${dateLabel.split(' (')[1]}` }}</span></h1>
       <RouterLink v-if="hasAzbuka" class="today-clock-link" to="/education/azbuka/numbers">
         <SlavonicClock compact :show-label="false" :label="text.education.clockTitle" />
@@ -110,10 +115,14 @@ onUnmounted(() => {
       <DayIcon v-if="icon" :key="icon.id" :icon="icon" />
       <span>
         <strong v-if="icon">{{ icon.title }}</strong><small v-if="icon?.credit">{{ icon.credit }}</small>
-        <template v-if="calendarHome.commemorations"><p v-for="event in visibleEvents" :key="event.id">{{ event.name }}</p></template>
-        <RouterLink to="/calendar">{{ text.today.allCommemorations }} →</RouterLink>
+        <template v-if="calendarHome.commemorations"><p v-for="event in visibleEvents" :key="event.id"><img v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</p></template>
+        <RouterLink :to="{ path: '/calendar', query: { date } }">{{ text.today.allCommemorations }} →</RouterLink>
       </span>
     </article>
+    <template v-if="sections.includes('calendar') && profile.configuration">
+      <FastingSummary v-if="day && calendarHome.fasting" :day="day" compact />
+      <CalendarSummary :day="day" :loading="calendarLoading" :failed="calendarFailed" :offline="calendarOffline" :settings="{ ...profile.configuration.calendar, home: { ...calendarHome, fasting: false, commemorations: false } }" />
+    </template>
 
     <section class="today-section">
       <div class="module-list">
@@ -136,11 +145,10 @@ onUnmounted(() => {
           <span class="module-action">{{ text.today.continue }} →</span>
         </RouterLink>
         <article v-if="sections.includes('calendar') && profile.configuration" class="calendar-module">
-          <RouterLink class="module-card available" to="/calendar">
+          <RouterLink class="module-card available" :to="{ path: '/calendar', query: { date } }">
             <span class="module-icon"><img :src="text.sections.calendar.icon" alt="" /></span>
             <span><strong>{{ text.sections.calendar.title }}</strong></span><span aria-hidden="true">→</span>
           </RouterLink>
-          <CalendarSummary :day="day" :loading="calendarLoading" :failed="calendarFailed" :offline="calendarOffline" :settings="{ ...profile.configuration.calendar, home: { ...calendarHome, commemorations: false } }" />
         </article>
       </div>
     </section>

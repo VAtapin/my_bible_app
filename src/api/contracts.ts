@@ -140,11 +140,20 @@ export interface CalendarEvent {
   is_icon_commemoration: boolean
   is_fasting: boolean
   typicon_icon?: string | null
+  type_code?: number
+  typikon_mark?: { label: string; image_url: string } | null
+  description?: string | null
   type?: { code: string; name: string } | null
   metadata?: Record<string, unknown> | unknown[]
 }
 
 export interface CalendarDay {
+  other_events?: { id: string; name: string; category: string; description?: string | null }[]
+  day_style?: { rank: string; color: string; fontWeight: number }
+  food?: { label: string; reason: string; color: string; image_url?: string }
+  memorial_markers?: { label: string; image_url: string }[]
+  tone?: number | null
+  week_after_pentecost?: number | null
   icons?: CalendarIcon[]
   date: string
   old_style_date: string
@@ -157,6 +166,14 @@ export interface CalendarDay {
   readings: CalendarReading[]
 }
 
+export interface CalendarServicePlan {
+  date: string
+  textLanguage: string
+  assignments: { textId: string | number; title: string; slot: string; text: string; insert?: boolean; rubric?: string | null }[]
+  expansions: { id: string; title: string; text: string }[]
+  properCoverage?: { message: string }
+}
+
 export interface CalendarIcon {
   id: number
   title: string
@@ -164,6 +181,8 @@ export interface CalendarIcon {
   credit?: string | null
   description?: string | null
   calendar_record_ids?: string[]
+  images?: { url: string }[]
+  dates?: { label: string }[]
 }
 export interface CalendarIconDetail { id: number; calendarRecordIds: string[] }
 

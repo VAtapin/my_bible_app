@@ -119,6 +119,8 @@ export const de: MessageShape<typeof ru> = {
     openFailed: 'Der Text konnte nicht geöffnet werden.', source: 'Quelle',
   },
   calendar: {
+    serviceTexts: 'Liturgische Texte des Tages', serviceFailed: 'Liturgische Texte konnten nicht geladen werden.', troparion: 'Troparion', kontakion: 'Kontakion', referenceText: 'Referenztext – keine Festlegung der Gottesdienstordnung',
+    sunday: 'Sonntag', redDays: 'Sonntage und Hochfeste', typikonSigns: 'Typikon-Zeichen', dayRules: 'Hinweise zum Tag', tone: 'Ton', weekAfterPentecost: 'Woche nach Pfingsten',
     day: 'Tag', week: 'Woche', month: 'Monat', view: 'Kalenderansicht', openIcon: 'Ikone öffnen', close: 'Schließen',
     eyebrow: 'Kirchenkalender', loading: 'Kalender wird geladen…', offline: 'Offline – gespeicherter Tag geöffnet.',
     saved: 'Der Tag wurde offline gespeichert.', failed: 'Der Kalender konnte nicht geöffnet werden.', previous: 'Vorheriger Tag', next: 'Nächster Tag',
