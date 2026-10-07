@@ -52,12 +52,13 @@ export const de: MessageShape<typeof ru> = {
     bible: { title: 'Bibel lesen', description: 'Text und Studium', icon: '/app-icons/library.png' },
     prayer: { title: 'Gebet', description: 'Gebetsregeln und Gebetbuch', icon: '/app-icons/prayers.png' },
     calendar: { title: 'Kirchenkalender', description: 'Feste und Tageslesungen', icon: '/app-icons/calendar.png' },
+    education: { title: 'Lernen', description: 'Alphabet und Lern-Apps', icon: '/app-icons/library.png' },
   },
   sections: {
     bible: { title: 'Bibel', description: 'Übersetzungen und Lesen', icon: '/app-icons/library.png' },
     prayers: { title: 'Gebet', description: 'Gebetbuch und liturgische Texte', icon: '/app-icons/prayers.png' },
     calendar: { title: 'Kirchenkalender', description: 'Feste und Lesungen', icon: '/app-icons/calendar.png' },
-    study: { title: 'Lesen und Studium', description: 'Fortsetzen und Lesezeichen', icon: '/app-icons/bookmarks.png' },
+    study: { title: 'Lernen', description: 'Alphabet und Lern-Apps', icon: '/app-icons/library.png' },
   },
   today: {
     eyebrow: 'Mein Tag', title: 'Heute', intro: 'Ihre ausgewählten Bereiche an einem ruhigen Ort.',
@@ -65,10 +66,22 @@ export const de: MessageShape<typeof ru> = {
     bibleAction: 'Letzte Bibelstelle öffnen', configured: 'Zum Profil hinzugefügt', nextStage: 'Demnächst',
     localTitle: 'Einstellungen auf dem Gerät gespeichert', localDescription: 'Auch ohne Konto und Netz verfügbar',
     prayersDescription: 'Gebetbuch, Akathiste und ausgewählte Regeln',
-    calendarDescription: 'Gedenktage, Fasten und Tageslesungen', notificationsTitle: 'Erinnerungen',
+    calendarDescription: 'Gedenktage, Fasten und Tageslesungen', educationDescription: 'Alphabet und weitere Lern-Apps', notificationsTitle: 'Erinnerungen',
     notificationsDescription: 'Kategorien, Uhrzeiten und Berechtigungen', profileTitle: 'Profil und Übertragung',
     profileDescription: 'Link, Synchronisierung, Export und Löschen', diagnosticsTitle: 'Diagnose',
     diagnosticsDescription: 'Anonyme lokale Übersicht für den Support',
+  },
+  education: {
+    eyebrow: 'Lernen', title: 'Lern-Apps',
+    intro: 'Eigenständige Apps und Werkzeuge im Ökosystem Biblia App.',
+    open: 'App öffnen',
+    types: { standalone: 'Eigenständige App', plugin: 'Plugin', bot: 'Bot' },
+    apps: {
+      azbuka: {
+        title: 'Kirchenslawisches Alphabet',
+        description: 'Buchstaben, Übungen und kirchenslawische Zahlen von 1 bis 999.',
+      },
+    },
   },
   prayers: {
     eyebrow: 'Gebet und Gottesdienst', title: 'Meine Gebetstexte',

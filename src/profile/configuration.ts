@@ -3,7 +3,7 @@ import { isInterfaceLanguage, type InterfaceLanguage } from '@/i18n/locale'
 export const sectionIds = ['bible', 'prayers', 'calendar', 'study'] as const
 export type AppSectionId = typeof sectionIds[number]
 
-export const presetIds = ['daily', 'bible', 'prayer', 'calendar'] as const
+export const presetIds = ['daily', 'bible', 'prayer', 'calendar', 'education'] as const
 export type PresetId = typeof presetIds[number]
 
 export type SetupMode = 'quick' | 'manual'
@@ -65,6 +65,7 @@ const presetSections: Record<PresetId, AppSectionId[]> = {
   bible: ['bible', 'study'],
   prayer: ['prayers'],
   calendar: ['calendar'],
+  education: ['study'],
 }
 
 export function sectionsForPreset(preset: PresetId): AppSectionId[] {

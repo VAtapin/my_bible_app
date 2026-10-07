@@ -87,12 +87,13 @@ export const ru = {
     bible: { title: 'Чтение Библии', description: 'Текст и изучение', icon: '/app-icons/library.png' },
     prayer: { title: 'Молитва', description: 'Правила и молитвослов', icon: '/app-icons/prayers.png' },
     calendar: { title: 'Церковный календарь', description: 'Праздники и чтения дня', icon: '/app-icons/calendar.png' },
+    education: { title: 'Обучение', description: 'Азбука и учебные приложения', icon: '/app-icons/library.png' },
   },
   sections: {
     bible: { title: 'Библия', description: 'Переводы и чтение', icon: '/app-icons/library.png' },
     prayers: { title: 'Ежедневная молитва', description: 'Правила и молитвослов', icon: '/app-icons/prayers.png' },
     calendar: { title: 'Церковный календарь', description: 'Праздники и чтения', icon: '/app-icons/calendar.png' },
-    study: { title: 'Чтение и изучение', description: 'Продолжение и закладки', icon: '/app-icons/bookmarks.png' },
+    study: { title: 'Обучение', description: 'Азбука и учебные приложения', icon: '/app-icons/library.png' },
   },
   today: {
     eyebrow: 'Мой день',
@@ -114,6 +115,20 @@ export const ru = {
     profileDescription: 'Ссылка, синхронизация, экспорт и удаление',
     diagnosticsTitle: 'Диагностика',
     diagnosticsDescription: 'Локальная обезличенная сводка для поддержки',
+    educationDescription: 'Азбука с цифирью и другие учебные приложения',
+  },
+  education: {
+    eyebrow: 'Обучение',
+    title: 'Учебные приложения',
+    intro: 'Отдельные приложения и инструменты экосистемы Biblia App.',
+    open: 'Открыть приложение',
+    types: { standalone: 'Отдельное приложение', plugin: 'Плагин', bot: 'Бот' },
+    apps: {
+      azbuka: {
+        title: 'Азбука с цифирью',
+        description: 'Буквы, упражнения и церковнославянские числа от 1 до 999.',
+      },
+    },
   },
   prayers: {
     eyebrow: 'Молитва и богослужение',

@@ -13,6 +13,7 @@ import NotificationSettingsView from '@/features/notifications/NotificationSetti
 import ProfileSettingsView from '@/features/profile/ProfileSettingsView.vue'
 import PrivacyView from '@/features/legal/PrivacyView.vue'
 import DiagnosticsView from '@/features/diagnostics/DiagnosticsView.vue'
+import EducationView from '@/features/education/EducationView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -93,6 +94,11 @@ export const router = createRouter({
       path: '/diagnostics',
       name: 'diagnostics',
       component: DiagnosticsView,
+    },
+    {
+      path: '/education',
+      name: 'education',
+      component: EducationView,
     },
     {
       path: '/:pathMatch(.*)*',

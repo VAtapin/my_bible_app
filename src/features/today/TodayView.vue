@@ -47,11 +47,11 @@ onMounted(() => {
           <span><strong>{{ text.sections.calendar.title }}</strong><small>{{ text.today.calendarDescription }}</small></span>
           <span aria-hidden="true">→</span>
         </RouterLink>
-        <div v-if="sections.includes('study')" class="module-card">
+        <RouterLink v-if="sections.includes('study')" class="module-card available" to="/education">
           <span class="module-icon"><img :src="text.sections.study.icon" alt="" /></span>
-          <span><strong>{{ text.sections.study.title }}</strong><small>{{ text.today.configured }}</small></span>
-          <span class="module-status">{{ text.today.nextStage }}</span>
-        </div>
+          <span><strong>{{ text.sections.study.title }}</strong><small>{{ text.today.educationDescription }}</small></span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
         <RouterLink class="module-card available" to="/notifications">
           <span class="module-icon"><img src="/app-icons/calendar.png" alt="" /></span>
           <span><strong>{{ text.today.notificationsTitle }}</strong><small>{{ text.today.notificationsDescription }}</small></span>

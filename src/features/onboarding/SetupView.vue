@@ -229,7 +229,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       <h2>{{ text.setup.presetTitle }}</h2>
       <p class="section-intro">{{ text.setup.presetIntro }}</p>
       <div class="preset-grid">
-        <button v-for="id in (['daily', 'bible', 'prayer', 'calendar'] as PresetId[])" :key="id" type="button" @click="choosePreset(id)">
+        <button v-for="id in (['daily', 'bible', 'prayer', 'calendar', 'education'] as PresetId[])" :key="id" type="button" @click="choosePreset(id)">
           <img :src="text.presets[id].icon" alt="" />
           <span><strong>{{ text.presets[id].title }}</strong><small>{{ text.presets[id].description }}</small></span>
         </button>
