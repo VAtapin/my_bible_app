@@ -6,7 +6,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
-    vue(),
+    // Keep public root URLs in component tests (Windows cannot import /brand as a file URL).
+    vue({ template: { transformAssetUrls: { includeAbsolute: !process.env.VITEST } } }),
     {
       name: 'shared-azbuka-font-license',
       generateBundle() {

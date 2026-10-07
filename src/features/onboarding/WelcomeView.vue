@@ -17,35 +17,38 @@ onMounted(() => {
 </script>
 
 <template>
-  <MobileShell :show-navigation="false">
+  <MobileShell class="welcome-screen" :show-header="false" :show-navigation="false">
     <section class="welcome-hero">
-      <img src="/brand/app-icon-512.png" alt="" />
-      <p class="eyebrow">{{ text.welcome.eyebrow }}</p>
+      <div class="welcome-picture" aria-hidden="true"><img src="/brand/app-icon-512.png" alt="" /></div>
       <h1>{{ text.welcome.title }}</h1>
       <p>{{ text.welcome.intro }}</p>
     </section>
 
     <section class="welcome-actions" :aria-label="text.welcome.startLabel">
-      <RouterLink class="choice-card primary-choice" to="/setup/quick">
-        <span class="choice-number">01</span>
+      <RouterLink class="choice-card welcome-choice primary-choice" to="/setup/quick">
+        <svg class="welcome-choice-icon quick-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-8 12h6l-1 8 9-13h-7l1-7Z" /></svg>
         <span>
           <strong>{{ text.welcome.quickTitle }}</strong>
           <small>{{ text.welcome.quickDescription }}</small>
         </span>
-        <span aria-hidden="true">→</span>
+        <span class="welcome-chevron" aria-hidden="true">›</span>
       </RouterLink>
-      <RouterLink class="choice-card" to="/setup/manual">
-        <span class="choice-number">02</span>
+      <RouterLink class="choice-card welcome-choice" to="/setup/manual">
+        <svg class="welcome-choice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3 4 0 .5 3 2 .9 2.5-1.4 2 3.5-2.4 1.8v2.4l2.4 1.8-2 3.5-2.5-1.4-2 .9-.5 3h-4l-.5-3-2-.9L5 18.5l-2-3.5 2.4-1.8v-2.4L3 9l2-3.5 2.5 1.4 2-.9.5-3Z" /><circle cx="12" cy="12" r="3" /></svg>
         <span>
           <strong>{{ text.welcome.manualTitle }}</strong>
           <small>{{ text.welcome.manualDescription }}</small>
         </span>
-        <span aria-hidden="true">→</span>
+        <span class="welcome-chevron" aria-hidden="true">›</span>
       </RouterLink>
-      <RouterLink class="restore-link" to="/restore">{{ text.welcome.restore }}</RouterLink>
+      <RouterLink class="choice-card welcome-choice restore-choice" to="/restore">
+        <svg class="welcome-choice-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 17v4h14v-4" /></svg>
+        <span><strong>{{ text.welcome.restore }}</strong><small>{{ text.welcome.restoreDescription }}</small></span>
+        <span class="welcome-chevron" aria-hidden="true">›</span>
+      </RouterLink>
     </section>
 
-    <p class="reassurance">{{ text.welcome.reassurance }}</p>
+    <blockquote class="welcome-quote"><p>{{ text.welcome.verse }}</p><cite>{{ text.welcome.verseReference }}</cite></blockquote>
     <RouterLink class="privacy-link" to="/privacy">{{ text.welcome.privacy }}</RouterLink>
   </MobileShell>
 </template>

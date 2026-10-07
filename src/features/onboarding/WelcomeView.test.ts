@@ -1,0 +1,46 @@
+import { createSSRApp, h } from 'vue'
+import { renderToString } from 'vue/server-renderer'
+import { createPinia } from 'pinia'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import WelcomeView from './WelcomeView.vue'
+import MobileShell from '@/components/MobileShell.vue'
+import { getMessages, setInterfaceLanguage } from '@/i18n'
+
+beforeEach(() => {
+  vi.stubGlobal('navigator', { onLine: true })
+  vi.stubGlobal('window', { localStorage: { getItem: () => null, setItem: () => undefined } })
+  vi.stubGlobal('document', { documentElement: { lang: '' }, querySelector: () => null })
+  setInterfaceLanguage('ru')
+})
+afterEach(() => vi.unstubAllGlobals())
+
+async function render(component: typeof WelcomeView | typeof MobileShell) {
+  const router = createRouter({ history: createMemoryHistory(), routes: ['/', '/today', '/reader', '/prayers', '/calendar', '/more', '/setup/quick', '/setup/manual', '/restore', '/privacy'].map((path) => ({ path, component: { render: () => h('div') } })) })
+  await router.push('/')
+  await router.isReady()
+  return renderToString(createSSRApp(component).use(createPinia()).use(router))
+}
+
+describe('first launch layout', () => {
+  it.each(['ru', 'de'] as const)('renders the reference composition and all three existing entry points in %s', async (language) => {
+    setInterfaceLanguage(language)
+    const html = await render(WelcomeView), text = getMessages(language)
+    expect(html).toContain('welcome-picture')
+    expect(html).toContain('/brand/app-icon-512.png')
+    expect(html).toContain('Bible Desktop</h1>')
+    expect(html).toContain(text.welcome.intro)
+    expect(html.match(/class="choice-card welcome-choice/g)).toHaveLength(3)
+    for (const path of ['/setup/quick', '/setup/manual', '/restore', '/privacy']) expect(html).toContain(`href="${path}"`)
+    expect(html).toContain(text.welcome.restoreDescription)
+    expect(html).toContain(text.welcome.verseReference)
+    expect(html).not.toContain('class="app-header"')
+    expect(html).not.toContain('class="bottom-nav"')
+    expect(html).not.toContain('choice-number')
+  })
+  it('keeps the normal header and navigation enabled on other application screens', async () => {
+    const html = await render(MobileShell)
+    expect(html).toContain('class="app-header"')
+    expect(html).toContain('class="bottom-nav"')
+  })
+})

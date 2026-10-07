@@ -23,11 +23,12 @@ export const de: MessageShape<typeof ru> = {
     noteUnavailable: 'Notizen sind noch nicht verfügbar.', audioUnavailable: 'Audioaufnahmen sind noch nicht verfügbar.',
   },
   welcome: {
-    eyebrow: 'Persönliche App', title: 'Mein Bible Desktop',
-    intro: 'Stellen Sie Ihre App so zusammen, dass sie nur das enthält, was Sie wirklich nutzen.',
+    eyebrow: 'Persönliche App', title: 'Bible Desktop',
+    intro: 'Orthodoxe App für Ihr geistliches Leben',
     startLabel: 'Einrichtungsart', quickTitle: 'Schnell einrichten',
-    quickDescription: 'Eine Vorlage wählen – den Rest schlagen wir vor',
-    manualTitle: 'Selbst einrichten', manualDescription: 'Bereiche und Inhalte selbst auswählen',
+    quickDescription: 'Empfohlene Einrichtung',
+    manualTitle: 'Selbst einrichten', manualDescription: 'Bereiche und Einstellungen auswählen',
+    restoreDescription: 'Meine Daten wiederherstellen', verse: '„Sucht zuerst das Reich Gottes …“', verseReference: 'Mt. 6,33',
     restore: 'Ich habe bereits eine App', reassurance: 'Alles lässt sich später ändern', privacy: 'Datenschutz',
   },
   restore: {

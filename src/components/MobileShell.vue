@@ -8,9 +8,11 @@ import AppIcon from '../../azbuka-web/src/components/AppIcon.vue'
 
 withDefaults(defineProps<{
   showNavigation?: boolean
+  showHeader?: boolean
   backTo?: string
 }>(), {
   showNavigation: true,
+  showHeader: true,
   backTo: undefined,
 })
 
@@ -39,7 +41,7 @@ onUnmounted(() => {
 
 <template>
   <div class="mobile-app" :data-theme="appearance.theme.value">
-    <header class="app-header">
+    <header v-if="showHeader" class="app-header">
       <RouterLink v-if="backTo" :to="backTo" class="back-link" :aria-label="text.navigation.back">
         <span aria-hidden="true">←</span>
       </RouterLink>

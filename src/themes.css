@@ -158,7 +158,30 @@
 .chapter-picker > summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; color: var(--brand-blue); font-size: 13px; font-weight: 600; }
 .chapter-picker[open] > summary { margin-bottom: 14px; }
 .reader-status { margin: 8px 4px; font-size: 11px; }
-.welcome-hero > img { width: 190px; height: 190px; margin-bottom: 12px; border-radius: 22px; }
+.mobile-app.welcome-screen { grid-template-rows: minmax(0, 1fr); max-width: 420px; }
+.welcome-screen .app-content { display: flex; flex-direction: column; padding: 0 0 calc(8px + env(safe-area-inset-bottom)); }
+.welcome-screen .welcome-hero { padding: 0; }
+.welcome-picture { position: relative; height: clamp(260px, 82vw, 340px); overflow: hidden; background: #dce8ef; }
+.welcome-picture img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.welcome-picture::after { position: absolute; inset: 0; content: ''; background: linear-gradient(to bottom, transparent 58%, var(--brand-surface) 100%); }
+.welcome-screen .welcome-hero h1 { position: relative; margin: -15px 12px 6px; color: #143e68; font: 600 30px/1.15 Georgia, 'Times New Roman', serif; letter-spacing: -.025em; }
+.welcome-screen .welcome-hero > p { max-width: 27ch; margin: 0 auto; padding: 0 10px; color: var(--brand-blue); font: 16px/1.4 Georgia, 'Times New Roman', serif; }
+.welcome-screen .welcome-actions { margin: 18px 18px 0; gap: 9px; }
+.welcome-screen .welcome-choice { grid-template-columns: 28px minmax(0, 1fr) 14px; min-height: 74px; padding: 11px 14px; gap: 12px; border-radius: 15px; background: linear-gradient(145deg, var(--white), #e9f0f6); box-shadow: 0 3px 10px #2d4a6408; }
+.welcome-screen .welcome-choice strong { margin-bottom: 3px; font-size: 14px; line-height: 1.35; }
+.welcome-screen .welcome-choice small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.welcome-screen .primary-choice { background: linear-gradient(120deg, #345f83, #426e94); color: #fff; }
+.welcome-screen .primary-choice small { color: #e4edf5; }
+.welcome-screen .restore-choice { background: var(--white); }
+.welcome-screen .restore-choice strong { font-size: 12px; }
+.welcome-choice-icon { width: 24px; height: 24px; fill: none; stroke: var(--brand-blue); stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+.welcome-choice-icon.quick-icon { fill: #e4b24f; stroke: #e4b24f; stroke-width: .6; }
+.welcome-chevron { color: inherit; text-align: right; font: 26px/1 Georgia, serif; }
+.welcome-quote { margin: 22px 18px 0; padding-top: 14px; text-align: center; color: var(--muted); font: 12px/1.5 Georgia, serif; }
+.welcome-quote::before { content: ''; display: block; width: 60px; height: 1px; background: var(--brand-gold); margin: -14px auto 14px; }
+.welcome-quote p { margin-bottom: 2px; }
+.welcome-quote cite { font-style: normal; font-size: 11px; }
+.welcome-screen .privacy-link { margin-top: auto; min-height: 36px; padding: 10px; font-size: 10px; }
 .setup-heading h1 { font-size: 26px; line-height: 1.2; }
 .setup-heading .eyebrow { display: none; }
 .setup-heading > p { font-size: 12px; }
