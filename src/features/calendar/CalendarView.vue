@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { CalendarDay } from '@/api/contracts'
-import { bibleApi, kalendarApi } from '@/api'
+import { bibleApi } from '@/api'
 import { useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
@@ -11,17 +11,17 @@ import DayIcon from '@/components/DayIcon.vue'
 import CalendarGrid from '@/components/CalendarGrid.vue'
 import FastingSummary from '@/components/FastingSummary.vue'
 import CalendarServiceTexts from './CalendarServiceTexts.vue'
-import { createCalendarContentService } from '@/services/kalendarContent'
+import { createCalendarContentService } from '@/services/calendarContent'
 import { calendarEvents, calendarReadingLink as readingLink } from '@/services/calendarPresentation'
 import { useProfileStore } from '@/stores/profileStore'
 import { useI18n, formatMessage } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
-import type { CalendarHorizon } from '@/services/kalendarContent'
+import type { CalendarHorizon } from '@/services/calendarContent'
 import { formatCalendarDate } from '@/services/calendarDates'
 import OfflineImage from '@/components/OfflineImage.vue'
 
 const repository = createIndexedDbDailyContentRepository()
-const service = createCalendarContentService(kalendarApi, bibleApi, repository)
+const service = createCalendarContentService(bibleApi, repository)
 const route = useRoute()
 const router = useRouter()
 const profile = useProfileStore()
@@ -37,7 +37,7 @@ const horizonMessage = ref('')
 const savedHorizon = ref<CalendarHorizon>()
 const downloading = computed(() => Boolean(horizonController.value))
 
-const events = computed(() => calendarEvents(day.value?.events ?? [], 'all'))
+const events = computed(() => calendarEvents(day.value?.events ?? [], 'all', day.value?.other_events))
 const icons = computed(() => day.value ? rankedCalendarIcons(day.value) : [])
 const mode = ref<CalendarViewMode>('month')
 const calendarLanguage = computed(() => profile.configuration?.calendar.languageCode ?? language.value)

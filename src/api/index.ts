@@ -1,9 +1,6 @@
 import { createBibleApi } from './client'
-import { apiBaseUrl, calendarApiBaseUrl } from '@/config/api'
-import { createKalendarApi } from './kalendar'
+import { apiBaseUrl } from '@/config/api'
 
 export const bibleApi = createBibleApi({
   baseUrl: apiBaseUrl,
 })
-
-export const kalendarApi = createKalendarApi({ baseUrl: calendarApiBaseUrl })

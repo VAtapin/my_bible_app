@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { kalendarApi } from '@/api'
-import { calendarApiBaseUrl } from '@/config/api'
-import { calendarAssetUrl, primaryTypikonMark, type CalendarGridDay } from '@/api/kalendar'
+import { bibleApi } from '@/api'
+import { apiBaseUrl } from '@/config/api'
+import { calendarAssetUrl, primaryTypikonMark, type CalendarGridDay } from '@/api/calendar'
 import { calendarDateInTimeZone, calendarPeriodDates, formatCalendarDate, moveCalendarPeriod, isCalendarDate, type CalendarViewMode } from '@/services/calendarDates'
 import { useI18n } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
-import { calendarContentLanguage } from '@/services/kalendarContent'
+import { calendarContentLanguage } from '@/services/calendarContent'
 import OfflineImage from './OfflineImage.vue'
 
 const props = withDefaults(defineProps<{ date: string; calendarLanguage: string; mode?: CalendarViewMode; compact?: boolean }>(), { mode: 'month', compact: false })
@@ -35,7 +35,7 @@ watch(() => [dates.value[0].slice(0, 7), dates.value.at(-1)!.slice(0, 7), props.
   failed.value = false
   try {
     const months = [...new Set([dates.value[0].slice(0, 7), dates.value.at(-1)!.slice(0, 7)])].filter((month) => isCalendarDate(`${month}-01`))
-    const result = await Promise.all(months.map((month) => kalendarApi.getMonth(`${month}-01`, calendarContentLanguage(props.calendarLanguage))))
+    const result = await Promise.all(months.map((month) => bibleApi.getCalendarMonth(`${month}-01`, calendarContentLanguage(props.calendarLanguage))))
     if (requestGeneration === generation) days.value = result.flat()
   } catch { if (requestGeneration === generation) failed.value = true }
   finally { if (requestGeneration === generation) busy.value = false }
@@ -43,7 +43,7 @@ watch(() => [dates.value[0].slice(0, 7), dates.value.at(-1)!.slice(0, 7), props.
 onUnmounted(() => { generation++ })
 function mark(date: string) {
   const marker = primaryTypikonMark(lookup.value.get(date))
-  return marker ? { label: marker.label, url: calendarAssetUrl(marker.svgSource, calendarApiBaseUrl) } : undefined
+  return marker ? { label: marker.label, url: calendarAssetUrl(marker.svgSource, apiBaseUrl) } : undefined
 }
 function label(date: string): string {
   const day = lookup.value.get(date)

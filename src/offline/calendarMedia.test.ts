@@ -1,8 +1,31 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCalendarMediaCache, previewSize, previewMaxBytes, readCalendarState, writeCalendarState } from './calendarMedia'
+import { apiBaseUrl } from '@/config/api'
+import { bundledCalendarAssetUrl } from '@/services/calendarAssets'
 beforeEach(() => vi.stubGlobal('indexedDB', new IDBFactory()))
 describe('economical calendar previews', () => {
+  it('downloads the API preview while keeping the original URL as the offline image key', async () => {
+    const original = 'https://bible-desktop.com/storage/calendar-icons/original.jpg'
+    const preview = 'https://bible-desktop.com/api/calendar/icons/310/images/3548?preview=1'
+    const fetcher = vi.fn(async () => new Response(new Blob(['small preview'], { type: 'image/webp' })))
+    const cache = createCalendarMediaCache(fetcher, async (blob) => blob)
+    await cache.save(original, true, undefined, preview)
+    expect(fetcher).toHaveBeenCalledWith(preview, expect.any(Object))
+    expect(await (await cache.read(original))?.text()).toBe('small preview')
+  })
+  it('stores the bundled original Typikon SVG without needing cross-origin static-file access', async () => {
+    const source = new URL('/assets/typikon/vigil.svg', apiBaseUrl).href
+    const fetcher = vi.fn(async (url: string) => {
+      if (url === source) throw new TypeError('Static server has no CORS')
+      return new Response(new Blob(['<svg xmlns="http://www.w3.org/2000/svg"></svg>'], { type: 'image/svg+xml' }))
+    })
+    const cache = createCalendarMediaCache(fetcher)
+    await cache.save(source, false)
+    expect(fetcher).toHaveBeenCalledWith(bundledCalendarAssetUrl(source), expect.any(Object))
+    expect((await cache.read(source))?.type).toBe('image/svg+xml')
+    expect(await (await createCalendarMediaCache().read(source))?.text()).toContain('<svg')
+  })
   it('bounds portrait and landscape dimensions without upscaling', () => {
     expect(previewSize(1000, 2000)).toEqual({ width: 160, height: 320 })
     expect(previewSize(2000, 1000)).toEqual({ width: 320, height: 160 })

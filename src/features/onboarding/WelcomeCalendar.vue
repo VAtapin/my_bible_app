@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { bibleApi, kalendarApi } from '@/api'
+import { bibleApi } from '@/api'
 import type { CalendarDay } from '@/api/contracts'
 import CalendarGrid from '@/components/CalendarGrid.vue'
 import DayIcon from '@/components/DayIcon.vue'
@@ -9,16 +9,18 @@ import FastingSummary from '@/components/FastingSummary.vue'
 import { useI18n } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
 import { calendarDateInTimeZone, formatTodayDate } from '@/services/calendarDates'
-import { calendarContentLanguage, createCalendarContentService } from '@/services/kalendarContent'
+import { calendarContentLanguage, createCalendarContentService } from '@/services/calendarContent'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { rankedCalendarIcons } from '@/services/calendarIcons'
+import { calendarEvents } from '@/services/calendarPresentation'
 const { language, messages: text } = useI18n()
 const date = ref(calendarDateInTimeZone())
 const day = ref<CalendarDay>()
 const loading = ref(false), failed = ref(false)
 const calendarLanguage = computed(() => calendarContentLanguage(language.value))
-const service = createCalendarContentService(kalendarApi, bibleApi, createIndexedDbDailyContentRepository())
+const service = createCalendarContentService(bibleApi, createIndexedDbDailyContentRepository())
 const icon = computed(() => day.value ? rankedCalendarIcons(day.value)[0] : undefined)
+const commemorations = computed(() => calendarEvents(day.value?.events ?? [], 'all', day.value?.other_events).slice(0, 3))
 let generation = 0
 watch(() => [date.value, calendarLanguage.value], async () => {
   const current = ++generation
@@ -38,7 +40,7 @@ onUnmounted(() => { generation++ })
     <template v-if="day">
       <div class="welcome-calendar-day">
         <DayIcon v-if="icon" :key="`${date}-${icon.id}`" :icon="icon" />
-        <div><p v-for="event in day.events.slice(0, 3)" :key="event.id"><OfflineImage v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</p></div>
+        <div><p v-for="event in commemorations" :key="event.id"><OfflineImage v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</p></div>
       </div>
       <FastingSummary :day="day" compact />
       <RouterLink :to="{ path: '/calendar', query: { date } }">{{ text.today.details }} →</RouterLink>

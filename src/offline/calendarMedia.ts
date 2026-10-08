@@ -1,10 +1,11 @@
 import { offlineStores, openOfflineDatabase, runRequest } from './database'
+import { bundledCalendarAssetUrl } from '@/services/calendarAssets'
 
 const prefix = 'calendar-media:'
 export const previewMaxSide = 320
 export const previewMaxBytes = 80 * 1024
 export interface CalendarMediaCache {
-  save(url: string, preview: boolean, signal?: AbortSignal): Promise<void>
+  save(url: string, preview: boolean, signal?: AbortSignal, downloadUrl?: string): Promise<void>
   read(url: string): Promise<Blob | undefined>
 }
 
@@ -54,13 +55,13 @@ async function thumbnail(blob: Blob): Promise<Blob> {
 export function createCalendarMediaCache(fetcher = fetch, resize = thumbnail): CalendarMediaCache {
   return {
     read: (url) => readCalendarState<Blob>(`${prefix}${url}`),
-    async save(url, preview, signal) {
+    async save(url, preview, signal, downloadUrl) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
       if (await this.read(url)) return
-      const requestUrl = new URL(url)
+      const requestUrl = new URL(downloadUrl ?? url)
       // Existing Bible Desktop image endpoint now supplies bounded previews.
       if (preview && /^\/api\/calendar\/icons\/\d+\/images\/\d+$/.test(requestUrl.pathname)) requestUrl.searchParams.set('preview', '1')
-      const response = await fetcher(requestUrl.href, { credentials: 'omit', signal: AbortSignal.any([AbortSignal.timeout(15_000), ...(signal ? [signal] : [])]) })
+      const response = await fetcher(bundledCalendarAssetUrl(url) ?? requestUrl.href, { credentials: 'omit', signal: AbortSignal.any([AbortSignal.timeout(15_000), ...(signal ? [signal] : [])]) })
       if (!response.ok) throw new Error(`Image HTTP ${response.status}`)
       if (Number(response.headers.get('Content-Length')) > 8 * 1024 * 1024) throw new Error('Image too large')
       const original = await response.blob()

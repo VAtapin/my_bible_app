@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { CalendarDay } from '@/api/contracts'
-import { bibleApi, kalendarApi } from '@/api'
+import { bibleApi } from '@/api'
 import { RouterLink, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { useI18n, formatMessage } from '@/i18n'
@@ -9,7 +9,7 @@ import { interfaceLocales, defaultBibleTranslations } from '@/i18n/locale'
 import { useProfileStore } from '@/stores/profileStore'
 import { defaultCalendarHome, educationSettings } from '@/profile/configuration'
 import { calendarDateInTimeZone, formatTodayDate } from '@/services/calendarDates'
-import { createCalendarContentService } from '@/services/kalendarContent'
+import { createCalendarContentService } from '@/services/calendarContent'
 import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
 import { createChapterService } from '@/services/chapterService'
 import { loadRandomVerse } from '@/services/randomVerse'
@@ -44,14 +44,14 @@ const day = ref<CalendarDay>()
 const calendarLoading = ref(false)
 const calendarFailed = ref(false)
 const calendarOffline = ref(false)
-const dailyService = createCalendarContentService(kalendarApi, bibleApi, createIndexedDbDailyContentRepository())
+const dailyService = createCalendarContentService(bibleApi, createIndexedDbDailyContentRepository())
 const dateLabel = computed(() => formatTodayDate(date.value, day.value?.old_style_date, interfaceLocales[language.value]))
 const verse = ref<Awaited<ReturnType<typeof loadRandomVerse>>>()
 const chapters = createChapterService(bibleApi, createIndexedDbChapterRepository())
 const verseTranslation = computed(() => profile.configuration?.bible.translationCodes.find((code) => code === defaultBibleTranslations[language.value])
   ?? profile.configuration?.bible.translationCodes[0] ?? defaultBibleTranslations[language.value])
 const icon = computed(() => day.value ? rankedCalendarIcons(day.value)[0] : undefined)
-const dayEvents = computed(() => calendarEvents(day.value?.events ?? [], 'all'))
+const dayEvents = computed(() => calendarEvents(day.value?.events ?? [], 'all', day.value?.other_events))
 const visibleEvents = computed(() => calendarHome.value.compact ? dayEvents.value.slice(0, 3) : dayEvents.value)
 let calendarGeneration = 0
 watch(() => [date.value, profile.configuration?.calendar.languageCode], async () => {

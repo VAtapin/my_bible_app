@@ -3,6 +3,11 @@ import type { CalendarEvent, CalendarReading } from '@/api/contracts'
 import { calendarEvents, calendarReadingLink, fastingNote } from './calendarPresentation'
 
 describe('shared calendar presentation', () => {
+  it('does not repeat BibleDesktop rules in the separate commemoration list', () => {
+    const event: CalendarEvent = { id: 'memory', name: 'Memory', is_icon_commemoration: false, is_fasting: false }
+    const rule = { ...event, id: 'rule', name: 'Rule', type_code: null }
+    expect(calendarEvents([event, rule], 'all', [{ id: 'rule' }])).toEqual([event])
+  })
   it('keeps fasting separate and applies the same event filter on both screens', () => {
     const ordinary: CalendarEvent = { id: 'ordinary', name: 'Memory', is_icon_commemoration: false, is_fasting: false }
     const icon = { ...ordinary, id: 'icon', is_icon_commemoration: true }

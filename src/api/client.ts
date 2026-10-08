@@ -13,6 +13,8 @@ import type {
   TranslationSummary,
   VerseSearchResponse,
 } from './contracts'
+import { isCalendarMonth, normalizeCalendarAssets, normalizeCalendarMonthAssets, type CalendarGridDay } from './calendar'
+import { readCalendarState } from '@/offline/calendarMedia'
 
 export type ApiErrorKind = 'offline' | 'timeout' | 'http' | 'invalid-response'
 
@@ -21,6 +23,7 @@ export class ApiError extends Error {
     public readonly kind: ApiErrorKind,
     message: string,
     public readonly status?: number,
+    public readonly retryAfterMs?: number,
   ) {
     super(message)
     this.name = 'ApiError'
@@ -37,6 +40,7 @@ export interface BibleApi {
   getLiturgicalWorks(collection: string): Promise<LiturgicalWorkSummary[]>
   getLiturgicalVersion(slug: string, language: string, edition?: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
+  getCalendarMonth(date: string, language?: string): Promise<CalendarGridDay[]>
   getCalendarIcon(id: number): Promise<CalendarIconDetail>
   getCalendarService(date: string, language: string): Promise<CalendarServicePlan>
   searchVerses(query: string, translation: string): Promise<VerseSearchResponse>
@@ -56,14 +60,21 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
     try {
       const response = await fetcher(`${baseUrl.replace(/\/$/, '')}${path}`, {
         headers: { Accept: 'application/json' },
+        credentials: 'omit',
         signal: controller.signal,
       })
 
       if (!response.ok) {
-        throw new ApiError('http', `API вернуло статус ${response.status}.`, response.status)
+        const retryAfter = response.headers.get('Retry-After')
+        const retryAfterMs = retryAfter === null ? undefined : /^\d+$/u.test(retryAfter)
+          ? Number(retryAfter) * 1000 : Math.max(0, Date.parse(retryAfter) - Date.now())
+        throw new ApiError('http', `API вернуло статус ${response.status}.`, response.status,
+          Number.isFinite(retryAfterMs) ? retryAfterMs : undefined)
       }
 
-      const payload: unknown = await response.json()
+      let payload: unknown
+      try { payload = await response.json() }
+      catch { throw new ApiError('invalid-response', 'API вернуло некорректный JSON.') }
       if (!isEnvelope(payload) || !validate(payload.data)) {
         throw new ApiError('invalid-response', 'API вернуло ответ неизвестного формата.')
       }
@@ -121,9 +132,22 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
         isLiturgicalWorkVersion,
       )
     },
-    getCalendarDay(date, language = 'ru', profile = 'typikon-strict') {
+    async getCalendarDay(date, language = 'ru', profile = 'typikon-strict') {
       const query = new URLSearchParams({ date, lang: language, profile })
-      return request<CalendarDay>(`/calendar/day?${query}`, isCalendarDay)
+      const day = await request<CalendarDay>(`/calendar/day?${query}`, (value): value is CalendarDay => isCalendarDay(value) && value.date === date)
+      return normalizeCalendarAssets(day, baseUrl)
+    },
+    async getCalendarMonth(date, language = 'ru') {
+      const query = new URLSearchParams({ year: date.slice(0, 4), month: String(Number(date.slice(5, 7))), lang: language, profile: 'typikon-strict' })
+      try {
+        const days = await request<CalendarGridDay[]>(`/calendar/month?${query}`, (value): value is CalendarGridDay[] => isCalendarMonth(value, date))
+        return normalizeCalendarMonthAssets(days, baseUrl)
+      } catch (error) {
+        if (!(error instanceof ApiError) || !['offline', 'timeout'].includes(error.kind)) throw error
+        const saved = await readCalendarState<CalendarGridDay[]>(`bible-calendar-month:${language}:${date.slice(0, 7)}`).catch(() => undefined)
+        if (!isCalendarMonth(saved, date)) throw error
+        return saved
+      }
     },
     getCalendarIcon(id) {
       return request<CalendarIconDetail>(`/calendar/icons/${id}`, (value): value is CalendarIconDetail => isRecord(value)
@@ -312,6 +336,7 @@ function isCalendarDay(value: unknown): value is CalendarDay {
     && (value.icons === undefined || (Array.isArray(value.icons) && value.icons.every((icon) => isRecord(icon)
       && typeof icon.id === 'number' && typeof icon.title === 'string'
       && (icon.image_url === null || typeof icon.image_url === 'string')
+      && (icon.imagePreviewUrl == null || typeof icon.imagePreviewUrl === 'string')
       && (icon.credit === undefined || icon.credit === null || typeof icon.credit === 'string'))))
 }
 
@@ -320,6 +345,9 @@ function isCalendarEvent(value: unknown): value is CalendarDay['events'][number]
     && typeof value.id === 'string'
     && typeof value.name === 'string'
     && typeof value.is_fasting === 'boolean'
+    && (value.type_code == null || typeof value.type_code === 'number')
+    && (value.typikon_mark == null || (isRecord(value.typikon_mark)
+      && typeof value.typikon_mark.label === 'string' && typeof value.typikon_mark.image_url === 'string'))
 }
 
 function isCalendarReading(value: unknown): value is CalendarDay['readings'][number] {

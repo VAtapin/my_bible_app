@@ -5,7 +5,7 @@ import type { CalendarServicePlan } from '@/api/contracts'
 import { useI18n } from '@/i18n'
 import { normalizePrayerText } from '@/services/prayerContent'
 import { readCalendarState } from '@/offline/calendarMedia'
-import { calendarServiceKey } from '@/services/kalendarContent'
+import { calendarServiceKey } from '@/services/calendarContent'
 import { ApiError } from '@/api/client'
 const props = defineProps<{ date: string; calendarLanguage: string }>()
 const { messages: text } = useI18n()

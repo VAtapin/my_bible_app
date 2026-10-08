@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WelcomeView from './WelcomeView.vue'
 import MobileShell from '@/components/MobileShell.vue'
 import { getMessages, setInterfaceLanguage } from '@/i18n'
-vi.mock('@/api', () => ({ bibleApi: {}, kalendarApi: { getMonth: vi.fn(async () => []), getCalendarDay: vi.fn(async () => { throw new Error('Offline fixture') }) } }))
+vi.mock('@/api', () => ({ bibleApi: { getCalendarMonth: vi.fn(async () => []), getCalendarDay: vi.fn(async () => { throw new Error('Offline fixture') }) } }))
 
 beforeEach(() => {
   vi.stubGlobal('navigator', { onLine: true })
