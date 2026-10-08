@@ -59,7 +59,7 @@
 .icon-viewer header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .icon-viewer header button { flex: 0 0 44px; height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font-size: 24px; }
 /* A dialog is nested inside thumbnail cards; their later img rules must not resize its image. */
-.icon-dialog .icon-viewer > .icon-full-image { display: block; width: 100%; height: min(68dvh, 820px); max-height: none; margin-inline: auto; object-fit: contain; object-position: center; border-radius: 8px; }
+.icon-dialog .icon-viewer > .icon-full-image { display: block; width: 100%; height: min(68dvh, 820px); max-height: none; margin-inline: auto; object-fit: contain; object-position: center; border-radius: 8px; touch-action: pan-y pinch-zoom; user-select: none; }
 .calendar-view-switch { display: flex; gap: 6px; margin-bottom: 12px; }
 .calendar-view-switch button { flex: 1; min-height: 36px; border: 1px solid #ffffff70; border-radius: 8px; color: #fff; background: #ffffff12; }
 .calendar-view-switch button.active { background: #fff; color: var(--brand-blue); }

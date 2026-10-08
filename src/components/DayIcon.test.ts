@@ -4,14 +4,22 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import DayIcon from './DayIcon.vue'
 const styles = readFileSync(new URL('../themes.css', import.meta.url), 'utf8')
+const component = readFileSync(new URL('./DayIcon.vue', import.meta.url), 'utf8')
+
 
 describe('full size icon dialog', () => {
   it('separates the large dialog image from the card thumbnail', async () => {
     const html = await renderToString(createSSRApp(DayIcon, { icon: { id: 1, title: 'Icon', image_url: '/icon.png' } }))
     expect(html).toContain('class="icon-full-image"')
+    expect(html).toContain('draggable="false"')
     expect(html).toContain('class="day-icon-button"')
     expect(styles).toContain('.icon-dialog .icon-viewer > .icon-full-image')
     expect(styles).toContain('height: min(68dvh, 820px)')
     expect(styles).toContain('width: min(960px, 94vw)')
+  })
+  it('wires the gallery image to pointer gestures without blocking scroll or pinch zoom', () => {
+    for (const event of ['@pointerdown', '@pointerup', '@pointercancel', '@lostpointercapture']) expect(component).toContain(event)
+    expect(component).toContain('@close="swipe.cancel"')
+    expect(styles).toContain('touch-action: pan-y pinch-zoom')
   })
 })
