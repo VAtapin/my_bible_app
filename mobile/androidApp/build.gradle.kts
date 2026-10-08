@@ -23,6 +23,9 @@ kotlin {
         implementation(libs.coil.compose)
         implementation(libs.coil.network.okhttp)
         implementation(libs.coil.svg)
+        implementation(libs.androidx.work.runtime)
+        implementation(libs.kotlinx.serialization.json)
+        implementation(libs.kotlinx.coroutines.android)
         debugImplementation(libs.androidx.compose.ui.tooling)
         debugImplementation(libs.androidx.compose.ui.test.manifest)
         androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -30,6 +33,7 @@ kotlin {
         androidTestImplementation(libs.androidx.test.runner)
         androidTestImplementation(libs.androidx.test.ext.junit)
         androidTestImplementation(libs.androidx.test.espresso.core)
+        androidTestImplementation(libs.androidx.work.testing)
     }
 }
 

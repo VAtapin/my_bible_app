@@ -98,7 +98,7 @@ import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
-import com.bibledesktop.shared.api.BibleApiClient
+import com.bibledesktop.myapp.data.OfflineContentRepository
 import com.bibledesktop.shared.api.TranslationSummary
 import com.bibledesktop.shared.presentation.initialInterfaceLanguage
 import com.bibledesktop.shared.presentation.quickNativeSections
@@ -177,7 +177,7 @@ fun SetupApp() {
     var translationFilter by rememberSaveable { mutableStateOf(TranslationFilter.All) }
     var reloadKey by remember { mutableIntStateOf(0) }
     var translationState by remember { mutableStateOf<TranslationState>(TranslationState.Loading) }
-    val client = remember { BibleApiClient() }
+    val client = remember { OfflineContentRepository(context.applicationContext) }
 
     val selectedSections = remember(selectedSectionIds) {
         selectedSectionIds.split(',').filter(String::isNotBlank).toSet()

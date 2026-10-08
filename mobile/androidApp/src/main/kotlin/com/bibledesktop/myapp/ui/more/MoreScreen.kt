@@ -105,6 +105,9 @@ fun MoreScreen(
         ) {
             item {
                 SettingsCard(language, onSettings)
+            }
+            item { OfflinePanel(language) }
+            item {
                 Text(localText(R.string.notes_title, language), Modifier.padding(top = 18.dp), color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (notesResult == null) item { CircularProgressIndicator() }

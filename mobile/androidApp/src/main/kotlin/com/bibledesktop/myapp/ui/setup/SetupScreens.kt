@@ -101,14 +101,14 @@ import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
-import com.bibledesktop.shared.api.BibleApiClient
+import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.TranslationSummary
 import java.util.Locale
 
 @Composable
 internal fun WelcomeScreen(
     language: String,
-    client: BibleApiClient,
+    client: BibleContentSource,
     translationsState: TranslationState,
     onRetry: () -> Unit,
     onLanguageChange: (String) -> Unit,

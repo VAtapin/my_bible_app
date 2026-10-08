@@ -117,4 +117,17 @@
     <string name="calendar_service">Богослужебные тексты</string>
     <string name="calendar_service_error">Не удалось загрузить богослужебные тексты.</string>
     <string name="calendar_service_office">Шестой час · справочный текст, не руководство для совершения службы</string>
+    <string name="offline_title">Без сети</string>
+    <string name="offline_description">Открытые главы, молитвы и дни сохраняются на устройстве. Пакет: 30 дней календаря, тексты дня CU-civil и небольшие превью икон. Новая загрузка обновляет пакет; целые Библии пока не скачиваются.</string>
+    <string name="offline_download">Скачать 30 дней</string>
+    <string name="offline_wifi">Только по Wi-Fi</string>
+    <string name="offline_waiting">Ожидание сети или запуска фоновой задачи.</string>
+    <string name="offline_running">Скачиваем календарь…</string>
+    <string name="offline_complete">30 дней сохранены: календарь, тексты дня и доступные для хранения превью.</string>
+    <string name="offline_cancelled">Загрузка отменена. Уже сохранённые материалы остались на устройстве.</string>
+    <string name="offline_failed">Загрузка не завершена. Проверьте сеть и свободное место, затем продолжите.</string>
+    <string name="offline_progress">Сохранено дней: %1$d из %2$d</string>
+    <string name="offline_cancel">Отменить загрузку</string>
+    <string name="offline_resume">Продолжить</string>
+    <string name="offline_package">Пакет с %1$s · %2$s</string>
 </resources>

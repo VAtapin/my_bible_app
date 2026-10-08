@@ -10,12 +10,12 @@ import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.myapp.ui.theme.readingFont
-import com.bibledesktop.shared.api.BibleApiClient
+import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.CalendarServicePlan
 import kotlinx.coroutines.CancellationException
 
 @Composable
-internal fun CalendarService(date: String, language: String, client: BibleApiClient) {
+internal fun CalendarService(date: String, language: String, client: BibleContentSource) {
     var opened by rememberSaveable { mutableStateOf(false) }
     var plan by remember { mutableStateOf<CalendarServicePlan?>(null) }
     var error by remember { mutableStateOf(false) }

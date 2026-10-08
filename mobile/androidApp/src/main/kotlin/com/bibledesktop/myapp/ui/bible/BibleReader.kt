@@ -78,7 +78,7 @@ import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.myapp.ui.theme.readingFont
-import com.bibledesktop.shared.api.BibleApiClient
+import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.BibleBook
 import com.bibledesktop.shared.api.BibleChapter
 import com.bibledesktop.shared.api.BibleVerse
@@ -97,7 +97,7 @@ private sealed interface LoadState<out T> {
 fun BibleReader(
     language: String,
     translations: List<TranslationSummary>,
-    client: BibleApiClient,
+    client: BibleContentSource,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current

@@ -15,10 +15,10 @@ private const val DefaultApiBaseUrl = "https://bible-desktop.com/api"
 class BibleApiClient internal constructor(
     private val client: HttpClient,
     private val baseUrl: String = DefaultApiBaseUrl,
-) {
+) : BibleContentSource {
     constructor() : this(createPlatformHttpClient())
 
-    suspend fun getTranslations(language: String? = null): List<TranslationSummary> {
+    override suspend fun getTranslations(language: String?): List<TranslationSummary> {
         val response = client.get("$baseUrl/translations") {
             language?.takeIf(String::isNotBlank)?.let { parameter("language", it) }
         }
@@ -26,12 +26,12 @@ class BibleApiClient internal constructor(
         return response.body<ApiEnvelope<List<TranslationSummary>>>().data
     }
 
-    suspend fun getBooks(translationCode: String): List<BibleBook> {
+    override suspend fun getBooks(translationCode: String): List<BibleBook> {
         val response = client.get("$baseUrl/translations/$translationCode/books")
         return response.body<ApiEnvelope<BibleBooksPayload>>().data.books
     }
 
-    suspend fun getChapter(
+    override suspend fun getChapter(
         translationCode: String,
         bookSlug: String,
         chapterNumber: Int,
@@ -42,7 +42,7 @@ class BibleApiClient internal constructor(
         return response.body<ApiEnvelope<BibleChapter>>().data
     }
 
-    suspend fun getPrayers(language: String): List<PrayerSummary> {
+    override suspend fun getPrayers(language: String): List<PrayerSummary> {
         val response = client.get("$baseUrl/prayers") {
             parameter("language", language)
         }
@@ -50,15 +50,15 @@ class BibleApiClient internal constructor(
             .filter { it.languageCode == language }
     }
 
-    suspend fun getPrayer(id: Long): PrayerDetail {
+    override suspend fun getPrayer(id: Long): PrayerDetail {
         val response = client.get("$baseUrl/prayers/$id")
         return response.body<ApiEnvelope<PrayerDetail>>().data
     }
 
-    suspend fun getCalendarDay(
+    override suspend fun getCalendarDay(
         date: String,
         language: String,
-        profile: String = "typikon-strict",
+        profile: String,
     ): CalendarDay {
         val response = client.get("$baseUrl/calendar/day") {
             parameter("date", date)
@@ -68,7 +68,7 @@ class BibleApiClient internal constructor(
         return response.body<ApiEnvelope<CalendarDay>>().data
     }
 
-    suspend fun getCalendarMonth(year: Int, month: Int, language: String): List<CalendarGridDay> {
+    override suspend fun getCalendarMonth(year: Int, month: Int, language: String): List<CalendarGridDay> {
         require(year in 1900..2100 && month in 1..12)
         val response = client.get("$baseUrl/calendar/month") {
             parameter("year", year)
@@ -79,11 +79,11 @@ class BibleApiClient internal constructor(
         return response.body<ApiEnvelope<List<CalendarGridDay>>>().data
     }
 
-    fun close() {
+    override fun close() {
         client.close()
     }
 
-    suspend fun getCalendarService(date: String, language: String): CalendarServicePlan {
+    override suspend fun getCalendarService(date: String, language: String): CalendarServicePlan {
         val response = client.get("$baseUrl/calendar/service") {
             parameter("date", date)
             parameter("lang", calendarContentLanguage(language))
@@ -97,6 +97,17 @@ class BibleApiClient internal constructor(
 
 /** English UI must not pretend that the calendar corpus has been translated. */
 fun calendarContentLanguage(language: String): String = if (language == "en") "ru" else language
+
+/** Background public downloads may retry rate limits and server failures, never access failures. */
+fun isRetryableBibleFailure(error: Throwable): Boolean =
+    error is io.ktor.client.plugins.ResponseException &&
+        (error.response.status.value == 429 || error.response.status.value in 500..599)
+
+fun bibleRetryDelayMillis(error: Throwable): Long {
+    val seconds = (error as? io.ktor.client.plugins.ResponseException)?.response?.headers
+        ?.get(io.ktor.http.HttpHeaders.RetryAfter)?.toLongOrNull()?.takeIf { it > 0 }
+    return (seconds ?: 60L).coerceAtMost(Long.MAX_VALUE / 1000) * 1000
+}
 
 internal fun HttpClientConfig<*>.configureBibleApiClient() {
     expectSuccess = true

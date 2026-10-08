@@ -12,6 +12,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun rateLimitsHonorRetryAfterAndAccessFailuresAreNotRetried() = runBlocking {
+        for (status in listOf(HttpStatusCode.TooManyRequests, HttpStatusCode.Forbidden, HttpStatusCode.ServiceUnavailable)) {
+            val engine = MockEngine { respond("error", status, headersOf(HttpHeaders.RetryAfter, "120")) }
+            val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+            try {
+                val error = runCatching { client.getTranslations() }.exceptionOrNull()!!
+                assertEquals(status != HttpStatusCode.Forbidden, isRetryableBibleFailure(error))
+                assertEquals(120_000L, bibleRetryDelayMillis(error))
+            } finally { client.close() }
+        }
+    }
+
     @Test fun decodesCalendarIconsMarksAndService() = runBlocking {
         val engine = MockEngine { request ->
             val body = if (request.url.encodedPath.endsWith("service")) {

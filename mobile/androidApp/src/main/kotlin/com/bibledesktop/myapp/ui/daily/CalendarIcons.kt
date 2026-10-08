@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -26,16 +27,29 @@ import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.shared.api.CalendarIcon
 import kotlinx.coroutines.launch
+import com.bibledesktop.myapp.data.OfflineStore
+import com.bibledesktop.myapp.data.isConnected
 
 @Composable
-internal fun CalendarImage(model: String?, description: String, language: String, modifier: Modifier) {
-    if (model == null) {
+internal fun CalendarImage(model: String?, description: String, language: String, modifier: Modifier, previewFallback: String? = null) {
+    val context = LocalContext.current
+    var local by remember(model, previewFallback) { mutableStateOf<String?>(null) }
+    LaunchedEffect(model, previewFallback) {
+        val store = OfflineStore(context)
+        local = model?.let { store.image(it)?.absolutePath } ?: previewFallback?.let { store.image(it)?.absolutePath }
+    }
+    val displayModel = if (model?.startsWith("https:") == true && (!isConnected(context) || model.contains("preview=1"))) local ?: model else model
+    if (displayModel == null) {
         Box(modifier, contentAlignment = Alignment.Center) { Text(localized(R.string.calendar_image_unavailable, language)) }
-    } else SubcomposeAsyncImage(model = model, contentDescription = description,
+    } else SubcomposeAsyncImage(model = displayModel, contentDescription = description,
         modifier = modifier, contentScale = ContentScale.Fit,
         success = { SubcomposeAsyncImageContent(Modifier.testTag("calendar-image-ready")) },
         loading = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp)) } },
-        error = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(localized(R.string.calendar_image_unavailable, language)) } })
+        error = {
+            if (local != null && displayModel != local) SubcomposeAsyncImage(model = local, contentDescription = description,
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+            else Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(localized(R.string.calendar_image_unavailable, language)) }
+        })
 }
 
 @Composable
@@ -72,7 +86,9 @@ internal fun CalendarIconGallery(icon: CalendarIcon, language: String, onClose: 
                     if (urls.isEmpty()) Text(localized(R.string.calendar_image_unavailable, language))
                     else {
                         HorizontalPager(pager, Modifier.fillMaxWidth().height(imageHeight).testTag("calendar-gallery")) { index ->
-                            CalendarImage(urls[index], icon.title, language, Modifier.fillMaxSize())
+                            val preview = if (urls[index] == calendarImageUrl(icon.imageUrl)) icon.imagePreviewUrl
+                                else icon.images.firstOrNull { calendarImageUrl(it.url) == urls[index] }?.previewUrl
+                            CalendarImage(urls[index], icon.title, language, Modifier.fillMaxSize(), calendarImageUrl(preview))
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                             IconButton(enabled = urls.size > 1, onClick = { scope.launch { pager.animateScrollToPage((pager.currentPage - 1 + urls.size) % urls.size) } }) {

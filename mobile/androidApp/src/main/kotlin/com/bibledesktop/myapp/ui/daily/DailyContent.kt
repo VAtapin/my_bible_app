@@ -70,7 +70,7 @@ import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.myapp.ui.theme.readingFont
-import com.bibledesktop.shared.api.BibleApiClient
+import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.PrayerDetail
 import com.bibledesktop.shared.api.PrayerSummary
 import java.util.Locale
@@ -84,7 +84,7 @@ private sealed interface LoadState<out T> {
 @Composable
 fun PrayersScreen(
     language: String,
-    client: BibleApiClient,
+    client: BibleContentSource,
     onBack: () -> Unit,
 ) {
     var selectedPrayer by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -258,7 +258,7 @@ private fun PrayerReader(
 @Composable
 fun CalendarScreen(
     language: String,
-    client: BibleApiClient,
+    client: BibleContentSource,
     onBack: () -> Unit,
 ) {
     BackHandler(onBack = onBack)

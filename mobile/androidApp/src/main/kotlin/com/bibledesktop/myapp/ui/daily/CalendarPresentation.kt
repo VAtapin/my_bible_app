@@ -25,15 +25,7 @@ internal fun bundledCalendarAsset(source: String?): String? = runCatching {
 }.getOrNull()
 
 /** Calendar image downloads stay on BibleDesktop; preview and gallery are distinct. */
-internal fun calendarImageUrl(source: String?): String? = runCatching {
-    val url = apiOrigin.resolve(source ?: return null)
-    if (url.scheme != "https" || url.host != apiOrigin.host || url.port != -1 ||
-        url.userInfo != null || url.fragment != null ||
-        !(Regex("/api/calendar/icons/[0-9]+/images/[0-9]+").matches(url.path) ||
-          Regex("/storage/calendar-icons/[a-f0-9]{64}\\.(png|jpg|jpeg|webp)").matches(url.path)) ||
-        (url.query != null && url.query != "preview=1")) return null
-    url.toString()
-}.getOrNull()
+internal fun calendarImageUrl(source: String?): String? = com.bibledesktop.myapp.data.CalendarMedia.url(source)
 
 internal fun calendarGalleryUrls(icon: CalendarIcon): List<String> =
     (listOfNotNull(icon.imageUrl) + icon.images.map { it.url }).mapNotNull(::calendarImageUrl).distinct()

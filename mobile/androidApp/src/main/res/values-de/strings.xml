@@ -117,4 +117,17 @@
     <string name="calendar_service">Gottesdiensttexte</string>
     <string name="calendar_service_error">Gottesdiensttexte konnten nicht geladen werden.</string>
     <string name="calendar_service_office">Sechste Stunde · Referenztext, keine Anleitung zur Durchführung des Gottesdienstes</string>
+    <string name="offline_title">Offline</string>
+    <string name="offline_description">Geöffnete Kapitel, Gebete und Tage werden auf dem Gerät gespeichert. Paket: 30 Kalendertage, Tagestexte CU-civil und kleine Ikonenvorschauen. Ein neuer Download aktualisiert das Paket; ganze Bibeln werden noch nicht heruntergeladen.</string>
+    <string name="offline_download">30 Tage herunterladen</string>
+    <string name="offline_wifi">Nur über WLAN</string>
+    <string name="offline_waiting">Warten auf Netzwerk oder Hintergrundauftrag.</string>
+    <string name="offline_running">Kalender wird heruntergeladen…</string>
+    <string name="offline_complete">30 Tage gespeichert: Kalender, Tagestexte und zur Speicherung freigegebene Vorschauen.</string>
+    <string name="offline_cancelled">Download abgebrochen. Gespeicherte Inhalte bleiben auf dem Gerät.</string>
+    <string name="offline_failed">Download nicht abgeschlossen. Netzwerk und freien Speicher prüfen, dann fortsetzen.</string>
+    <string name="offline_progress">Gespeicherte Tage: %1$d von %2$d</string>
+    <string name="offline_cancel">Download abbrechen</string>
+    <string name="offline_resume">Fortsetzen</string>
+    <string name="offline_package">Paket ab %1$s · %2$s</string>
 </resources>

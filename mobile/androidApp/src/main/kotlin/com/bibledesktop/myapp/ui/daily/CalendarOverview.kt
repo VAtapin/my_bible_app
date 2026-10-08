@@ -31,7 +31,7 @@ import java.util.Locale
 
 /** Shared live month/day UI for the first launch and Today, without creating a profile. */
 @Composable
-internal fun CalendarOverview(language: String, client: BibleApiClient, modifier: Modifier = Modifier, detailed: Boolean = false) {
+internal fun CalendarOverview(language: String, client: BibleContentSource, modifier: Modifier = Modifier, detailed: Boolean = false) {
     var selected by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var monthIso by rememberSaveable { mutableStateOf(selected.take(7)) }
     var days by remember { mutableStateOf<List<CalendarGridDay>?>(null) }
