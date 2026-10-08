@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -29,14 +30,9 @@ import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.Bookmark
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.TextDecrease
 import androidx.compose.material.icons.outlined.TextIncrease
 import androidx.compose.material3.Button
@@ -66,18 +62,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
+import com.bibledesktop.myapp.ui.theme.ReadingSerif
+import com.bibledesktop.myapp.ui.reading.ReadingHeader
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Ink
 import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
-import com.bibledesktop.myapp.ui.theme.readingFont
 import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.BibleBook
 import com.bibledesktop.shared.api.BibleChapter
@@ -203,6 +199,7 @@ fun BibleReader(
             book = selectedBook,
             onChapterClick = { selectedChapter = it },
             onBack = { selectedBookSlug = null },
+            onHome = onBack,
         )
 
         else -> {
@@ -215,6 +212,7 @@ fun BibleReader(
             fontSize = fontSize,
             bookmarkedKeys = bookmarkEntries.map { "${it.translationCode}:${it.reference}" }.toSet(),
             onBack = { selectedChapter = null },
+            onHome = onBack,
             onRetry = { chapterRetry += 1 },
             onPrevious = { selectedChapter = (chapterNumber - 1).coerceAtLeast(1) },
             onNext = { selectedChapter = (chapterNumber + 1).coerceAtMost(selectedBook.chaptersCount) },
@@ -269,6 +267,7 @@ private fun BooksScreen(
     ReaderPage(
         title = allBooksTitle,
         onBack = onBack,
+        language = language,
     ) {
         item {
             Text(
@@ -324,7 +323,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.testamentItems(
             title,
             modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
             color = Navy,
-            fontFamily = FontFamily.Serif,
+            fontFamily = ReadingSerif,
             fontSize = 21.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -364,6 +363,7 @@ private fun ChaptersScreen(
     book: BibleBook,
     onChapterClick: (Int) -> Unit,
     onBack: () -> Unit,
+    onHome: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -372,12 +372,12 @@ private fun ChaptersScreen(
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
-        ReaderHeader(book.name, onBack)
+        ReadingHeader(book.name, language, onBack, onHome)
         Text(
             text(R.string.bible_chapters, language),
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             color = Ink,
-            fontFamily = FontFamily.Serif,
+            fontFamily = ReadingSerif,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -415,6 +415,7 @@ private fun ChapterScreen(
     fontSize: Float,
     bookmarkedKeys: Set<String>,
     onBack: () -> Unit,
+    onHome: () -> Unit,
     onRetry: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -434,7 +435,7 @@ private fun ChapterScreen(
         val title = (state as? LoadState.Ready)?.value?.let {
             "${it.book.name} · ${text(R.string.bible_chapter, language, it.chapter.number)}"
         } ?: text(R.string.bible_chapter, language, chapterNumber)
-        ReaderHeader(title, onBack)
+        ReadingHeader(title, language, onBack, onHome)
 
         when (state) {
             LoadState.Loading -> LoadingBox(Modifier.weight(1f))
@@ -444,104 +445,43 @@ private fun ChapterScreen(
                 onRetry,
                 Modifier.weight(1f),
             )
-            is LoadState.Ready -> LazyColumn(
+            is LoadState.Ready -> ChapterReadingContent(
+                language, state.value, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-            ) {
-                items(state.value.verses, key = BibleVerse::osisRef) { verse ->
-                    VerseRow(
-                        language = language,
-                        chapter = state.value,
-                        verse = verse,
-                        fontSize = fontSize,
-                        bookmarked = "${state.value.translation.code}:${verse.osisRef}" in bookmarkedKeys,
-                        onBookmark = { onBookmark(state.value, verse) },
-                        onShare = { onShare(state.value, verse) },
-                        onNote = { onNote(state.value, verse) },
-                    )
-                }
-            }
+            )
         }
 
         Surface(color = Color.White, shadowElevation = 6.dp) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onPrevious, enabled = chapterNumber > 1) {
-                    Icon(Icons.Outlined.ChevronLeft, text(R.string.bible_previous_chapter, language))
-                }
-                IconButton(onClick = onFontSmaller, enabled = fontSize > 15f) {
-                    Icon(Icons.Outlined.TextDecrease, text(R.string.bible_font_smaller, language))
-                }
-                Text("$chapterNumber / $chaptersCount", color = Navy, fontWeight = FontWeight.Bold)
-                IconButton(onClick = onFontLarger, enabled = fontSize < 28f) {
-                    Icon(Icons.Outlined.TextIncrease, text(R.string.bible_font_larger, language))
-                }
-                IconButton(onClick = onNext, enabled = chapterNumber < chaptersCount) {
-                    Icon(Icons.Outlined.ChevronRight, text(R.string.bible_next_chapter, language))
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Row(
+                    modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = onPrevious, enabled = chapterNumber > 1) {
+                        Icon(Icons.Outlined.ChevronLeft, text(R.string.bible_previous_chapter, language))
+                    }
+                    IconButton(onClick = onFontSmaller, enabled = fontSize > 15f) {
+                        Icon(Icons.Outlined.TextDecrease, text(R.string.bible_font_smaller, language))
+                    }
+                    Text("$chapterNumber / $chaptersCount", color = Navy, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = onFontLarger, enabled = fontSize < 28f) {
+                        Icon(Icons.Outlined.TextIncrease, text(R.string.bible_font_larger, language))
+                    }
+                    IconButton(onClick = onNext, enabled = chapterNumber < chaptersCount) {
+                        Icon(Icons.Outlined.ChevronRight, text(R.string.bible_next_chapter, language))
+                    }
                 }
             }
         }
     }
-}
-
-@Composable
-private fun VerseRow(
-    language: String,
-    chapter: BibleChapter,
-    verse: BibleVerse,
-    fontSize: Float,
-    bookmarked: Boolean,
-    onBookmark: () -> Unit,
-    onShare: () -> Unit,
-    onNote: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            verse.number.toString(),
-            modifier = Modifier.padding(top = 3.dp),
-            color = PrimaryBlue,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            if (chapter.translation.language.code in setOf("cu", "cu-civil"))
-                android.text.Html.fromHtml(verse.text, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim()
-            else verse.plainText,
-            modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
-            color = Ink,
-            fontFamily = readingFont(chapter.translation.language.code),
-            fontSize = fontSize.sp,
-            lineHeight = (fontSize * 1.45f).sp,
-        )
-        Column {
-            IconButton(onClick = onBookmark, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    if (bookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
-                    if (bookmarked) text(R.string.bible_bookmark_remove, language) else text(R.string.bible_bookmark_add, language),
-                    tint = if (bookmarked) Navy else PrimaryBlue,
-                )
-            }
-            IconButton(onClick = onShare, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Outlined.Share, text(R.string.bible_share, language), tint = PrimaryBlue)
-            }
-            IconButton(onClick = onNote, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Outlined.EditNote, text(R.string.note_edit, language), tint = PrimaryBlue)
-            }
-        }
-    }
-    HorizontalDivider(color = WarmBorder.copy(alpha = 0.7f))
 }
 
 @Composable
 private fun ReaderPage(
     title: String,
     onBack: () -> Unit,
+    language: String,
     content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
 ) {
     Column(
@@ -551,31 +491,11 @@ private fun ReaderPage(
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
-        ReaderHeader(title, onBack)
+        ReadingHeader(title, language, onBack, onBack)
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             content = content,
-        )
-    }
-}
-
-@Composable
-private fun ReaderHeader(title: String, onBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null, tint = Navy)
-        }
-        Text(
-            title,
-            modifier = Modifier.weight(1f).padding(end = 48.dp),
-            color = Ink,
-            fontFamily = FontFamily.Serif,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
         )
     }
 }

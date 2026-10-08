@@ -19,6 +19,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.SubcomposeAsyncImage
@@ -58,9 +60,10 @@ internal fun CalendarIcons(icons: List<CalendarIcon>, language: String, detailed
     val visible = if (detailed) icons else icons.take(3)
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         visible.forEach { icon ->
-            Column(Modifier.width(112.dp).clickable { openedId = icon.id }, horizontalAlignment = Alignment.CenterHorizontally) {
-                CalendarImage(calendarImageUrl(icon.imagePreviewUrl), icon.title, language, Modifier.fillMaxWidth().height(130.dp))
-                Text(icon.title)
+            Column(Modifier.width(156.dp).clickable { openedId = icon.id }, horizontalAlignment = Alignment.CenterHorizontally) {
+                CalendarImage(calendarImageUrl(icon.imagePreviewUrl), icon.title, language, Modifier.fillMaxWidth().height(160.dp))
+                Text(icon.title, Modifier.fillMaxWidth().padding(top = 6.dp), style = MaterialTheme.typography.bodySmall,
+                    fontSize = 13.sp, lineHeight = 18.sp, textAlign = TextAlign.Center)
             }
         }
     }

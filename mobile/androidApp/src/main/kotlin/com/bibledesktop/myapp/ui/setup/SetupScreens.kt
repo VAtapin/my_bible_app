@@ -84,7 +84,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
+import com.bibledesktop.myapp.ui.theme.ReadingSerif
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -155,10 +155,10 @@ private fun WelcomeHero(language: String, modifier: Modifier) {
                     .background(Brush.verticalGradient(listOf(Color.Transparent, Cream))))
             }
         }
-        Text(localized(R.string.app_name, language), color = Ink, fontFamily = FontFamily.Serif,
+        Text(localized(R.string.app_name, language), color = Ink, fontFamily = ReadingSerif,
             fontSize = 34.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         Text(localized(R.string.welcome_subtitle, language), Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-            color = PrimaryBlue, fontFamily = FontFamily.Serif, fontSize = 18.sp, textAlign = TextAlign.Center)
+            color = PrimaryBlue, fontFamily = ReadingSerif, fontSize = 18.sp, textAlign = TextAlign.Center)
     }
 }
 
@@ -198,7 +198,7 @@ private fun WelcomeActions(language: String, state: TranslationState, onRetry: (
             text = localized(R.string.welcome_quote, language),
             modifier = Modifier.padding(top = 26.dp),
             color = PrimaryBlue,
-            fontFamily = FontFamily.Serif,
+            fontFamily = ReadingSerif,
             fontSize = 20.sp,
             textAlign = TextAlign.Center,
         )

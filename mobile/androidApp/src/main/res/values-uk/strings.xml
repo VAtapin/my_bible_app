@@ -130,4 +130,6 @@
     <string name="offline_cancel">Скасувати завантаження</string>
     <string name="offline_resume">Продовжити</string>
     <string name="offline_package">Пакет із %1$s · %2$s</string>
+    <string name="reader_home">На головну</string>
+    <string name="reader_verse_actions">Дії з віршем %1$d</string>
 </resources>

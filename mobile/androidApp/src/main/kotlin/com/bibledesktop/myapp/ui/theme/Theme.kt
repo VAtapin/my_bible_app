@@ -2,6 +2,7 @@ package com.bibledesktop.myapp.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -29,6 +30,26 @@ private val BibleDesktopColors = lightColorScheme(
 fun BibleDesktopTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = BibleDesktopColors,
+        typography = BibleDesktopTypography,
         content = content,
     )
 }
+
+private val defaults = Typography()
+private val BibleDesktopTypography = Typography(
+    displayLarge = defaults.displayLarge.copy(fontFamily = ReadingSerif),
+    displayMedium = defaults.displayMedium.copy(fontFamily = ReadingSerif),
+    displaySmall = defaults.displaySmall.copy(fontFamily = ReadingSerif),
+    headlineLarge = defaults.headlineLarge.copy(fontFamily = ReadingSerif),
+    headlineMedium = defaults.headlineMedium.copy(fontFamily = ReadingSerif),
+    headlineSmall = defaults.headlineSmall.copy(fontFamily = ReadingSerif),
+    titleLarge = defaults.titleLarge.copy(fontFamily = InterfaceFont),
+    titleMedium = defaults.titleMedium.copy(fontFamily = InterfaceFont),
+    titleSmall = defaults.titleSmall.copy(fontFamily = InterfaceFont),
+    bodyLarge = defaults.bodyLarge.copy(fontFamily = InterfaceFont),
+    bodyMedium = defaults.bodyMedium.copy(fontFamily = InterfaceFont),
+    bodySmall = defaults.bodySmall.copy(fontFamily = InterfaceFont),
+    labelLarge = defaults.labelLarge.copy(fontFamily = InterfaceFont),
+    labelMedium = defaults.labelMedium.copy(fontFamily = InterfaceFont),
+    labelSmall = defaults.labelSmall.copy(fontFamily = InterfaceFont),
+)

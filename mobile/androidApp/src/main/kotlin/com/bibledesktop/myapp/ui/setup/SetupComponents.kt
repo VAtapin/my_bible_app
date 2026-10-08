@@ -83,7 +83,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
+import com.bibledesktop.myapp.ui.theme.ReadingSerif
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -135,7 +135,7 @@ internal fun TodayScreen(
                 modifier = Modifier.size(48.dp),
             )
             Column(modifier = Modifier.weight(1f).padding(start = 10.dp)) {
-                Text(localized(R.string.app_name, language), color = Ink, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+                Text(localized(R.string.app_name, language), color = Ink, fontFamily = ReadingSerif, fontWeight = FontWeight.Bold)
                 Text(localized(R.string.my_day, language), color = PrimaryBlue, fontSize = 12.sp)
             }
             IconButton(onClick = onEdit) {
@@ -154,8 +154,8 @@ internal fun TodayScreen(
                         CalendarOverview(language, client)
                         Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(22.dp)) {
                             Column(Modifier.padding(22.dp)) {
-                                Text(localized(R.string.today_title, language), color = Color.White, fontFamily = FontFamily.Serif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                                Text(localized(R.string.today_quote, language), Modifier.padding(top = 12.dp), color = LightBlue, fontFamily = FontFamily.Serif, fontSize = 20.sp)
+                                Text(localized(R.string.today_title, language), color = Color.White, fontFamily = ReadingSerif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                                Text(localized(R.string.today_quote, language), Modifier.padding(top = 12.dp), color = LightBlue, fontFamily = ReadingSerif, fontSize = 20.sp)
                             }
                         }
                     }
@@ -259,7 +259,7 @@ internal fun SetupScaffold(
             trackColor = LightBlue,
         )
         Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
-            Text(title, color = Ink, fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(title, color = Ink, fontFamily = ReadingSerif, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Text(subtitle, modifier = Modifier.padding(top = 6.dp), color = PrimaryBlue, fontSize = 13.sp)
         }
 

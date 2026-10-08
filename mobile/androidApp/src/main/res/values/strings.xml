@@ -130,4 +130,6 @@
     <string name="offline_cancel">Отменить загрузку</string>
     <string name="offline_resume">Продолжить</string>
     <string name="offline_package">Пакет с %1$s · %2$s</string>
+    <string name="reader_home">На главную</string>
+    <string name="reader_verse_actions">Действия со стихом %1$d</string>
 </resources>

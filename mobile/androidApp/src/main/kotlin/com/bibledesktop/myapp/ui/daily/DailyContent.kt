@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,7 +26,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Church
 import androidx.compose.material.icons.outlined.Share
@@ -38,7 +36,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -57,11 +54,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
+import com.bibledesktop.myapp.ui.reading.ReadingHeader
+import com.bibledesktop.myapp.ui.reading.ReadingViewport
+import com.bibledesktop.myapp.ui.reading.PrayerReadingContent
+import com.bibledesktop.myapp.ui.reading.readingText
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Gold
 import com.bibledesktop.myapp.ui.theme.Ink
@@ -69,7 +69,6 @@ import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
-import com.bibledesktop.myapp.ui.theme.readingFont
 import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.PrayerDetail
 import com.bibledesktop.shared.api.PrayerSummary
@@ -117,7 +116,7 @@ fun PrayersScreen(
     }
 
     if (selectedPrayer == null) {
-        ContentListPage(title = localText(R.string.prayers_title, language), onBack = onBack) {
+        ContentListPage(title = localText(R.string.prayers_title, language), language = language, onBack = onBack) {
             item {
                 Text(localText(R.string.prayer_text_language, language), color = Ink, fontWeight = FontWeight.Bold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -153,6 +152,7 @@ fun PrayersScreen(
             language = language,
             state = detailState,
             onBack = { selectedPrayer = null },
+            onHome = onBack,
             onRetry = { retry += 1 },
         )
     }
@@ -196,6 +196,7 @@ private fun PrayerReader(
     language: String,
     state: LoadState<PrayerDetail>,
     onBack: () -> Unit,
+    onHome: () -> Unit,
     onRetry: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -205,7 +206,7 @@ private fun PrayerReader(
     Column(
         modifier = Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding(),
     ) {
-        Header(title, onBack)
+        ReadingHeader(title, language, onBack, onHome)
         when (val current = state) {
             LoadState.Loading -> LoadingBox(Modifier.weight(1f))
             LoadState.Error -> ErrorBox(
@@ -214,20 +215,10 @@ private fun PrayerReader(
                 onRetry,
                 Modifier.weight(1f),
             )
-            is LoadState.Ready -> Column(
-                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(22.dp),
-            ) {
-                current.value.intro?.takeIf(String::isNotBlank)?.let {
-                    Text(it, color = PrimaryBlue, fontFamily = FontFamily.Serif, fontSize = 16.sp)
-                    Spacer(Modifier.height(16.dp))
+            is LoadState.Ready -> ReadingViewport(Modifier.weight(1f)) {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    PrayerReadingContent(current.value, fontSize)
                 }
-                Text(
-                    android.text.Html.fromHtml(current.value.body, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim(),
-                    color = Ink,
-                    fontFamily = readingFont(current.value.languageCode),
-                    fontSize = fontSize.sp,
-                    lineHeight = (fontSize * 1.5f).sp,
-                )
             }
         }
         Surface(color = Color.White, shadowElevation = 6.dp) {
@@ -244,7 +235,7 @@ private fun PrayerReader(
                 IconButton(
                     onClick = {
                         val prayer = (state as? LoadState.Ready)?.value ?: return@IconButton
-                        share(context, "${prayer.title}\n\n${prayer.body}")
+                        share(context, "${prayer.title}\n\n${readingText(prayer.body)}")
                     },
                     enabled = state is LoadState.Ready,
                 ) {
@@ -265,7 +256,7 @@ fun CalendarScreen(
     Column(
         modifier = Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding(),
     ) {
-        Header(localText(R.string.calendar_title, language), onBack)
+        ReadingHeader(localText(R.string.calendar_title, language), language, onBack, onBack)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp)) {
             CalendarOverview(language, client, detailed = true)
         }
@@ -275,37 +266,18 @@ fun CalendarScreen(
 @Composable
 private fun ContentListPage(
     title: String,
+    language: String,
     onBack: () -> Unit,
     content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding(),
     ) {
-        Header(title, onBack)
+        ReadingHeader(title, language, onBack, onBack)
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(20.dp),
             content = content,
-        )
-    }
-}
-
-@Composable
-private fun Header(title: String, onBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null, tint = Navy)
-        }
-        Text(
-            title,
-            modifier = Modifier.weight(1f).padding(end = 48.dp),
-            color = Ink,
-            fontFamily = FontFamily.Serif,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
         )
     }
 }

@@ -130,4 +130,6 @@
     <string name="offline_cancel">Download abbrechen</string>
     <string name="offline_resume">Fortsetzen</string>
     <string name="offline_package">Paket ab %1$s · %2$s</string>
+    <string name="reader_home">Zur Startseite</string>
+    <string name="reader_verse_actions">Aktionen für Vers %1$d</string>
 </resources>

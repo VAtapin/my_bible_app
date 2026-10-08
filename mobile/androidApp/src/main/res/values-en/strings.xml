@@ -130,4 +130,6 @@
     <string name="offline_cancel">Cancel download</string>
     <string name="offline_resume">Resume</string>
     <string name="offline_package">Package from %1$s · %2$s</string>
+    <string name="reader_home">Go to home</string>
+    <string name="reader_verse_actions">Actions for verse %1$d</string>
 </resources>

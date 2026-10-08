@@ -46,7 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontFamily
+import com.bibledesktop.myapp.ui.theme.ReadingSerif
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -92,7 +92,7 @@ fun MoreScreen(
                 localText(R.string.more_title, language),
                 modifier = Modifier.weight(1f).padding(end = 48.dp),
                 color = Ink,
-                fontFamily = FontFamily.Serif,
+                fontFamily = ReadingSerif,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -123,7 +123,7 @@ fun MoreScreen(
                     localText(R.string.bookmarks_title, language),
                     modifier = Modifier.padding(top = 18.dp, bottom = 4.dp),
                     color = Navy,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = ReadingSerif,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -202,7 +202,7 @@ private fun BookmarkCard(
                 bookmark.text,
                 modifier = Modifier.padding(top = 10.dp),
                 color = Ink,
-                fontFamily = FontFamily.Serif,
+                fontFamily = ReadingSerif,
                 fontSize = 16.sp,
                 maxLines = 4,
             )

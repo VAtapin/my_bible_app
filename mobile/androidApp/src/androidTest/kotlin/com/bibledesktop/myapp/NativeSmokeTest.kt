@@ -6,8 +6,10 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -101,7 +103,7 @@ class NativeSmokeTest {
         compose.onNodeWithText("Молитвы").performClick()
         compose.onNodeWithText("Молитвы").assertIsDisplayed()
         back()
-        compose.onAllNodes(hasText("Библия"))[0].performClick()
+        compose.onNode(hasText("Библия") and isSelectable()).performClick()
         compose.onNodeWithText("Книги Библии").assertIsDisplayed()
         back()
         compose.onNodeWithText("Календарь").assertIsDisplayed()
@@ -162,16 +164,20 @@ class NativeSmokeTest {
         } } finally { client.close() }
         compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
-        compose.onAllNodes(hasText("Библия"))[0].performClick()
+        compose.onNode(hasText("Библия") and isSelectable()).performClick()
         compose.waitUntil(30_000) { compose.onAllNodes(hasText(book.name)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText(book.name).performScrollTo().performClick()
         compose.onNodeWithText("1").performClick()
-        compose.waitUntil(30_000) { compose.onAllNodes(hasContentDescription("Заметка к стиху")).fetchSemanticsNodes().isNotEmpty() }
-        compose.onAllNodes(hasContentDescription("Заметка к стиху"))[0].performClick()
+        compose.waitUntil(30_000) { compose.onAllNodes(hasContentDescription("Действия со стихом 1")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithContentDescription("Действия со стихом 1").performClick()
+        compose.onNodeWithText("Заметка к стиху").performClick()
         compose.onNodeWithTag("note-body").performTextInput("Проверочная заметка")
         compose.onNodeWithText("Сохранить").performClick()
         compose.waitUntil(10_000) { com.bibledesktop.myapp.ui.bible.NoteStore.load(compose.activity).any { it.body == "Проверочная заметка" } }
-        back(); back(); back()
+        compose.activityRule.scenario.recreate()
+        compose.waitUntil(10_000) { compose.onAllNodes(hasContentDescription("Действия со стихом 1")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithContentDescription("На главную").performClick()
+        compose.onAllNodes(hasText("Церковный календарь"))[0].assertExists()
         compose.onNodeWithText("Ещё").performClick()
         compose.onNodeWithText("Проверочная заметка").performScrollTo().assertIsDisplayed()
     }
