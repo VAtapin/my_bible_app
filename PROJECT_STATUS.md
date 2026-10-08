@@ -2,6 +2,10 @@
 
 ## Реализовано
 
+- Android «Ещё → О приложении»: автор/разработчик Vladimir Atapin и реальная
+  версия APK, ссылки на bible-app.online/{ru,de,uk,en}, bible-desktop.com и
+  /privacy веб-app. Сведения локальны и доступны без сети, ссылки открываются
+  внешним браузером; экран имеет Back/Home и сохраняется при пересоздании.
 - Android-ссылки на стихи: отправка текста из читалки/закладок содержит HTTPS
   bible-app.online/reader с точными translation/book/chapter/verse, как веб-app.
   Native VIEW проверяет перевод, книгу и текст до записи места, открывается
@@ -233,6 +237,13 @@
 
 ## Проверки
 
+- Android About 09.10.2026: четыре layout/URL-теста RU/DE/UK/EN, включая
+  200% шрифт, плюс два NativeSmoke сценария «Ещё → About → пересоздание →
+  Back/Home» и прежняя заметка/каталог в «Ещё» прошли (6 разных проверок).
+  Реальная версия APK и адреса проверены, RU-снимок просмотрен.
+  assembleDebug/assembleDebugAndroidTest/lintDebug пройдены:
+  0 ошибок, 50 предупреждений, 3 подсказки. Физический телефон и навигация
+  внешнего браузера не проверялись; API/веб-app/production не изменялись.
 - Android-ссылки 09.10.2026: ReaderLinks 4, NativeReaderLinks 4 и прежние
   NativeSmoke 13 (21/21) прошли на API 37: настоящий cold VIEW до настройки,
   warm URL, точный стих, смена главы/пересоздание, недоступный стих/сохранность
@@ -358,5 +369,5 @@
 
 ## Последний связанный commit
 
-- Предыдущий: 15f6273 — Clarify native reading and calendar controls.
-- Текущий atomic commit: Link native verse sharing to the online reader.
+- Предыдущий: 9c0dc6d — Link native verse sharing to the online reader.
+- Текущий atomic commit: Add native app information and project links.

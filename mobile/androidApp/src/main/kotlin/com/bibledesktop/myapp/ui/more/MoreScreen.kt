@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,6 +75,11 @@ fun MoreScreen(
     onBibleDownloads: () -> Unit,
 ) {
     val context = LocalContext.current
+    var showingAbout by rememberSaveable { mutableStateOf(false) }
+    if (showingAbout) {
+        AboutScreen(language, onBack = { showingAbout = false }, onHome = onBack)
+        return
+    }
     var bookmarks by remember { mutableStateOf(BookmarkStore.load(context)) }
     var notesResult by remember { mutableStateOf<Result<List<VerseNote>>?>(null) }
     val noteScope = rememberCoroutineScope()
@@ -108,6 +114,9 @@ fun MoreScreen(
             item {
                 SettingsCard(language, onSettings)
             }
+            item { androidx.compose.material3.OutlinedButton(onClick = { showingAbout = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(localText(R.string.about_title, language))
+            } }
             item { OfflinePanel(language) }
             item { androidx.compose.material3.OutlinedButton(onClick = onBibleDownloads, modifier = Modifier.fillMaxWidth()) {
                 Text(localText(R.string.bible_download_title, language))

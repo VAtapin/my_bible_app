@@ -161,6 +161,22 @@ class NativeSmokeTest {
         }
     }
 
+    @Test fun aboutIsVisibleInMoreAndSurvivesRecreation() {
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
+        compose.onNodeWithText("Ещё").performClick()
+        compose.onNodeWithText("О приложении").performScrollTo().performClick()
+        compose.onNodeWithText("Vladimir Atapin").assertIsDisplayed()
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithText("О приложении").assertIsDisplayed()
+        compose.onNodeWithText("Vladimir Atapin").assertIsDisplayed()
+        back()
+        compose.onNodeWithText("Ещё").assertIsDisplayed()
+        compose.onNodeWithText("О приложении").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("На главную").performClick()
+        compose.onNodeWithText("Мой день").assertIsDisplayed()
+    }
+
     @Test fun parallelReferenceOpensExactVerseAndBackRestoresSource() {
         val client = BibleApiClient()
         val source = try { runBlocking {

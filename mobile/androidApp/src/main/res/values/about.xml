@@ -1,0 +1,10 @@
+<resources>
+    <string name="about_title">О приложении</string>
+    <string name="about_description">Библия, молитвы и церковный календарь для вашей духовной жизни.</string>
+    <string name="about_version">Версия %1$s</string>
+    <string name="about_author">Автор и разработчик</string>
+    <string name="about_online">Онлайн-приложение</string>
+    <string name="about_website">Сайт Bible Desktop</string>
+    <string name="about_privacy">Конфиденциальность</string>
+    <string name="about_link_unavailable">Не удалось открыть ссылку. Проверьте, установлен ли браузер.</string>
+</resources>

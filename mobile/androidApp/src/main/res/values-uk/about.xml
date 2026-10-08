@@ -1,0 +1,10 @@
+<resources>
+    <string name="about_title">Про застосунок</string>
+    <string name="about_description">Біблія, молитви та церковний календар для вашого духовного життя.</string>
+    <string name="about_version">Версія %1$s</string>
+    <string name="about_author">Автор і розробник</string>
+    <string name="about_online">Онлайн-застосунок</string>
+    <string name="about_website">Сайт Bible Desktop</string>
+    <string name="about_privacy">Конфіденційність</string>
+    <string name="about_link_unavailable">Не вдалося відкрити посилання. Перевірте, чи встановлено браузер.</string>
+</resources>
