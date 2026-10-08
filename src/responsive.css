@@ -51,21 +51,39 @@
   .mobile-app .embedded-azbuka h2 { font-size: 24px; }
 
   .welcome-screen .app-content {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'hero actions' 'hero quote' 'privacy privacy';
-    align-content: center;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0 28px;
-    padding: max(24px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+    padding: max(40px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
   }
-  .welcome-screen .welcome-hero { grid-area: hero; }
-  .welcome-screen .welcome-picture { height: clamp(220px, 34cqw, 350px); border-radius: 22px 22px 0 0; }
-  .welcome-screen .welcome-hero h1 { font-size: clamp(28px, 3.5cqw, 36px); }
-  .welcome-screen .welcome-actions { grid-area: actions; margin: 0; gap: 12px; align-self: end; }
-  .welcome-screen .welcome-choice { min-height: 82px; }
-  .welcome-screen .welcome-quote { grid-area: quote; margin: 22px 0 0; align-self: start; }
-  .welcome-screen .privacy-link { grid-area: privacy; margin-top: 28px; }
+  .welcome-screen :is(.welcome-hero, .welcome-actions, .welcome-quote, .privacy-link) { width: 100%; max-width: 540px; flex-shrink: 0; }
+  .welcome-screen .welcome-picture { width: 260px; height: 260px; margin-inline: auto; border-radius: 22px 22px 0 0; }
+  .welcome-screen .welcome-actions { margin: 22px 0 0; gap: 10px; }
+  .welcome-screen .welcome-choice { min-height: 78px; }
+  .welcome-screen .welcome-quote { margin: 22px 0 28px; }
+  .welcome-screen .privacy-link { margin-top: auto; }
+}
+
+/* The welcome screen needs one reading order in portrait, two columns only in landscape. */
+@media (orientation: landscape) {
+  @container app (min-width: 600px) {
+    .welcome-screen .app-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(44px, 1fr);
+      grid-template-areas: 'hero actions' 'hero quote' 'privacy privacy';
+      align-content: start;
+      align-items: start;
+      gap: 0 32px;
+      width: 100%;
+      max-width: 1000px;
+      margin-inline: auto;
+    }
+    .welcome-screen .welcome-hero { grid-area: hero; }
+    .welcome-screen .welcome-actions { grid-area: actions; margin: 0; }
+    .welcome-screen .welcome-quote { grid-area: quote; margin-bottom: 0; }
+    .welcome-screen .privacy-link { grid-area: privacy; justify-self: center; align-self: end; margin-top: 28px; }
+  }
 }
 
 @container app (min-width: 760px) {

@@ -43,6 +43,13 @@ describe('first launch layout', () => {
     expect(html).toContain('class="app-header"')
     expect(html).toContain('class="bottom-nav"')
   })
+  it('keeps a single image and the portrait reading order before the privacy link', async () => {
+    const html = await render(WelcomeView)
+    const positions = ['class="welcome-hero"', 'class="welcome-actions"', 'class="welcome-quote"', 'class="privacy-link"'].map((selector) => html.indexOf(selector))
+    expect(positions.every((position) => position >= 0)).toBe(true)
+    expect(positions).toEqual([...positions].sort((a, b) => a - b))
+    expect(html.match(/<img /g)).toHaveLength(1)
+  })
   it.each([
     { showHeader: true, showNavigation: false },
     { showHeader: false, showNavigation: true },
