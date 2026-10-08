@@ -103,6 +103,8 @@ onUnmounted(() => {
 
 <template>
   <MobileShell>
+    <div class="today-dashboard">
+    <section class="today-dashboard-calendar">
     <CalendarGrid v-if="sections.includes('calendar')" :date="date" :calendar-language="profile.configuration?.calendar.languageCode ?? language" compact @select="date = $event" />
     <header class="today-hero">
       <h1><span class="civil-date">{{ dateLabel.split(' (')[0] }}</span><span v-if="dateLabel.includes(' (')" class="old-style-date">{{ ` (${dateLabel.split(' (')[1]}` }}</span></h1>
@@ -111,6 +113,8 @@ onUnmounted(() => {
       </RouterLink>
       <RouterLink v-if="verse" class="today-verse" :to="verse.route"><blockquote>«{{ verse.text }}»</blockquote><cite>{{ verse.reference }}</cite></RouterLink>
     </header>
+    </section>
+    <section class="today-details">
     <article v-if="sections.includes('calendar') && day && (icon || (calendarHome.commemorations && visibleEvents.length))" class="icon-day-card">
       <DayIcon v-if="icon" :key="icon.id" :icon="icon" />
       <span>
@@ -152,5 +156,7 @@ onUnmounted(() => {
         </article>
       </div>
     </section>
+    </section>
+    </div>
   </MobileShell>
 </template>

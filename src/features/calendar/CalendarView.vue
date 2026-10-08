@@ -94,6 +94,8 @@ function stopHorizonDownload(): void {
 
 <template>
   <MobileShell>
+    <div class="calendar-dashboard">
+    <section class="calendar-overview">
     <section class="calendar-controls">
       <div class="calendar-view-switch" role="group" :aria-label="text.calendar.view">
         <button v-for="option in (['day', 'week', 'month'] as const)" :key="option" type="button" :aria-pressed="mode === option" :class="{ active: mode === option }" @click="mode = option">{{ text.calendar[option] }}</button>
@@ -110,6 +112,9 @@ function stopHorizonDownload(): void {
       <section v-if="icons.length" class="calendar-icon-gallery">
         <figure v-for="icon in icons" :key="`${date}-${icon.id}`"><DayIcon :icon="icon" /><figcaption>{{ icon.title }}</figcaption></figure>
       </section>
+    </template>
+    </section>
+    <section v-if="day" class="calendar-details">
 
       <section class="calendar-section">
         <h2>{{ text.calendar.commemorations }}</h2>
@@ -144,6 +149,7 @@ function stopHorizonDownload(): void {
         <button v-else type="button" @click="stopHorizonDownload">{{ text.calendar.stop }}</button>
         <progress v-if="horizonProgress" :value="horizonProgress" max="30">{{ horizonProgress }}/30</progress>
       </section>
-    </template>
+    </section>
+    </div>
   </MobileShell>
 </template>

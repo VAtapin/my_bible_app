@@ -15,11 +15,11 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-async function render(component: typeof WelcomeView | typeof MobileShell) {
+async function render(component: typeof WelcomeView | typeof MobileShell, props = {}) {
   const router = createRouter({ history: createMemoryHistory(), routes: ['/', '/today', '/reader', '/prayers', '/calendar', '/more', '/setup/quick', '/setup/manual', '/restore', '/privacy'].map((path) => ({ path, component: { render: () => h('div') } })) })
   await router.push('/')
   await router.isReady()
-  return renderToString(createSSRApp(component).use(createPinia()).use(router))
+  return renderToString(createSSRApp(component, props).use(createPinia()).use(router))
 }
 
 describe('first launch layout', () => {
@@ -42,5 +42,16 @@ describe('first launch layout', () => {
     const html = await render(MobileShell)
     expect(html).toContain('class="app-header"')
     expect(html).toContain('class="bottom-nav"')
+  })
+  it.each([
+    { showHeader: true, showNavigation: false },
+    { showHeader: false, showNavigation: true },
+    { showHeader: false, showNavigation: false },
+  ])('reserves only the visible shell rows for %j', async (props) => {
+    const html = await render(MobileShell, props)
+    expect(html.includes('without-header')).toBe(!props.showHeader)
+    expect(html.includes('without-navigation')).toBe(!props.showNavigation)
+    expect(html.includes('class="app-header"')).toBe(props.showHeader)
+    expect(html.includes('class="bottom-nav"')).toBe(props.showNavigation)
   })
 })

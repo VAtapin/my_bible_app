@@ -1,0 +1,107 @@
+/* One fullscreen app on phones and tablets, not a phone mockup inside a tablet. */
+.mobile-app {
+  max-width: 1120px;
+  container: app / inline-size;
+  min-width: 0;
+  height: 100dvh;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+}
+.mobile-app.without-navigation { grid-template-rows: auto minmax(0, 1fr); }
+.mobile-app.without-header { grid-template-rows: minmax(0, 1fr) auto; }
+.mobile-app.without-header.without-navigation { grid-template-rows: minmax(0, 1fr); }
+.mobile-app.welcome-screen { max-width: 1120px; }
+.app-content, .app-content > *, .today-dashboard > *, .calendar-dashboard > * { min-width: 0; }
+.app-content :is(h1, h2, h3) { overflow-wrap: anywhere; }
+.app-header { padding-top: calc(10px + env(safe-area-inset-top)); }
+.app-content { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+.app-header { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
+.bottom-nav { padding-left: max(6px, env(safe-area-inset-left)); padding-right: max(6px, env(safe-area-inset-right)); }
+.today-details > .icon-day-card:first-child { margin-top: 12px; }
+.calendar-overview > .calendar-selected-date { margin-top: 12px; }
+.today-hero h1 { display: flex; flex-wrap: wrap; column-gap: .25em; }
+.today-hero :is(.civil-date, .old-style-date) { max-width: 100%; white-space: normal; }
+.reading-card, .chapter-picker, .reader-heading, .reader-status, .prayer-reading, .simple-page {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.mobile-app .embedded-azbuka .result-card, .mobile-app .embedded-azbuka .session-page { min-height: 0; }
+.mobile-app .embedded-azbuka .session-page { padding-bottom: 24px; }
+.mobile-app .embedded-azbuka .segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 100%; }
+.mobile-app .embedded-azbuka .segmented button { min-width: 0; padding-inline: 6px; }
+
+/* Container queries also work in split-screen: layout follows the app's width. */
+@container app (min-width: 600px) {
+  .app-content { padding: 20px max(24px, env(safe-area-inset-right)) 28px max(24px, env(safe-area-inset-left)); }
+  .app-header { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+  .bottom-nav span { font-size: 11px; }
+  .module-list, .content-catalog, .section-selector { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .content-card, .module-card { min-width: 0; }
+  .section-selector button > span:not(.selection-mark) { min-width: 0; padding-right: 20px; }
+  .calendar-picker .calendar-grid button { min-height: 48px; }
+  .calendar-picker.compact .calendar-grid button { min-height: 40px; }
+  .calendar-view-switch button, .calendar-picker-heading button { min-height: 44px; }
+  .calendar-icon-gallery figure { flex-basis: 105px; }
+  .calendar-icon-gallery img { width: 78px; height: 100px; }
+  .calendar-section:first-child { margin-top: 0; }
+  .verse-dialog { width: min(480px, 90vw); }
+  .mobile-app .embedded-azbuka h1 { font-size: 32px; }
+  .mobile-app .embedded-azbuka h2 { font-size: 24px; }
+
+  .welcome-screen .app-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'hero actions' 'hero quote' 'privacy privacy';
+    align-content: center;
+    align-items: center;
+    gap: 0 28px;
+    padding: max(24px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+  }
+  .welcome-screen .welcome-hero { grid-area: hero; }
+  .welcome-screen .welcome-picture { height: clamp(220px, 34cqw, 350px); border-radius: 22px 22px 0 0; }
+  .welcome-screen .welcome-hero h1 { font-size: clamp(28px, 3.5cqw, 36px); }
+  .welcome-screen .welcome-actions { grid-area: actions; margin: 0; gap: 12px; align-self: end; }
+  .welcome-screen .welcome-choice { min-height: 82px; }
+  .welcome-screen .welcome-quote { grid-area: quote; margin: 22px 0 0; align-self: start; }
+  .welcome-screen .privacy-link { grid-area: privacy; margin-top: 28px; }
+}
+
+@container app (min-width: 760px) {
+  .today-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .today-details > .icon-day-card:first-child { margin-top: 0; }
+  .today-details .module-list { grid-template-columns: minmax(0, 1fr); }
+  .setup-screen .app-content { display: grid; grid-template-columns: minmax(220px, .65fr) minmax(0, 1.35fr); align-content: start; align-items: start; gap: 16px 20px; }
+  .setup-screen .setup-heading { grid-column: 1 / -1; }
+  .setup-screen .setup-card { margin-top: 0; }
+  .setup-screen .language-card { grid-column: 1; }
+  .setup-screen .language-selector { grid-template-columns: minmax(0, 1fr); }
+  .setup-screen .language-selector.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .setup-screen .section-selector { grid-template-columns: minmax(0, 1fr); }
+  .mobile-app .embedded-azbuka .page { padding-top: 0; }
+  .mobile-app .embedded-azbuka .alphabet-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .mobile-app .embedded-azbuka .letter-tile { min-height: 128px; }
+  .mobile-app .embedded-azbuka .letter-tile strong { font-size: 56px; }
+  .mobile-app .embedded-azbuka .large-glyph { font-size: 100px; }
+  .mobile-app .embedded-azbuka .letter-summary { padding: 22px; }
+  .mobile-app .embedded-azbuka .letter-example { padding: 24px; }
+  .mobile-app .embedded-azbuka .letter-example blockquote { font-size: 28px; }
+  .mobile-app .embedded-azbuka .number-builder { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 24px; gap: 24px; }
+  .mobile-app .embedded-azbuka .number-result strong { font-size: 88px; }
+  .mobile-app .embedded-azbuka .number-rules, .mobile-app .embedded-azbuka .numeral-tables { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mobile-app .embedded-azbuka .number-rules article, .mobile-app .embedded-azbuka .numeral-group { min-height: 0; padding: 18px; }
+  .mobile-app .embedded-azbuka .number-rules h2 { font-size: 20px; }
+}
+
+@container app (min-width: 960px) {
+  .calendar-dashboard { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); align-items: start; gap: 24px; }
+  .mobile-app .embedded-azbuka .alphabet-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* A landscape phone has little height; keep the same actions and allow scrolling. */
+@media (max-height: 600px) {
+  .welcome-picture { height: clamp(160px, 38dvh, 230px); }
+  .welcome-screen .welcome-picture { max-height: 38dvh; }
+  .welcome-screen .app-content { align-content: start; }
+}

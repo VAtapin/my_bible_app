@@ -40,7 +40,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mobile-app" :data-theme="appearance.theme.value">
+  <div class="mobile-app" :class="{ 'without-header': !showHeader, 'without-navigation': !showNavigation }" :data-theme="appearance.theme.value">
     <header v-if="showHeader" class="app-header">
       <RouterLink v-if="backTo" :to="backTo" class="back-link" :aria-label="text.navigation.back">
         <span aria-hidden="true">←</span>

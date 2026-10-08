@@ -234,7 +234,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
 </script>
 
 <template>
-  <MobileShell :show-navigation="false" :back-to="editing ? '/today' : '/'">
+  <MobileShell class="setup-screen" :show-navigation="false" :back-to="editing ? '/today' : '/'">
     <section class="setup-heading">
       <p class="eyebrow dark-eyebrow">{{ mode === 'quick' ? text.setup.quickEyebrow : text.setup.manualEyebrow }}</p>
       <h1>{{ editing ? text.setup.editTitle : text.setup.title }}</h1>
