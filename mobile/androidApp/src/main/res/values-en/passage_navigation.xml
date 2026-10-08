@@ -1,0 +1,9 @@
+<resources>
+    <string name="bible_choose_book">Choose book</string>
+    <string name="study_intro">Explore a verse: compare related Bible passages, look up word meanings and record your own thoughts.</string>
+    <string name="study_references_help">Other verses related to the selected verse. Tap “Open” to read the full passage.</string>
+    <string name="study_strong_help">Meanings of the original Greek and Hebrew words. Available in translations with Strong markup; tap a word number, such as G25.</string>
+    <string name="study_notes_help">Personal notes on a verse. Open the ⋮ menu beside a verse in the reader and choose “%1$s”.</string>
+    <string name="study_last_passage">Last opened passage</string>
+    <string name="prayer_source_count">Prayers of this edition in BibleDesktop: %1$d. Choose other editions above; Russian texts do not replace Church Slavonic texts.</string>
+</resources>

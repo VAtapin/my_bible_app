@@ -1,6 +1,8 @@
 package com.bibledesktop.myapp.ui.bible
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -13,6 +15,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +46,8 @@ internal fun ChapterReadingContent(
                     VerseRow(language, chapter, verse, fontSize,
                         "${chapter.translation.code}:${verse.osisRef}" in bookmarkedKeys,
                         onBookmark = { onBookmark(chapter, verse) }, onShare = { onShare(chapter, verse) },
-                        onNote = { onNote(chapter, verse) }, onStudy = onStudy?.let { { it(chapter, verse) } })
+                        onNote = { onNote(chapter, verse) }, onStudy = onStudy?.let { { it(chapter, verse) } },
+                        highlighted = initialVerse > 0 && verse.number == initialVerse)
                 }
             }
         }
@@ -54,12 +59,15 @@ internal fun VerseRow(
     language: String, chapter: BibleChapter, verse: BibleVerse, fontSize: Float, bookmarked: Boolean,
     onBookmark: () -> Unit, onShare: () -> Unit, onNote: () -> Unit,
     onStudy: (() -> Unit)? = null,
+    highlighted: Boolean = false,
 ) {
     var menu by rememberSaveable(verse.osisRef) { mutableStateOf(false) }
     val body = remember(verse, chapter.translation.language.code) {
         if (chapter.translation.language.code in setOf("cu", "cu-civil")) readingText(verse.text) else verse.plainText
     }
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("verse-${verse.number}"),
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("verse-${verse.number}")
+        .semantics { selected = highlighted }
+        .background(if (highlighted) LightBlue else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.Top) {
         Text(verse.number.toString(), Modifier.padding(top = 6.dp).widthIn(min = 20.dp), color = PrimaryBlue,
             fontSize = 12.sp, fontWeight = FontWeight.Bold)

@@ -50,6 +50,15 @@ class BibleComparisonUiTest {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
     }
+    @Test fun comparisonHighlightsOnlyTheExactNavigatedVerse() {
+        compose.setContent { BibleDesktopTheme {
+            ComparisonRows("ru", chapter(first), chapter(second), 19f, initialVerse = 2)
+        } }
+        compose.onNodeWithTag("compared-John.3.2").assertIsDisplayed().assertIsSelected()
+        compose.onNodeWithTag("comparison-rows").performScrollToIndex(0)
+        compose.onNodeWithTag("compared-John.3.1").assertIsNotSelected()
+    }
+
     @Test fun translationPickerSearchesLanguagesAndSelectsActualCode() {
         var chosen = ""
         compose.setContent { BibleDesktopTheme { TranslationPicker("ru", listOf(first, second), "A", { chosen = it }, {}) } }

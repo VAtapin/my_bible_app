@@ -31,7 +31,7 @@
     <string name="section_prayer_subtitle">Morning and evening prayers, prayer book</string>
     <string name="section_calendar">Church calendar</string>
     <string name="section_calendar_subtitle">Feasts, fasting and daily readings</string>
-    <string name="section_study">Reading and study</string>
+    <string name="section_study">Bible study</string>
     <string name="section_study_subtitle">Cross-references, Strong dictionary and notes</string>
     <string name="section_reminders">Reminders</string>
     <string name="section_reminders_subtitle">Prayer, reading and events</string>
@@ -116,7 +116,6 @@
     <string name="calendar_next_image">Next image</string>
     <string name="calendar_service">Service texts</string>
     <string name="calendar_service_error">Could not load service texts.</string>
-    <string name="calendar_service_office">Sixth Hour · reference text, not instructions for conducting a service</string>
     <string name="offline_title">Offline</string>
     <string name="offline_description">Opened chapters, prayers and days are saved on the device. Package: 30 calendar days, CU-civil daily texts and small icon previews. A new download updates the package; whole Bibles are not downloaded yet.</string>
     <string name="offline_download">Download 30 days</string>

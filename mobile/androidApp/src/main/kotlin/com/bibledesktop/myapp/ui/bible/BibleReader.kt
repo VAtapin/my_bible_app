@@ -6,24 +6,17 @@ import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items as gridItems
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -51,17 +44,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
-import com.bibledesktop.myapp.ui.theme.ReadingSerif
 import com.bibledesktop.myapp.ui.reading.ReadingHeader
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Ink
 import com.bibledesktop.myapp.ui.theme.Navy
-import com.bibledesktop.myapp.ui.theme.PrimaryBlue
-import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.BibleBook
 import com.bibledesktop.shared.api.BibleChapter
@@ -84,6 +75,7 @@ fun BibleReader(
     client: BibleContentSource,
     onBack: () -> Unit,
     onDownloads: () -> Unit = {},
+    choosePassageOnOpen: Boolean = false,
 ) {
     val context = LocalContext.current
     val pickerState = rememberSaveableStateHolder()
@@ -120,6 +112,8 @@ fun BibleReader(
     var referenceReturn by rememberSaveable { mutableStateOf<String?>(null) }
     var comparing by rememberSaveable { mutableStateOf(false) }
     var compareCode by rememberSaveable { mutableStateOf(preferences.getString("compareTranslation", "").orEmpty()) }
+    var choosingPassage by rememberSaveable { mutableStateOf(choosePassageOnOpen) }
+    var choosingBooks by rememberSaveable { mutableStateOf(true) }
     val openError = text(R.string.study_open_error, language)
     fun chapterBack() {
         val saved = referenceReturn?.split('|')
@@ -208,6 +202,8 @@ fun BibleReader(
             onChapterClick = { selectedChapter = it; focusedVerse = 0 },
             onBack = { selectedBookSlug = null },
             onHome = onBack,
+            textLanguage = translations.firstOrNull { it.code == translationCode }?.language?.code.orEmpty(),
+            onChooseBook = { choosingBooks = true; choosingPassage = true },
         )
 
         else -> {
@@ -238,6 +234,9 @@ fun BibleReader(
                 comparing = !comparing
             },
             onDownloads = onDownloads,
+            textLanguage = translations.firstOrNull { it.code == translationCode }?.language?.code.orEmpty(),
+            onChooseBook = { choosingBooks = true; choosingPassage = true },
+            onChooseChapter = { choosingBooks = false; choosingPassage = true },
             onFontSmaller = {
                 fontSize = (fontSize - 1f).coerceAtLeast(15f)
                 preferences.edit().putFloat("readerFontSize", fontSize).apply()
@@ -267,6 +266,12 @@ fun BibleReader(
         )
         }
     }
+    if (choosingPassage) PassagePicker(language, translations, client, translationCode, selectedBook, selectedChapter,
+        choosingBooks, onSelect = { code, book, number ->
+            translationCode = code; selectedBookSlug = book.slug; selectedChapter = number
+            focusedVerse = 0; referenceReturn = null; studyVerseId = null; choosingPassage = false
+        }, onClose = { choosingPassage = false }, onHome = { choosingPassage = false; onBack() },
+        initialBookSlug = selectedBookSlug)
     notePassage?.let { passage ->
         NoteEditor(language, passage, noteInitial, onDismiss = { notePassage = null }, onSaved = { notePassage = null })
     }
@@ -307,55 +312,6 @@ private fun BooksScreen(
 }
 
 @Composable
-private fun ChaptersScreen(
-    language: String,
-    book: BibleBook,
-    onChapterClick: (Int) -> Unit,
-    onBack: () -> Unit,
-    onHome: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Cream)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-    ) {
-        ReadingHeader(book.name, language, onBack, onHome)
-        Text(
-            text(R.string.bible_chapters, language),
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-            color = Ink,
-            fontFamily = ReadingSerif,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(58.dp),
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            gridItems((1..book.chaptersCount).toList()) { chapter ->
-                Surface(
-                    modifier = Modifier
-                        .size(58.dp)
-                        .clickable { onChapterClick(chapter) },
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, WarmBorder),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(chapter.toString(), color = Navy, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ChapterScreen(
     language: String,
     state: LoadState<BibleChapter>,
@@ -379,6 +335,9 @@ private fun ChapterScreen(
     comparing: Boolean,
     onCompare: () -> Unit,
     onDownloads: () -> Unit,
+    textLanguage: String,
+    onChooseBook: () -> Unit,
+    onChooseChapter: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -390,7 +349,15 @@ private fun ChapterScreen(
         val title = (state as? LoadState.Ready)?.value?.let {
             "${it.book.name} · ${text(R.string.bible_chapter, language, it.chapter.number)}"
         } ?: text(R.string.bible_chapter, language, chapterNumber)
-        ReadingHeader(title, language, onBack, onHome)
+        ReadingHeader(title, language, onBack, onHome, com.bibledesktop.myapp.ui.theme.readingFont(textLanguage))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.material3.OutlinedButton(onClick = onChooseBook, modifier = Modifier.weight(1f).testTag("reader-choose-book")) {
+                Text(text(R.string.bible_choose_book, language))
+            }
+            androidx.compose.material3.OutlinedButton(onClick = onChooseChapter, modifier = Modifier.testTag("reader-choose-chapter")) {
+                Text(text(R.string.bible_chapter, language, chapterNumber) + " ▾")
+            }
+        }
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 12.dp)) {
             androidx.compose.material3.TextButton(onClick = onCompare) { Text(text(if (comparing) R.string.compare_close else R.string.compare_open, language)) }
             androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_download_title, language)) }
@@ -426,7 +393,9 @@ private fun ChapterScreen(
                     IconButton(onClick = onFontSmaller, enabled = fontSize > 15f) {
                         Icon(Icons.Outlined.TextDecrease, text(R.string.bible_font_smaller, language))
                     }
-                    Text("$chapterNumber / $chaptersCount", color = Navy, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.TextButton(onClick = onChooseChapter) {
+                        Text("$chapterNumber / $chaptersCount ▾", color = Navy, fontWeight = FontWeight.Bold)
+                    }
                     IconButton(onClick = onFontLarger, enabled = fontSize < 28f) {
                         Icon(Icons.Outlined.TextIncrease, text(R.string.bible_font_larger, language))
                     }

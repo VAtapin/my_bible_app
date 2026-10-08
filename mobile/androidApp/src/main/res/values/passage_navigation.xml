@@ -1,0 +1,9 @@
+<resources>
+    <string name="bible_choose_book">Выбрать книгу</string>
+    <string name="study_intro">Изучайте выбранный стих: сопоставляйте его с другими местами Библии, смотрите значения слов и записывайте свои мысли.</string>
+    <string name="study_references_help">Другие стихи, связанные с выбранным. Нажмите «Открыть», чтобы прочитать место целиком.</string>
+    <string name="study_strong_help">Значения исходных греческих и еврейских слов. Доступен в переводах с разметкой Стронга; нажмите номер слова, например G25.</string>
+    <string name="study_notes_help">Личные записи к стиху. В читалке откройте меню ⋮ рядом со стихом и выберите «%1$s».</string>
+    <string name="study_last_passage">Последнее открытое место</string>
+    <string name="prayer_source_count">Молитв в этой редакции в BibleDesktop: %1$d. Другие редакции выбираются выше; русские тексты не подменяют церковнославянские.</string>
+</resources>

@@ -2,6 +2,7 @@ package com.bibledesktop.myapp
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.hasText
@@ -136,10 +137,10 @@ class NativeSmokeTest {
     @Test fun studyAndRemindersAreRealDestinationsInQuickSetup() {
         compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
-        compose.onNodeWithText("Чтение и изучение").performScrollTo().performClick()
+        compose.onNodeWithText("Изучение Библии").performScrollTo().performClick()
         compose.onNodeWithText("Выбрать место в Библии").assertIsDisplayed().performClick()
-        compose.onNodeWithText("Книги Библии").assertIsDisplayed()
-        compose.onNodeWithContentDescription("На главную").performClick()
+        compose.onNode(hasText("Книги Библии") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.isDialog())).assertIsDisplayed()
+        compose.onNode(hasContentDescription("На главную") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
         compose.onNodeWithText("Напоминания").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("reminder-toggle-calendar").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("reminder-toggle-morning").assertIsOff()
@@ -181,10 +182,10 @@ class NativeSmokeTest {
             compose.waitUntil(30_000) { compose.onAllNodesWithTag("reference-1John.4.10").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("reference-1John.4.10").performScrollTo().performClick()
             compose.waitUntil(30_000) { compose.onAllNodes(hasText("1 Иоанна · Глава 4")).fetchSemanticsNodes().isNotEmpty() }
-            compose.onNodeWithTag("verse-10").assertIsDisplayed()
+            compose.onNodeWithTag("verse-10").assertIsDisplayed().assertIsSelected()
             compose.onNodeWithContentDescription("Назад").performClick()
             compose.waitUntil(30_000) { compose.onAllNodes(hasText("Иоанна · Глава 3")).fetchSemanticsNodes().isNotEmpty() }
-            compose.onNodeWithTag("verse-16").assertIsDisplayed()
+            compose.onNodeWithTag("verse-16").assertIsDisplayed().assertIsSelected()
         }
     }
 
@@ -216,6 +217,23 @@ class NativeSmokeTest {
             compose.onNodeWithTag("bible-comparison").assertDoesNotExist()
             compose.onNodeWithTag("verse-16").assertIsDisplayed()
         }
+    }
+
+    @Test fun directChapterPickerSurvivesRecreationAndOpensRealChapter() {
+        val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
+        check(preferences.edit().putString("lastTranslation", "BQ_RUSSIAN_RST_STRONG")
+            .putString("lastBookSlug", "genesis").putInt("lastChapter", 18).putInt("lastVerse", 0).commit())
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
+        compose.onNode(hasText("Библия") and isSelectable()).performClick()
+        compose.waitUntil(30_000) { compose.onAllNodesWithTag("reader-choose-chapter").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("reader-choose-chapter").performClick()
+        compose.activityRule.scenario.recreate()
+        compose.waitUntil(30_000) { compose.onAllNodesWithTag("choose-chapter-5").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("choose-chapter-5").performClick()
+        compose.waitUntil(30_000) { compose.onAllNodesWithTag("verse-1").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 5", substring = true)
+        assertEquals(5, preferences.getInt("lastChapter", 0))
     }
 
     @Test fun fourLanguagesAndCalendarBeforeSetup() {

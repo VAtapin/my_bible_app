@@ -26,14 +26,15 @@ internal fun readingText(html: String): String =
     Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY).toString().replace('\u00a0', ' ').trim()
 
 @Composable
-internal fun ReadingHeader(title: String, language: String, onBack: () -> Unit, onHome: () -> Unit) {
+internal fun ReadingHeader(title: String, language: String, onBack: () -> Unit, onHome: () -> Unit,
+    titleFont: androidx.compose.ui.text.font.FontFamily = ReadingSerif) {
     Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, localized(R.string.action_back, language), tint = Navy)
         }
         Text(title, Modifier.weight(1f).padding(horizontal = 4.dp), color = Ink,
-            fontFamily = ReadingSerif, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            fontFamily = titleFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         IconButton(onClick = onHome) {
             Icon(Icons.Outlined.Home, localized(R.string.reader_home, language), tint = Navy)
         }

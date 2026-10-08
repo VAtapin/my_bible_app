@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -125,9 +126,14 @@ fun PrayersScreen(
                         "cu-civil" to localText(R.string.prayer_cu_civil, language),
                     )
                     editions.forEach { (code, label) ->
-                        FilterChip(selected = textLanguage == code, onClick = { textLanguage = code }, label = { Text(label) })
+                        FilterChip(selected = textLanguage == code, modifier = Modifier.testTag("prayer-edition-$code"),
+                            onClick = { textLanguage = code }, label = { Text(label) })
                     }
                 }
+            }
+            if (textLanguage in setOf("cu", "cu-civil") && listState is LoadState.Ready) item {
+                Text(localText(R.string.prayer_source_count, language, (listState as LoadState.Ready).value.size),
+                    Modifier.testTag("prayer-source-count").padding(vertical = 8.dp), color = PrimaryBlue)
             }
             when (val current = listState) {
                 LoadState.Loading -> item { LoadingBox() }
@@ -177,7 +183,8 @@ private fun PrayerCard(prayer: PrayerSummary, onClick: () -> Unit) {
                 Icon(Icons.Outlined.Church, contentDescription = null, tint = Navy)
             }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(prayer.title, color = Ink, fontWeight = FontWeight.Bold)
+                Text(prayer.title, color = Ink, fontFamily = com.bibledesktop.myapp.ui.theme.readingFont(prayer.languageCode),
+                    fontSize = 18.sp, lineHeight = 27.sp)
                 Text(
                     prayer.excerpt,
                     color = PrimaryBlue,

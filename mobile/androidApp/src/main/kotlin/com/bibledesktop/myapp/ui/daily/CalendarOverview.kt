@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,6 +42,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
     var dayError by remember { mutableStateOf(false) }
     var retry by remember { mutableIntStateOf(0) }
     var week by rememberSaveable { mutableStateOf(false) }
+    var choosingMonth by rememberSaveable { mutableStateOf(false) }
     val month = YearMonth.parse(monthIso)
     val selectedDate = LocalDate.parse(selected)
     val dates = remember(selected, monthIso, week) { calendarPeriodDates(selectedDate, month, week) }
@@ -63,13 +66,19 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
         catch (_: Exception) { dayError = true }
     }
     Column(modifier.fillMaxWidth().testTag("calendar-overview"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (!detailed) Text(localized(R.string.calendar_title, language), color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         if (language == "en") Text(localized(R.string.calendar_corpus_ru, language), color = PrimaryBlue)
         if (detailed) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !week, onClick = { week = false; monthIso = selected.take(7) }, label = { Text(localized(R.string.calendar_month, language)) })
             FilterChip(selected = week, onClick = { week = true }, label = { Text(localized(R.string.calendar_week, language)) })
         }
-        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(18.dp)) {
+        Column(Modifier.fillMaxWidth().testTag("calendar-selected-date"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(selectedDate.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale)), color = Ink,
+                fontSize = 22.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
+            day?.let { value ->
+                Text(localized(R.string.calendar_old_style, language, value.oldStyleDate), color = PrimaryBlue, fontSize = 16.sp, lineHeight = 24.sp)
+            }
+        }
+        Card(modifier = Modifier.testTag("calendar-grid"), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = {
@@ -78,16 +87,19 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
                     }, enabled = if (week) dates.first()!!.minusWeeks(1).year >= 1900 else month.year > 1900 || month.monthValue > 1) {
                         Icon(Icons.Outlined.ChevronLeft, localized(if (week) R.string.calendar_previous_week else R.string.calendar_previous_month, language))
                     }
-                    Text(if (week) "${dates.first()!!.format(DateTimeFormatter.ofPattern("d MMM", locale))} – ${dates.last()!!.format(DateTimeFormatter.ofPattern("d MMM yyyy", locale))}" else month.atDay(1).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)),
-                        Modifier.weight(1f), fontWeight = FontWeight.Bold, color = Ink)
+                    TextButton(onClick = { choosingMonth = true }, modifier = Modifier.weight(1f).testTag("calendar-select-month")) {
+                        Text(if (week) "${dates.first()!!.format(DateTimeFormatter.ofPattern("d MMM", locale))} – ${dates.last()!!.format(DateTimeFormatter.ofPattern("d MMM yyyy", locale))}" else month.atDay(1).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)),
+                            fontWeight = FontWeight.Bold, color = Ink)
+                        Icon(Icons.Outlined.ExpandMore, localized(R.string.calendar_choose_month, language), Modifier.size(18.dp))
+                    }
                     IconButton(onClick = {
                         selected = if (week) selectedDate.plusWeeks(1).toString() else month.plusMonths(1).atDay(1).toString()
                         monthIso = selected.take(7)
                     }, enabled = if (week) dates.last()!!.plusWeeks(1).year <= 2100 else month.year < 2100 || month.monthValue < 12) {
                         Icon(Icons.Outlined.ChevronRight, localized(if (week) R.string.calendar_next_week else R.string.calendar_next_month, language))
                     }
-                    TextButton(onClick = { selected = LocalDate.now().toString(); monthIso = selected.take(7) }) {
-                        Text(localized(R.string.nav_today, language))
+                    IconButton(onClick = { selected = LocalDate.now().toString(); monthIso = selected.take(7) }) {
+                        Icon(Icons.Outlined.CalendarToday, localized(R.string.nav_today, language), tint = Navy)
                     }
                 }
                 Row(Modifier.fillMaxWidth()) {
@@ -132,9 +144,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
                 }
             }
         }
-        Text(LocalDate.parse(selected).format(DateTimeFormatter.ofPattern("EEEE, d MMMM", locale)), color = Ink, fontWeight = FontWeight.Bold)
         day?.let { value ->
-            Text(localized(R.string.calendar_old_style, language, value.oldStyleDate), color = PrimaryBlue, fontSize = 13.sp)
             value.food?.let { food ->
                 Row(Modifier.fillMaxWidth().background(LightBlue, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     bundledCalendarAsset(food.imageUrl)?.let { CalendarImage(it, food.label, language, Modifier.size(36.dp).padding(end = 6.dp)) }
@@ -176,4 +186,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
             TextButton(onClick = { retry++ }) { Text(localized(R.string.retry, language)) }
         }
     }
+    if (choosingMonth) CalendarMonthPicker(language, month, onSelect = { value ->
+        selected = value.atDay(1).toString(); monthIso = value.toString(); choosingMonth = false; week = false
+    }, onClose = { choosingMonth = false })
 }

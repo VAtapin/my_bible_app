@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.bible.*
@@ -49,15 +50,30 @@ internal fun StudyScreen(language: String, client: BibleContentSource, onBack: (
         ReadingHeader(localized(R.string.section_study, language), language, onBack, onBack)
         ReadingViewport(Modifier.weight(1f)) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(localized(R.string.study_intro, language), color = Ink)
+                Card(Modifier.fillMaxWidth().testTag("study-guide")) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(localized(R.string.study_references, language), style = MaterialTheme.typography.titleMedium)
+                        Text(localized(R.string.study_references_help, language))
+                        Text(localized(R.string.study_strong, language), style = MaterialTheme.typography.titleMedium)
+                        Text(localized(R.string.study_strong_help, language))
+                        Text(localized(R.string.notes_title, language), style = MaterialTheme.typography.titleMedium)
+                        Text(localized(R.string.study_notes_help, language, localized(R.string.note_edit, language)))
+                    }
+                }
+                Button(onClick = onBible, modifier = Modifier.fillMaxWidth().testTag("study-choose-passage")) {
+                    Text(localized(R.string.study_choose_passage, language))
+                }
                 Text(localized(R.string.study_hint, language), color = PrimaryBlue)
-                OutlinedButton(onClick = onBible) { Text(localized(R.string.study_choose_passage, language)) }
                 if (loading) CircularProgressIndicator()
                 if (error) StudyError(language) { retry++ }
                 chapter?.let { value ->
+                    Text(localized(R.string.study_last_passage, language), style = MaterialTheme.typography.titleLarge)
                     val verse = value.verses.firstOrNull { it.number == selectedVerse } ?: value.verses.firstOrNull()
                     if (verse != null) {
                         Box {
-                            Button(onClick = { chooseVerse = true }) { Text("${value.book.name} ${value.chapter.number}:${verse.number} ▾") }
+                            Button(onClick = { chooseVerse = true }) { Text("${value.book.name} ${value.chapter.number}:${verse.number} ▾",
+                                fontFamily = readingFont(value.translation.language.code)) }
                             DropdownMenu(expanded = chooseVerse, onDismissRequest = { chooseVerse = false }, modifier = Modifier.heightIn(max = 320.dp)) {
                                 value.verses.forEach { item -> DropdownMenuItem(text = { Text("${value.book.name} ${value.chapter.number}:${item.number}") }, onClick = { selectedVerse = item.number; chooseVerse = false }) }
                             }

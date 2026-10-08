@@ -183,6 +183,7 @@ fun SetupApp(initialDestination: String? = null) {
         )
     }
     var translationFilter by rememberSaveable { mutableStateOf(TranslationFilter.All) }
+    var chooseBiblePassage by rememberSaveable { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
     var translationState by remember { mutableStateOf<TranslationState>(TranslationState.Loading) }
     val client = remember { OfflineContentRepository(context.applicationContext) }
@@ -334,8 +335,9 @@ fun SetupApp(initialDestination: String? = null) {
                 .orEmpty()
                 .sortedBy { if (it.language.code == language) 0 else 1 },
             client = client,
-            onBack = { route = Route.Home },
-            onDownloads = { route = Route.BibleLibrary },
+            onBack = { chooseBiblePassage = false; route = Route.Home },
+            onDownloads = { chooseBiblePassage = false; route = Route.BibleLibrary },
+            choosePassageOnOpen = chooseBiblePassage,
         )
 
         Route.Prayers -> PrayersScreen(
@@ -371,7 +373,7 @@ fun SetupApp(initialDestination: String? = null) {
             },
         )
         Route.Study -> com.bibledesktop.myapp.ui.study.StudyScreen(language, client,
-            onBack = { route = Route.Home }, onBible = { route = Route.Bible }, onOpen = { passage ->
+            onBack = { route = Route.Home }, onBible = { chooseBiblePassage = true; route = Route.Bible }, onOpen = { passage ->
                 preferences.edit().putString("lastTranslation", passage.translationCode).putString("lastBookSlug", passage.bookSlug)
                     .putInt("lastChapter", passage.chapter).putInt("lastVerse", passage.verse).apply()
                 route = Route.Bible

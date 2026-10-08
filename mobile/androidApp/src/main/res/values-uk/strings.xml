@@ -31,7 +31,7 @@
     <string name="section_prayer_subtitle">Ранкове й вечірнє правило, молитовник</string>
     <string name="section_calendar">Церковний календар</string>
     <string name="section_calendar_subtitle">Свята, пости й читання дня</string>
-    <string name="section_study">Читання й вивчення</string>
+    <string name="section_study">Вивчення Біблії</string>
     <string name="section_study_subtitle">Паралельні місця, словник Стронга та нотатки</string>
     <string name="section_reminders">Нагадування</string>
     <string name="section_reminders_subtitle">Молитва, читання та події</string>
@@ -116,7 +116,6 @@
     <string name="calendar_next_image">Наступне зображення</string>
     <string name="calendar_service">Богослужбові тексти</string>
     <string name="calendar_service_error">Не вдалося завантажити богослужбові тексти.</string>
-    <string name="calendar_service_office">Шостий час · довідковий текст, не настанова для звершення служби</string>
     <string name="offline_title">Без мережі</string>
     <string name="offline_description">Відкриті розділи, молитви та дні зберігаються на пристрої. Пакет: 30 днів календаря, тексти дня CU-civil і невеликі превʼю ікон. Нове завантаження оновлює пакет; цілі Біблії поки не завантажуються.</string>
     <string name="offline_download">Завантажити 30 днів</string>

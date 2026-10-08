@@ -156,8 +156,7 @@ internal fun TodayScreen(
                         CalendarOverview(language, client)
                         Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(22.dp)) {
                             Column(Modifier.padding(22.dp)) {
-                                Text(localized(R.string.today_title, language), color = Color.White, fontFamily = ReadingSerif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                                Text(localized(R.string.today_quote, language), Modifier.padding(top = 12.dp), color = LightBlue, fontFamily = ReadingSerif, fontSize = 20.sp)
+                                Text(localized(R.string.today_quote, language), color = LightBlue, fontFamily = ReadingSerif, fontSize = 20.sp)
                             }
                         }
                     }

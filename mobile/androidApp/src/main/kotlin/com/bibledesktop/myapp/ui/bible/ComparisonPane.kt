@@ -10,12 +10,15 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.reading.readingText
 import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.myapp.ui.theme.readingFont
+import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 
@@ -65,7 +68,9 @@ internal fun ComparisonRows(language: String, primary: BibleChapter, secondary: 
         val wide = maxWidth >= 700.dp
         LazyColumn(Modifier.fillMaxSize().testTag("comparison-rows"), state = state, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(rows, key = ComparedVerse::reference) { row ->
-                Card(Modifier.fillMaxWidth().testTag("compared-${row.reference}"), colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White)) {
+                val highlighted = initialVerse > 0 && row.primary?.number == initialVerse
+                Card(Modifier.fillMaxWidth().testTag("compared-${row.reference}").semantics { selected = highlighted },
+                    colors = CardDefaults.cardColors(containerColor = if (highlighted) LightBlue else androidx.compose.ui.graphics.Color.White)) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         val reference = row.primary?.let { "${primary.book.name} ${primary.chapter.number}:${it.number}" }
                             ?: row.secondary!!.let { "${secondary.book.name} ${secondary.chapter.number}:${it.number}" }

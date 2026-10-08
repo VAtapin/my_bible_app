@@ -54,6 +54,7 @@ internal fun BookPicker(
     language: String, translations: List<TranslationSummary>, selectedTranslationCode: String,
     books: List<BibleBook>?, error: Boolean, onTranslationChange: (String) -> Unit,
     onBookClick: (BibleBook) -> Unit, onRetry: () -> Unit, onBack: () -> Unit,
+    onHome: () -> Unit = onBack,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var testament by rememberSaveable { mutableStateOf("all") }
@@ -68,7 +69,7 @@ internal fun BookPicker(
     val visible = remember(books, query, activeGroup) { matchingBooks(books.orEmpty(), query, activeGroup) }
     val selected = translations.firstOrNull { it.code == selectedTranslationCode }
     Column(Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding()) {
-        ReadingHeader(localized(R.string.bible_books_title, language), language, onBack, onBack)
+        ReadingHeader(localized(R.string.bible_books_title, language), language, onBack, onHome)
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), color = Color.White,
                 border = androidx.compose.foundation.BorderStroke(1.dp, WarmBorder),
@@ -134,7 +135,8 @@ internal fun BookPicker(
                                     }) {
                                     Row(Modifier.heightIn(min = 64.dp).padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                                         Column(Modifier.weight(1f).padding(end = 8.dp)) {
-                                            Text(book.name, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                                            Text(book.name, color = Ink, fontFamily = readingFont(selected?.language?.code.orEmpty()),
+                                                fontWeight = FontWeight.Normal, fontSize = 18.sp, lineHeight = 27.sp)
                                             Text(localized(R.string.bible_chapters_count, language, book.chaptersCount), color = PrimaryBlue, fontSize = 12.sp)
                                         }
                                         Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, tint = PrimaryBlue, modifier = Modifier.size(20.dp))

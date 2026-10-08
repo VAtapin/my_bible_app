@@ -1,0 +1,9 @@
+<resources>
+    <string name="bible_choose_book">Buch wählen</string>
+    <string name="study_intro">Untersuchen Sie einen Vers: vergleichen Sie verwandte Bibelstellen, lesen Sie Wortbedeutungen und halten Sie eigene Gedanken fest.</string>
+    <string name="study_references_help">Weitere Verse, die mit dem ausgewählten Vers verbunden sind. Mit „Öffnen“ lesen Sie die ganze Stelle.</string>
+    <string name="study_strong_help">Bedeutungen der ursprünglichen griechischen und hebräischen Wörter. In Übersetzungen mit Strong-Markierung verfügbar; tippen Sie auf eine Wortnummer, z. B. G25.</string>
+    <string name="study_notes_help">Persönliche Notizen zu einem Vers. Öffnen Sie im Lesefenster das Menü ⋮ am Vers und wählen Sie „%1$s“.</string>
+    <string name="study_last_passage">Zuletzt geöffnete Stelle</string>
+    <string name="prayer_source_count">Gebete dieser Textfassung in BibleDesktop: %1$d. Andere Fassungen wählen Sie oben; russische Texte ersetzen keine kirchenslawischen.</string>
+</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <string name="calendar_choose_month">Monat wählen</string>
+    <string name="calendar_year">Jahr</string>
+    <string name="calendar_year_range">1900–2100</string>
+</resources>

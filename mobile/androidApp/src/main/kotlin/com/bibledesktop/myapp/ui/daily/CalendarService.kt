@@ -50,8 +50,6 @@ internal fun CalendarService(date: String, language: String, client: BibleConten
             TextButton(onClick = { retry++ }) { Text(localized(R.string.retry, language)) }
         } else if (plan == null) CircularProgressIndicator(Modifier.size(24.dp))
         plan?.let { value ->
-            Text(localized(R.string.calendar_service_office, language))
-            value.properCoverage?.message?.let { Text(it) }
             Row {
                 TextButton(onClick = { fontSize = (fontSize - 2).coerceAtLeast(16f) }) { Text(localized(R.string.bible_font_smaller, language)) }
                 TextButton(onClick = { fontSize = (fontSize + 2).coerceAtMost(40f) }) { Text(localized(R.string.bible_font_larger, language)) }

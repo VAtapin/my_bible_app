@@ -62,6 +62,18 @@ class ReaderLayoutTest {
         screenshot("reader-$name")
     }
 
+    @Test fun exactNavigatedVerseIsHighlightedAndNormalChapterClearsHighlight() {
+        var focused by mutableIntStateOf(3)
+        compose.setContent { BibleDesktopTheme {
+            ChapterReadingContent("ru", chapter(), 19f, emptySet(), { _, _ -> }, { _, _ -> }, { _, _ -> }, initialVerse = focused)
+        } }
+        compose.onNodeWithTag("verse-3").assertIsDisplayed().assertIsSelected()
+        compose.onNodeWithTag("verse-4").assertIsNotSelected()
+        screenshot("reader-highlighted-verse")
+        compose.runOnIdle { focused = 0 }
+        compose.onNodeWithTag("verse-3").assertIsNotSelected()
+    }
+
     @Test fun singleActionButtonKeepsShortVerseCompactAndAllActionsWork() {
         val short = chapter().copy(verses = listOf(BibleVerse(1, 1, "Gen.18.1", "Текст", "Текст")))
         var bookmarks = 0; var shares = 0; var notes = 0

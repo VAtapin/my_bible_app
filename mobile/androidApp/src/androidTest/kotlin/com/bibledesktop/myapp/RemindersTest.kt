@@ -121,6 +121,8 @@ class RemindersTest {
             compose.runOnIdle { language = code }
             compose.waitUntil(10_000) { compose.onAllNodesWithText(title).fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithText(title).assertIsDisplayed()
+            val action = when (code) { "de" -> "Zeit ändern"; "uk" -> "Змінити час"; "en" -> "Change time"; else -> "Изменить время" }
+            compose.onNodeWithTag("reminder-time-morning").assertTextContains(action, substring = true)
         }
     }
 
@@ -133,5 +135,33 @@ class RemindersTest {
         compose.onNodeWithTag("reminders-list").performScrollToNode(hasText("Расписание сохранено."))
         compose.onNodeWithText("Расписание сохранено.").assertIsDisplayed()
         assertTrue(ReminderStore.read(compose.activity).none { it.enabled })
+    }
+
+    @Test fun explicitTimeButtonOpensNativePickerAndSavesNewTime() {
+        ReminderStore.save(target, defaultReminders())
+        compose.setContent { BibleDesktopTheme { RemindersScreen("ru") {} } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("reminder-time-morning").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("reminder-time-morning").assertTextContains("08:00 · Изменить время").performClick()
+        androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom(android.widget.TimePicker::class.java))
+            .perform(object : androidx.test.espresso.ViewAction {
+                override fun getConstraints() = androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom(android.widget.TimePicker::class.java)
+                override fun getDescription() = "Set native time picker to 06:45"
+                override fun perform(controller: androidx.test.espresso.UiController, view: android.view.View) {
+                    (view as android.widget.TimePicker).hour = 6
+                    view.minute = 45
+                    controller.loopMainThreadUntilIdle()
+                }
+            })
+        androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.withId(android.R.id.button1))
+            .perform(androidx.test.espresso.action.ViewActions.click())
+        compose.onNodeWithTag("reminder-time-morning").assertTextContains("06:45 · Изменить время")
+        compose.onNodeWithText("Сохранить").performClick()
+        compose.waitUntil(10_000) { ReminderStore.read(target).first { it.id == "morning" }.time == "06:45" }
+        assertTrue(ReminderStore.read(target).none { it.enabled })
+        compose.waitForIdle()
+        android.os.SystemClock.sleep(300)
+        target.getExternalFilesDir(null)!!.resolve("native-reminder-time.png").outputStream().use {
+            instrumentation.uiAutomation.takeScreenshot()!!.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
     }
 }

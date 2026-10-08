@@ -12,6 +12,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -93,12 +95,16 @@ internal fun RemindersScreen(language: String, onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(title, style = MaterialTheme.typography.titleMedium)
-                            TextButton(enabled = !busy, modifier = Modifier.testTag("reminder-time-${entry.id}"), onClick = {
+                            OutlinedButton(enabled = !busy, modifier = Modifier.testTag("reminder-time-${entry.id}"), onClick = {
                                 val time = LocalTime.parse(entry.time)
                                 TimePickerDialog(context, { _, hour, minute ->
                                     update(draft.orEmpty().map { if (it.id == entry.id) it.copy(time = String.format(Locale.ROOT, "%02d:%02d", hour, minute)) else it })
                                 }, time.hour, time.minute, true).show()
-                            }) { Text(entry.time) }
+                            }) {
+                                Icon(Icons.Outlined.Schedule, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(localized(R.string.reminder_change_time, language, entry.time))
+                            }
                         }
                         Switch(checked = entry.enabled, enabled = !busy, modifier = Modifier.testTag("reminder-toggle-${entry.id}").semantics { contentDescription = title },
                             onCheckedChange = { enabled -> update(draft.orEmpty().map { if (it.id == entry.id) it.copy(enabled = enabled) else it }) })

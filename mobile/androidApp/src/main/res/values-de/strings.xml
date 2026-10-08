@@ -31,7 +31,7 @@
     <string name="section_prayer_subtitle">Morgen- und Abendgebete, Gebetbuch</string>
     <string name="section_calendar">Kirchenkalender</string>
     <string name="section_calendar_subtitle">Feste, Fastenzeiten und Tageslesungen</string>
-    <string name="section_study">Lesen und Vertiefen</string>
+    <string name="section_study">Bibelstudium</string>
     <string name="section_study_subtitle">Parallelstellen, Strong-Wörterbuch und Notizen</string>
     <string name="section_reminders">Erinnerungen</string>
     <string name="section_reminders_subtitle">Gebet, Lesen und Ereignisse</string>
@@ -116,7 +116,6 @@
     <string name="calendar_next_image">Nächstes Bild</string>
     <string name="calendar_service">Gottesdiensttexte</string>
     <string name="calendar_service_error">Gottesdiensttexte konnten nicht geladen werden.</string>
-    <string name="calendar_service_office">Sechste Stunde · Referenztext, keine Anleitung zur Durchführung des Gottesdienstes</string>
     <string name="offline_title">Offline</string>
     <string name="offline_description">Geöffnete Kapitel, Gebete und Tage werden auf dem Gerät gespeichert. Paket: 30 Kalendertage, Tagestexte CU-civil und kleine Ikonenvorschauen. Ein neuer Download aktualisiert das Paket; ganze Bibeln werden noch nicht heruntergeladen.</string>
     <string name="offline_download">30 Tage herunterladen</string>
