@@ -26,7 +26,7 @@ export const de: MessageShape<typeof ru> = {
     eyebrow: 'Persönliche App', title: 'Bible Desktop',
     intro: 'Orthodoxe App für Ihr geistliches Leben',
     startLabel: 'Einrichtungsart', quickTitle: 'Schnell einrichten',
-    quickDescription: 'Empfohlene Einrichtung',
+    quickDescription: 'Alle Bereiche mit einem Klick',
     manualTitle: 'Selbst einrichten', manualDescription: 'Bereiche und Einstellungen auswählen',
     restoreDescription: 'Meine Daten wiederherstellen', verse: '„Sucht zuerst das Reich Gottes …“', verseReference: 'Mt. 6,33',
     restore: 'Ich habe bereits eine App', reassurance: 'Alles lässt sich später ändern', privacy: 'Datenschutz',

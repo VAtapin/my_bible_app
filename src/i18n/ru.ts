@@ -38,7 +38,7 @@ export const ru = {
     intro: 'Православное приложение для вашей духовной жизни',
     startLabel: 'Способ настройки',
     quickTitle: 'Быстро настроить',
-    quickDescription: 'Рекомендуемый вариант',
+    quickDescription: 'Все разделы — одним нажатием',
     manualTitle: 'Настроить самому',
     manualDescription: 'Выбрать разделы и настройки',
     restore: 'У меня уже есть приложение',

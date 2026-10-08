@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n'
 import { languageSwitchUrl, interfaceLanguageIds, interfaceLanguageNames, defaultBibleTranslations, type InterfaceLanguage } from '@/i18n/locale'
 import {
   createConfiguration,
+  createCompleteConfiguration,
   sectionsForPreset,
   defaultCalendarHome,
   educationSettings,
@@ -57,6 +58,7 @@ watch(educationPluginIds, (ids) => {
 })
 
 const editing = computed(() => route.query.edit === '1')
+const instantStart = computed(() => props.mode === 'quick' && !editing.value)
 const selectedSectionLabels = computed(() => sections.value.flatMap((id) => id === 'study'
   ? educationPluginIds.value.map((pluginId) => text.value.education.apps[pluginId].title)
   : [text.value.sections[id].title]))
@@ -87,6 +89,18 @@ const selectedPrayerLabels = computed(() => [
 
 onMounted(async () => {
   const existing = profile.load()
+  if (instantStart.value) {
+    try {
+      // A saved profile must never be overwritten by revisiting the quick-start URL.
+      if (!existing) {
+        recordProductMetric('constructor_opened')
+        profile.save(createCompleteConfiguration(interfaceLanguage.value))
+        recordProductMetric('constructor_completed')
+      }
+      await router.replace('/today')
+    } catch { message.value = text.value.unknownError }
+    return
+  }
   if (!editing.value) recordProductMetric('constructor_opened')
   if (!editing.value) setLanguage(interfaceLanguage.value)
   if (existing && editing.value) {
@@ -235,6 +249,8 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
 
 <template>
   <MobileShell class="setup-screen" :show-navigation="false" :back-to="editing ? '/today' : '/'">
+    <p v-if="instantStart" class="status" :role="message ? 'alert' : 'status'">{{ message || text.loading }}</p>
+    <template v-else>
     <section class="setup-heading">
       <p class="eyebrow dark-eyebrow">{{ mode === 'quick' ? text.setup.quickEyebrow : text.setup.manualEyebrow }}</p>
       <h1>{{ editing ? text.setup.editTitle : text.setup.title }}</h1>
@@ -379,5 +395,6 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
         {{ mode === 'quick' ? text.setup.changePreset : text.setup.change }}
       </button>
     </section>
+    </template>
   </MobileShell>
 </template>
