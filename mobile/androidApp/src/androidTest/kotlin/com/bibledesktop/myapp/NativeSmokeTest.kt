@@ -2,6 +2,7 @@ package com.bibledesktop.myapp
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.performTextInput
@@ -166,7 +167,8 @@ class NativeSmokeTest {
         compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
         compose.onNode(hasText("Библия") and isSelectable()).performClick()
         compose.waitUntil(30_000) { compose.onAllNodes(hasText(book.name)).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText(book.name).performScrollTo().performClick()
+        compose.onNodeWithTag("book-search").performTextInput(book.name)
+        compose.onNodeWithTag("book-${book.slug}").performScrollTo().performClick()
         compose.onNodeWithText("1").performClick()
         compose.waitUntil(30_000) { compose.onAllNodes(hasContentDescription("Действия со стихом 1")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Действия со стихом 1").performClick()
@@ -176,6 +178,8 @@ class NativeSmokeTest {
         compose.waitUntil(10_000) { com.bibledesktop.myapp.ui.bible.NoteStore.load(compose.activity).any { it.body == "Проверочная заметка" } }
         compose.activityRule.scenario.recreate()
         compose.waitUntil(10_000) { compose.onAllNodes(hasContentDescription("Действия со стихом 1")).fetchSemanticsNodes().isNotEmpty() }
+        back(); back()
+        compose.onNodeWithTag("book-search").assertTextContains(book.name)
         compose.onNodeWithContentDescription("На главную").performClick()
         compose.onAllNodes(hasText("Церковный календарь"))[0].assertExists()
         compose.onNodeWithText("Ещё").performClick()

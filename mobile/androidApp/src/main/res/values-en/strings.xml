@@ -132,4 +132,10 @@
     <string name="offline_package">Package from %1$s · %2$s</string>
     <string name="reader_home">Go to home</string>
     <string name="reader_verse_actions">Actions for verse %1$d</string>
+    <string name="bible_choose_translation">Choose translation</string>
+    <string name="bible_find_book">Find a book</string>
+    <string name="bible_clear_search">Clear search</string>
+    <string name="bible_books_not_found">No books found. Change your search or choose another Testament.</string>
+    <string name="bible_other_books">Other books</string>
+    <string name="bible_chapters_count">Chapters: %1$d</string>
 </resources>

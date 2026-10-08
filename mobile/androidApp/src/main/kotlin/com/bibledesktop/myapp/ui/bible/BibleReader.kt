@@ -9,11 +9,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,29 +20,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.TextDecrease
 import androidx.compose.material.icons.outlined.TextIncrease
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +42,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
@@ -70,7 +59,6 @@ import com.bibledesktop.myapp.ui.theme.ReadingSerif
 import com.bibledesktop.myapp.ui.reading.ReadingHeader
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Ink
-import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
@@ -97,6 +85,7 @@ fun BibleReader(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val pickerState = rememberSaveableStateHolder()
     val notesErrorText = text(R.string.notes_error, language)
     val noteScope = rememberCoroutineScope()
     val preferences = remember {
@@ -176,23 +165,25 @@ fun BibleReader(
     }
 
     when {
-        selectedBook == null -> BooksScreen(
-            language = language,
-            translations = translations,
-            selectedTranslationCode = translationCode,
-            state = booksState,
-            onTranslationChange = {
-                translationCode = it
-                selectedBookSlug = null
-                selectedChapter = null
-            },
-            onBookClick = {
-                selectedBookSlug = it.slug
-                selectedChapter = null
-            },
-            onRetry = { booksRetry += 1 },
-            onBack = onBack,
-        )
+        selectedBook == null -> pickerState.SaveableStateProvider("book-picker") {
+            BooksScreen(
+                language = language,
+                translations = translations,
+                selectedTranslationCode = translationCode,
+                state = booksState,
+                onTranslationChange = {
+                    translationCode = it
+                    selectedBookSlug = null
+                    selectedChapter = null
+                },
+                onBookClick = {
+                    selectedBookSlug = it.slug
+                    selectedChapter = null
+                },
+                onRetry = { booksRetry += 1 },
+                onBack = onBack,
+            )
+        }
 
         selectedChapter == null -> ChaptersScreen(
             language = language,
@@ -261,100 +252,12 @@ private fun BooksScreen(
     onRetry: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val oldTestamentTitle = text(R.string.bible_old_testament, language)
-    val newTestamentTitle = text(R.string.bible_new_testament, language)
-    val allBooksTitle = text(R.string.bible_books_title, language)
-    ReaderPage(
-        title = allBooksTitle,
-        onBack = onBack,
-        language = language,
-    ) {
-        item {
-            Text(
-                text(R.string.bible_translation, language),
-                color = Ink,
-                fontWeight = FontWeight.Bold,
-            )
-            FlowRow(
-                modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                translations.forEach { translation ->
-                    FilterChip(
-                        selected = translation.code == selectedTranslationCode,
-                        onClick = { onTranslationChange(translation.code) },
-                        label = { Text(translation.shortName ?: translation.language.code.uppercase()) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Navy,
-                            selectedLabelColor = Color.White,
-                            containerColor = Color.White,
-                            labelColor = Ink,
-                        ),
-                    )
-                }
-            }
-        }
-
-        when (state) {
-            LoadState.Loading -> item { LoadingBox() }
-            LoadState.Error -> item {
-                ErrorBox(text(R.string.bible_books_error, language), text(R.string.retry, language), onRetry)
-            }
-            is LoadState.Ready -> {
-                val oldTestament = state.value.filter { it.canonicalBook?.testament == "old" }
-                val newTestament = state.value.filter { it.canonicalBook?.testament == "new" }
-                testamentItems(oldTestamentTitle, oldTestament, onBookClick)
-                testamentItems(newTestamentTitle, newTestament, onBookClick)
-                val other = state.value.filter { it !in oldTestament && it !in newTestament }
-                if (other.isNotEmpty()) testamentItems(allBooksTitle, other, onBookClick)
-            }
-        }
-    }
-}
-
-private fun androidx.compose.foundation.lazy.LazyListScope.testamentItems(
-    title: String,
-    books: List<BibleBook>,
-    onBookClick: (BibleBook) -> Unit,
-) {
-    if (books.isEmpty()) return
-    item(key = "header-$title") {
-        Text(
-            title,
-            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
-            color = Navy,
-            fontFamily = ReadingSerif,
-            fontSize = 21.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-    items(books, key = BibleBook::slug) { book ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onBookClick(book) }
-                .padding(vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(LightBlue, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(book.order.toString(), color = Navy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-            Text(
-                book.name,
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                color = Ink,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(book.chaptersCount.toString(), color = PrimaryBlue, fontSize = 12.sp)
-            Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, tint = PrimaryBlue)
-        }
-        HorizontalDivider(color = WarmBorder)
-    }
+    BookPicker(
+        language, translations, selectedTranslationCode,
+        books = (state as? LoadState.Ready)?.value,
+        error = state is LoadState.Error,
+        onTranslationChange, onBookClick, onRetry, onBack,
+    )
 }
 
 @Composable
@@ -474,29 +377,6 @@ private fun ChapterScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ReaderPage(
-    title: String,
-    onBack: () -> Unit,
-    language: String,
-    content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Cream)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-    ) {
-        ReadingHeader(title, language, onBack, onBack)
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-            content = content,
-        )
     }
 }
 

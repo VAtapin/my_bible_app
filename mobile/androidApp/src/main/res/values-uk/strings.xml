@@ -132,4 +132,10 @@
     <string name="offline_package">Пакет із %1$s · %2$s</string>
     <string name="reader_home">На головну</string>
     <string name="reader_verse_actions">Дії з віршем %1$d</string>
+    <string name="bible_choose_translation">Вибрати переклад</string>
+    <string name="bible_find_book">Знайти книгу</string>
+    <string name="bible_clear_search">Очистити пошук</string>
+    <string name="bible_books_not_found">Книги не знайдено. Змініть пошук або виберіть інший Завіт.</string>
+    <string name="bible_other_books">Інші книги</string>
+    <string name="bible_chapters_count">Розділів: %1$d</string>
 </resources>
