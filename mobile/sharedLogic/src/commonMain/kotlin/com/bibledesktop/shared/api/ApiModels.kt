@@ -122,6 +122,9 @@ data class CalendarEvent(
     @SerialName("is_icon_commemoration") val isIconCommemoration: Boolean = false,
     @SerialName("is_fasting") val isFasting: Boolean = false,
     val type: CalendarEventType? = null,
+    @SerialName("type_code") val typeCode: Int? = null,
+    @SerialName("typikon_mark") val typikonMark: CalendarMark? = null,
+    val description: String? = null,
 )
 
 @Serializable
@@ -143,10 +146,57 @@ data class CalendarDay(
     @SerialName("fasting_events") val fastingEvents: List<CalendarEvent> = emptyList(),
     val readings: List<CalendarReading> = emptyList(),
     val food: CalendarFood? = null,
+    val icons: List<CalendarIcon> = emptyList(),
+    @SerialName("memorial_markers") val memorialMarkers: List<CalendarMark> = emptyList(),
+    @SerialName("other_events") val otherEvents: List<CalendarOtherEvent> = emptyList(),
+    @SerialName("day_style") val dayStyle: CalendarDayStyle? = null,
+    val tone: Int? = null,
+    @SerialName("week_after_pentecost") val weekAfterPentecost: Int? = null,
 )
 
 @Serializable
-data class CalendarFood(val label: String, val reason: String? = null)
+data class CalendarFood(val label: String, val reason: String? = null, val color: String? = null,
+    @SerialName("image_url") val imageUrl: String? = null)
+
+@Serializable
+data class CalendarMark(val label: String, @SerialName("image_url") val imageUrl: String)
+
+@Serializable
+data class CalendarOtherEvent(val id: String, val name: String, val category: String, val description: String? = null)
+
+@Serializable
+data class CalendarIcon(
+    val id: Long,
+    val title: String,
+    @SerialName("image_url") val imageUrl: String? = null,
+    val imagePreviewUrl: String? = null,
+    val credit: String? = null,
+    @SerialName("local_caching_allowed") val localCachingAllowed: Boolean = false,
+    val description: String? = null,
+    val images: List<CalendarIconImage> = emptyList(),
+    val dates: List<CalendarIconDate> = emptyList(),
+)
+
+@Serializable
+data class CalendarIconImage(val url: String, val previewUrl: String? = null)
+@Serializable
+data class CalendarIconDate(val label: String)
+
+@Serializable
+data class CalendarServicePlan(
+    val date: String,
+    val textLanguage: String,
+    val assignments: List<CalendarServiceText> = emptyList(),
+    val expansions: List<CalendarServiceExpansion> = emptyList(),
+    val properCoverage: CalendarServiceCoverage? = null,
+)
+
+@Serializable
+data class CalendarServiceText(val title: String, val slot: String, val text: String, val insert: Boolean = false, val rubric: String? = null)
+@Serializable
+data class CalendarServiceExpansion(val id: String, val title: String, val text: String)
+@Serializable
+data class CalendarServiceCoverage(val message: String? = null)
 
 @Serializable
 data class CalendarGridDay(

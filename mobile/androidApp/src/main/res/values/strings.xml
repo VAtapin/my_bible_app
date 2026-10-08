@@ -106,4 +106,15 @@
     <string name="note_cancel">Отмена</string>
     <string name="note_delete">Удалить заметку</string>
     <string name="note_delete_confirm">Удалить эту заметку?</string>
+    <string name="calendar_month">Месяц</string>
+    <string name="calendar_week">Неделя</string>
+    <string name="calendar_previous_week">Предыдущая неделя</string>
+    <string name="calendar_next_week">Следующая неделя</string>
+    <string name="calendar_image_unavailable">Изображение недоступно</string>
+    <string name="calendar_close_gallery">Закрыть галерею</string>
+    <string name="calendar_previous_image">Предыдущее изображение</string>
+    <string name="calendar_next_image">Следующее изображение</string>
+    <string name="calendar_service">Богослужебные тексты</string>
+    <string name="calendar_service_error">Не удалось загрузить богослужебные тексты.</string>
+    <string name="calendar_service_office">Шестой час · справочный текст, не руководство для совершения службы</string>
 </resources>

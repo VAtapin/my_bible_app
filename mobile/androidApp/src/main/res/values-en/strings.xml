@@ -106,4 +106,15 @@
     <string name="settings_subtitle">Language, sections and translations</string>
     <string name="bookmark_delete">Delete bookmark</string>
     <string name="bookmark_open">Open passage</string>
+    <string name="calendar_month">Month</string>
+    <string name="calendar_week">Week</string>
+    <string name="calendar_previous_week">Previous week</string>
+    <string name="calendar_next_week">Next week</string>
+    <string name="calendar_image_unavailable">Image unavailable</string>
+    <string name="calendar_close_gallery">Close gallery</string>
+    <string name="calendar_previous_image">Previous image</string>
+    <string name="calendar_next_image">Next image</string>
+    <string name="calendar_service">Service texts</string>
+    <string name="calendar_service_error">Could not load service texts.</string>
+    <string name="calendar_service_office">Sixth Hour · reference text, not instructions for conducting a service</string>
 </resources>

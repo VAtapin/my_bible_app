@@ -82,6 +82,17 @@ class BibleApiClient internal constructor(
     fun close() {
         client.close()
     }
+
+    suspend fun getCalendarService(date: String, language: String): CalendarServicePlan {
+        val response = client.get("$baseUrl/calendar/service") {
+            parameter("date", date)
+            parameter("lang", calendarContentLanguage(language))
+            parameter("office", "sixth-hour")
+            parameter("expansion", "full")
+            parameter("profile", "typikon-strict")
+        }
+        return response.body<ApiEnvelope<CalendarServicePlan>>().data.also { require(it.date == date) }
+    }
 }
 
 /** English UI must not pretend that the calendar corpus has been translated. */

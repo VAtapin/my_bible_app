@@ -106,4 +106,15 @@
     <string name="settings_subtitle">Мова, розділи й переклади</string>
     <string name="bookmark_delete">Видалити закладку</string>
     <string name="bookmark_open">Відкрити місце</string>
+    <string name="calendar_month">Місяць</string>
+    <string name="calendar_week">Тиждень</string>
+    <string name="calendar_previous_week">Попередній тиждень</string>
+    <string name="calendar_next_week">Наступний тиждень</string>
+    <string name="calendar_image_unavailable">Зображення недоступне</string>
+    <string name="calendar_close_gallery">Закрити галерею</string>
+    <string name="calendar_previous_image">Попереднє зображення</string>
+    <string name="calendar_next_image">Наступне зображення</string>
+    <string name="calendar_service">Богослужбові тексти</string>
+    <string name="calendar_service_error">Не вдалося завантажити богослужбові тексти.</string>
+    <string name="calendar_service_office">Шостий час · довідковий текст, не настанова для звершення служби</string>
 </resources>

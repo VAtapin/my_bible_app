@@ -106,4 +106,15 @@
     <string name="note_cancel">Abbrechen</string>
     <string name="note_delete">Notiz löschen</string>
     <string name="note_delete_confirm">Diese Notiz löschen?</string>
+    <string name="calendar_month">Monat</string>
+    <string name="calendar_week">Woche</string>
+    <string name="calendar_previous_week">Vorherige Woche</string>
+    <string name="calendar_next_week">Nächste Woche</string>
+    <string name="calendar_image_unavailable">Bild nicht verfügbar</string>
+    <string name="calendar_close_gallery">Galerie schließen</string>
+    <string name="calendar_previous_image">Vorheriges Bild</string>
+    <string name="calendar_next_image">Nächstes Bild</string>
+    <string name="calendar_service">Gottesdiensttexte</string>
+    <string name="calendar_service_error">Gottesdiensttexte konnten nicht geladen werden.</string>
+    <string name="calendar_service_office">Sechste Stunde · Referenztext, keine Anleitung zur Durchführung des Gottesdienstes</string>
 </resources>

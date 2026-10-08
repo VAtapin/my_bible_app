@@ -78,6 +78,14 @@ class NativeSmokeTest {
             assertEquals("2026-10-08", day.date)
             assertEquals("bible-desktop-calendar-engine", day.source)
             assertTrue(day.events.isNotEmpty())
+            assertTrue(day.events.any { it.typikonMark != null })
+            assertTrue(day.icons.isNotEmpty())
+            assertTrue(day.icons.first().imagePreviewUrl?.contains("preview=1") == true)
+            val service = client.getCalendarService("2026-10-08", "en")
+            assertEquals("2026-10-08", service.date)
+            assertTrue(service.assignments.isNotEmpty())
+            assertTrue(service.expansions.isNotEmpty())
+            assertEquals("cu-civil", client.getCalendarService("2026-10-08", "cu-civil").textLanguage)
             assertEquals(31, client.getCalendarMonth(2026, 10, "uk").size)
         } finally { client.close() }
     }

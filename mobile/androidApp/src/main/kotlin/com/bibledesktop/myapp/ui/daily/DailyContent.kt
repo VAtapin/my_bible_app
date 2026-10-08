@@ -29,9 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.ChevronLeft
-import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Church
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.TextDecrease
@@ -74,12 +71,8 @@ import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.myapp.ui.theme.readingFont
 import com.bibledesktop.shared.api.BibleApiClient
-import com.bibledesktop.shared.api.CalendarDay
 import com.bibledesktop.shared.api.PrayerDetail
 import com.bibledesktop.shared.api.PrayerSummary
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Locale
 
 private sealed interface LoadState<out T> {
@@ -269,108 +262,12 @@ fun CalendarScreen(
     onBack: () -> Unit,
 ) {
     BackHandler(onBack = onBack)
-    var dateIso by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
-    var state by remember { mutableStateOf<LoadState<CalendarDay>>(LoadState.Loading) }
-    var retry by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(dateIso, language, retry) {
-        state = LoadState.Loading
-        state = runCatching { client.getCalendarDay(dateIso, language) }
-            .fold(
-                onSuccess = { LoadState.Ready(it) },
-                onFailure = { LoadState.Error },
-            )
-    }
-
     Column(
         modifier = Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding(),
     ) {
         Header(localText(R.string.calendar_title, language), onBack)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = { dateIso = LocalDate.parse(dateIso).minusDays(1).toString() }) {
-                Icon(Icons.Outlined.ChevronLeft, localText(R.string.calendar_previous, language))
-            }
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(formatDate(dateIso, language), color = Ink, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                (state as? LoadState.Ready)?.value?.let {
-                    Text(localText(R.string.calendar_old_style, language, formatDate(it.oldStyleDate, language)), color = PrimaryBlue, fontSize = 11.sp)
-                }
-            }
-            IconButton(onClick = { dateIso = LocalDate.parse(dateIso).plusDays(1).toString() }) {
-                Icon(Icons.Outlined.ChevronRight, localText(R.string.calendar_next, language))
-            }
-        }
-
-        when (val current = state) {
-            LoadState.Loading -> LoadingBox(Modifier.weight(1f))
-            LoadState.Error -> ErrorBox(
-                localText(R.string.calendar_error, language),
-                localText(R.string.retry, language),
-                { retry += 1 },
-                Modifier.weight(1f),
-            )
-            is LoadState.Ready -> CalendarDayContent(language, current.value, Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun CalendarDayContent(language: String, day: CalendarDay, modifier: Modifier) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            Text(day.liturgicalPeriod, color = Navy, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        }
-        if (day.fastingEvents.isNotEmpty()) {
-            item {
-                CalendarGroup(
-                    title = localText(R.string.calendar_fasting, language),
-                    values = day.fastingEvents.map { it.name },
-                    highlighted = true,
-                )
-            }
-        }
-        if (day.events.isNotEmpty()) {
-            item {
-                CalendarGroup(
-                    title = localText(R.string.calendar_events, language),
-                    values = day.events.map { it.name },
-                )
-            }
-        }
-        if (day.readings.isNotEmpty()) {
-            item {
-                CalendarGroup(
-                    title = localText(R.string.calendar_readings, language),
-                    values = day.readings.map { it.displayRef.ifBlank { it.title } },
-                )
-            }
-        }
-        if (day.events.isEmpty() && day.fastingEvents.isEmpty() && day.readings.isEmpty()) {
-            item { EmptyBox(localText(R.string.calendar_empty, language)) }
-        }
-    }
-}
-
-@Composable
-private fun CalendarGroup(title: String, values: List<String>, highlighted: Boolean = false) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = if (highlighted) LightBlue else Color.White),
-        border = CardDefaults.outlinedCardBorder(),
-        shape = RoundedCornerShape(18.dp),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, color = Navy, fontWeight = FontWeight.Bold)
-            values.forEachIndexed { index, value ->
-                if (index > 0) HorizontalDivider(Modifier.padding(vertical = 10.dp), color = WarmBorder)
-                Text(value, color = Ink, fontSize = 14.sp)
-            }
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp)) {
+            CalendarOverview(language, client, detailed = true)
         }
     }
 }
@@ -444,13 +341,6 @@ private fun ErrorBox(
         Button(onClick = onRetry, modifier = Modifier.padding(top = 12.dp)) { Text(retryTitle) }
     }
 }
-
-private fun formatDate(value: String, language: String): String = runCatching {
-    LocalDate.parse(value).format(
-        DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
-            .withLocale(Locale.forLanguageTag(language)),
-    )
-}.getOrDefault(value)
 
 private fun share(context: Context, body: String) {
     context.startActivity(

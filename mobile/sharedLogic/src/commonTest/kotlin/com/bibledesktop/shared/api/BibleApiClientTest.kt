@@ -12,6 +12,32 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun decodesCalendarIconsMarksAndService() = runBlocking {
+        val engine = MockEngine { request ->
+            val body = if (request.url.encodedPath.endsWith("service")) {
+                assertEquals("sixth-hour", request.url.parameters["office"])
+                assertEquals("full", request.url.parameters["expansion"])
+                assertEquals("typikon-strict", request.url.parameters["profile"])
+                assertEquals("ru", request.url.parameters["lang"])
+                """{"data":{"date":"2026-10-08","textLanguage":"cu","assignments":[{"title":"Psalm","slot":"psalm","text":"text"}],"expansions":[{"id":"x","title":"Troparion","text":"text"}],"properCoverage":{"message":"Reference only"}}}"""
+            } else """{"data":{"date":"2026-10-08","old_style_date":"2026-09-25","pascha_date":"2026-04-12","liturgical_period":"Thursday","source":"engine","events":[{"id":"1","name":"Saint","type_code":4,"typikon_mark":{"label":"Polyeleos","image_url":"/assets/typikon/polyeleos.svg"}}],"icons":[{"id":3054,"title":"Saint","image_url":"https://bible-desktop.com/storage/calendar-icons/image.png","imagePreviewUrl":"https://bible-desktop.com/api/calendar/icons/3054/images/7023?preview=1","images":[{"url":"original","previewUrl":"preview"}],"local_caching_allowed":true}],"memorial_markers":[{"label":"Memorial","image_url":"/assets/markers/minimal-dark/memorial.png"}]}}"""
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+        try {
+            val day = client.getCalendarDay("2026-10-08", "en")
+            assertEquals(4, day.events.single().typeCode)
+            assertEquals("Polyeleos", day.events.single().typikonMark?.label)
+            assertTrue(day.icons.single().localCachingAllowed)
+            assertEquals("preview", day.icons.single().images.single().previewUrl)
+            assertEquals("Memorial", day.memorialMarkers.single().label)
+            val service = client.getCalendarService("2026-10-08", "en")
+            assertEquals("cu", service.textLanguage)
+            assertEquals("Psalm", service.assignments.single().title)
+            assertEquals("Troparion", service.expansions.single().title)
+        } finally { client.close() }
+    }
+
     @Test fun decodesMonthAndUsesExplicitEnglishCorpusFallback() = runBlocking {
         val engine = MockEngine { request ->
             assertEquals("/api/calendar/month", request.url.encodedPath)
