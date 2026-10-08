@@ -68,6 +68,9 @@
   и редактируются, новая база не создавалась.
 - «Азбука»: 37 букв, примеры, цифирь 1–999, упражнения/прогресс. Встроенная
   /education/azbuka и standalone используют azbuka-web/src.
+  Карточка буквы компактнее: min-height 160 вместо 195 px; цитата CU —
+  28 px на узком экране, адаптивно до 40 px на широком. Ponomar, содержание
+  и размеры обычного перевода не изменены. Оба варианта используют одни стили.
   Нативный KMP-каркас Android/iOS сохранён; эта задача касается web.
 
 ## Важные решения и deployment
@@ -87,7 +90,8 @@
 - Standalone: /var/www/vhosts/bible-desktop.com/my_app/azbuka-web/dist.
   Домены имеют разных пользователей Plesk; общий скрипт записи в обе папки
   не применять. Старый родительский my_app не используется для Git/build.
-  Отдельные исходники «Азбуки» не менялись; её отдельный deployment не нужен.
+  Стили «Азбуки» изменены: требуется обновить обе сборки; перенос standalone
+  публичным архивом описан в README (разные пользователи Plesk).
   Commit/push не является deployment.
 
 ## Текущее состояние и ограничения
@@ -115,6 +119,9 @@
 
 ## Проверки
 
+- 08.10.2026: после изменения карточки буквы npm run check — vue-tsc,
+  180 тестов / 40 файлов и обе production-сборки пройдены. Браузер 390 × 844
+  и 834 × 1210: карточка 160 px, цитата 28 px, горизонтального переполнения нет.
 - 08.10.2026: quick start проверен на отдельном локальном origin без удаления
   прежнего профиля: одно нажатие открыло /today; ручной просмотр настроек
   подтвердил все четыре раздела, шесть сборников, Азбуку, RU/CU/CU-civil.
@@ -151,5 +158,6 @@
 
 ## Последний связанный commit
 
-- Предыдущий: 343e6a2 — Enable complete app in one tap; e243de7 — Enlarge calendar icon viewer.
-- Текущий atomic commit: Use BibleDesktop as the only calendar API.
+- Предыдущий: 0660535 — Use BibleDesktop as the only calendar API;
+  343e6a2 — Enable complete app in one tap; e243de7 — Enlarge calendar icon viewer.
+- Текущий atomic commit: Refine letter card and quotation sizes.

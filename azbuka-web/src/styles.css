@@ -125,7 +125,7 @@ h2 { font-size: clamp(1.35rem, 4vw, 2rem); margin-bottom: .35rem; }
 .letter-tile.learned { background: linear-gradient(150deg, #fff, #f2f8f5); }
 
 .back-button { min-height: 44px; padding: 8px 12px 8px 5px; display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--ink-soft); font-weight: 750; cursor: pointer; }
-.letter-hero { min-height: 195px; display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border-radius: 24px; background: linear-gradient(135deg, #dce8ef, #fff 65%); box-shadow: var(--shadow); }
+.letter-hero { min-height: 160px; display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border-radius: 24px; background: linear-gradient(135deg, #dce8ef, #fff 65%); box-shadow: var(--shadow); }
 .large-glyph { display: grid; place-items: center; background: var(--ink-soft); color: #fff; font-family: Ponomar, Georgia, serif; font-size: clamp(4.5rem, 15vw, 8.5rem); line-height: 1; text-shadow: 0 4px 0 rgb(185 154 90 / 28%); }
 .letter-summary { padding: clamp(16px, 3.5vw, 35px); align-self: center; }
 .letter-summary h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
@@ -140,7 +140,7 @@ h2 { font-size: clamp(1.35rem, 4vw, 2rem); margin-bottom: .35rem; }
 .letter-example { margin-top: 20px; padding: clamp(24px, 5vw, 38px); }
 .example-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
 .example-heading > span { padding: 7px 11px; border-radius: 12px; background: var(--sky-pale); color: var(--ink-soft); font-size: .75rem; font-weight: 800; white-space: nowrap; }
-.letter-example blockquote { margin: 18px 0 16px; padding: 22px 24px; border-left: 4px solid var(--gold); border-radius: 0 18px 18px 0; background: #f7f3ea; color: #183c57; font-family: Ponomar, Georgia, serif; font-size: clamp(1.45rem, 4vw, 2.2rem); line-height: 1.65; }
+.letter-example blockquote { margin: 18px 0 16px; padding: 22px 24px; border-left: 4px solid var(--gold); border-radius: 0 18px 18px 0; background: #f7f3ea; color: #183c57; font-family: Ponomar, Georgia, serif; font-size: clamp(1.75rem, 4.5vw, 2.5rem); line-height: 1.65; }
 .letter-example mark { padding: 0 .05em; border-radius: .16em; background: #f2dca4; color: #153a56; box-shadow: 0 .07em 0 #d1aa55; }
 .example-translation { margin-bottom: 8px; color: #4f6679; font-size: 1.02rem; }
 .letter-example > small { color: #7b8995; }
@@ -306,7 +306,7 @@ h2 { font-size: clamp(1.35rem, 4vw, 2rem); margin-bottom: .35rem; }
   .letter-actions { display: grid; }
   .example-heading { display: grid; gap: 7px; }
   .example-heading > span { width: fit-content; }
-  .letter-example blockquote { padding: 18px; font-size: 1.45rem; }
+  .letter-example blockquote { padding: 18px; font-size: 1.75rem; }
   .number-builder { grid-template-columns: 1fr; padding: 20px; }
   .number-steps { grid-column: auto; }
   .number-rules, .numeral-tables { grid-template-columns: 1fr; }
