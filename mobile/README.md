@@ -71,6 +71,11 @@ Capacitor-версии пока не реализована.
   обычная кнопка «Назад» сохраняет последовательный возврат;
 - Android: каталог полных закладок, открытие сохранённого места и автоматическое
   продолжение последней главы;
+- Отправка стиха из читалки и закладок: текст, ссылка на место и единый HTTPS
+  адрес `https://bible-app.online/reader?translation=...&book=...&chapter=...&verse=...`.
+  Native VIEW открывает точный перевод/стих до настройки, выделяет его; проверяет
+  наличие текста до изменения места чтения. Повторная ссылка обновляет activity,
+  а пересоздание не возвращает к исходному стиху после смены главы;
 - Android: заметка к стиху, создание/редактирование, список в «Ещё», открытие
   главы, подтверждаемое удаление. Локальный version1 JSON в существующих
   SharedPreferences профиля, фоновое чтение/commit записи. Отмена не сохраняет
@@ -131,6 +136,26 @@ Android-сценарии проверены на эмуляторе API 37 с pr
 требует первой сборки и проверки на macOS.
 
 ## Android
+
+### Ссылки Android App Links
+
+В manifest заявлен только `/reader` на `bible-app.online`, HTTP/HTTPS; отправка
+всегда использует HTTPS. Без установленного приложения это обычная ссылка веб-читалки.
+Автоматическое открытие установленного release APK требует публичного
+`https://bible-app.online/.well-known/assetlinks.json`: relation
+`delegate_permission/common.handle_all_urls`, namespace `android_app`, package
+`com.bibledesktop.myapp` и SHA-256 сертификата **подписи приложения**.
+Для Google Play использовать App Signing certificate, не upload certificate.
+Ключ подписи не публикуется и не хранится в Git.
+
+На 09.10.2026 этот URL возвращает HTML, не Digital Asset Links JSON. Поэтому
+автоматическое открытие через браузер ещё не подтверждено; сайт здесь не менялся.
+Реальное получение VIEW cold/warm и навигация проверены отдельными тестами;
+это не заменяет проверку домена. Debug-пакет отдельный и в production association
+не добавлялся. После выбора подписи нужен отдельный серверный шаг и проверка
+`adb shell pm get-app-links com.bibledesktop.myapp` на установленном release.
+
+[Официальная настройка association](https://developer.android.com/training/app-links/configure-assetlinks).
 
 Требуются JDK 25, Android SDK 37 и Android Studio 2026.1.4 или новее.
 

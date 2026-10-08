@@ -99,6 +99,7 @@ import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.myapp.data.OfflineContentRepository
+import com.bibledesktop.myapp.data.ReaderLink
 import com.bibledesktop.shared.api.TranslationSummary
 import com.bibledesktop.shared.presentation.initialInterfaceLanguage
 import com.bibledesktop.shared.presentation.quickNativeSections
@@ -120,6 +121,7 @@ private enum class Route {
     Study,
     Reminders,
     BibleLibrary,
+    LinkedBible,
 }
 
 internal enum class TranslationFilter(val code: String?) {
@@ -152,7 +154,7 @@ internal val sections = listOf(
 )
 
 @Composable
-fun SetupApp(initialDestination: String? = null) {
+fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? = null) {
     val context = LocalContext.current
     val preferences = remember {
         context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
@@ -174,7 +176,7 @@ fun SetupApp(initialDestination: String? = null) {
     }
     var route by rememberSaveable {
         mutableStateOf(
-            if (!setupComplete) Route.Welcome else when (initialDestination) {
+            if (initialReaderLink != null) Route.LinkedBible else if (!setupComplete) Route.Welcome else when (initialDestination) {
                 "prayer" -> Route.Prayers
                 "bible" -> Route.Bible
                 "calendar" -> Route.Calendar
@@ -340,6 +342,12 @@ fun SetupApp(initialDestination: String? = null) {
             choosePassageOnOpen = chooseBiblePassage,
         )
 
+        Route.LinkedBible -> initialReaderLink?.let { link ->
+            com.bibledesktop.myapp.ui.bible.LinkedBibleReader(language, link, client,
+                onBack = { route = if (setupComplete) Route.Home else Route.Welcome },
+                onDownloads = { route = Route.BibleLibrary })
+        }
+
         Route.Prayers -> PrayersScreen(
             language = language,
             client = client,
@@ -379,7 +387,7 @@ fun SetupApp(initialDestination: String? = null) {
                 route = Route.Bible
             })
         Route.Reminders -> com.bibledesktop.myapp.ui.reminders.RemindersScreen(language) { route = Route.Home }
-        Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client) { route = Route.Home }
+        Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client) { route = if (setupComplete) Route.Home else Route.Welcome }
     }
 }
 

@@ -1,0 +1,3 @@
+<resources>
+    <string name="reader_link_unavailable">Unable to open this passage in the specified translation. Check the link and connection, or open a saved chapter.</string>
+</resources>

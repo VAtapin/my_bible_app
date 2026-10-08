@@ -1,7 +1,6 @@
 package com.bibledesktop.myapp.ui.more
 
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
@@ -237,16 +236,7 @@ private fun BookmarkCard(
 }
 
 private fun share(context: Context, bookmark: BookmarkEntry) {
-    val message = "${bookmark.text}\n\n${bookmark.bookName} ${bookmark.chapter}:${bookmark.verse} · ${bookmark.translationName}"
-    context.startActivity(
-        Intent.createChooser(
-            Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, message)
-            },
-            null,
-        ),
-    )
+    com.bibledesktop.myapp.ui.bible.shareBiblePassage(context, bookmark)
 }
 
 @Composable

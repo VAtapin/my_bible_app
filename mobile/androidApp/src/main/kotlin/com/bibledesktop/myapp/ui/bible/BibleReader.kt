@@ -1,7 +1,6 @@
 package com.bibledesktop.myapp.ui.bible
 
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
@@ -248,7 +247,7 @@ fun BibleReader(
             onBookmark = { chapter, verse ->
                 bookmarkEntries = BookmarkStore.toggle(context, bookmarkEntries, chapter, verse)
             },
-            onShare = { chapter, verse -> shareVerse(context, chapter, verse) },
+            onShare = { chapter, verse -> shareBiblePassage(context, versePassage(chapter, verse)) },
             onNote = { chapter, verse ->
                 val passage = versePassage(chapter, verse)
                 noteScope.launch {
@@ -430,15 +429,6 @@ private fun ErrorBox(
         Text(message, color = Ink)
         Button(onClick = onRetry, modifier = Modifier.padding(top = 12.dp)) { Text(retry) }
     }
-}
-
-private fun shareVerse(context: Context, chapter: BibleChapter, verse: BibleVerse) {
-    val message = "${verse.plainText}\n\n${chapter.book.name} ${chapter.chapter.number}:${verse.number} · ${chapter.translation.shortName ?: chapter.translation.name}"
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, message)
-    }
-    context.startActivity(Intent.createChooser(intent, null))
 }
 
 @Composable
