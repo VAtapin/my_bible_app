@@ -97,4 +97,13 @@
     <string name="prayer_text_language">Язык молитвенного текста</string>
     <string name="prayer_cu">Церковнославянский</string>
     <string name="prayer_cu_civil">Церковнославянский · гражданский</string>
+    <string name="notes_title">Заметки</string>
+    <string name="notes_empty">Заметок пока нет. Нажмите значок заметки у стиха.</string>
+    <string name="notes_error">Не удалось прочитать или сохранить заметку. Попробуйте ещё раз.</string>
+    <string name="note_edit">Заметка к стиху</string>
+    <string name="note_body">Текст заметки</string>
+    <string name="note_save">Сохранить</string>
+    <string name="note_cancel">Отмена</string>
+    <string name="note_delete">Удалить заметку</string>
+    <string name="note_delete_confirm">Удалить эту заметку?</string>
 </resources>

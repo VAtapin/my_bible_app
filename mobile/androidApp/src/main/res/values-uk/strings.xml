@@ -92,6 +92,15 @@
     <string name="prayer_text_language">Мова молитовного тексту</string>
     <string name="prayer_cu">Церковнослов’янська</string>
     <string name="prayer_cu_civil">Церковнослов’янська · цивільний шрифт</string>
+    <string name="notes_title">Нотатки</string>
+    <string name="notes_empty">Нотаток поки немає. Натисніть значок нотатки біля вірша.</string>
+    <string name="notes_error">Не вдалося прочитати або зберегти нотатку. Спробуйте ще раз.</string>
+    <string name="note_edit">Нотатка до вірша</string>
+    <string name="note_body">Текст нотатки</string>
+    <string name="note_save">Зберегти</string>
+    <string name="note_cancel">Скасувати</string>
+    <string name="note_delete">Видалити нотатку</string>
+    <string name="note_delete_confirm">Видалити цю нотатку?</string>
     <string name="more_title">Ще</string>
     <string name="settings_title">Налаштування застосунку</string>
     <string name="settings_subtitle">Мова, розділи й переклади</string>

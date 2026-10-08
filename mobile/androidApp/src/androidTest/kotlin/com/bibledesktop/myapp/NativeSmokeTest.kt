@@ -3,6 +3,8 @@ package com.bibledesktop.myapp
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -25,7 +27,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class NativeSmokeTest {
     private val compose = createAndroidComposeRule<MainActivity>()
-    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations")
+    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "verseNotesV1")
     private var original: Map<String, Any?> = emptyMap()
     private val fixture = object : ExternalResource() {
         override fun before() {
@@ -33,7 +35,8 @@ class NativeSmokeTest {
             check(context.packageName == "com.bibledesktop.myapp.debug")
             val preferences = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
             original = fixtureKeys.associateWith { preferences.all[it] }
-            check(preferences.edit().putBoolean("setupComplete", false).putString("uiLanguage", "ru").commit())
+            check(preferences.edit().putBoolean("setupComplete", false).putString("uiLanguage", "ru")
+                .remove("lastTranslation").remove("lastBookSlug").remove("lastChapter").remove("verseNotesV1").commit())
         }
 
         override fun after() {
@@ -43,6 +46,7 @@ class NativeSmokeTest {
                 when (value) {
                     is Boolean -> editor.putBoolean(key, value)
                     is String -> editor.putString(key, value)
+                    is Int -> editor.putInt(key, value)
                     null -> editor.remove(key)
                 }
             }
@@ -140,5 +144,27 @@ class NativeSmokeTest {
     private fun back() {
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.waitForIdle()
+    }
+
+    @Test fun verseNoteIsAccessibleFromMoreAfterLeavingReader() {
+        val client = BibleApiClient()
+        val book = try { runBlocking {
+            val translation = client.getTranslations("ru").let { all -> all.firstOrNull { it.isDefault } ?: all.first() }
+            client.getBooks(translation.code).minBy { it.order }
+        } } finally { client.close() }
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
+        compose.onAllNodes(hasText("Библия"))[0].performClick()
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText(book.name)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText(book.name).performScrollTo().performClick()
+        compose.onNodeWithText("1").performClick()
+        compose.waitUntil(30_000) { compose.onAllNodes(hasContentDescription("Заметка к стиху")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodes(hasContentDescription("Заметка к стиху"))[0].performClick()
+        compose.onNodeWithTag("note-body").performTextInput("Проверочная заметка")
+        compose.onNodeWithText("Сохранить").performClick()
+        compose.waitUntil(10_000) { com.bibledesktop.myapp.ui.bible.NoteStore.load(compose.activity).any { it.body == "Проверочная заметка" } }
+        back(); back(); back()
+        compose.onNodeWithText("Ещё").performClick()
+        compose.onNodeWithText("Проверочная заметка").performScrollTo().assertIsDisplayed()
     }
 }

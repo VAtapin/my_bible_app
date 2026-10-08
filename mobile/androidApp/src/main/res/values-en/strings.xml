@@ -92,6 +92,15 @@
     <string name="prayer_text_language">Prayer text language</string>
     <string name="prayer_cu">Church Slavonic</string>
     <string name="prayer_cu_civil">Church Slavonic · civil script</string>
+    <string name="notes_title">Notes</string>
+    <string name="notes_empty">No notes yet. Tap the note icon beside a verse.</string>
+    <string name="notes_error">Could not read or save the note. Please try again.</string>
+    <string name="note_edit">Verse note</string>
+    <string name="note_body">Note text</string>
+    <string name="note_save">Save</string>
+    <string name="note_cancel">Cancel</string>
+    <string name="note_delete">Delete note</string>
+    <string name="note_delete_confirm">Delete this note?</string>
     <string name="more_title">More</string>
     <string name="settings_title">App settings</string>
     <string name="settings_subtitle">Language, sections and translations</string>

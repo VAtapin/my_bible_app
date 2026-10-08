@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.TextDecrease
 import androidx.compose.material.icons.outlined.TextIncrease
 import androidx.compose.material3.Button
@@ -56,7 +57,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,6 +84,8 @@ import com.bibledesktop.shared.api.BibleChapter
 import com.bibledesktop.shared.api.BibleVerse
 import com.bibledesktop.shared.api.TranslationSummary
 import java.util.Locale
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 private sealed interface LoadState<out T> {
     data object Loading : LoadState<Nothing>
@@ -96,6 +101,8 @@ fun BibleReader(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val notesErrorText = text(R.string.notes_error, language)
+    val noteScope = rememberCoroutineScope()
     val preferences = remember {
         context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
     }
@@ -118,6 +125,10 @@ fun BibleReader(
     var chapterRetry by remember { mutableStateOf(0) }
     var fontSize by rememberSaveable { mutableFloatStateOf(preferences.getFloat("readerFontSize", 19f)) }
     var bookmarkEntries by remember { mutableStateOf(BookmarkStore.load(context)) }
+    var notePassage by rememberSaveable(stateSaver = Saver<BookmarkEntry?, String>(
+        save = { it?.toJson()?.toString() }, restore = { bookmarkFromJson(org.json.JSONObject(it)) },
+    )) { mutableStateOf<BookmarkEntry?>(null) }
+    var noteInitial by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(translations, translationCode) {
         if (translationCode.isBlank() || translations.none { it.code == translationCode }) {
@@ -219,8 +230,25 @@ fun BibleReader(
                 bookmarkEntries = BookmarkStore.toggle(context, bookmarkEntries, chapter, verse)
             },
             onShare = { chapter, verse -> shareVerse(context, chapter, verse) },
+            onNote = { chapter, verse ->
+                val passage = versePassage(chapter, verse)
+                noteScope.launch {
+                    try {
+                        noteInitial = NoteStore.read(context).firstOrNull {
+                            it.passage.reference == passage.reference && it.passage.translationCode == passage.translationCode
+                        }?.body.orEmpty()
+                        notePassage = passage
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) {
+                        android.widget.Toast.makeText(context, notesErrorText, android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            },
         )
         }
+    }
+    notePassage?.let { passage ->
+        NoteEditor(language, passage, noteInitial, onDismiss = { notePassage = null }, onSaved = { notePassage = null })
     }
 }
 
@@ -394,6 +422,7 @@ private fun ChapterScreen(
     onFontLarger: () -> Unit,
     onBookmark: (BibleChapter, BibleVerse) -> Unit,
     onShare: (BibleChapter, BibleVerse) -> Unit,
+    onNote: (BibleChapter, BibleVerse) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -428,6 +457,7 @@ private fun ChapterScreen(
                         bookmarked = "${state.value.translation.code}:${verse.osisRef}" in bookmarkedKeys,
                         onBookmark = { onBookmark(state.value, verse) },
                         onShare = { onShare(state.value, verse) },
+                        onNote = { onNote(state.value, verse) },
                     )
                 }
             }
@@ -466,6 +496,7 @@ private fun VerseRow(
     bookmarked: Boolean,
     onBookmark: () -> Unit,
     onShare: () -> Unit,
+    onNote: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -498,6 +529,9 @@ private fun VerseRow(
             }
             IconButton(onClick = onShare, modifier = Modifier.size(40.dp)) {
                 Icon(Icons.Outlined.Share, text(R.string.bible_share, language), tint = PrimaryBlue)
+            }
+            IconButton(onClick = onNote, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Outlined.EditNote, text(R.string.note_edit, language), tint = PrimaryBlue)
             }
         }
     }

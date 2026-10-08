@@ -97,4 +97,13 @@
     <string name="prayer_text_language">Sprache des Gebetstextes</string>
     <string name="prayer_cu">Kirchenslawisch</string>
     <string name="prayer_cu_civil">Kirchenslawisch · zivile Schrift</string>
+    <string name="notes_title">Notizen</string>
+    <string name="notes_empty">Noch keine Notizen. Tippen Sie auf das Notizsymbol neben einem Vers.</string>
+    <string name="notes_error">Notiz konnte nicht gelesen oder gespeichert werden. Bitte versuchen Sie es erneut.</string>
+    <string name="note_edit">Notiz zum Vers</string>
+    <string name="note_body">Notiztext</string>
+    <string name="note_save">Speichern</string>
+    <string name="note_cancel">Abbrechen</string>
+    <string name="note_delete">Notiz löschen</string>
+    <string name="note_delete_confirm">Diese Notiz löschen?</string>
 </resources>

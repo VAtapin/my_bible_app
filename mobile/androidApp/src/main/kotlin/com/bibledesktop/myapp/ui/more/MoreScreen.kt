@@ -30,10 +30,13 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,12 +53,16 @@ import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.bible.BookmarkEntry
 import com.bibledesktop.myapp.ui.bible.BookmarkStore
+import com.bibledesktop.myapp.ui.bible.NoteStore
+import com.bibledesktop.myapp.ui.bible.NoteCard
+import com.bibledesktop.myapp.ui.bible.VerseNote
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Ink
 import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun MoreScreen(
@@ -66,6 +73,9 @@ fun MoreScreen(
 ) {
     val context = LocalContext.current
     var bookmarks by remember { mutableStateOf(BookmarkStore.load(context)) }
+    var notesResult by remember { mutableStateOf<Result<List<VerseNote>>?>(null) }
+    val noteScope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { notesResult = runCatching { NoteStore.read(context) } }
     BackHandler(onBack = onBack)
 
     Column(
@@ -95,6 +105,17 @@ fun MoreScreen(
         ) {
             item {
                 SettingsCard(language, onSettings)
+                Text(localText(R.string.notes_title, language), Modifier.padding(top = 18.dp), color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            if (notesResult == null) item { CircularProgressIndicator() }
+            if (notesResult?.isFailure == true) item { Text(localText(R.string.notes_error, language)) }
+            else if (notesResult?.getOrNull()?.isEmpty() == true) item { Text(localText(R.string.notes_empty, language), color = PrimaryBlue) }
+            items(notesResult?.getOrNull().orEmpty(), key = { "note:${it.passage.translationCode}:${it.passage.reference}" }) { note ->
+                NoteCard(language, note, onOpen = { onOpenBookmark(note.passage) }, onChanged = {
+                    noteScope.launch { notesResult = runCatching { NoteStore.read(context) } }
+                })
+            }
+            item {
                 Text(
                     localText(R.string.bookmarks_title, language),
                     modifier = Modifier.padding(top = 18.dp, bottom = 4.dp),
