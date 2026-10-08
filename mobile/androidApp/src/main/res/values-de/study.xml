@@ -1,0 +1,14 @@
+<resources>
+    <string name="study_hint">Öffnen Sie einen Bibelvers und wählen Sie „Vers untersuchen“ im Menü. Hier finden Sie die zuletzt geöffnete Stelle und Ihre Notizen.</string>
+    <string name="study_choose_passage">Bibelstelle wählen</string>
+    <string name="study_verse">Vers untersuchen</string>
+    <string name="study_references">Parallelstellen</string>
+    <string name="study_strong">Strong-Wörterbuch</string>
+    <string name="study_no_references">Die API enthält keine Parallelstellen für diesen Vers.</string>
+    <string name="study_no_strong">Diese Übersetzung enthält für diesen Vers keine Strong-Nummern.</string>
+    <string name="study_missing_text">Der Text ist in dieser Übersetzung nicht verfügbar.</string>
+    <string name="study_offline_hint">Geöffnete Parallelstellen und Wörterbucheinträge werden offline gespeichert. Die Sprache des Wörterbuchs hängt vom Textbestand ab, nicht von der Oberflächensprache.</string>
+    <string name="study_error">Der Inhalt konnte nicht geladen werden. Prüfen Sie die Verbindung oder öffnen Sie einen bereits gespeicherten Inhalt.</string>
+    <string name="study_open_error">Das Buch oder die Stelle konnte in dieser Übersetzung nicht geöffnet werden.</string>
+    <string name="study_close">Schließen</string>
+</resources>

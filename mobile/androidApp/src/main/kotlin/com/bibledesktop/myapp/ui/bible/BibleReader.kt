@@ -94,7 +94,7 @@ fun BibleReader(
     var translationCode by rememberSaveable {
         val saved = preferences.getString("lastTranslation", null)
         mutableStateOf(
-            saved?.takeIf { value -> translations.any { it.code == value } }
+            saved?.takeIf(String::isNotBlank)
                 ?: translations.firstOrNull()?.code.orEmpty(),
         )
     }
@@ -114,9 +114,19 @@ fun BibleReader(
         save = { it?.toJson()?.toString() }, restore = { bookmarkFromJson(org.json.JSONObject(it)) },
     )) { mutableStateOf<BookmarkEntry?>(null) }
     var noteInitial by rememberSaveable { mutableStateOf("") }
+    var studyVerseId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var focusedVerse by rememberSaveable { mutableStateOf(preferences.getInt("lastVerse", 0)) }
+    var referenceReturn by rememberSaveable { mutableStateOf<String?>(null) }
+    val openError = text(R.string.study_open_error, language)
+    fun chapterBack() {
+        val saved = referenceReturn?.split('|')
+        if (saved != null) {
+            selectedBookSlug = saved[0]; selectedChapter = saved[1].toInt(); focusedVerse = saved[2].toInt(); referenceReturn = null
+        } else selectedChapter = null
+    }
 
     LaunchedEffect(translations, translationCode) {
-        if (translationCode.isBlank() || translations.none { it.code == translationCode }) {
+        if (translations.isNotEmpty() && (translationCode.isBlank() || translations.none { it.code == translationCode })) {
             translationCode = translations.firstOrNull()?.code.orEmpty()
         }
     }
@@ -143,13 +153,14 @@ fun BibleReader(
         )
     }
 
-    LaunchedEffect(translationCode, selectedBookSlug, selectedChapter) {
+    LaunchedEffect(translationCode, selectedBookSlug, selectedChapter, focusedVerse) {
         val bookSlug = selectedBookSlug ?: return@LaunchedEffect
         val chapterNumber = selectedChapter ?: return@LaunchedEffect
         preferences.edit()
             .putString("lastTranslation", translationCode)
             .putString("lastBookSlug", bookSlug)
             .putInt("lastChapter", chapterNumber)
+            .putInt("lastVerse", focusedVerse)
             .apply()
     }
 
@@ -158,7 +169,7 @@ fun BibleReader(
 
     BackHandler {
         when {
-            selectedChapter != null -> selectedChapter = null
+            selectedChapter != null -> chapterBack()
             selectedBookSlug != null -> selectedBookSlug = null
             else -> onBack()
         }
@@ -175,10 +186,12 @@ fun BibleReader(
                     translationCode = it
                     selectedBookSlug = null
                     selectedChapter = null
+                    focusedVerse = 0; referenceReturn = null
                 },
                 onBookClick = {
                     selectedBookSlug = it.slug
                     selectedChapter = null
+                    focusedVerse = 0; referenceReturn = null
                 },
                 onRetry = { booksRetry += 1 },
                 onBack = onBack,
@@ -188,7 +201,7 @@ fun BibleReader(
         selectedChapter == null -> ChaptersScreen(
             language = language,
             book = selectedBook,
-            onChapterClick = { selectedChapter = it },
+            onChapterClick = { selectedChapter = it; focusedVerse = 0 },
             onBack = { selectedBookSlug = null },
             onHome = onBack,
         )
@@ -202,11 +215,13 @@ fun BibleReader(
             chaptersCount = selectedBook.chaptersCount,
             fontSize = fontSize,
             bookmarkedKeys = bookmarkEntries.map { "${it.translationCode}:${it.reference}" }.toSet(),
-            onBack = { selectedChapter = null },
+            onBack = { chapterBack() },
             onHome = onBack,
             onRetry = { chapterRetry += 1 },
-            onPrevious = { selectedChapter = (chapterNumber - 1).coerceAtLeast(1) },
-            onNext = { selectedChapter = (chapterNumber + 1).coerceAtMost(selectedBook.chaptersCount) },
+            onPrevious = { selectedChapter = (chapterNumber - 1).coerceAtLeast(1); focusedVerse = 0 },
+            onNext = { selectedChapter = (chapterNumber + 1).coerceAtMost(selectedBook.chaptersCount); focusedVerse = 0 },
+            initialVerse = focusedVerse,
+            onStudy = { _, verse -> studyVerseId = verse.id; focusedVerse = verse.number },
             onFontSmaller = {
                 fontSize = (fontSize - 1f).coerceAtLeast(15f)
                 preferences.edit().putFloat("readerFontSize", fontSize).apply()
@@ -238,6 +253,21 @@ fun BibleReader(
     }
     notePassage?.let { passage ->
         NoteEditor(language, passage, noteInitial, onDismiss = { notePassage = null }, onSaved = { notePassage = null })
+    }
+    val chapter = (chapterState as? LoadState.Ready)?.value
+    chapter?.verses?.firstOrNull { it.id == studyVerseId }?.let { verse ->
+        com.bibledesktop.myapp.ui.study.VerseStudyDialog(language, chapter, verse, client, onClose = { studyVerseId = null }, onOpen = { target ->
+            noteScope.launch {
+                try {
+                    val book = client.getBooks(translationCode).firstOrNull { it.canonicalBook?.osisCode == target.osisRef.substringBefore('.') }
+                        ?: error("Canonical book unavailable")
+                    require(target.chapterNumber in 1..book.chaptersCount)
+                    referenceReturn = "$selectedBookSlug|$selectedChapter|${verse.number}"
+                    selectedBookSlug = book.slug; selectedChapter = target.chapterNumber; focusedVerse = target.verseNumber; studyVerseId = null
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { android.widget.Toast.makeText(context, openError, android.widget.Toast.LENGTH_LONG).show() }
+            }
+        })
     }
 }
 
@@ -327,6 +357,8 @@ private fun ChapterScreen(
     onBookmark: (BibleChapter, BibleVerse) -> Unit,
     onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit,
+    onStudy: (BibleChapter, BibleVerse) -> Unit,
+    initialVerse: Int,
 ) {
     Column(
         modifier = Modifier
@@ -351,6 +383,7 @@ private fun ChapterScreen(
             is LoadState.Ready -> ChapterReadingContent(
                 language, state.value, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 modifier = Modifier.weight(1f),
+                onStudy = onStudy, initialVerse = initialVerse,
             )
         }
 

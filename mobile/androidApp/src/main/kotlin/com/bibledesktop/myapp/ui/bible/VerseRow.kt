@@ -3,6 +3,7 @@ package com.bibledesktop.myapp.ui.bible
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -28,15 +29,20 @@ internal fun ChapterReadingContent(
     language: String, chapter: BibleChapter, fontSize: Float, bookmarkedKeys: Set<String>,
     onBookmark: (BibleChapter, BibleVerse) -> Unit, onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit, modifier: Modifier = Modifier,
+    onStudy: ((BibleChapter, BibleVerse) -> Unit)? = null, initialVerse: Int = 0,
 ) {
     key(chapter.translation.code, chapter.book.slug, chapter.chapter.number) {
         ReadingViewport(modifier) {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
+            val listState = rememberLazyListState()
+            LaunchedEffect(initialVerse) {
+                chapter.verses.indexOfFirst { it.number == initialVerse }.takeIf { it >= 0 }?.let { listState.scrollToItem(it) }
+            }
+            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
                 items(chapter.verses, key = BibleVerse::osisRef) { verse ->
                     VerseRow(language, chapter, verse, fontSize,
                         "${chapter.translation.code}:${verse.osisRef}" in bookmarkedKeys,
                         onBookmark = { onBookmark(chapter, verse) }, onShare = { onShare(chapter, verse) },
-                        onNote = { onNote(chapter, verse) })
+                        onNote = { onNote(chapter, verse) }, onStudy = onStudy?.let { { it(chapter, verse) } })
                 }
             }
         }
@@ -47,6 +53,7 @@ internal fun ChapterReadingContent(
 internal fun VerseRow(
     language: String, chapter: BibleChapter, verse: BibleVerse, fontSize: Float, bookmarked: Boolean,
     onBookmark: () -> Unit, onShare: () -> Unit, onNote: () -> Unit,
+    onStudy: (() -> Unit)? = null,
 ) {
     var menu by rememberSaveable(verse.osisRef) { mutableStateOf(false) }
     val body = remember(verse, chapter.translation.language.code) {
@@ -75,6 +82,8 @@ internal fun VerseRow(
                     leadingIcon = { Icon(Icons.Outlined.Share, null) }, onClick = { menu = false; onShare() })
                 DropdownMenuItem(text = { Text(localized(R.string.note_edit, language)) },
                     leadingIcon = { Icon(Icons.Outlined.EditNote, null) }, onClick = { menu = false; onNote() })
+                if (onStudy != null) DropdownMenuItem(text = { Text(localized(R.string.study_verse, language)) },
+                    leadingIcon = { Icon(Icons.Outlined.AutoStories, null) }, onClick = { menu = false; onStudy() })
             }
         }
     }

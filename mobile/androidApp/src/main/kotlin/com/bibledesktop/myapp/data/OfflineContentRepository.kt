@@ -39,6 +39,9 @@ internal class OfflineContentRepository(
     override suspend fun getTranslations(language: String?) = content("translations:${language.orEmpty()}", ListSerializer(TranslationSummary.serializer())) { remote.getTranslations(language) }
     override suspend fun getBooks(translationCode: String) = content("books:$translationCode", ListSerializer(BibleBook.serializer())) { remote.getBooks(translationCode) }
     override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = content("chapter:$translationCode:$bookSlug:$chapterNumber", BibleChapter.serializer()) { remote.getChapter(translationCode, bookSlug, chapterNumber) }
+    override suspend fun getCrossReferences(verseId: Long, translationCode: String) = content("references:$translationCode:$verseId", CrossReferences.serializer()) { remote.getCrossReferences(verseId, translationCode) }
+    override suspend fun getStrongTokens(verseId: Long, translationCode: String) = content("tokens:$translationCode:$verseId", StrongTokens.serializer()) { remote.getStrongTokens(verseId, translationCode) }
+    override suspend fun getStrongEntry(number: String, verseId: Long) = content("strong:$number:$verseId", StrongEntry.serializer()) { remote.getStrongEntry(number, verseId) }
     override suspend fun getPrayers(language: String) = content("prayers:$language", ListSerializer(PrayerSummary.serializer())) { remote.getPrayers(language) }
     override suspend fun getPrayer(id: Long) = content("prayer:$id", PrayerDetail.serializer()) { remote.getPrayer(id) }
     override suspend fun getCalendarDay(date: String, language: String, profile: String) = content("day:$date:${calendarContentLanguage(language)}:$profile", CalendarDay.serializer()) { remote.getCalendarDay(date, language, profile) }

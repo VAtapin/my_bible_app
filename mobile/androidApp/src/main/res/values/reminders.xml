@@ -1,0 +1,11 @@
+<resources>
+    <string name="reminder_morning">Утренняя молитва</string>
+    <string name="reminder_evening">Вечерняя молитва</string>
+    <string name="reminder_message">Откройте Bible Desktop для своего ежедневного правила.</string>
+    <string name="reminders_hint">Ежедневные напоминания работают без сети. Выберите время и включите нужные. Android может задерживать уведомления для экономии батареи. После принудительной остановки откройте приложение снова.</string>
+    <string name="reminders_blocked">Уведомления отключены в Android. При сохранении можно разрешить их.</string>
+    <string name="reminders_system_settings">Настройки уведомлений Android</string>
+    <string name="reminders_saved">Расписание сохранено.</string>
+    <string name="reminders_saved_blocked">Расписание сохранено, но Android пока не разрешает уведомления.</string>
+    <string name="reminders_error">Не удалось прочитать, сохранить или применить расписание. Прежние данные не удалены.</string>
+</resources>

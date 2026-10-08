@@ -70,6 +70,8 @@ fun MoreScreen(
     onBack: () -> Unit,
     onSettings: () -> Unit,
     onOpenBookmark: (BookmarkEntry) -> Unit,
+    onOpenStudy: () -> Unit,
+    onOpenReminders: () -> Unit,
 ) {
     val context = LocalContext.current
     var bookmarks by remember { mutableStateOf(BookmarkStore.load(context)) }
@@ -107,6 +109,12 @@ fun MoreScreen(
                 SettingsCard(language, onSettings)
             }
             item { OfflinePanel(language) }
+            item { androidx.compose.material3.OutlinedButton(onClick = onOpenStudy, modifier = Modifier.fillMaxWidth()) {
+                Text(localText(R.string.section_study, language))
+            } }
+            item { androidx.compose.material3.OutlinedButton(onClick = onOpenReminders, modifier = Modifier.fillMaxWidth()) {
+                Text(localText(R.string.section_reminders, language))
+            } }
             item {
                 Text(localText(R.string.notes_title, language), Modifier.padding(top = 18.dp), color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }

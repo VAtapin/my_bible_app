@@ -42,6 +42,28 @@ class BibleApiClient internal constructor(
         return response.body<ApiEnvelope<BibleChapter>>().data
     }
 
+    override suspend fun getCrossReferences(verseId: Long, translationCode: String): CrossReferences {
+        require(verseId > 0 && translationCode.isNotBlank())
+        return client.get("$baseUrl/verses/$verseId/cross-references") {
+            parameter("translation", translationCode)
+        }.body<ApiEnvelope<CrossReferences>>().data.also {
+            require(it.verse.id == verseId && it.translationCode == translationCode)
+        }
+    }
+
+    override suspend fun getStrongTokens(verseId: Long, translationCode: String): StrongTokens {
+        require(verseId > 0 && translationCode.isNotBlank())
+        return client.get("$baseUrl/verses/$verseId/strong-tokens") {
+            parameter("translation", translationCode)
+        }.body<ApiEnvelope<StrongTokens>>().data.also { require(it.verse.id == verseId) }
+    }
+
+    override suspend fun getStrongEntry(number: String, verseId: Long): StrongEntry {
+        require(Regex("[GH]?[0-9]{1,5}").matches(number) && verseId > 0)
+        return client.get("$baseUrl/strong/$number") { parameter("verse", verseId) }
+            .body<ApiEnvelope<StrongEntry>>().data
+    }
+
     override suspend fun getPrayers(language: String): List<PrayerSummary> {
         val response = client.get("$baseUrl/prayers") {
             parameter("language", language)

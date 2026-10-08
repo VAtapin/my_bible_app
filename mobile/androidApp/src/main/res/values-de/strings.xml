@@ -32,7 +32,7 @@
     <string name="section_calendar">Kirchenkalender</string>
     <string name="section_calendar_subtitle">Feste, Fastenzeiten und Tageslesungen</string>
     <string name="section_study">Lesen und Vertiefen</string>
-    <string name="section_study_subtitle">Artikel, Auslegungen und Notizen</string>
+    <string name="section_study_subtitle">Parallelstellen, Strong-Wörterbuch und Notizen</string>
     <string name="section_reminders">Erinnerungen</string>
     <string name="section_reminders_subtitle">Gebet, Lesen und Ereignisse</string>
     <string name="action_next">Weiter</string>

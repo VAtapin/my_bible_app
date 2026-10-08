@@ -1,0 +1,14 @@
+<resources>
+    <string name="study_hint">Open a Bible verse and choose “Study verse” from its menu. Your last opened passage and notes are available here.</string>
+    <string name="study_choose_passage">Choose a Bible passage</string>
+    <string name="study_verse">Study verse</string>
+    <string name="study_references">Cross-references</string>
+    <string name="study_strong">Strong dictionary</string>
+    <string name="study_no_references">The API has no cross-references for this verse.</string>
+    <string name="study_no_strong">This translation has no Strong markup for this verse.</string>
+    <string name="study_missing_text">Text is unavailable in the selected translation.</string>
+    <string name="study_offline_hint">Opened cross-references and dictionary entries are saved for offline reading. Dictionary language depends on its corpus, not the interface language.</string>
+    <string name="study_error">Could not load the content. Check the network or open previously saved content.</string>
+    <string name="study_open_error">Could not find the book or open the passage in this translation.</string>
+    <string name="study_close">Close</string>
+</resources>

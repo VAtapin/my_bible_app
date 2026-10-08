@@ -19,7 +19,7 @@ class SetupDefaultsTest {
         val all = listOf(translation("RU", "ru", true), translation("UK", "uk"), translation("EN", "en"), translation("CU", "cu"), translation("CIVIL", "cu-civil"))
         assertEquals(setOf("UK", "CU", "CIVIL"), recommendedNativeTranslations(all, "uk"))
         assertEquals(setOf("EN", "CU", "CIVIL"), recommendedNativeTranslations(all, "en"))
-        assertEquals(setOf("bible", "prayer", "calendar"), quickNativeSections)
+        assertEquals(setOf("bible", "prayer", "calendar", "study", "reminders"), quickNativeSections)
         assertEquals(setOf("RU", "CU", "CIVIL"), recommendedNativeTranslations(all, "de"))
         assertTrue(recommendedNativeTranslations(emptyList(), "ru").isEmpty())
     }

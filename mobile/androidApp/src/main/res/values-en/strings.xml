@@ -32,7 +32,7 @@
     <string name="section_calendar">Church calendar</string>
     <string name="section_calendar_subtitle">Feasts, fasting and daily readings</string>
     <string name="section_study">Reading and study</string>
-    <string name="section_study_subtitle">Articles, commentaries and notes</string>
+    <string name="section_study_subtitle">Cross-references, Strong dictionary and notes</string>
     <string name="section_reminders">Reminders</string>
     <string name="section_reminders_subtitle">Prayer, reading and events</string>
     <string name="action_next">Next</string>

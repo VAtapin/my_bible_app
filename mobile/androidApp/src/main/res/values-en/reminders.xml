@@ -1,0 +1,11 @@
+<resources>
+    <string name="reminder_morning">Morning prayer</string>
+    <string name="reminder_evening">Evening prayer</string>
+    <string name="reminder_message">Open Bible Desktop for your daily prayer and reading.</string>
+    <string name="reminders_hint">Daily reminders work offline. Choose a time and enable the reminders you want. Android may delay notifications to save battery. Reopen the app after a force stop.</string>
+    <string name="reminders_blocked">Android notifications are disabled. You can allow them when saving.</string>
+    <string name="reminders_system_settings">Android notification settings</string>
+    <string name="reminders_saved">Schedule saved.</string>
+    <string name="reminders_saved_blocked">Schedule saved, but Android does not yet allow notifications.</string>
+    <string name="reminders_error">Could not read, save or apply the schedule. Previous data was not deleted.</string>
+</resources>

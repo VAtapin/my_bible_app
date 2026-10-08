@@ -1,0 +1,14 @@
+<resources>
+    <string name="study_hint">Откройте стих в Библии и выберите «Изучить стих» в его меню. Здесь доступно последнее открытое место и ваши заметки.</string>
+    <string name="study_choose_passage">Выбрать место в Библии</string>
+    <string name="study_verse">Изучить стих</string>
+    <string name="study_references">Параллельные места</string>
+    <string name="study_strong">Словарь Стронга</string>
+    <string name="study_no_references">API не содержит параллельных мест для этого стиха.</string>
+    <string name="study_no_strong">В выбранном переводе нет разметки Стронга для этого стиха.</string>
+    <string name="study_missing_text">Текст недоступен в выбранном переводе.</string>
+    <string name="study_offline_hint">Открытые параллельные места и словарные статьи сохраняются для чтения без сети. Язык словаря определяется его корпусом, а не языком интерфейса.</string>
+    <string name="study_error">Не удалось загрузить материал. Проверьте сеть или откройте ранее сохранённый материал.</string>
+    <string name="study_open_error">В выбранном переводе не удалось найти эту книгу или открыть место.</string>
+    <string name="study_close">Закрыть</string>
+</resources>

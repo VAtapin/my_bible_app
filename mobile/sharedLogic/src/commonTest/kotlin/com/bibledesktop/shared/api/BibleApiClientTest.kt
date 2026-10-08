@@ -12,6 +12,47 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun decodesStudyAndUsesRealVerseIdentityAndTranslation() = runBlocking {
+        val engine = MockEngine { request ->
+            val path = request.url.encodedPath
+            val body = when {
+                path.endsWith("cross-references") -> {
+                    assertEquals("/api/verses/42/cross-references", path)
+                    assertEquals("RST", request.url.parameters["translation"])
+                    """{"data":{"verse":{"id":42,"osis_ref":"John.3.16"},"translation_code":"RST","references":[{"id":1,"target":{"verse_id":99,"osis_ref":"1John.4.10","reference":"1 Иоанна 4:10","book_slug":"1john","chapter_number":4,"verse_number":10,"text":null}}]}}"""
+                }
+                path.endsWith("strong-tokens") -> {
+                    assertEquals("RST", request.url.parameters["translation"])
+                    """{"data":{"verse":{"id":42,"osis_ref":"John.3.16"},"tokens":[{"strong_number":"G25","entry":{"word":null}}]}}"""
+                }
+                else -> {
+                    assertEquals("/api/strong/G25", path)
+                    assertEquals("42", request.url.parameters["verse"])
+                    """{"data":{"number":"G25","word":"ἀγαπάω","content":"<p>любить</p>","lexicon":{"name":"Dictionary","language":"ru"}}}"""
+                }
+            }
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+        try {
+            val reference = client.getCrossReferences(42, "RST").references.single().target
+            assertEquals("1John.4.10", reference.osisRef)
+            assertEquals(null, reference.text)
+            assertEquals("G25", client.getStrongTokens(42, "RST").tokens.single().number)
+            assertEquals("ru", client.getStrongEntry("G25", 42).lexicon.language)
+            assertTrue(runCatching { client.getStrongEntry("../invalid", 42) }.isFailure)
+        } finally { client.close() }
+    }
+
+    @Test fun rejectsStudyForAnotherVerseOrTranslation() = runBlocking {
+        for ((id, code) in listOf(43 to "RST", 42 to "OTHER")) {
+            val engine = MockEngine { respond("""{"data":{"verse":{"id":$id,"osis_ref":"John.3.16"},"translation_code":"$code","references":[]}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json")) }
+            val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+            try { assertTrue(runCatching { client.getCrossReferences(42, "RST") }.isFailure) }
+            finally { client.close() }
+        }
+    }
     @Test fun rateLimitsHonorRetryAfterAndAccessFailuresAreNotRetried() = runBlocking {
         for (status in listOf(HttpStatusCode.TooManyRequests, HttpStatusCode.Forbidden, HttpStatusCode.ServiceUnavailable)) {
             val engine = MockEngine { respond("error", status, headersOf(HttpHeaders.RetryAfter, "120")) }

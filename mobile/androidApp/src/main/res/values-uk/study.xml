@@ -1,0 +1,14 @@
+<resources>
+    <string name="study_hint">Відкрийте вірш у Біблії та виберіть «Вивчити вірш» у його меню. Тут доступне останнє відкрите місце та ваші нотатки.</string>
+    <string name="study_choose_passage">Вибрати місце в Біблії</string>
+    <string name="study_verse">Вивчити вірш</string>
+    <string name="study_references">Паралельні місця</string>
+    <string name="study_strong">Словник Стронга</string>
+    <string name="study_no_references">API не містить паралельних місць для цього вірша.</string>
+    <string name="study_no_strong">У вибраному перекладі немає розмітки Стронга для цього вірша.</string>
+    <string name="study_missing_text">Текст недоступний у вибраному перекладі.</string>
+    <string name="study_offline_hint">Відкриті паралельні місця та словникові статті зберігаються для читання без мережі. Мова словника залежить від його корпусу, а не від мови інтерфейсу.</string>
+    <string name="study_error">Не вдалося завантажити матеріал. Перевірте мережу або відкрийте раніше збережений матеріал.</string>
+    <string name="study_open_error">Не вдалося знайти книгу або відкрити місце у вибраному перекладі.</string>
+    <string name="study_close">Закрити</string>
+</resources>

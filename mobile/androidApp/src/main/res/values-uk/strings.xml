@@ -32,7 +32,7 @@
     <string name="section_calendar">Церковний календар</string>
     <string name="section_calendar_subtitle">Свята, пости й читання дня</string>
     <string name="section_study">Читання й вивчення</string>
-    <string name="section_study_subtitle">Статті, тлумачення та нотатки</string>
+    <string name="section_study_subtitle">Паралельні місця, словник Стронга та нотатки</string>
     <string name="section_reminders">Нагадування</string>
     <string name="section_reminders_subtitle">Молитва, читання та події</string>
     <string name="action_next">Далі</string>

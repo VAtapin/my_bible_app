@@ -7,8 +7,8 @@ val interfaceLanguages = linkedMapOf("ru" to "Русский", "de" to "Deutsch"
 fun initialInterfaceLanguage(saved: String?, device: String): String =
     saved?.takeIf { it in interfaceLanguages } ?: device.takeIf { it in interfaceLanguages } ?: "ru"
 
-/** Only functioning native sections; reminders require explicit system opt-in later. */
-val quickNativeSections = setOf("bible", "prayer", "calendar")
+/** Available native sections; showing reminders does not enable notifications. */
+val quickNativeSections = setOf("bible", "prayer", "calendar", "study", "reminders")
 
 fun recommendedNativeTranslations(available: List<TranslationSummary>, language: String): Set<String> {
     val primary = available.firstOrNull { it.language.code == language && it.isDefault }

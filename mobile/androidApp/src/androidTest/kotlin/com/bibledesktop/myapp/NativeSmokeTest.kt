@@ -3,6 +3,7 @@ package com.bibledesktop.myapp
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.performTextInput
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -30,7 +32,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class NativeSmokeTest {
     private val compose = createAndroidComposeRule<MainActivity>()
-    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "verseNotesV1")
+    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "verseNotesV1")
     private var original: Map<String, Any?> = emptyMap()
     private val fixture = object : ExternalResource() {
         override fun before() {
@@ -39,7 +41,7 @@ class NativeSmokeTest {
             val preferences = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
             original = fixtureKeys.associateWith { preferences.all[it] }
             check(preferences.edit().putBoolean("setupComplete", false).putString("uiLanguage", "ru")
-                .remove("lastTranslation").remove("lastBookSlug").remove("lastChapter").remove("verseNotesV1").commit())
+                .remove("lastTranslation").remove("lastBookSlug").remove("lastChapter").remove("lastVerse").remove("verseNotesV1").commit())
         }
 
         override fun after() {
@@ -129,6 +131,61 @@ class NativeSmokeTest {
         compose.onNodeWithText("Книги Библии").assertIsDisplayed()
         back()
         compose.onNodeWithText("Календарь").assertIsDisplayed()
+    }
+
+    @Test fun studyAndRemindersAreRealDestinationsInQuickSetup() {
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
+        compose.onNodeWithText("Чтение и изучение").performScrollTo().performClick()
+        compose.onNodeWithText("Выбрать место в Библии").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Книги Библии").assertIsDisplayed()
+        compose.onNodeWithContentDescription("На главную").performClick()
+        compose.onNodeWithText("Напоминания").performScrollTo().performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("reminder-toggle-calendar").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("reminder-toggle-morning").assertIsOff()
+        compose.onNodeWithContentDescription("На главную").performClick()
+        compose.onNodeWithText("Мой день").assertIsDisplayed()
+    }
+
+    @Test fun notificationLaunchOpensBibleDirectly() {
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
+        compose.activity.intent.putExtra(com.bibledesktop.myapp.data.ReminderScheduler.destinationExtra, "bible")
+        // New activity, not saved Compose navigation restored from an old activity.
+        val intent = android.content.Intent(compose.activity, MainActivity::class.java)
+            .putExtra(com.bibledesktop.myapp.data.ReminderScheduler.destinationExtra, "bible")
+        androidx.test.core.app.ActivityScenario.launch<MainActivity>(intent).use { scenario ->
+            compose.waitUntil(15_000) { compose.onAllNodes(hasText("Книги Библии")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithText("Книги Библии").assertIsDisplayed()
+        }
+    }
+
+    @Test fun parallelReferenceOpensExactVerseAndBackRestoresSource() {
+        val client = BibleApiClient()
+        val source = try { runBlocking {
+            val edition = client.getTranslations("ru").first { it.hasStrong }
+            val book = client.getBooks(edition.code).first { it.canonicalBook?.osisCode == "John" }
+            client.getChapter(edition.code, book.slug, 3)
+        } } finally { client.close() }
+        val verse = source.verses.first { it.number == 16 }
+        val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
+        check(preferences.edit().putBoolean("setupComplete", true).putString("sections", "bible,study")
+            .putString("translations", source.translation.code).putString("lastTranslation", source.translation.code)
+            .putString("lastBookSlug", source.book.slug).putInt("lastChapter", 3).putInt("lastVerse", 16).commit())
+        val intent = android.content.Intent(compose.activity, MainActivity::class.java)
+            .putExtra(com.bibledesktop.myapp.data.ReminderScheduler.destinationExtra, "bible")
+        androidx.test.core.app.ActivityScenario.launch<MainActivity>(intent).use {
+            compose.waitUntil(30_000) { compose.onAllNodes(hasContentDescription("Действия со стихом 16")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithContentDescription("Действия со стихом 16").performClick()
+            compose.onNodeWithText("Изучить стих").performClick()
+            compose.waitUntil(30_000) { compose.onAllNodesWithTag("reference-1John.4.10").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("reference-1John.4.10").performScrollTo().performClick()
+            compose.waitUntil(30_000) { compose.onAllNodes(hasText("1 Иоанна · Глава 4")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("verse-10").assertIsDisplayed()
+            compose.onNodeWithContentDescription("Назад").performClick()
+            compose.waitUntil(30_000) { compose.onAllNodes(hasText("Иоанна · Глава 3")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("verse-16").assertIsDisplayed()
+        }
     }
 
     @Test fun fourLanguagesAndCalendarBeforeSetup() {

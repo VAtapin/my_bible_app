@@ -45,6 +45,23 @@ class OfflineStoreTest {
         assertEquals(future, file.readText())
     }
 
+    @Test fun studySurvivesRepositoryRestartAndKeepsTranslationBoundaries() = runBlocking {
+        val source = FixtureSource()
+        val repository = OfflineContentRepository(source, OfflineStore(root))
+        val refs = repository.getCrossReferences(42, "RU")
+        val tokens = repository.getStrongTokens(42, "RU")
+        val word = repository.getStrongEntry("G25", 42)
+        val calls = source.calls
+        source.offline = true
+        val reopened = OfflineContentRepository(source, OfflineStore(root))
+        assertEquals(refs, reopened.getCrossReferences(42, "RU"))
+        assertEquals(tokens, reopened.getStrongTokens(42, "RU"))
+        assertEquals(word, reopened.getStrongEntry("G25", 42))
+        assertEquals(calls, source.calls)
+        assertTrue(runCatching { reopened.getCrossReferences(42, "EN") }.isFailure)
+        assertTrue(runCatching { reopened.getStrongTokens(43, "RU") }.isFailure)
+    }
+
     @Test fun cancelledWorkerDoesNotMarkAPartialPackAsComplete() = runBlocking {
         val context = object : ContextWrapper(target) {
             override fun getNoBackupFilesDir(): File = root
@@ -153,6 +170,15 @@ private class FixtureSource : BibleContentSource {
             BibleBook(bookSlug, "John", chaptersCount = 21), ChapterSummary(chapterNumber, 1), listOf(BibleVerse(1, 1, "John.3.1", "Text", "Text")))
     }
     override suspend fun getPrayers(language: String): List<PrayerSummary> { request(); return emptyList() }
+    override suspend fun getCrossReferences(verseId: Long, translationCode: String): CrossReferences {
+        request(); return CrossReferences(StudyVerse(verseId, "John.3.16"), translationCode)
+    }
+    override suspend fun getStrongTokens(verseId: Long, translationCode: String): StrongTokens {
+        request(); return StrongTokens(StudyVerse(verseId, "John.3.16"), listOf(StrongToken("G25")))
+    }
+    override suspend fun getStrongEntry(number: String, verseId: Long): StrongEntry {
+        request(); return StrongEntry(number, content = "Definition", lexicon = StrongLexicon("Dictionary", "ru"))
+    }
     override suspend fun getCalendarMonth(year: Int, month: Int, language: String): List<CalendarGridDay> { request(); return emptyList() }
     override fun close() = Unit
 }

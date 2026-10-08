@@ -1,0 +1,11 @@
+<resources>
+    <string name="reminder_morning">Morgengebet</string>
+    <string name="reminder_evening">Abendgebet</string>
+    <string name="reminder_message">Öffnen Sie Bible Desktop für Ihre tägliche Andacht.</string>
+    <string name="reminders_hint">Tägliche Erinnerungen funktionieren offline. Wählen Sie die Uhrzeit und aktivieren Sie die gewünschten Erinnerungen. Android kann Benachrichtigungen zum Energiesparen verzögern. Öffnen Sie die App nach einem erzwungenen Stopp erneut.</string>
+    <string name="reminders_blocked">Android-Benachrichtigungen sind deaktiviert. Beim Speichern können Sie sie erlauben.</string>
+    <string name="reminders_system_settings">Android-Benachrichtigungseinstellungen</string>
+    <string name="reminders_saved">Zeitplan gespeichert.</string>
+    <string name="reminders_saved_blocked">Zeitplan gespeichert, aber Android erlaubt noch keine Benachrichtigungen.</string>
+    <string name="reminders_error">Der Zeitplan konnte nicht gelesen, gespeichert oder angewendet werden. Bisherige Daten wurden nicht gelöscht.</string>
+</resources>

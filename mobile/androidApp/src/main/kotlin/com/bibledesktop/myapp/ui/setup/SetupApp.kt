@@ -117,6 +117,8 @@ private enum class Route {
     Prayers,
     Calendar,
     More,
+    Study,
+    Reminders,
 }
 
 internal enum class TranslationFilter(val code: String?) {
@@ -149,7 +151,7 @@ internal val sections = listOf(
 )
 
 @Composable
-fun SetupApp() {
+fun SetupApp(initialDestination: String? = null) {
     val context = LocalContext.current
     val preferences = remember {
         context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
@@ -171,7 +173,12 @@ fun SetupApp() {
     }
     var route by rememberSaveable {
         mutableStateOf(
-            if (setupComplete) Route.Home else Route.Welcome,
+            if (!setupComplete) Route.Welcome else when (initialDestination) {
+                "prayer" -> Route.Prayers
+                "bible" -> Route.Bible
+                "calendar" -> Route.Calendar
+                else -> Route.Home
+            },
         )
     }
     var translationFilter by rememberSaveable { mutableStateOf(TranslationFilter.All) }
@@ -315,6 +322,8 @@ fun SetupApp() {
             onOpenPrayers = { route = Route.Prayers },
             onOpenCalendar = { route = Route.Calendar },
             onOpenMore = { route = Route.More },
+            onOpenStudy = { route = Route.Study },
+            onOpenReminders = { route = Route.Reminders },
         )
 
         Route.Bible -> BibleReader(
@@ -347,15 +356,25 @@ fun SetupApp() {
                 quickSetup = false
                 route = Route.Sections
             },
+            onOpenStudy = { route = Route.Study },
+            onOpenReminders = { route = Route.Reminders },
             onOpenBookmark = { bookmark: BookmarkEntry ->
                 preferences.edit()
                     .putString("lastTranslation", bookmark.translationCode)
                     .putString("lastBookSlug", bookmark.bookSlug)
                     .putInt("lastChapter", bookmark.chapter)
+                    .putInt("lastVerse", bookmark.verse)
                     .apply()
                 route = Route.Bible
             },
         )
+        Route.Study -> com.bibledesktop.myapp.ui.study.StudyScreen(language, client,
+            onBack = { route = Route.Home }, onBible = { route = Route.Bible }, onOpen = { passage ->
+                preferences.edit().putString("lastTranslation", passage.translationCode).putString("lastBookSlug", passage.bookSlug)
+                    .putInt("lastChapter", passage.chapter).putInt("lastVerse", passage.verse).apply()
+                route = Route.Bible
+            })
+        Route.Reminders -> com.bibledesktop.myapp.ui.reminders.RemindersScreen(language) { route = Route.Home }
     }
 }
 

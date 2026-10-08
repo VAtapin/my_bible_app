@@ -32,7 +32,7 @@
     <string name="section_calendar">Церковный календарь</string>
     <string name="section_calendar_subtitle">Праздники, посты и чтения дня</string>
     <string name="section_study">Чтение и изучение</string>
-    <string name="section_study_subtitle">Статьи, толкования и заметки</string>
+    <string name="section_study_subtitle">Параллельные места, словарь Стронга и заметки</string>
     <string name="section_reminders">Напоминания</string>
     <string name="section_reminders_subtitle">Молитва, чтение и события</string>
     <string name="action_next">Далее</string>

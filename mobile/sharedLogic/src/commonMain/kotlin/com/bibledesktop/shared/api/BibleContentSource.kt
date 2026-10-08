@@ -5,6 +5,9 @@ interface BibleContentSource {
     suspend fun getTranslations(language: String? = null): List<TranslationSummary>
     suspend fun getBooks(translationCode: String): List<BibleBook>
     suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int): BibleChapter
+    suspend fun getCrossReferences(verseId: Long, translationCode: String): CrossReferences
+    suspend fun getStrongTokens(verseId: Long, translationCode: String): StrongTokens
+    suspend fun getStrongEntry(number: String, verseId: Long): StrongEntry
     suspend fun getPrayers(language: String): List<PrayerSummary>
     suspend fun getPrayer(id: Long): PrayerDetail
     suspend fun getCalendarDay(date: String, language: String, profile: String = "typikon-strict"): CalendarDay

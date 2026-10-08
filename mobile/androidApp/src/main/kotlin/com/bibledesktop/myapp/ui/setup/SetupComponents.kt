@@ -115,6 +115,8 @@ internal fun TodayScreen(
     onOpenPrayers: () -> Unit,
     onOpenCalendar: () -> Unit,
     onOpenMore: () -> Unit,
+    onOpenStudy: () -> Unit,
+    onOpenReminders: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -167,6 +169,8 @@ internal fun TodayScreen(
                                     "bible" -> onOpenBible
                                     "prayer" -> onOpenPrayers
                                     "calendar" -> onOpenCalendar
+                                    "study" -> onOpenStudy
+                                    "reminders" -> onOpenReminders
                                     else -> null
                                 })
                         }
