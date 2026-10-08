@@ -1,0 +1,102 @@
+package com.bibledesktop.myapp
+
+import android.content.Context
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.bibledesktop.shared.api.BibleApiClient
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
+import org.junit.runner.RunWith
+
+/** Uses the real APK and read-only production API; never creates remote profiles. */
+@RunWith(AndroidJUnit4::class)
+class NativeSmokeTest {
+    private val compose = createAndroidComposeRule<MainActivity>()
+    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations")
+    private var original: Map<String, Any?> = emptyMap()
+    private val fixture = object : ExternalResource() {
+        override fun before() {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            check(context.packageName == "com.bibledesktop.myapp.debug")
+            val preferences = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
+            original = fixtureKeys.associateWith { preferences.all[it] }
+            check(preferences.edit().putBoolean("setupComplete", false).putString("uiLanguage", "ru").commit())
+        }
+
+        override fun after() {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val editor = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE).edit()
+            original.forEach { (key, value) ->
+                when (value) {
+                    is Boolean -> editor.putBoolean(key, value)
+                    is String -> editor.putString(key, value)
+                    null -> editor.remove(key)
+                }
+            }
+            check(editor.commit())
+        }
+    }
+
+    @get:Rule val rules: RuleChain = RuleChain.outerRule(fixture).around(compose)
+
+    @Test fun firstLaunchManualSetupAndSystemBack() {
+        compose.onNodeWithText("Добро пожаловать").assertIsDisplayed()
+        compose.onNodeWithText("Настроить самому").performScrollTo().performClick()
+        compose.onNodeWithText("Выберите, что включить в приложение").assertIsDisplayed()
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithText("Добро пожаловать").assertIsDisplayed()
+    }
+
+    @Test fun currentBibleDesktopApiSupportsNativeCoreScreens() = runBlocking {
+        val client = BibleApiClient()
+        try {
+            val translation = client.getTranslations("ru").first { it.language.code == "ru" }
+            val book = client.getBooks(translation.code).first()
+            val chapter = client.getChapter(translation.code, book.slug, 1)
+            assertTrue(chapter.verses.isNotEmpty())
+            assertEquals(1, chapter.chapter.number)
+            val prayer = client.getPrayers("ru").first()
+            assertTrue(client.getPrayer(prayer.id).body.isNotBlank())
+            val day = client.getCalendarDay("2026-10-08", "ru")
+            assertEquals("2026-10-08", day.date)
+            assertEquals("bible-desktop-calendar-engine", day.source)
+            assertTrue(day.events.isNotEmpty())
+        } finally { client.close() }
+    }
+
+    @Test fun setupAndCoreScreenNavigation() {
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
+        compose.waitUntil(timeoutMillis = 30_000) {
+            compose.onAllNodes(hasText("Далее") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Далее").performClick()
+        compose.onNodeWithText("Создать моё приложение").performClick()
+        compose.onNodeWithText("Календарь").performClick()
+        compose.onNodeWithText("Церковный календарь").assertIsDisplayed()
+        back()
+        compose.onNodeWithText("Молитвы").performClick()
+        compose.onNodeWithText("Молитвы").assertIsDisplayed()
+        back()
+        compose.onAllNodes(hasText("Библия"))[0].performClick()
+        compose.onNodeWithText("Книги Библии").assertIsDisplayed()
+        back()
+        compose.onNodeWithText("Календарь").assertIsDisplayed()
+    }
+
+    private fun back() {
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+    }
+}

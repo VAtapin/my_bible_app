@@ -14,6 +14,11 @@ PWA.
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия:
 `0.1.0` (build 1).
 
+Android debug имеет отдельный идентификатор `com.bibledesktop.myapp.debug`
+и название «Bible Desktop · Тест». Он не заменяет release-приложение и не
+использует его сохранённые данные. Автоматическая миграция данных старой
+Capacitor-версии пока не реализована.
+
 ## Реализованные сценарии
 
 - локализованный RU/DE onboarding: быстрый и ручной режимы;
@@ -42,6 +47,30 @@ $env:ANDROID_HOME='C:\Users\atapi\AppData\Local\Android\Sdk'
 
 Debug APK:
 `androidApp/build/outputs/apk/debug/androidApp-debug.apk`.
+
+### Проверка базовых сценариев
+
+На запущенном эмуляторе (не физическом телефоне), из каталога `mobile`:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
+$env:ANDROID_HOME='C:\Users\atapi\AppData\Local\Android\Sdk'
+$env:ANDROID_SERIAL='emulator-5556'
+.\gradlew.bat :sharedLogic:testAndroidHostTest :androidApp:connectedDebugAndroidTest :androidApp:assembleDebug
+```
+
+Укажите serial своего эмулятора. На 08.10.2026 прошли пять тестов общего
+клиента и три instrumentation-теста на BibleDesktop_API_37: первый запуск,
+ручная настройка/системный возврат, быстрый мастер/переходы основных экранов,
+чтение реальных ответов BibleDesktop для переводов, книг, главы, молитвы и дня.
+Проверка API требует сети; фиксированная дата — 08.10.2026. Тесты не создают
+серверные профили, допускают только debug-пакет и восстанавливают изменённые
+настройки после каждого теста. Физический телефон не проверен.
+
+Это baseline нативного прототипа, не полная паритетная версия PWA:
+пока RU/DE, быстрый режим с мастером, календарь дня. Следующий этап —
+перенос актуального интерфейса и четырёх языков. Полный офлайн, заметки,
+синхронизация и миграция прежних данных требуют отдельных реализаций.
 
 ## iOS
 

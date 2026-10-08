@@ -21,6 +21,11 @@ kotlin {
         implementation(libs.androidx.compose.ui)
         implementation(libs.androidx.compose.ui.tooling.preview)
         debugImplementation(libs.androidx.compose.ui.tooling)
+        androidTestImplementation(platform(libs.androidx.compose.bom))
+        androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+        androidTestImplementation(libs.androidx.test.runner)
+        androidTestImplementation(libs.androidx.test.ext.junit)
+        androidTestImplementation(libs.androidx.test.espresso.core)
     }
 }
 
@@ -34,6 +39,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "0.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -47,6 +53,10 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         getByName("release") {
             isMinifyEnabled = false
         }
