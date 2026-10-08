@@ -3,10 +3,7 @@ package com.bibledesktop.myapp.ui.bible
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -150,30 +147,14 @@ internal fun BookPicker(
             }
         }
     }
-    if (choosingTranslation) AlertDialog(onDismissRequest = { choosingTranslation = false },
-        title = { Text(localized(R.string.bible_choose_translation, language)) },
-        confirmButton = { TextButton(onClick = { choosingTranslation = false }) { Text(localized(R.string.action_back, language)) } },
-        text = {
-            LazyColumn(Modifier.heightIn(max = 420.dp)) {
-                items(translations, key = TranslationSummary::code) { translation ->
-                    Row(Modifier.fillMaxWidth().selectable(selected = translation.code == selectedTranslationCode, role = Role.RadioButton,
-                        onClick = {
-                            choosingTranslation = false
-                            if (translation.code != selectedTranslationCode) {
-                                query = ""; testament = "all"
-                                onTranslationChange(translation.code)
-                            }
-                        }).padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = translation.code == selectedTranslationCode, onClick = null)
-                        Column(Modifier.weight(1f)) {
-                            Text(translation.name, color = Ink, fontWeight = FontWeight.SemiBold)
-                            Text(translationDescription(translation), color = PrimaryBlue, fontSize = 12.sp)
-                        }
-                    }
-                }
+    if (choosingTranslation) TranslationPicker(language, translations, selectedTranslationCode,
+        onSelect = { code ->
+            choosingTranslation = false
+            if (code != selectedTranslationCode) {
+                query = ""; testament = "all"
+                onTranslationChange(code)
             }
-        })
+        }, onClose = { choosingTranslation = false })
 }
 
 private fun translationDescription(translation: TranslationSummary): String =

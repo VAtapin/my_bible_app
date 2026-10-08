@@ -1,0 +1,22 @@
+<resources>
+    <string name="bible_download_available_done">Alle verfügbaren Kapitel sind gespeichert. Fehlende Kapitel sind oben aufgeführt.</string>
+    <string name="bible_chapter_unavailable">Die API enthält in dieser Übersetzung noch keinen Text für dieses Kapitel.</string>
+    <string name="translation_not_found">Keine Übersetzungen gefunden. Suche ändern.</string>
+    <string name="bible_download_partial">Die Übersetzung ist noch nicht vollständig gespeichert. Der Download kann fortgesetzt werden.</string>
+    <string name="bible_download_unavailable">Kapitel ohne Text in der API: %1$d. Andere Kapitel wurden gespeichert. Die vollständige Übersetzung ist noch nicht verfügbar; nach Korrektur der Quelle fortsetzen.</string>
+    <string name="bible_download_action">Gesamte Übersetzung herunterladen</string>
+    <string name="translation_search">Übersetzung oder Sprache suchen</string>
+    <string name="compare_open">Übersetzungen vergleichen</string>
+    <string name="compare_close">Eine Übersetzung</string>
+    <string name="compare_choose">Zweite Übersetzung wählen</string>
+    <string name="compare_unavailable">Dieses Buch oder Kapitel fehlt in der zweiten Übersetzung.</string>
+    <string name="compare_error">Die zweite Übersetzung konnte nicht geöffnet werden. Für Offline-Nutzung zuerst herunterladen.</string>
+    <string name="compare_numbering">Zuordnung anhand der Versverweise. Verszählung und Umfang können je nach Ausgabe abweichen.</string>
+    <string name="compare_missing">Dieser Vers fehlt in dieser Übersetzung.</string>
+    <string name="bible_download_title">Bibel offline</string>
+    <string name="bible_download_hint">Laden Sie die gesamte ausgewählte Übersetzung herunter: alle Bücher und Kapitel in BibleDesktop. Mehrere Übersetzungen können nacheinander geladen werden. Gespeicherte Kapitel lassen sich offline lesen und vergleichen. Wörterbücher und Querverweise werden beim Öffnen separat geladen.</string>
+    <string name="bible_download_progress">Gespeicherte Kapitel: %1$d / %2$d</string>
+    <string name="bible_download_size">Texte: %1$.1f MB</string>
+    <string name="bible_download_complete">Die gesamte Übersetzung ist offline verfügbar.</string>
+    <string name="bible_download_failed">Download nicht abgeschlossen. Netzwerk und freien Speicher prüfen (Speicherlimit: 256 MB). Gespeicherte Kapitel bleiben erhalten; der Download kann fortgesetzt werden.</string>
+</resources>

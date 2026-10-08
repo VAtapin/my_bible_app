@@ -83,6 +83,7 @@ fun BibleReader(
     translations: List<TranslationSummary>,
     client: BibleContentSource,
     onBack: () -> Unit,
+    onDownloads: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val pickerState = rememberSaveableStateHolder()
@@ -117,6 +118,8 @@ fun BibleReader(
     var studyVerseId by rememberSaveable { mutableStateOf<Long?>(null) }
     var focusedVerse by rememberSaveable { mutableStateOf(preferences.getInt("lastVerse", 0)) }
     var referenceReturn by rememberSaveable { mutableStateOf<String?>(null) }
+    var comparing by rememberSaveable { mutableStateOf(false) }
+    var compareCode by rememberSaveable { mutableStateOf(preferences.getString("compareTranslation", "").orEmpty()) }
     val openError = text(R.string.study_open_error, language)
     fun chapterBack() {
         val saved = referenceReturn?.split('|')
@@ -169,6 +172,7 @@ fun BibleReader(
 
     BackHandler {
         when {
+            comparing -> comparing = false
             selectedChapter != null -> chapterBack()
             selectedBookSlug != null -> selectedBookSlug = null
             else -> onBack()
@@ -215,13 +219,25 @@ fun BibleReader(
             chaptersCount = selectedBook.chaptersCount,
             fontSize = fontSize,
             bookmarkedKeys = bookmarkEntries.map { "${it.translationCode}:${it.reference}" }.toSet(),
-            onBack = { chapterBack() },
+            onBack = { if (comparing) comparing = false else chapterBack() },
             onHome = onBack,
             onRetry = { chapterRetry += 1 },
             onPrevious = { selectedChapter = (chapterNumber - 1).coerceAtLeast(1); focusedVerse = 0 },
             onNext = { selectedChapter = (chapterNumber + 1).coerceAtMost(selectedBook.chaptersCount); focusedVerse = 0 },
             initialVerse = focusedVerse,
             onStudy = { _, verse -> studyVerseId = verse.id; focusedVerse = verse.number },
+            comparison = if (comparing) {
+                { value, modifier -> ComparisonPane(language, value, translations, compareCode, { code ->
+                    compareCode = code; preferences.edit().putString("compareTranslation", code).apply()
+                }, client, fontSize, focusedVerse, modifier) }
+            } else null,
+            comparing = comparing,
+            onCompare = {
+                if (!comparing && (compareCode.isBlank() || compareCode == translationCode))
+                    compareCode = translations.firstOrNull { it.code != translationCode }?.code.orEmpty()
+                comparing = !comparing
+            },
+            onDownloads = onDownloads,
             onFontSmaller = {
                 fontSize = (fontSize - 1f).coerceAtLeast(15f)
                 preferences.edit().putFloat("readerFontSize", fontSize).apply()
@@ -359,6 +375,10 @@ private fun ChapterScreen(
     onNote: (BibleChapter, BibleVerse) -> Unit,
     onStudy: (BibleChapter, BibleVerse) -> Unit,
     initialVerse: Int,
+    comparison: (@Composable (BibleChapter, Modifier) -> Unit)?,
+    comparing: Boolean,
+    onCompare: () -> Unit,
+    onDownloads: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -371,6 +391,10 @@ private fun ChapterScreen(
             "${it.book.name} · ${text(R.string.bible_chapter, language, it.chapter.number)}"
         } ?: text(R.string.bible_chapter, language, chapterNumber)
         ReadingHeader(title, language, onBack, onHome)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 12.dp)) {
+            androidx.compose.material3.TextButton(onClick = onCompare) { Text(text(if (comparing) R.string.compare_close else R.string.compare_open, language)) }
+            androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_download_title, language)) }
+        }
 
         when (state) {
             LoadState.Loading -> LoadingBox(Modifier.weight(1f))
@@ -380,7 +404,9 @@ private fun ChapterScreen(
                 onRetry,
                 Modifier.weight(1f),
             )
-            is LoadState.Ready -> ChapterReadingContent(
+            is LoadState.Ready -> if (comparison != null) comparison(state.value, Modifier.weight(1f)) else if (state.value.verses.isEmpty()) ErrorBox(
+                text(R.string.bible_chapter_unavailable, language), text(R.string.retry, language), onRetry, Modifier.weight(1f),
+            ) else ChapterReadingContent(
                 language, state.value, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 modifier = Modifier.weight(1f),
                 onStudy = onStudy, initialVerse = initialVerse,

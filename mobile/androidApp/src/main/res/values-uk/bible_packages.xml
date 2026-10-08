@@ -1,0 +1,22 @@
+<resources>
+    <string name="bible_download_available_done">Усі доступні розділи збережено. Відсутні розділи перелічено вище.</string>
+    <string name="bible_chapter_unavailable">У цьому перекладі API поки не містить тексту цього розділу.</string>
+    <string name="translation_not_found">Переклади не знайдено. Змініть пошук.</string>
+    <string name="bible_download_partial">Переклад збережено не повністю. Можна продовжити завантаження.</string>
+    <string name="bible_download_unavailable">Кількість розділів без тексту в API: %1$d. Решту збережено. Повний переклад поки недоступний; після виправлення джерела натисніть «Продовжити».</string>
+    <string name="bible_download_action">Завантажити весь переклад</string>
+    <string name="translation_search">Пошук перекладу або мови</string>
+    <string name="compare_open">Порівняти переклади</string>
+    <string name="compare_close">Один переклад</string>
+    <string name="compare_choose">Вибрати другий переклад</string>
+    <string name="compare_unavailable">Цієї книги або розділу немає в другому перекладі.</string>
+    <string name="compare_error">Не вдалося відкрити другий переклад. Для роботи без мережі спочатку завантажте його.</string>
+    <string name="compare_numbering">Зіставлення за посиланнями віршів. Нумерація та склад віршів різних редакцій можуть відрізнятися.</string>
+    <string name="compare_missing">У цьому перекладі вірш відсутній.</string>
+    <string name="bible_download_title">Біблія без мережі</string>
+    <string name="bible_download_hint">Завантажте весь вибраний переклад: усі книги й розділи, наявні в BibleDesktop. Можна завантажити кілька перекладів по черзі. Збережені розділи доступні для читання й порівняння без мережі. Словники та паралельні місця завантажуються окремо під час відкриття.</string>
+    <string name="bible_download_progress">Збережено розділів: %1$d / %2$d</string>
+    <string name="bible_download_size">Тексти: %1$.1f МБ</string>
+    <string name="bible_download_complete">Весь переклад збережено й доступний без мережі.</string>
+    <string name="bible_download_failed">Не вдалося завершити завантаження. Перевірте мережу та вільне місце (сховище до 256 МБ). Збережені розділи не втрачено; можна продовжити.</string>
+</resources>

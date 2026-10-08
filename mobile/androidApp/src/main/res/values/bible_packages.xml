@@ -1,0 +1,22 @@
+<resources>
+    <string name="bible_download_available_done">Все доступные главы сохранены. Отсутствующие главы перечислены выше.</string>
+    <string name="bible_chapter_unavailable">В этом переводе API пока не содержит текста этой главы.</string>
+    <string name="translation_not_found">Переводы не найдены. Измените поиск.</string>
+    <string name="bible_download_partial">Перевод сохранён не полностью. Можно продолжить загрузку.</string>
+    <string name="bible_download_unavailable">Глав без текста в API: %1$d. Остальные главы сохранены. Полный перевод пока недоступен; после исправления источника нажмите «Продолжить».</string>
+    <string name="bible_download_action">Скачать весь перевод</string>
+    <string name="translation_search">Поиск перевода или языка</string>
+    <string name="compare_open">Сравнить переводы</string>
+    <string name="compare_close">Один перевод</string>
+    <string name="compare_choose">Выбрать второй перевод</string>
+    <string name="compare_unavailable">Этой книги или главы нет во втором переводе.</string>
+    <string name="compare_error">Не удалось открыть второй перевод. Без сети сначала загрузите его.</string>
+    <string name="compare_numbering">Сопоставление по ссылкам стихов. Нумерация и состав стихов разных редакций могут отличаться.</string>
+    <string name="compare_missing">В этом переводе стих отсутствует.</string>
+    <string name="bible_download_title">Библия без сети</string>
+    <string name="bible_download_hint">Скачайте весь выбранный перевод: все книги и главы, которые есть в BibleDesktop. Можно загрузить несколько переводов по очереди. Сохранённые главы доступны для чтения и сравнения без сети. Словари и параллельные места скачиваются отдельно при открытии.</string>
+    <string name="bible_download_progress">Сохранено глав: %1$d / %2$d</string>
+    <string name="bible_download_size">Тексты: %1$.1f МБ</string>
+    <string name="bible_download_complete">Весь перевод сохранён и доступен без сети.</string>
+    <string name="bible_download_failed">Не удалось завершить загрузку. Проверьте сеть и свободное место (хранилище до 256 МБ). Сохранённые главы не потеряны; можно продолжить.</string>
+</resources>

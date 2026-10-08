@@ -32,7 +32,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class NativeSmokeTest {
     private val compose = createAndroidComposeRule<MainActivity>()
-    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "verseNotesV1")
+    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "verseNotesV1", "compareTranslation")
     private var original: Map<String, Any?> = emptyMap()
     private val fixture = object : ExternalResource() {
         override fun before() {
@@ -184,6 +184,36 @@ class NativeSmokeTest {
             compose.onNodeWithTag("verse-10").assertIsDisplayed()
             compose.onNodeWithContentDescription("Назад").performClick()
             compose.waitUntil(30_000) { compose.onAllNodes(hasText("Иоанна · Глава 3")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("verse-16").assertIsDisplayed()
+        }
+    }
+
+    @Test fun readerComparesUnconfiguredTranslationAndKeepsItOnRecreation() {
+        val api = BibleApiClient()
+        val source = try { runBlocking {
+            val ru = api.getTranslations("ru").first()
+            val book = api.getBooks(ru.code).first { it.canonicalBook?.osisCode == "John" }
+            api.getChapter(ru.code, book.slug, 3)
+        } } finally { api.close() }
+        val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
+        check(preferences.edit().putBoolean("setupComplete", true).putString("sections", "bible")
+            .putString("translations", source.translation.code).putString("lastTranslation", source.translation.code)
+            .putString("lastBookSlug", source.book.slug).putInt("lastChapter", 3).putInt("lastVerse", 16).remove("compareTranslation").commit())
+        val intent = android.content.Intent(compose.activity, MainActivity::class.java)
+            .putExtra(com.bibledesktop.myapp.data.ReminderScheduler.destinationExtra, "bible")
+        androidx.test.core.app.ActivityScenario.launch<MainActivity>(intent).use { scenario ->
+            compose.waitUntil(30_000) { compose.onAllNodesWithTag("verse-16").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithText("Сравнить переводы").performClick()
+            compose.onNodeWithTag("compare-translation").performClick()
+            compose.onNodeWithTag("translation-search").performTextInput("King James")
+            compose.onNodeWithTag("translation-BQ_ENGLISH_KJV_1769").performClick()
+            compose.waitUntil(30_000) { compose.onAllNodesWithTag("compared-John.3.16").fetchSemanticsNodes().isNotEmpty() }
+            assertEquals("BQ_ENGLISH_KJV_1769", preferences.getString("compareTranslation", null))
+            compose.onNodeWithTag("compared-John.3.16").assertIsDisplayed()
+            scenario.recreate()
+            compose.waitUntil(30_000) { compose.onAllNodesWithTag("compared-John.3.16").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithContentDescription("Назад").performClick()
+            compose.onNodeWithTag("bible-comparison").assertDoesNotExist()
             compose.onNodeWithTag("verse-16").assertIsDisplayed()
         }
     }

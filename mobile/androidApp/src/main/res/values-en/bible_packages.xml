@@ -1,0 +1,22 @@
+<resources>
+    <string name="bible_download_available_done">All available chapters are saved. Missing chapters are listed above.</string>
+    <string name="bible_chapter_unavailable">The API does not yet contain text for this chapter in this translation.</string>
+    <string name="translation_not_found">No translations found. Change your search.</string>
+    <string name="bible_download_partial">The translation is not fully saved yet. You can resume the download.</string>
+    <string name="bible_download_unavailable">Chapters without text in the API: %1$d. Other chapters are saved. The full translation is not yet available; resume after the source is corrected.</string>
+    <string name="bible_download_action">Download entire translation</string>
+    <string name="translation_search">Search translation or language</string>
+    <string name="compare_open">Compare translations</string>
+    <string name="compare_close">One translation</string>
+    <string name="compare_choose">Choose second translation</string>
+    <string name="compare_unavailable">This book or chapter is not available in the second translation.</string>
+    <string name="compare_error">Could not open the second translation. Download it first for offline use.</string>
+    <string name="compare_numbering">Aligned by verse references. Verse numbering and included verses can differ between editions.</string>
+    <string name="compare_missing">This verse is absent in this translation.</string>
+    <string name="bible_download_title">Offline Bible</string>
+    <string name="bible_download_hint">Download the entire selected translation: every book and chapter available in BibleDesktop. Multiple translations can be downloaded one after another. Saved chapters can be read and compared offline. Dictionaries and cross-references are downloaded separately when opened.</string>
+    <string name="bible_download_progress">Saved chapters: %1$d / %2$d</string>
+    <string name="bible_download_size">Texts: %1$.1f MB</string>
+    <string name="bible_download_complete">The entire translation is saved and available offline.</string>
+    <string name="bible_download_failed">Download could not finish. Check your connection and free space (storage limit: 256 MB). Saved chapters are kept; you can resume.</string>
+</resources>

@@ -119,6 +119,7 @@ private enum class Route {
     More,
     Study,
     Reminders,
+    BibleLibrary,
 }
 
 internal enum class TranslationFilter(val code: String?) {
@@ -331,10 +332,10 @@ fun SetupApp(initialDestination: String? = null) {
             translations = (translationState as? TranslationState.Content)
                 ?.translations
                 .orEmpty()
-                .filter { it.code in selectedTranslations }
                 .sortedBy { if (it.language.code == language) 0 else 1 },
             client = client,
             onBack = { route = Route.Home },
+            onDownloads = { route = Route.BibleLibrary },
         )
 
         Route.Prayers -> PrayersScreen(
@@ -358,6 +359,7 @@ fun SetupApp(initialDestination: String? = null) {
             },
             onOpenStudy = { route = Route.Study },
             onOpenReminders = { route = Route.Reminders },
+            onBibleDownloads = { route = Route.BibleLibrary },
             onOpenBookmark = { bookmark: BookmarkEntry ->
                 preferences.edit()
                     .putString("lastTranslation", bookmark.translationCode)
@@ -375,6 +377,7 @@ fun SetupApp(initialDestination: String? = null) {
                 route = Route.Bible
             })
         Route.Reminders -> com.bibledesktop.myapp.ui.reminders.RemindersScreen(language) { route = Route.Home }
+        Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client) { route = Route.Home }
     }
 }
 

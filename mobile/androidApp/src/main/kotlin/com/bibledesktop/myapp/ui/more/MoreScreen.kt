@@ -72,6 +72,7 @@ fun MoreScreen(
     onOpenBookmark: (BookmarkEntry) -> Unit,
     onOpenStudy: () -> Unit,
     onOpenReminders: () -> Unit,
+    onBibleDownloads: () -> Unit,
 ) {
     val context = LocalContext.current
     var bookmarks by remember { mutableStateOf(BookmarkStore.load(context)) }
@@ -109,6 +110,9 @@ fun MoreScreen(
                 SettingsCard(language, onSettings)
             }
             item { OfflinePanel(language) }
+            item { androidx.compose.material3.OutlinedButton(onClick = onBibleDownloads, modifier = Modifier.fillMaxWidth()) {
+                Text(localText(R.string.bible_download_title, language))
+            } }
             item { androidx.compose.material3.OutlinedButton(onClick = onOpenStudy, modifier = Modifier.fillMaxWidth()) {
                 Text(localText(R.string.section_study, language))
             } }
