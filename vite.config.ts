@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -52,6 +53,12 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,ttf,txt}'],
+        // Cache this supplied original explicitly without raising the size limit for other assets.
+        globIgnores: ['brand/welcome-church.png'],
+        additionalManifestEntries: [{
+          url: 'brand/welcome-church.png',
+          revision: createHash('sha256').update(readFileSync(new URL('./public/brand/welcome-church.png', import.meta.url))).digest('hex'),
+        }],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {

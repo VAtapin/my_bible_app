@@ -162,7 +162,7 @@
 .welcome-screen .app-content { display: flex; flex-direction: column; padding: 0 0 calc(8px + env(safe-area-inset-bottom)); }
 .welcome-screen .welcome-hero { padding: 0; }
 .welcome-picture { position: relative; height: clamp(260px, 82vw, 340px); overflow: hidden; background: #dce8ef; }
-.welcome-picture img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.welcome-picture img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
 .welcome-picture::after { position: absolute; inset: 0; content: ''; background: linear-gradient(to bottom, transparent 58%, var(--brand-surface) 100%); }
 .welcome-screen .welcome-hero h1 { position: relative; margin: -15px 12px 6px; color: #143e68; font: 600 30px/1.15 Georgia, 'Times New Roman', serif; letter-spacing: -.025em; }
 .welcome-screen .welcome-hero > p { max-width: 27ch; margin: 0 auto; padding: 0 10px; color: var(--brand-blue); font: 16px/1.4 Georgia, 'Times New Roman', serif; }

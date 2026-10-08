@@ -19,7 +19,7 @@ onMounted(() => {
 <template>
   <MobileShell class="welcome-screen" :show-header="false" :show-navigation="false">
     <section class="welcome-hero">
-      <div class="welcome-picture" aria-hidden="true"><img src="/brand/app-icon-512.png" alt="" /></div>
+      <div class="welcome-picture" aria-hidden="true"><img src="/brand/welcome-church.png" alt="" /></div>
       <h1>{{ text.welcome.title }}</h1>
       <p>{{ text.welcome.intro }}</p>
     </section>

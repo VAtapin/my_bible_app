@@ -122,4 +122,7 @@
   .welcome-picture { height: clamp(160px, 38dvh, 230px); }
   .welcome-screen .welcome-picture { max-height: 38dvh; }
   .welcome-screen .app-content { align-content: start; }
+  @container app (min-width: 600px) {
+    .welcome-screen .welcome-picture { width: min(260px, 38dvh); }
+  }
 }
