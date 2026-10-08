@@ -5,6 +5,9 @@ import { calendarApiBaseUrl } from '@/config/api'
 import { calendarAssetUrl, primaryTypikonMark, type CalendarGridDay } from '@/api/kalendar'
 import { calendarDateInTimeZone, calendarPeriodDates, formatCalendarDate, moveCalendarPeriod, isCalendarDate, type CalendarViewMode } from '@/services/calendarDates'
 import { useI18n } from '@/i18n'
+import { interfaceLocales } from '@/i18n/locale'
+import { calendarContentLanguage } from '@/services/kalendarContent'
+import OfflineImage from './OfflineImage.vue'
 
 const props = withDefaults(defineProps<{ date: string; calendarLanguage: string; mode?: CalendarViewMode; compact?: boolean }>(), { mode: 'month', compact: false })
 const emit = defineEmits<{ select: [date: string] }>()
@@ -12,7 +15,7 @@ const { language, messages: text } = useI18n()
 const days = ref<CalendarGridDay[]>([])
 const busy = ref(false)
 const failed = ref(false)
-const locale = computed(() => language.value === 'de' ? 'de-DE' : 'ru-RU')
+const locale = computed(() => interfaceLocales[language.value])
 const dates = computed(() => calendarPeriodDates(props.date, props.mode))
 const offset = computed(() => props.mode === 'month' ? (new Date(`${dates.value[0]}T12:00:00Z`).getUTCDay() + 6) % 7 : 0)
 const title = computed(() => props.mode === 'month'
@@ -32,7 +35,7 @@ watch(() => [dates.value[0].slice(0, 7), dates.value.at(-1)!.slice(0, 7), props.
   failed.value = false
   try {
     const months = [...new Set([dates.value[0].slice(0, 7), dates.value.at(-1)!.slice(0, 7)])].filter((month) => isCalendarDate(`${month}-01`))
-    const result = await Promise.all(months.map((month) => kalendarApi.getMonth(`${month}-01`, props.calendarLanguage)))
+    const result = await Promise.all(months.map((month) => kalendarApi.getMonth(`${month}-01`, calendarContentLanguage(props.calendarLanguage))))
     if (requestGeneration === generation) days.value = result.flat()
   } catch { if (requestGeneration === generation) failed.value = true }
   finally { if (requestGeneration === generation) busy.value = false }
@@ -49,7 +52,7 @@ function label(date: string): string {
 </script>
 
 <template>
-  <section class="calendar-picker" :class="{ compact }" :aria-label="text.calendar.view" :aria-busy="busy">
+  <section class="calendar-picker" :class="{ compact }" :style="{ '--calendar-rows': Math.ceil((offset + dates.length) / 7) }" :aria-label="text.calendar.view" :aria-busy="busy">
     <div class="calendar-picker-heading">
       <button type="button" :aria-label="text.calendar.previous" @click="move(-1)">‹</button>
       <strong>{{ title }}</strong>
@@ -64,7 +67,7 @@ function label(date: string): string {
         :class="{ selected: item === date, today: item === calendarDateInTimeZone(), 'calendar-red': ['pascha', 'great-feast', 'sunday'].includes(lookup.get(item)?.dayStyle.rank ?? ''), 'calendar-gold': lookup.get(item)?.dayStyle.rank === 'monastery-feast', 'calendar-has-fast': lookup.get(item)?.foodLabel && lookup.get(item)?.foodLabel !== 'поста нет' }"
         @click="emit('select', item)">
         <span class="grid-date-number">{{ Number(item.slice(-2)) }}</span>
-        <img v-if="mark(item)?.url" class="typikon-grid-mark" :src="mark(item)!.url" :alt="mark(item)!.label" />
+        <OfflineImage v-if="mark(item)?.url" class="typikon-grid-mark" :src="mark(item)!.url!" :alt="mark(item)!.label" />
         <small v-if="!compact && lookup.get(item)" class="grid-old-style">{{ Number(lookup.get(item)!.oldStyleDate.slice(-2)) }}</small>
         <span v-if="mode === 'week' && !compact" class="week-day-summary"><strong>{{ weekdays[(new Date(`${item}T12:00:00Z`).getUTCDay() + 6) % 7] }} · {{ lookup.get(item)?.foodLabel }}</strong><span>{{ lookup.get(item)?.events.slice(0, 2).map((event) => event.title).join(' · ') }}</span></span>
       </button>

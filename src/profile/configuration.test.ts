@@ -20,6 +20,12 @@ const draft: ConfigurationDraft = {
 }
 
 describe('app configuration', () => {
+  it.each([['uk', 'BQ_UKRAINE'], ['en', 'BQ_ENGLISH_KJV_1769']] as const)('keeps %s profiles and chooses a verified same-language Bible by default', (interfaceLanguage, translationCode) => {
+    const configuration = createConfiguration({ ...draft, interfaceLanguage, translationCodes: [], prayerLanguageCodes: [interfaceLanguage] })
+    expect(configuration.bible.translationCode).toBe(translationCode)
+    expect(migrateAppConfiguration(JSON.parse(JSON.stringify(configuration)))?.interfaceLanguage).toBe(interfaceLanguage)
+    expect(configuration.prayers.languageCodes).toEqual([interfaceLanguage])
+  })
   it('always enables the clock when Azbuka is selected, including legacy false settings', () => {
     const configuration = createConfiguration({ ...draft, sections: ['study'], educationPluginIds: ['azbuka'], showEducationClock: false })
     expect(configuration.education?.showClock).toBe(true)

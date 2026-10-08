@@ -16,6 +16,7 @@ import PrivacyView from '@/features/legal/PrivacyView.vue'
 import DiagnosticsView from '@/features/diagnostics/DiagnosticsView.vue'
 import EducationView from '@/features/education/EducationView.vue'
 import MoreView from '@/features/profile/MoreView.vue'
+import { interfaceLanguageIds } from '@/i18n/locale'
 import { configureAzbukaIntegration } from '../../azbuka-web/src/integration'
 import { azbukaRoutes } from '../../azbuka-web/src/routes'
 
@@ -30,6 +31,7 @@ export const router = createRouter({
       name: 'welcome',
       component: WelcomeView,
     },
+    ...interfaceLanguageIds.map((code) => ({ path: `/${code}`, name: `welcome-${code}`, component: WelcomeView })),
     {
       path: '/setup/quick',
       name: 'setup-quick',

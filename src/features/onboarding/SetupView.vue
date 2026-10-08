@@ -5,7 +5,7 @@ import MobileShell from '@/components/MobileShell.vue'
 import { bibleApi } from '@/api'
 import type { TranslationSummary } from '@/api/contracts'
 import { useI18n } from '@/i18n'
-import { languageSwitchUrl, type InterfaceLanguage } from '@/i18n/locale'
+import { languageSwitchUrl, interfaceLanguageIds, interfaceLanguageNames, defaultBibleTranslations, type InterfaceLanguage } from '@/i18n/locale'
 import {
   createConfiguration,
   sectionsForPreset,
@@ -229,7 +229,7 @@ function preferredTranslationCode(value: InterfaceLanguage): string {
 }
 
 function defaultTranslationCode(value: InterfaceLanguage): string {
-  return value === 'de' ? 'BQ_GERMAN_ELBERFELD_STRONG' : 'BQ_RUSSIAN_RST_STRONG'
+  return defaultBibleTranslations[value]
 }
 </script>
 
@@ -249,8 +249,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       <h2>{{ text.setup.interfaceLanguageTitle }}</h2>
       <p class="section-intro">{{ text.setup.interfaceLanguageIntro }}</p>
       <div class="language-selector" role="group" :aria-label="text.setup.interfaceLanguageTitle">
-        <button type="button" :class="{ selected: interfaceLanguage === 'ru' }" :aria-pressed="interfaceLanguage === 'ru'" @click="changeInterfaceLanguage('ru')">{{ text.setup.russian }}</button>
-        <button type="button" :class="{ selected: interfaceLanguage === 'de' }" :aria-pressed="interfaceLanguage === 'de'" @click="changeInterfaceLanguage('de')">{{ text.setup.german }}</button>
+        <button v-for="code in interfaceLanguageIds" :key="code" type="button" :lang="code" :class="{ selected: interfaceLanguage === code }" :aria-pressed="interfaceLanguage === code" @click="changeInterfaceLanguage(code)">{{ interfaceLanguageNames[code] }}</button>
       </div>
     </section>
 
@@ -313,6 +312,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
         <div class="language-selector compact" role="group" :aria-label="text.setup.prayerLanguagesTitle">
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('ru') }" :aria-pressed="prayerLanguageCodes.includes('ru')" @click="togglePrayerLanguage('ru')">{{ text.setup.russian }}</button>
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('de') }" :aria-pressed="prayerLanguageCodes.includes('de')" @click="togglePrayerLanguage('de')">{{ text.setup.german }}</button>
+          <button v-for="code in (['uk', 'en'] as const)" :key="code" type="button" :aria-pressed="prayerLanguageCodes.includes(code)" :class="{ selected: prayerLanguageCodes.includes(code) }" @click="togglePrayerLanguage(code)">{{ interfaceLanguageNames[code] }}</button>
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu') }" :aria-pressed="prayerLanguageCodes.includes('cu')" @click="togglePrayerLanguage('cu')">{{ text.setup.churchSlavonic }}</button>
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu-civil') }" :aria-pressed="prayerLanguageCodes.includes('cu-civil')" @click="togglePrayerLanguage('cu-civil')">{{ text.setup.churchSlavonicCivil }}</button>
         </div>
@@ -343,7 +343,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       <p class="section-intro">{{ text.setup.summaryIntro }}</p>
       <dl class="summary-list">
         <div v-if="mode === 'quick'"><dt>{{ text.setup.summaryPreset }}</dt><dd>{{ text.presets[preset].title }}</dd></div>
-        <div><dt>{{ text.setup.summaryLanguage }}</dt><dd>{{ interfaceLanguage === 'de' ? text.setup.german : text.setup.russian }}</dd></div>
+        <div><dt>{{ text.setup.summaryLanguage }}</dt><dd>{{ interfaceLanguageNames[interfaceLanguage] }}</dd></div>
         <div><dt>{{ text.setup.summarySections }}</dt><dd>{{ selectedSectionLabels.join(', ') }}</dd></div>
         <div v-if="sections.includes('bible')">
           <dt>{{ text.setup.summaryTranslations }}</dt>

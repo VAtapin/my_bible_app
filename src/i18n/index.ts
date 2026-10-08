@@ -1,7 +1,9 @@
 import { computed, readonly, ref } from 'vue'
 import { de } from './de'
-import { languageForHostname, type InterfaceLanguage } from './locale'
+import { isInterfaceLanguage, languageForHostname, languageFromPath, type InterfaceLanguage } from './locale'
 import { ru } from './ru'
+import { uk } from './uk'
+import { en } from './en'
 
 export type MessageShape<T> = {
   [Key in keyof T]: T[Key] extends string
@@ -13,7 +15,7 @@ export type MessageShape<T> = {
 
 const languageStorageKey = 'bible-desktop:interface-language'
 const currentLanguage = ref<InterfaceLanguage>('ru')
-const catalog: Record<InterfaceLanguage, MessageShape<typeof ru>> = { ru, de }
+const catalog: Record<InterfaceLanguage, MessageShape<typeof ru>> = { ru, de, uk, en }
 
 export const messages = computed(() => catalog[currentLanguage.value])
 
@@ -27,7 +29,7 @@ export function getMessages(language = currentLanguage.value): MessageShape<type
 
 export function initializeInterfaceLanguage(): InterfaceLanguage {
   const stored = window.localStorage.getItem(languageStorageKey)
-  return setInterfaceLanguage(stored === 'de' || stored === 'ru' ? stored : languageForHostname())
+  return setInterfaceLanguage(languageFromPath() ?? (isInterfaceLanguage(stored) ? stored : languageForHostname()))
 }
 
 export function setInterfaceLanguage(language: InterfaceLanguage): InterfaceLanguage {

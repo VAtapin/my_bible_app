@@ -1,8 +1,8 @@
-export const interfaceLanguageIds = ['ru', 'de'] as const
+export const interfaceLanguageIds = ['ru', 'de', 'uk', 'en'] as const
 
 export type InterfaceLanguage = typeof interfaceLanguageIds[number]
 
-const canonicalLanguageHosts: Record<InterfaceLanguage, string> = {
+const canonicalLanguageHosts: Partial<Record<InterfaceLanguage, string>> = {
   ru: 'biblia-app.ru',
   de: 'bible-app.de',
 }
@@ -14,7 +14,17 @@ export function isInterfaceLanguage(value: unknown): value is InterfaceLanguage 
 }
 
 export function languageFromBrowser(language = navigator.language): InterfaceLanguage {
-  return language.toLowerCase().startsWith('de') ? 'de' : 'ru'
+  const code = language.toLowerCase().split('-')[0]
+  return isInterfaceLanguage(code) ? code : 'ru'
+}
+
+export const interfaceLanguageNames: Record<InterfaceLanguage, string> = { ru: 'Русский', de: 'Deutsch', uk: 'Українська', en: 'English' }
+export const interfaceLocales: Record<InterfaceLanguage, string> = { ru: 'ru-RU', de: 'de-DE', uk: 'uk-UA', en: 'en-GB' }
+// Verified public translation codes; interface language never relabels source texts.
+export const defaultBibleTranslations: Record<InterfaceLanguage, string> = { ru: 'BQ_RUSSIAN_RST_STRONG', de: 'BQ_GERMAN_ELBERFELD_STRONG', uk: 'BQ_UKRAINE', en: 'BQ_ENGLISH_KJV_1769' }
+export function languageFromPath(pathname = window.location.pathname): InterfaceLanguage | undefined {
+  const code = /^\/(ru|de|uk|en)\/?$/.exec(pathname ?? '')?.[1]
+  return isInterfaceLanguage(code) ? code : undefined
 }
 
 export function languageForHostname(
@@ -49,6 +59,7 @@ export function languageSwitchUrl(
   if (!productionHosts.includes(normalizedHostname)) return null
 
   const targetHostname = canonicalLanguageHosts[language]
+  if (!targetHostname) return null
   if (url.hostname === targetHostname && url.protocol === 'https:' && !url.port) return null
 
   url.protocol = 'https:'

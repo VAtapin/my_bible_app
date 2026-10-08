@@ -64,4 +64,30 @@ describe('interface language', () => {
 
     expect(getInterfaceLanguage()).toBe('de')
   })
+  it.each(['uk', 'en'] as const)('detects, switches and persists %s without inventing a new domain', (language) => {
+    expect(languageForHostname('localhost', `${language}-UA`)).toBe(language)
+    setInterfaceLanguage(language)
+    expect(initializeInterfaceLanguage()).toBe(language)
+    expect(document.documentElement.lang).toBe(language)
+    expect(languageSwitchUrl(language, 'https://biblia-app.ru/')).toBeNull()
+    expect(getMessages().welcome.quickTitle).not.toBe(getMessages('ru').welcome.quickTitle)
+  })
+  it('translates every interface key and preserves interpolation placeholders in all four languages', () => {
+    function entries(value: Record<string, unknown>, prefix = ''): [string, string][] {
+      return Object.entries(value).flatMap(([key, part]) => typeof part === 'string' ? [[`${prefix}${key}`, part] as [string, string]] : entries(part as Record<string, unknown>, `${prefix}${key}.`))
+    }
+    const original = entries(getMessages('ru'))
+    for (const language of ['de', 'uk', 'en'] as const) {
+      const translated = entries(getMessages(language))
+      expect(translated.map(([key]) => key).sort()).toEqual(original.map(([key]) => key).sort())
+      for (const [key, text] of original) expect((translated.find(([path]) => path === key)![1].match(/\{\w+\}/g) ?? []).sort(), key).toEqual((text.match(/\{\w+\}/g) ?? []).sort())
+    }
+  })
+  it('gives a shared language URL priority over a saved language and hostname', () => {
+    setInterfaceLanguage('de')
+    window.location.pathname = '/uk'
+    expect(initializeInterfaceLanguage()).toBe('uk')
+    window.location.pathname = '/en/'
+    expect(initializeInterfaceLanguage()).toBe('en')
+  })
 })

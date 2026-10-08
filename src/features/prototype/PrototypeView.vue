@@ -12,6 +12,7 @@ import { createOfflinePackageService, type PackageProgress } from '@/services/of
 import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
 import { useProfileStore } from '@/stores/profileStore'
 import { formatMessage, useI18n } from '@/i18n'
+import { interfaceLocales } from '@/i18n/locale'
 import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 import VerseActions from './VerseActions.vue'
@@ -264,7 +265,7 @@ function errorMessage(error: unknown): string {
 }
 
 function formatDate(value: string): string {
-  return new Intl.DateTimeFormat(language.value === 'de' ? 'de-DE' : 'ru-RU', { dateStyle: 'short' }).format(new Date(value))
+  return new Intl.DateTimeFormat(interfaceLocales[language.value], { dateStyle: 'short' }).format(new Date(value))
 }
 </script>
 

@@ -123,6 +123,7 @@ export const ru = {
     study: { title: 'Обучение', description: 'Азбука и учебные приложения', icon: '/app-icons/library.png' },
   },
   today: {
+    clock: 'Часы',
     eyebrow: 'Мой день',
     title: 'Сегодня',
     intro: 'Ваши выбранные разделы собраны в одном спокойном пространстве.',
@@ -203,6 +204,8 @@ export const ru = {
     horizon: 'Офлайн-горизонт', horizonHint: 'Сохраните текущий и следующие 29 дней', download: 'Скачать', stop: 'Стоп',
     savingHorizon: 'Сохраняем календарь на 30 дней…', horizonSaved: 'Календарь на 30 дней доступен без сети.',
     horizonStopped: 'Загрузка календаря остановлена.', horizonFailed: 'Не удалось сохранить календарь.',
+    horizonProgress: 'Сохранено дней: {count} из {total}', horizonImages: 'Календарь сохранён, но не все превью икон скачаны. Повторите загрузку при наличии сети.',
+    horizonRange: 'Доступно без сети: {from} — {to}',
   },
   reader: {
     eyebrow: 'Библия', title: 'Чтение', offline: 'Офлайн', chooseChapter: 'Выбор главы', openChapter: 'Открыть главу',

@@ -4,6 +4,9 @@ import { bibleApi } from '@/api'
 import type { CalendarServicePlan } from '@/api/contracts'
 import { useI18n } from '@/i18n'
 import { normalizePrayerText } from '@/services/prayerContent'
+import { readCalendarState } from '@/offline/calendarMedia'
+import { calendarServiceKey } from '@/services/kalendarContent'
+import { ApiError } from '@/api/client'
 const props = defineProps<{ date: string; calendarLanguage: string }>()
 const { messages: text } = useI18n()
 const plan = ref<CalendarServicePlan>()
@@ -18,7 +21,11 @@ watch(() => [props.date, props.calendarLanguage], async () => {
   try {
     const result = await bibleApi.getCalendarService(props.date, props.calendarLanguage === 'cu' ? 'cu' : 'cu-civil')
     if (current === generation) plan.value = result
-  } catch { if (current === generation) failed.value = true }
+  } catch (error) {
+    const saved = error instanceof ApiError && ['offline', 'timeout'].includes(error.kind)
+      ? await readCalendarState<CalendarServicePlan>(calendarServiceKey(props.date, props.calendarLanguage === 'cu' ? 'cu' : 'cu-civil')).catch(() => undefined) : undefined
+    if (current === generation) { plan.value = saved; failed.value = !saved }
+  }
   finally { if (current === generation) loading.value = false }
 }, { immediate: true })
 onUnmounted(() => { generation++ })

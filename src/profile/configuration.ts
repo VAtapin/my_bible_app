@@ -1,4 +1,4 @@
-import { isInterfaceLanguage, type InterfaceLanguage } from '@/i18n/locale'
+import { isInterfaceLanguage, defaultBibleTranslations, type InterfaceLanguage } from '@/i18n/locale'
 
 export const sectionIds = ['bible', 'prayers', 'calendar', 'study'] as const
 export type AppSectionId = typeof sectionIds[number]
@@ -235,7 +235,7 @@ function uniqueNonEmpty(values: string[]): string[] {
 }
 
 function defaultTranslationCode(language: InterfaceLanguage): string {
-  return language === 'de' ? 'BQ_GERMAN_ELBERFELD_STRONG' : 'BQ_RUSSIAN_RST_STRONG'
+  return defaultBibleTranslations[language]
 }
 
 function isLegacyConfiguration(value: unknown): value is Omit<AppConfiguration, 'version' | 'interfaceLanguage' | 'bible' | 'prayers' | 'calendar'> & {

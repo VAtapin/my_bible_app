@@ -31,9 +31,12 @@ async function read<T>(storeName: string, key: string): Promise<T | undefined> {
 }
 
 async function put(storeName: string, value: unknown): Promise<void> {
-  await withDatabase((database) => runRequest(
-    database.transaction(storeName, 'readwrite').objectStore(storeName).put(value),
-  ))
+  await withDatabase((database) => new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(storeName, 'readwrite')
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = transaction.onabort = () => reject(transaction.error ?? new Error('Storage failed'))
+    transaction.objectStore(storeName).put(value)
+  }))
 }
 
 async function list<T>(storeName: string): Promise<T[]> {

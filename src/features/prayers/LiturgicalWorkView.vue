@@ -40,7 +40,6 @@ onMounted(async () => {
         <h2 v-if="block.kind === 'heading'" class="prayer-text-heading">{{ block.text }}</h2>
         <p v-else :class="{ rubric: block.kind === 'rubric' }">{{ block.text }}</p>
       </template>
-      <p class="source-credit"><strong>{{ text.prayers.source }}:</strong> <a :href="work.source_url" target="_blank" rel="noreferrer">{{ work.credit }}</a></p>
     </article>
     <p v-else class="status" role="status">{{ message }}</p>
   </MobileShell>

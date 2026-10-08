@@ -21,7 +21,8 @@ async function initialize(): Promise<void> {
   failed.value = false
   try {
     await store.initialize()
-    if (!store.profile) await store.create(language.value, 10)
+    // The separate alphabet plugin currently publishes RU/DE/CU, not EN/UK.
+    if (!store.profile) await store.create(language.value === 'de' ? 'de' : 'ru', 10)
   } catch { failed.value = true }
 }
 onMounted(initialize)

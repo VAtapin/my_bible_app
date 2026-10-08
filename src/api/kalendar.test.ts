@@ -3,6 +3,8 @@ import { calendarAssetUrl, createKalendarApi, primaryTypikonMark } from './kalen
 import { calendarPeriodDates } from '@/services/calendarDates'
 import { rankedCalendarIcons } from '@/services/calendarIcons'
 import { calendarEvents, calendarReadingLink } from '@/services/calendarPresentation'
+import { IDBFactory } from 'fake-indexeddb'
+import { writeCalendarState } from '@/offline/calendarMedia'
 
 const baseUrl = 'https://calendar.example/api/v1/calendar'
 const mark = { label: 'Шестеричная служба', svgSource: '/assets/typikon/six-stichera.svg' }
@@ -24,6 +26,16 @@ const month = { metadata, days: calendarPeriodDates('2026-10-07', 'month').map(g
 const response = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } })
 
 describe('existing Kalendar API integration', () => {
+  it('reopens only explicitly downloaded month data on connection failure, never on revoked access', async () => {
+    vi.stubGlobal('indexedDB', new IDBFactory())
+    try {
+      await writeCalendarState('calendar-month:ru:2026-10', month.days)
+      const fetcher = vi.fn(async () => { throw new TypeError('Network failed') })
+      expect(await createKalendarApi({ baseUrl, fetcher }).getMonth('2026-10-08')).toEqual(month.days)
+      const denied = vi.fn(async () => response({}, 403))
+      await expect(createKalendarApi({ baseUrl, fetcher: denied }).getMonth('2026-10-08')).rejects.toMatchObject({ status: 403 })
+    } finally { vi.unstubAllGlobals() }
+  })
   it('uses the documented public read-only identifier, summary month and separate configured origin', async () => {
     const fetcher = vi.fn(async () => response(month))
     const days = await createKalendarApi({ baseUrl, fetcher }).getMonth('2026-10-07', 'de')

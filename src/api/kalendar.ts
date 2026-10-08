@@ -1,6 +1,7 @@
 import { ApiError } from './client'
 import type { CalendarDay, CalendarEvent, CalendarReading } from './contracts'
 import { calendarPeriodDates } from '@/services/calendarDates'
+import { readCalendarState } from '@/offline/calendarMedia'
 
 export interface CalendarGridDay {
   date: string
@@ -109,8 +110,16 @@ export function createKalendarApi({ baseUrl, fetcher = fetch, timeoutMs = 15_000
   return {
     async getMonth(date: string, language = 'ru'): Promise<CalendarGridDay[]> {
       const expectedDates = calendarPeriodDates(date, 'month')
-      const value = await request('month', { year: date.slice(0, 4), month: String(Number(date.slice(5, 7))), lang: language, profile: 'typikon-strict', view: 'summary' }, (value) => Array.isArray(value.days)
-        && value.days.length === expectedDates.length && value.days.every((day, index) => isGridDay(day) && day.date === expectedDates[index]))
+      let value: unknown
+      try {
+        value = await request('month', { year: date.slice(0, 4), month: String(Number(date.slice(5, 7))), lang: language, profile: 'typikon-strict', view: 'summary' }, (value) => Array.isArray(value.days)
+          && value.days.length === expectedDates.length && value.days.every((day, index) => isGridDay(day) && day.date === expectedDates[index]))
+      } catch (error) {
+        if (!(error instanceof ApiError) || !['offline', 'timeout'].includes(error.kind)) throw error
+        const saved = await readCalendarState<CalendarGridDay[]>(`calendar-month:${language}:${date.slice(0, 7)}`).catch(() => undefined)
+        if (!saved || saved.length !== expectedDates.length || !saved.every((day, index) => isGridDay(day) && day.date === expectedDates[index])) throw error
+        value = { days: saved }
+      }
       if (!record(value) || !Array.isArray(value.days) || !value.days.length || !value.days.every(isGridDay)
         || value.days.some((day) => !day.date.startsWith(date.slice(0, 7)))) throw new ApiError('invalid-response', 'Kalendar API: invalid month')
       return value.days

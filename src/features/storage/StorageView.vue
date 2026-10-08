@@ -10,6 +10,7 @@ import { parseBookmarkKey } from '@/offline/libraryRepository'
 import { createVerseNoteRepository, type VerseNote } from '@/offline/verseNotes'
 import { savedVerseLink } from '@/services/readerActions'
 import { formatMessage, useI18n } from '@/i18n'
+import { interfaceLocales } from '@/i18n/locale'
 
 const chaptersRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -110,7 +111,7 @@ function formatBytes(value: number): string {
 }
 
 function formatDate(value: string): string {
-  return new Intl.DateTimeFormat(language.value === 'de' ? 'de-DE' : 'ru-RU', { dateStyle: 'medium' }).format(new Date(value))
+  return new Intl.DateTimeFormat(interfaceLocales[language.value], { dateStyle: 'medium' }).format(new Date(value))
 }
 </script>
 

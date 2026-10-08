@@ -5,6 +5,7 @@ import { bibleApi, kalendarApi } from '@/api'
 import { RouterLink, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { useI18n, formatMessage } from '@/i18n'
+import { interfaceLocales, defaultBibleTranslations } from '@/i18n/locale'
 import { useProfileStore } from '@/stores/profileStore'
 import { defaultCalendarHome, educationSettings } from '@/profile/configuration'
 import { calendarDateInTimeZone, formatTodayDate } from '@/services/calendarDates'
@@ -15,6 +16,7 @@ import { loadRandomVerse } from '@/services/randomVerse'
 import { calendarEvents } from '@/services/calendarPresentation'
 import { rankedCalendarIcons } from '@/services/calendarIcons'
 import DayIcon from '@/components/DayIcon.vue'
+import OfflineImage from '@/components/OfflineImage.vue'
 import CalendarGrid from '@/components/CalendarGrid.vue'
 import FastingSummary from '@/components/FastingSummary.vue'
 import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
@@ -43,11 +45,11 @@ const calendarLoading = ref(false)
 const calendarFailed = ref(false)
 const calendarOffline = ref(false)
 const dailyService = createCalendarContentService(kalendarApi, bibleApi, createIndexedDbDailyContentRepository())
-const dateLabel = computed(() => formatTodayDate(date.value, day.value?.old_style_date, language.value === 'de' ? 'de-DE' : 'ru-RU'))
+const dateLabel = computed(() => formatTodayDate(date.value, day.value?.old_style_date, interfaceLocales[language.value]))
 const verse = ref<Awaited<ReturnType<typeof loadRandomVerse>>>()
 const chapters = createChapterService(bibleApi, createIndexedDbChapterRepository())
-const verseTranslation = computed(() => profile.configuration?.bible.translationCodes.find((code) => code.includes(language.value === 'de' ? 'GERMAN' : 'RUSSIAN'))
-  ?? (language.value === 'de' ? 'BQ_GERMAN_ELBERFELD_STRONG' : 'BQ_RUSSIAN_RST_STRONG'))
+const verseTranslation = computed(() => profile.configuration?.bible.translationCodes.find((code) => code === defaultBibleTranslations[language.value])
+  ?? profile.configuration?.bible.translationCodes[0] ?? defaultBibleTranslations[language.value])
 const icon = computed(() => day.value ? rankedCalendarIcons(day.value)[0] : undefined)
 const dayEvents = computed(() => calendarEvents(day.value?.events ?? [], 'all'))
 const visibleEvents = computed(() => calendarHome.value.compact ? dayEvents.value.slice(0, 3) : dayEvents.value)
@@ -109,6 +111,7 @@ onUnmounted(() => {
     <header class="today-hero">
       <h1><span class="civil-date">{{ dateLabel.split(' (')[0] }}</span><span v-if="dateLabel.includes(' (')" class="old-style-date">{{ ` (${dateLabel.split(' (')[1]}` }}</span></h1>
       <RouterLink v-if="hasAzbuka" class="today-clock-link" to="/education/azbuka/numbers">
+        <span class="today-clock-label">{{ text.today.clock }}</span>
         <SlavonicClock compact :show-label="false" :label="text.education.clockTitle" />
       </RouterLink>
       <RouterLink v-if="verse" class="today-verse" :to="verse.route"><blockquote>«{{ verse.text }}»</blockquote><cite>{{ verse.reference }}</cite></RouterLink>
@@ -119,7 +122,7 @@ onUnmounted(() => {
       <DayIcon v-if="icon" :key="icon.id" :icon="icon" />
       <span>
         <strong v-if="icon">{{ icon.title }}</strong><small v-if="icon?.credit">{{ icon.credit }}</small>
-        <template v-if="calendarHome.commemorations"><p v-for="event in visibleEvents" :key="event.id"><img v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</p></template>
+        <template v-if="calendarHome.commemorations"><p v-for="event in visibleEvents" :key="event.id"><OfflineImage v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</p></template>
         <RouterLink :to="{ path: '/calendar', query: { date } }">{{ text.today.allCommemorations }} →</RouterLink>
       </span>
     </article>

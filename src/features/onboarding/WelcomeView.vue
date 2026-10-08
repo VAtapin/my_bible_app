@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { onMounted, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { useI18n } from '@/i18n'
 import { useProfileStore } from '@/stores/profileStore'
+import { interfaceLanguageIds, interfaceLanguageNames, languageFromPath } from '@/i18n/locale'
+import WelcomeCalendar from './WelcomeCalendar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const profile = useProfileStore()
-const { messages: text } = useI18n()
+const { language, messages: text, setLanguage } = useI18n()
+watch(() => route.path, (path) => { const value = languageFromPath(path); if (value) setLanguage(value) }, { immediate: true })
 
 onMounted(() => {
   if (profile.load()) {
@@ -18,6 +22,9 @@ onMounted(() => {
 
 <template>
   <MobileShell class="welcome-screen" :show-header="false" :show-navigation="false">
+    <div class="welcome-languages" role="group" :aria-label="text.setup.interfaceLanguageTitle">
+      <RouterLink v-for="code in interfaceLanguageIds" :key="code" :to="`/${code}`" :lang="code" :aria-current="language === code ? 'true' : undefined" :class="{ selected: language === code }" @click="setLanguage(code)">{{ interfaceLanguageNames[code] }}</RouterLink>
+    </div>
     <section class="welcome-hero">
       <div class="welcome-picture" aria-hidden="true"><img src="/brand/welcome-church.png" alt="" /></div>
       <h1>{{ text.welcome.title }}</h1>
@@ -49,6 +56,7 @@ onMounted(() => {
     </section>
 
     <blockquote class="welcome-quote"><p>{{ text.welcome.verse }}</p><cite>{{ text.welcome.verseReference }}</cite></blockquote>
+    <WelcomeCalendar />
     <RouterLink class="privacy-link" to="/privacy">{{ text.welcome.privacy }}</RouterLink>
   </MobileShell>
 </template>

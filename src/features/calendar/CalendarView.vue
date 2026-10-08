@@ -14,7 +14,11 @@ import CalendarServiceTexts from './CalendarServiceTexts.vue'
 import { createCalendarContentService } from '@/services/kalendarContent'
 import { calendarEvents, calendarReadingLink as readingLink } from '@/services/calendarPresentation'
 import { useProfileStore } from '@/stores/profileStore'
-import { useI18n } from '@/i18n'
+import { useI18n, formatMessage } from '@/i18n'
+import { interfaceLocales } from '@/i18n/locale'
+import type { CalendarHorizon } from '@/services/kalendarContent'
+import { formatCalendarDate } from '@/services/calendarDates'
+import OfflineImage from '@/components/OfflineImage.vue'
 
 const repository = createIndexedDbDailyContentRepository()
 const service = createCalendarContentService(kalendarApi, bibleApi, repository)
@@ -29,6 +33,9 @@ const message = ref('')
 const busy = ref(false)
 const horizonProgress = ref(0)
 const horizonController = ref<AbortController>()
+const horizonMessage = ref('')
+const savedHorizon = ref<CalendarHorizon>()
+const downloading = computed(() => Boolean(horizonController.value))
 
 const events = computed(() => calendarEvents(day.value?.events ?? [], 'all'))
 const icons = computed(() => day.value ? rankedCalendarIcons(day.value) : [])
@@ -40,6 +47,12 @@ onMounted(async () => {
   profile.load()
   message.value = text.value.calendar.loading
   await openDay()
+  savedHorizon.value = await service.getSavedHorizon(calendarLanguage.value).catch(() => undefined)
+  if (savedHorizon.value) {
+    horizonProgress.value = savedHorizon.value.daysSaved
+    if (savedHorizon.value.daysSaved === 30) horizonMessage.value = savedHorizon.value.missingAssets ? text.value.calendar.horizonImages : text.value.calendar.horizonSaved
+    if (savedHorizon.value.missingServices) horizonMessage.value += ` ${text.value.calendar.serviceFailed}`
+  }
 })
 
 async function openDay(): Promise<void> {
@@ -71,18 +84,18 @@ onUnmounted(() => { generation++; horizonController.value?.abort() })
 async function downloadHorizon(): Promise<void> {
   horizonController.value = new AbortController()
   horizonProgress.value = 0
-  busy.value = true
-  message.value = text.value.calendar.savingHorizon
+  horizonMessage.value = text.value.calendar.savingHorizon
   try {
     const calendarLanguage = profile.configuration?.calendar.languageCode ?? language.value
-    await service.downloadCalendarHorizon(date.value, 30, (current) => { horizonProgress.value = current }, horizonController.value.signal, calendarLanguage)
-    message.value = text.value.calendar.horizonSaved
+    savedHorizon.value = await service.downloadCalendarHorizon(date.value, 30, (current) => { horizonProgress.value = current }, horizonController.value.signal, calendarLanguage)
+    horizonMessage.value = savedHorizon.value.missingAssets ? text.value.calendar.horizonImages : text.value.calendar.horizonSaved
+    if (savedHorizon.value.missingServices) horizonMessage.value += ` ${text.value.calendar.serviceFailed}`
   } catch (error) {
-    message.value = error instanceof DOMException && error.name === 'AbortError'
+    horizonMessage.value = error instanceof DOMException && error.name === 'AbortError'
       ? text.value.calendar.horizonStopped
-      : error instanceof Error ? error.message : text.value.calendar.horizonFailed
+      : text.value.calendar.horizonFailed
+    savedHorizon.value = await service.getSavedHorizon(calendarLanguage.value).catch(() => undefined)
   } finally {
-    busy.value = false
     horizonController.value = undefined
   }
 }
@@ -106,7 +119,7 @@ function stopHorizonDownload(): void {
     <p v-if="message" class="status" role="status">{{ message }}</p>
 
     <template v-if="day">
-      <h1 class="calendar-selected-date">{{ formatTodayDate(date, day.old_style_date, language === 'de' ? 'de-DE' : 'ru-RU') }}</h1>
+      <h1 class="calendar-selected-date">{{ formatTodayDate(date, day.old_style_date, interfaceLocales[language]) }}</h1>
       <div v-if="day.tone || day.week_after_pentecost" class="calendar-facts"><span v-if="day.tone">{{ text.calendar.tone }} {{ day.tone }}</span><span v-if="day.week_after_pentecost">{{ text.calendar.weekAfterPentecost }} {{ day.week_after_pentecost }}</span></div>
       <FastingSummary :day="day" />
       <section v-if="icons.length" class="calendar-icon-gallery">
@@ -120,7 +133,7 @@ function stopHorizonDownload(): void {
         <h2>{{ text.calendar.commemorations }}</h2>
         <div class="calendar-list">
           <article v-for="event in events" :key="event.id">
-            <strong><img v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</strong>
+            <strong><OfflineImage v-if="event.typikon_mark" class="typikon-event-mark" :src="event.typikon_mark.image_url" :alt="event.typikon_mark.label" />{{ event.name }}</strong>
             <small v-if="event.type">{{ event.type.name }}</small>
             <p v-if="event.description" class="calendar-event-description">{{ event.description }}</p>
           </article>
@@ -147,7 +160,10 @@ function stopHorizonDownload(): void {
         <span><strong>{{ text.calendar.horizon }}</strong><small>{{ text.calendar.horizonHint }}</small></span>
         <button v-if="!horizonController" type="button" :disabled="busy" @click="downloadHorizon">{{ text.calendar.download }}</button>
         <button v-else type="button" @click="stopHorizonDownload">{{ text.calendar.stop }}</button>
-        <progress v-if="horizonProgress" :value="horizonProgress" max="30">{{ horizonProgress }}/30</progress>
+        <progress v-if="downloading || horizonMessage || horizonProgress" :value="horizonProgress" max="30" :aria-label="text.calendar.horizon" />
+        <p v-if="downloading || horizonMessage || horizonProgress" class="calendar-offline-status">{{ formatMessage(text.calendar.horizonProgress, { count: horizonProgress, total: 30 }) }}</p>
+        <p v-if="horizonMessage" class="calendar-offline-status" role="status">{{ horizonMessage }}</p>
+        <p v-if="savedHorizon" class="calendar-offline-status">{{ formatMessage(text.calendar.horizonRange, { from: formatCalendarDate(savedHorizon.from, interfaceLocales[language]), to: formatCalendarDate(savedHorizon.to, interfaceLocales[language]) }) }}</p>
       </section>
     </section>
     </div>

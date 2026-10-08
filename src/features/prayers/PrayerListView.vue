@@ -17,7 +17,7 @@ interface WorkCard extends LiturgicalWorkSummary {
 
 const repository = createIndexedDbDailyContentRepository()
 const profile = useProfileStore()
-const { messages: text } = useI18n()
+const { language, messages: text } = useI18n()
 const prayers = ref<PrayerSummary[]>([])
 const works = ref<WorkCard[]>([])
 const message = ref('')
@@ -26,7 +26,7 @@ const displayPrayers = computed(() => [...prayers.value].sort((left, right) => r
 onMounted(async () => {
   const configuration = profile.load()
   const settings = configuration?.prayers
-  const languages = settings?.languageCodes ?? [configuration?.interfaceLanguage ?? 'ru']
+  const languages = settings?.languageCodes ?? [configuration?.interfaceLanguage ?? language.value]
   message.value = text.value.prayers.loading
 
   try {

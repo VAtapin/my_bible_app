@@ -81,6 +81,7 @@ export const de: MessageShape<typeof ru> = {
     study: { title: 'Lernen', description: 'Alphabet und Lern-Apps', icon: '/app-icons/library.png' },
   },
   today: {
+    clock: 'Uhr',
     eyebrow: 'Mein Tag', title: 'Heute', intro: 'Ihre ausgewählten Bereiche an einem ruhigen Ort.',
     profileLabel: 'Lokales Profil', yourApp: 'Ihre App', customize: 'Einrichten',
     bibleAction: 'Letzte Bibelstelle öffnen', configured: 'Zum Profil hinzugefügt', nextStage: 'Demnächst',
@@ -130,6 +131,8 @@ export const de: MessageShape<typeof ru> = {
     horizon: 'Offline-Zeitraum', horizonHint: 'Heute und die folgenden 29 Tage speichern', download: 'Laden', stop: 'Stopp',
     savingHorizon: 'Kalender für 30 Tage wird gespeichert…', horizonSaved: '30 Kalendertage sind offline verfügbar.',
     horizonStopped: 'Der Kalender-Download wurde gestoppt.', horizonFailed: 'Der Kalender konnte nicht gespeichert werden.',
+    horizonProgress: 'Gespeicherte Tage: {count} von {total}', horizonImages: 'Kalender gespeichert, aber nicht alle Symbolvorschauen geladen. Mit Internetverbindung erneut versuchen.',
+    horizonRange: 'Offline verfügbar: {from} — {to}',
   },
   reader: {
     eyebrow: 'Bibel', title: 'Lesen', offline: 'Offline', chooseChapter: 'Kapitel auswählen', openChapter: 'Kapitel öffnen',
