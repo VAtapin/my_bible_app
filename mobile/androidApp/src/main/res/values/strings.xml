@@ -16,7 +16,7 @@
     <string name="welcome_subtitle">Православное приложение для вашей духовной жизни</string>
     <string name="welcome_quote">«Ищите же прежде Царства Божия…»\nМф. 6:33</string>
     <string name="quick_title">Быстро настроить</string>
-    <string name="quick_subtitle">Рекомендуемый набор и ваш выбор Библии</string>
+    <string name="quick_subtitle">Все доступные разделы — одним нажатием</string>
     <string name="manual_title">Настроить самому</string>
     <string name="manual_subtitle">Выбрать язык, разделы и переводы</string>
     <string name="restore_title">У меня уже есть приложение</string>
@@ -91,4 +91,10 @@
     <string name="settings_subtitle">Язык, разделы и переводы</string>
     <string name="bookmark_delete">Удалить закладку</string>
     <string name="bookmark_open">Открыть место</string>
+    <string name="calendar_previous_month">Предыдущий месяц</string>
+    <string name="calendar_next_month">Следующий месяц</string>
+    <string name="calendar_corpus_ru">Календарные тексты пока доступны на русском.</string>
+    <string name="prayer_text_language">Язык молитвенного текста</string>
+    <string name="prayer_cu">Церковнославянский</string>
+    <string name="prayer_cu_civil">Церковнославянский · гражданский</string>
 </resources>

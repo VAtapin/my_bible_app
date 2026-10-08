@@ -62,16 +62,30 @@ class BibleApiClient internal constructor(
     ): CalendarDay {
         val response = client.get("$baseUrl/calendar/day") {
             parameter("date", date)
-            parameter("lang", language)
+            parameter("lang", calendarContentLanguage(language))
             parameter("profile", profile)
         }
         return response.body<ApiEnvelope<CalendarDay>>().data
+    }
+
+    suspend fun getCalendarMonth(year: Int, month: Int, language: String): List<CalendarGridDay> {
+        require(year in 1900..2100 && month in 1..12)
+        val response = client.get("$baseUrl/calendar/month") {
+            parameter("year", year)
+            parameter("month", month)
+            parameter("lang", calendarContentLanguage(language))
+            parameter("profile", "typikon-strict")
+        }
+        return response.body<ApiEnvelope<List<CalendarGridDay>>>().data
     }
 
     fun close() {
         client.close()
     }
 }
+
+/** English UI must not pretend that the calendar corpus has been translated. */
+fun calendarContentLanguage(language: String): String = if (language == "en") "ru" else language
 
 internal fun HttpClientConfig<*>.configureBibleApiClient() {
     expectSuccess = true

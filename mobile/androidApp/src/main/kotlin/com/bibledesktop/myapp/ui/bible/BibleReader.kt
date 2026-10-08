@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -61,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -72,6 +74,7 @@ import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
+import com.bibledesktop.myapp.ui.theme.readingFont
 import com.bibledesktop.shared.api.BibleApiClient
 import com.bibledesktop.shared.api.BibleBook
 import com.bibledesktop.shared.api.BibleChapter
@@ -245,7 +248,7 @@ private fun BooksScreen(
                 color = Ink,
                 fontWeight = FontWeight.Bold,
             )
-            Row(
+            FlowRow(
                 modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -476,10 +479,12 @@ private fun VerseRow(
             fontWeight = FontWeight.Bold,
         )
         Text(
-            verse.plainText,
+            if (chapter.translation.language.code in setOf("cu", "cu-civil"))
+                android.text.Html.fromHtml(verse.text, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim()
+            else verse.plainText,
             modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
             color = Ink,
-            fontFamily = FontFamily.Serif,
+            fontFamily = readingFont(chapter.translation.language.code),
             fontSize = fontSize.sp,
             lineHeight = (fontSize * 1.45f).sp,
         )
@@ -577,8 +582,9 @@ private fun shareVerse(context: Context, chapter: BibleChapter, verse: BibleVers
 @Composable
 private fun text(@StringRes id: Int, language: String, vararg args: Any): String {
     val context = LocalContext.current
-    return remember(id, language, args.toList()) {
-        val configuration = Configuration(context.resources.configuration).apply {
+    val currentConfiguration = LocalConfiguration.current
+    return remember(id, language, args.toList(), currentConfiguration) {
+        val configuration = Configuration(currentConfiguration).apply {
             setLocale(Locale.forLanguageTag(language))
         }
         context.createConfigurationContext(configuration).resources.getString(id, *args)

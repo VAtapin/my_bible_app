@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -79,6 +81,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +91,7 @@ import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.bible.BibleReader
 import com.bibledesktop.myapp.ui.daily.CalendarScreen
+import com.bibledesktop.myapp.ui.daily.CalendarOverview
 import com.bibledesktop.myapp.ui.daily.PrayersScreen
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Gold
@@ -103,6 +107,7 @@ import java.util.Locale
 @Composable
 internal fun TodayScreen(
     language: String,
+    client: BibleApiClient,
     selectedSections: Set<String>,
     selectedTranslations: List<TranslationSummary>,
     onEdit: () -> Unit,
@@ -144,28 +149,33 @@ internal fun TodayScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Navy),
-                    shape = RoundedCornerShape(22.dp),
-                ) {
-                    Column(Modifier.padding(22.dp)) {
-                        Text(localized(R.string.today_title, language), color = Color.White, fontFamily = FontFamily.Serif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                        Text(localized(R.string.today_quote, language), modifier = Modifier.padding(top = 12.dp), color = LightBlue, fontFamily = FontFamily.Serif, fontSize = 18.sp)
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val calendar: @Composable () -> Unit = {
+                        CalendarOverview(language, client)
+                        Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(22.dp)) {
+                            Column(Modifier.padding(22.dp)) {
+                                Text(localized(R.string.today_title, language), color = Color.White, fontFamily = FontFamily.Serif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                                Text(localized(R.string.today_quote, language), Modifier.padding(top = 12.dp), color = LightBlue, fontFamily = FontFamily.Serif, fontSize = 20.sp)
+                            }
+                        }
                     }
+                    val actions: @Composable () -> Unit = {
+                        sections.filter { it.id in selectedSections }.forEach { section ->
+                            HomeSectionCard(section = section, language = language,
+                                trailing = if (section.id == "bible") selectedTranslations.firstOrNull()?.shortName else null,
+                                onClick = when (section.id) {
+                                    "bible" -> onOpenBible
+                                    "prayer" -> onOpenPrayers
+                                    "calendar" -> onOpenCalendar
+                                    else -> null
+                                })
+                        }
+                    }
+                    if (maxWidth >= 840.dp) Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { calendar() }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { actions() }
+                    } else Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { calendar(); actions() }
                 }
-            }
-            items(sections.filter { it.id in selectedSections }) { section ->
-                HomeSectionCard(
-                    section = section,
-                    language = language,
-                    trailing = if (section.id == "bible") selectedTranslations.firstOrNull()?.shortName else null,
-                    onClick = when (section.id) {
-                        "bible" -> onOpenBible
-                        "prayer" -> onOpenPrayers
-                        "calendar" -> onOpenCalendar
-                        else -> null
-                    },
-                )
             }
         }
 
@@ -273,19 +283,18 @@ internal fun SetupScaffold(
 
 @Composable
 internal fun LanguagePicker(language: String, onChange: (String) -> Unit) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        listOf("ru" to "Русский", "de" to "Deutsch").forEach { (code, title) ->
+        com.bibledesktop.shared.presentation.interfaceLanguages.forEach { (code, title) ->
             FilterChip(
                 selected = language == code,
                 onClick = { onChange(code) },
-                label = { Text(title, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                label = { Text(title, textAlign = TextAlign.Center) },
                 leadingIcon = if (language == code) {
                     { Icon(Icons.Outlined.Language, contentDescription = null, modifier = Modifier.size(18.dp)) }
                 } else null,
-                modifier = Modifier.weight(1f),
                 colors = FilterChipDefaults.filterChipColors(
                     containerColor = Color.White,
                     labelColor = Ink,
@@ -341,11 +350,13 @@ internal fun TranslationFilters(
     selected: TranslationFilter,
     onChange: (TranslationFilter) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         val options = listOf(
             TranslationFilter.All to localized(R.string.language_all, language),
             TranslationFilter.Russian to "Русский",
             TranslationFilter.German to "Deutsch",
+            TranslationFilter.Ukrainian to "Українська",
+            TranslationFilter.English to "English",
         )
         options.forEach { (filter, title) ->
             FilterChip(
@@ -469,8 +480,9 @@ private fun HomeSectionCard(
 @Composable
 internal fun localized(@StringRes id: Int, language: String, vararg args: Any): String {
     val context = LocalContext.current
-    return remember(id, language, args.toList()) {
-        val configuration = Configuration(context.resources.configuration).apply {
+    val currentConfiguration = LocalConfiguration.current
+    return remember(id, language, args.toList(), currentConfiguration) {
+        val configuration = Configuration(currentConfiguration).apply {
             setLocale(Locale.forLanguageTag(language))
         }
         context.createConfigurationContext(configuration).resources.getString(id, *args)

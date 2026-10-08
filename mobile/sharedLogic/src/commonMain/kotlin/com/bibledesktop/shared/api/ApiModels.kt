@@ -142,4 +142,34 @@ data class CalendarDay(
     val events: List<CalendarEvent> = emptyList(),
     @SerialName("fasting_events") val fastingEvents: List<CalendarEvent> = emptyList(),
     val readings: List<CalendarReading> = emptyList(),
+    val food: CalendarFood? = null,
 )
+
+@Serializable
+data class CalendarFood(val label: String, val reason: String? = null)
+
+@Serializable
+data class CalendarGridDay(
+    val date: String,
+    val oldStyleDate: String,
+    val weekday: Int,
+    val dayStyle: CalendarDayStyle,
+    val foodLabel: String,
+    val fastingColor: String,
+    val events: List<CalendarGridEvent> = emptyList(),
+)
+
+@Serializable
+data class CalendarDayStyle(val rank: String, val color: String, val fontWeight: Int)
+
+@Serializable
+data class CalendarGridEvent(
+    val id: String,
+    val title: String,
+    val typeCode: Int,
+    val category: String,
+    val typikonMark: CalendarGridMark? = null,
+)
+
+@Serializable
+data class CalendarGridMark(val label: String, val svgSource: String)

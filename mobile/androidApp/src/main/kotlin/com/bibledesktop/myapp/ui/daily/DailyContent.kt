@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -69,6 +72,7 @@ import com.bibledesktop.myapp.ui.theme.LightBlue
 import com.bibledesktop.myapp.ui.theme.Navy
 import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
+import com.bibledesktop.myapp.ui.theme.readingFont
 import com.bibledesktop.shared.api.BibleApiClient
 import com.bibledesktop.shared.api.CalendarDay
 import com.bibledesktop.shared.api.PrayerDetail
@@ -91,13 +95,14 @@ fun PrayersScreen(
     onBack: () -> Unit,
 ) {
     var selectedPrayer by rememberSaveable { mutableStateOf<Long?>(null) }
+    var textLanguage by rememberSaveable { mutableStateOf(language) }
     var listState by remember { mutableStateOf<LoadState<List<PrayerSummary>>>(LoadState.Loading) }
     var detailState by remember { mutableStateOf<LoadState<PrayerDetail>>(LoadState.Loading) }
     var retry by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(language, retry) {
+    LaunchedEffect(textLanguage, retry) {
         listState = LoadState.Loading
-        listState = runCatching { client.getPrayers(language) }
+        listState = runCatching { client.getPrayers(textLanguage) }
             .fold(
                 onSuccess = { LoadState.Ready(it) },
                 onFailure = { LoadState.Error },
@@ -120,6 +125,18 @@ fun PrayersScreen(
 
     if (selectedPrayer == null) {
         ContentListPage(title = localText(R.string.prayers_title, language), onBack = onBack) {
+            item {
+                Text(localText(R.string.prayer_text_language, language), color = Ink, fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val editions = com.bibledesktop.shared.presentation.interfaceLanguages + linkedMapOf(
+                        "cu" to localText(R.string.prayer_cu, language),
+                        "cu-civil" to localText(R.string.prayer_cu_civil, language),
+                    )
+                    editions.forEach { (code, label) ->
+                        FilterChip(selected = textLanguage == code, onClick = { textLanguage = code }, label = { Text(label) })
+                    }
+                }
+            }
             when (val current = listState) {
                 LoadState.Loading -> item { LoadingBox() }
                 LoadState.Error -> item {
@@ -212,9 +229,9 @@ private fun PrayerReader(
                     Spacer(Modifier.height(16.dp))
                 }
                 Text(
-                    current.value.body,
+                    android.text.Html.fromHtml(current.value.body, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim(),
                     color = Ink,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = readingFont(current.value.languageCode),
                     fontSize = fontSize.sp,
                     lineHeight = (fontSize * 1.5f).sp,
                 )
@@ -226,10 +243,10 @@ private fun PrayerReader(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 IconButton(onClick = { fontSize = (fontSize - 1).coerceAtLeast(15f) }, enabled = fontSize > 15f) {
-                    Icon(Icons.Outlined.TextDecrease, contentDescription = null)
+                    Icon(Icons.Outlined.TextDecrease, localText(R.string.bible_font_smaller, language))
                 }
                 IconButton(onClick = { fontSize = (fontSize + 1).coerceAtMost(28f) }, enabled = fontSize < 28f) {
-                    Icon(Icons.Outlined.TextIncrease, contentDescription = null)
+                    Icon(Icons.Outlined.TextIncrease, localText(R.string.bible_font_larger, language))
                 }
                 IconButton(
                     onClick = {
@@ -450,8 +467,9 @@ private fun share(context: Context, body: String) {
 @Composable
 private fun localText(@StringRes id: Int, language: String, vararg args: Any): String {
     val context = LocalContext.current
-    return remember(id, language, args.toList()) {
-        val configuration = Configuration(context.resources.configuration).apply {
+    val currentConfiguration = LocalConfiguration.current
+    return remember(id, language, args.toList(), currentConfiguration) {
+        val configuration = Configuration(currentConfiguration).apply {
             setLocale(Locale.forLanguageTag(language))
         }
         context.createConfigurationContext(configuration).resources.getString(id, *args)

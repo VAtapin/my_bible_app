@@ -16,7 +16,7 @@
     <string name="welcome_subtitle">Die orthodoxe App für Ihr geistliches Leben</string>
     <string name="welcome_quote">„Trachtet zuerst nach dem Reich Gottes…“\nMt 6,33</string>
     <string name="quick_title">Schnell einrichten</string>
-    <string name="quick_subtitle">Empfohlene Bereiche und Ihre Bibelauswahl</string>
+    <string name="quick_subtitle">Alle verfügbaren Bereiche mit einem Tippen</string>
     <string name="manual_title">Selbst einrichten</string>
     <string name="manual_subtitle">Sprache, Bereiche und Übersetzungen wählen</string>
     <string name="restore_title">Ich habe bereits eine App</string>
@@ -91,4 +91,10 @@
     <string name="settings_subtitle">Sprache, Bereiche und Übersetzungen</string>
     <string name="bookmark_delete">Lesezeichen löschen</string>
     <string name="bookmark_open">Stelle öffnen</string>
+    <string name="calendar_previous_month">Vorheriger Monat</string>
+    <string name="calendar_next_month">Nächster Monat</string>
+    <string name="calendar_corpus_ru">Kalendertexte sind derzeit auf Russisch verfügbar.</string>
+    <string name="prayer_text_language">Sprache des Gebetstextes</string>
+    <string name="prayer_cu">Kirchenslawisch</string>
+    <string name="prayer_cu_civil">Kirchenslawisch · zivile Schrift</string>
 </resources>

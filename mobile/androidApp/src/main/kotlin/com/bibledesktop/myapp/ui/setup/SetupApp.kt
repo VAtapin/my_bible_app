@@ -100,6 +100,9 @@ import com.bibledesktop.myapp.ui.theme.PrimaryBlue
 import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.shared.api.BibleApiClient
 import com.bibledesktop.shared.api.TranslationSummary
+import com.bibledesktop.shared.presentation.initialInterfaceLanguage
+import com.bibledesktop.shared.presentation.quickNativeSections
+import com.bibledesktop.shared.presentation.recommendedNativeTranslations
 import java.util.Locale
 
 private const val PreferencesName = "bible-desktop-native-profile"
@@ -120,6 +123,8 @@ internal enum class TranslationFilter(val code: String?) {
     All(null),
     Russian("ru"),
     German("de"),
+    Ukrainian("uk"),
+    English("en"),
 }
 
 internal sealed interface TranslationState {
@@ -150,8 +155,7 @@ fun SetupApp() {
         context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
     }
     val initialLanguage = remember {
-        preferences.getString("uiLanguage", null)
-            ?: if (Locale.getDefault().language == "de") "de" else "ru"
+        initialInterfaceLanguage(preferences.getString("uiLanguage", null), Locale.getDefault().language)
     }
 
     var language by rememberSaveable { mutableStateOf(initialLanguage) }
@@ -216,14 +220,30 @@ fun SetupApp() {
         }
     }
 
+    val changeLanguage: (String) -> Unit = {
+        language = it
+        preferences.edit().putString("uiLanguage", it).apply()
+    }
+
     when (route) {
         Route.Welcome -> WelcomeScreen(
             language = language,
-            onLanguageChange = { language = it },
+            client = client,
+            translationsState = translationState,
+            onRetry = { reloadKey += 1 },
+            onLanguageChange = changeLanguage,
             onQuick = {
-                quickSetup = true
-                selectedSectionIds = "bible,prayer,calendar"
-                route = Route.Translations
+                val available = (translationState as? TranslationState.Content)?.translations.orEmpty()
+                val recommended = recommendedNativeTranslations(available, language)
+                if (recommended.isNotEmpty()) {
+                    selectedSectionIds = quickNativeSections.joinToString(",")
+                    selectedTranslationCodes = recommended.joinToString(",")
+                    preferences.edit().putBoolean("setupComplete", true)
+                        .putString("uiLanguage", language).putString("sections", selectedSectionIds)
+                        .putString("translations", selectedTranslationCodes).apply()
+                    setupComplete = true
+                    route = Route.Home
+                }
             },
             onManual = {
                 quickSetup = false
@@ -234,7 +254,7 @@ fun SetupApp() {
         Route.Sections -> SectionsScreen(
             language = language,
             selected = selectedSections,
-            onLanguageChange = { language = it },
+            onLanguageChange = changeLanguage,
             onToggle = { id -> selectedSectionIds = toggleCsv(selectedSections, id) },
             onBack = { route = if (setupComplete) Route.Home else Route.Welcome },
             onNext = {
@@ -280,6 +300,7 @@ fun SetupApp() {
 
         Route.Home -> TodayScreen(
             language = language,
+            client = client,
             selectedSections = selectedSections,
             selectedTranslations = (translationState as? TranslationState.Content)
                 ?.translations

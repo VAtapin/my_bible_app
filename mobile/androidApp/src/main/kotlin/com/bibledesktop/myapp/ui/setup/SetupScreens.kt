@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -74,8 +75,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -88,6 +92,7 @@ import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.bible.BibleReader
 import com.bibledesktop.myapp.ui.daily.CalendarScreen
+import com.bibledesktop.myapp.ui.daily.CalendarOverview
 import com.bibledesktop.myapp.ui.daily.PrayersScreen
 import com.bibledesktop.myapp.ui.theme.Cream
 import com.bibledesktop.myapp.ui.theme.Gold
@@ -103,59 +108,78 @@ import java.util.Locale
 @Composable
 internal fun WelcomeScreen(
     language: String,
+    client: BibleApiClient,
+    translationsState: TranslationState,
+    onRetry: () -> Unit,
     onLanguageChange: (String) -> Unit,
     onQuick: () -> Unit,
     onManual: () -> Unit,
 ) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding()) {
+    val split = maxWidth >= 840.dp && maxWidth > maxHeight
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Cream)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        LanguagePicker(language, onLanguageChange)
-        Spacer(Modifier.height(28.dp))
-        Image(
-            painter = painterResource(R.mipmap.ic_launcher_foreground),
-            contentDescription = null,
-            modifier = Modifier.size(160.dp),
-            contentScale = ContentScale.Crop,
-        )
-        Text(
-            text = localized(R.string.app_name, language),
-            modifier = Modifier.padding(top = 22.dp),
-            color = Ink,
-            fontFamily = FontFamily.Serif,
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = localized(R.string.welcome_title, language),
-            modifier = Modifier.padding(top = 10.dp),
-            color = Navy,
-            fontFamily = FontFamily.Serif,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = localized(R.string.welcome_subtitle, language),
-            modifier = Modifier.padding(top = 6.dp, bottom = 28.dp),
-            color = PrimaryBlue,
-            textAlign = TextAlign.Center,
-        )
+        Column(Modifier.padding(horizontal = 16.dp)) { LanguagePicker(language, onLanguageChange) }
+        Box(Modifier.fillMaxWidth()) {
+            if (split) Row(Modifier.fillMaxWidth().testTag("welcome-split")) {
+                WelcomeHero(language, Modifier.weight(1f))
+                Column(Modifier.weight(1f).padding(24.dp)) {
+                    WelcomeActions(language, translationsState, onRetry, onQuick, onManual)
+                }
+            } else Column(Modifier.fillMaxWidth().testTag("welcome-stacked")) {
+                WelcomeHero(language, Modifier.fillMaxWidth())
+                Column(Modifier.padding(18.dp)) {
+                    WelcomeActions(language, translationsState, onRetry, onQuick, onManual)
+                }
+            }
+        }
+        CalendarOverview(language, client, Modifier.padding(18.dp))
+    }
+    }
+}
 
+@Composable
+private fun WelcomeHero(language: String, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val height = (maxWidth * 0.8f).coerceIn(260.dp, 480.dp)
+            Box(Modifier.fillMaxWidth().height(height).testTag("welcome-hero")) {
+                Image(painterResource(R.drawable.welcome_church), contentDescription = null,
+                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                    alignment = BiasAlignment(0f, -0.36f))
+                Box(Modifier.fillMaxWidth().height(110.dp).align(Alignment.BottomCenter)
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Cream))))
+            }
+        }
+        Text(localized(R.string.app_name, language), color = Ink, fontFamily = FontFamily.Serif,
+            fontSize = 34.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text(localized(R.string.welcome_subtitle, language), Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+            color = PrimaryBlue, fontFamily = FontFamily.Serif, fontSize = 18.sp, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun WelcomeActions(language: String, state: TranslationState, onRetry: () -> Unit, onQuick: () -> Unit, onManual: () -> Unit) {
+        Text(localized(R.string.welcome_title, language), color = Ink, fontSize = 20.sp,
+            fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 14.dp))
         ActionCard(
             title = localized(R.string.quick_title, language),
             subtitle = localized(R.string.quick_subtitle, language),
             icon = Icons.Outlined.Bolt,
             primary = true,
+            enabled = state is TranslationState.Content && com.bibledesktop.shared.presentation.recommendedNativeTranslations(state.translations, language).isNotEmpty(),
             onClick = onQuick,
         )
+
+        if (state is TranslationState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(bottom = 12.dp))
+        if (state is TranslationState.Error) {
+            Text(localized(R.string.load_error, language), color = Ink)
+            TextButton(onClick = onRetry) { Text(localized(R.string.retry, language)) }
+        }
         ActionCard(
             title = localized(R.string.manual_title, language),
             subtitle = localized(R.string.manual_subtitle, language),
@@ -175,9 +199,9 @@ internal fun WelcomeScreen(
             modifier = Modifier.padding(top = 26.dp),
             color = PrimaryBlue,
             fontFamily = FontFamily.Serif,
+            fontSize = 20.sp,
             textAlign = TextAlign.Center,
         )
-    }
 }
 @Composable
 private fun ActionCard(
@@ -374,7 +398,7 @@ internal fun SummaryScreen(
     ) {
         SummaryGroup(
             title = localized(R.string.summary_language, language),
-            values = listOf(if (language == "de") "Deutsch" else "Русский"),
+            values = listOf(com.bibledesktop.shared.presentation.interfaceLanguages.getValue(language)),
         )
         SummaryGroup(
             title = localized(R.string.summary_sections, language),

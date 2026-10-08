@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -52,11 +53,11 @@ class NativeSmokeTest {
     @get:Rule val rules: RuleChain = RuleChain.outerRule(fixture).around(compose)
 
     @Test fun firstLaunchManualSetupAndSystemBack() {
-        compose.onNodeWithText("Добро пожаловать").assertIsDisplayed()
+        compose.onNodeWithText("Добро пожаловать").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Настроить самому").performScrollTo().performClick()
         compose.onNodeWithText("Выберите, что включить в приложение").assertIsDisplayed()
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
-        compose.onNodeWithText("Добро пожаловать").assertIsDisplayed()
+        compose.onNodeWithText("Добро пожаловать").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun currentBibleDesktopApiSupportsNativeCoreScreens() = runBlocking {
@@ -73,16 +74,15 @@ class NativeSmokeTest {
             assertEquals("2026-10-08", day.date)
             assertEquals("bible-desktop-calendar-engine", day.source)
             assertTrue(day.events.isNotEmpty())
+            assertEquals(31, client.getCalendarMonth(2026, 10, "uk").size)
         } finally { client.close() }
     }
 
     @Test fun setupAndCoreScreenNavigation() {
-        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
         compose.waitUntil(timeoutMillis = 30_000) {
-            compose.onAllNodes(hasText("Далее") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("Далее").performClick()
-        compose.onNodeWithText("Создать моё приложение").performClick()
+        compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
         compose.onNodeWithText("Календарь").performClick()
         compose.onNodeWithText("Церковный календарь").assertIsDisplayed()
         back()
@@ -93,6 +93,48 @@ class NativeSmokeTest {
         compose.onNodeWithText("Книги Библии").assertIsDisplayed()
         back()
         compose.onNodeWithText("Календарь").assertIsDisplayed()
+    }
+
+    @Test fun fourLanguagesAndCalendarBeforeSetup() {
+        compose.onNodeWithText("Українська").performClick()
+        compose.onNodeWithText("Швидко налаштувати").assertExists()
+        compose.onNodeWithText("English").performScrollTo().performClick()
+        compose.onNodeWithText("Quick setup").assertExists()
+        compose.onNodeWithTag("calendar-overview").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Calendar texts are currently in Russian.").assertExists()
+        compose.onNodeWithText("Deutsch").performScrollTo().performClick()
+        compose.onNodeWithText("Schnell einrichten").assertExists()
+        compose.onNodeWithText("Русский").performClick()
+        compose.onNodeWithText("Быстро настроить").assertExists()
+    }
+
+    @Test fun setupSurvivesActivityRecreation() {
+        compose.onNodeWithText("English").performClick()
+        compose.onNodeWithText("Set up manually").performScrollTo().performClick()
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithText("Choose what to include").assertIsDisplayed()
+        back()
+        compose.onNodeWithText("Quick setup").assertExists()
+    }
+
+    @Test fun systemRotationKeepsManualSetupAndLanguage() {
+        compose.onNodeWithText("Українська").performClick()
+        compose.onNodeWithText("Налаштувати самостійно").performScrollTo().performClick()
+        try {
+            compose.runOnUiThread {
+                compose.activity.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+            compose.waitUntil(10_000) {
+                compose.activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            }
+            compose.onNodeWithText("Виберіть, що додати до застосунку").assertIsDisplayed()
+            back()
+            compose.onNodeWithText("Швидко налаштувати").assertExists()
+        } finally {
+            compose.runOnUiThread {
+                compose.activity.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
     }
 
     private fun back() {

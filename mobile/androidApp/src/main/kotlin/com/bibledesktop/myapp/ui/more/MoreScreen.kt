@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -215,8 +216,9 @@ private fun share(context: Context, bookmark: BookmarkEntry) {
 @Composable
 private fun localText(@StringRes id: Int, language: String, vararg args: Any): String {
     val context = LocalContext.current
-    return remember(id, language, args.toList()) {
-        val configuration = Configuration(context.resources.configuration).apply {
+    val currentConfiguration = LocalConfiguration.current
+    return remember(id, language, args.toList(), currentConfiguration) {
+        val configuration = Configuration(currentConfiguration).apply {
             setLocale(Locale.forLanguageTag(language))
         }
         context.createConfigurationContext(configuration).resources.getString(id, *args)

@@ -12,6 +12,23 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun decodesMonthAndUsesExplicitEnglishCorpusFallback() = runBlocking {
+        val engine = MockEngine { request ->
+            assertEquals("/api/calendar/month", request.url.encodedPath)
+            assertEquals("2026", request.url.parameters["year"])
+            assertEquals("10", request.url.parameters["month"])
+            assertEquals("ru", request.url.parameters["lang"])
+            respond("""{"data":[{"date":"2026-10-08","oldStyleDate":"2026-09-25","weekday":4,"dayStyle":{"rank":"vigil","color":"#333333","fontWeight":700},"foodLabel":"поста нет","fastingColor":"#333333","events":[{"id":"1","title":"Saint","typeCode":4,"category":"commemoration","typikonMark":{"label":"Vigil","svgSource":"/assets/typikon/vigil.svg"}}]}]}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+        try {
+            val day = client.getCalendarMonth(2026, 10, "en").single()
+            assertEquals(700, day.dayStyle.fontWeight)
+            assertEquals("Vigil", day.events.single().typikonMark?.label)
+        } finally { client.close() }
+    }
+
     @Test
     fun decodesTranslationsAndPassesLanguageFilter() = runBlocking {
         val engine = MockEngine { request ->
