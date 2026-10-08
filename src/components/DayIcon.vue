@@ -17,7 +17,7 @@ function move(direction: number): void { index.value = (index.value + direction 
   <dialog ref="dialog" class="icon-dialog" :aria-label="icon.title" @click="($event.target === dialog) && dialog?.close()">
     <div class="icon-viewer">
       <header><strong>{{ icon.title }}</strong><button type="button" :aria-label="text.calendar.close" @click="dialog?.close()">×</button></header>
-      <OfflineImage v-if="images[index]" :src="images[index]" :alt="icon.title" />
+      <OfflineImage v-if="images[index]" class="icon-full-image" :src="images[index]" :alt="icon.title" />
       <div v-if="images.length > 1" class="icon-image-navigation"><button type="button" :aria-label="text.calendar.previous" @click="move(-1)">‹</button><small>{{ index + 1 }} / {{ images.length }}</small><button type="button" :aria-label="text.calendar.next" @click="move(1)">›</button></div>
       <small v-for="date in icon.dates" :key="date.label">{{ date.label }}</small>
       <small v-if="icon.credit">{{ icon.credit }}</small>

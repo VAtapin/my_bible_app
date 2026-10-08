@@ -54,11 +54,12 @@
 .icon-day-card p { margin: 8px 0 0; font-size: 13px; line-height: 1.4; }
 .day-icon-button { flex: 0 0 auto; align-self: start; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .day-icon-button img { display: block; }
-.icon-dialog { max-width: min(680px, 94vw); max-height: 92dvh; padding: 14px; border: 1px solid var(--line); border-radius: 16px; color: var(--ink); background: var(--white); }
+.icon-dialog { box-sizing: border-box; width: min(960px, 94vw); max-width: 94vw; max-height: 92dvh; overflow: auto; padding: 14px; border: 1px solid var(--line); border-radius: 16px; color: var(--ink); background: var(--white); }
 .icon-dialog::backdrop { background: #142537b8; }
 .icon-viewer header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .icon-viewer header button { flex: 0 0 44px; height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font-size: 24px; }
-.icon-viewer > img { display: block; width: 100%; height: auto; max-height: 73dvh; object-fit: contain; }
+/* A dialog is nested inside thumbnail cards; their later img rules must not resize its image. */
+.icon-dialog .icon-viewer > .icon-full-image { display: block; width: 100%; height: min(68dvh, 820px); max-height: none; margin-inline: auto; object-fit: contain; object-position: center; border-radius: 8px; }
 .calendar-view-switch { display: flex; gap: 6px; margin-bottom: 12px; }
 .calendar-view-switch button { flex: 1; min-height: 36px; border: 1px solid #ffffff70; border-radius: 8px; color: #fff; background: #ffffff12; }
 .calendar-view-switch button.active { background: #fff; color: var(--brand-blue); }

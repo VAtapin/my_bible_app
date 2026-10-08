@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Проверка размеров окна иконы</title></head>
+<body>
+  <div id="viewer-check"></div>
+  <script type="module">
+    import { createApp, h } from 'vue'
+    import DayIcon from '../src/components/DayIcon.vue'
+    import '../src/styles.css'
+    import '../src/themes.css'
+    import '../src/responsive.css'
+    // Isolated layout regression fixture, not a calendar API response.
+    createApp({ render: () => h('main', { style: 'padding:16px' }, [
+      h('h1', 'Проверка размеров окна иконы'),
+      h('p', 'Изолированная проверка компонента, не проверка календарных данных.'),
+      h('div', { class: 'icon-day-card calendar-icons' }, [h(DayIcon, { icon: {
+        id: 3054, title: 'Преподобный Сергий Радонежский',
+        image_url: 'https://bible-desktop.com/api/calendar/icons/3054/images/7023',
+      } })]),
+    ]) }).mount('#viewer-check')
+  </script>
+</body>
+</html>
