@@ -45,7 +45,7 @@
     <string name="summary_language">Sprache der Oberfläche</string>
     <string name="summary_sections">Bereiche</string>
     <string name="summary_translations">Bibelübersetzungen</string>
-    <string name="create_app">Meine App erstellen</string>
+    <string name="action_save">Speichern</string>
     <string name="offline_after_create">Ausgewählte Inhalte können anschließend für die Offline-Nutzung geladen werden.</string>
     <string name="my_day">Mein Tag</string>
     <string name="today_title">Heute</string>

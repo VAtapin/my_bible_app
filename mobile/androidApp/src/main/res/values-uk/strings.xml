@@ -45,7 +45,7 @@
     <string name="summary_language">Мова інтерфейсу</string>
     <string name="summary_sections">Розділи</string>
     <string name="summary_translations">Переклади Біблії</string>
-    <string name="create_app">Створити мій застосунок</string>
+    <string name="action_save">Зберегти</string>
     <string name="offline_after_create">Завантаження для роботи без мережі буде додано окремо.</string>
     <string name="my_day">Мій день</string>
     <string name="today_title">Сьогодні</string>

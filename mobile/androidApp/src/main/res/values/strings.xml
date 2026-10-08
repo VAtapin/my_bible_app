@@ -45,7 +45,7 @@
     <string name="summary_language">Язык интерфейса</string>
     <string name="summary_sections">Разделы</string>
     <string name="summary_translations">Переводы Библии</string>
-    <string name="create_app">Создать моё приложение</string>
+    <string name="action_save">Сохранить</string>
     <string name="offline_after_create">Выбранные материалы можно будет загрузить для работы без сети.</string>
     <string name="my_day">Мой день</string>
     <string name="today_title">Сегодня</string>

@@ -67,6 +67,27 @@ class NativeSmokeTest {
         compose.onNodeWithText("Добро пожаловать").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun manualSavePersistsSettingsAndOpensToday() {
+        compose.onNodeWithText("Настроить самому").performScrollTo().performClick()
+        compose.onNodeWithText("Далее").performClick()
+        if (compose.onAllNodes(hasText("Выберите переводы Библии")).fetchSemanticsNodes().isNotEmpty()) {
+            compose.waitUntil(30_000) {
+                compose.onAllNodes(hasText("Далее") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+            }
+            compose.onNodeWithText("Далее").performClick()
+        }
+        compose.onNodeWithText("Всё готово").assertIsDisplayed()
+        compose.onNodeWithText("Сохранить").performClick()
+        compose.onNodeWithText("Мой день").assertIsDisplayed()
+        val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
+        assertTrue(preferences.getBoolean("setupComplete", false))
+        assertEquals("ru", preferences.getString("uiLanguage", null))
+        assertTrue(preferences.contains("sections"))
+        assertTrue(preferences.contains("translations"))
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithText("Мой день").assertIsDisplayed()
+    }
+
     @Test fun currentBibleDesktopApiSupportsNativeCoreScreens() = runBlocking {
         val client = BibleApiClient()
         try {

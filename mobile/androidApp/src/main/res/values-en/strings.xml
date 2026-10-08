@@ -45,7 +45,7 @@
     <string name="summary_language">Interface language</string>
     <string name="summary_sections">Sections</string>
     <string name="summary_translations">Bible translations</string>
-    <string name="create_app">Create my app</string>
+    <string name="action_save">Save</string>
     <string name="offline_after_create">Offline downloads will be added in a later stage.</string>
     <string name="my_day">My day</string>
     <string name="today_title">Today</string>

@@ -392,7 +392,7 @@ internal fun SummaryScreen(
                     .height(54.dp),
             ) {
                 Icon(Icons.Outlined.CheckCircle, contentDescription = null)
-                Text(localized(R.string.create_app, language), modifier = Modifier.padding(start = 8.dp))
+                Text(localized(R.string.action_save, language), modifier = Modifier.padding(start = 8.dp))
             }
         },
     ) {
