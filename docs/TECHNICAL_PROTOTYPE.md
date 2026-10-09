@@ -67,9 +67,9 @@ npm run cap:sync
 
 Для PWA зафиксированы:
 
-- адрес: `https://my.bible-desktop.com`;
-- каталог проекта: `/var/www/vhosts/bible-desktop.com/my_app`;
-- document root субдомена: `/var/www/vhosts/bible-desktop.com/my_app/dist`;
+- адрес: `https://biblia-app.ru`;
+- каталог проекта: `/var/www/vhosts/biblia-app.ru/httpdocs`;
+- document root субдомена: `/var/www/vhosts/biblia-app.ru/httpdocs/dist`;
 - API: адрес из `config/api-base-url.txt`;
 - среда сборки: Plesk Node.js 22.
 
@@ -78,7 +78,7 @@ npm run cap:sync
 выполняется из SSH/Plesk terminal так:
 
 ```bash
-cd /var/www/vhosts/bible-desktop.com/my_app && \
+cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 git init && \
 git remote add origin https://github.com/VAtapin/my_bible_app.git && \
 git fetch origin main && \
@@ -95,14 +95,17 @@ bash scripts/deploy-production.sh
 После первого успешного checkout дальнейшие обновления выполняются командой:
 
 ```bash
-cd /var/www/vhosts/bible-desktop.com/my_app && \
+cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 export PATH="/opt/plesk/node/22/bin:$PATH" && \
 bash scripts/deploy-production.sh
 ```
 
 Скрипт использует только fast-forward pull, устанавливает точные зависимости из
 lock-файла, создаёт production-сборку и проверяет наличие `dist/index.html` и
-service worker. Файл `public/.htaccess` попадает в сборку и обеспечивает SPA
+service worker. По умолчанию он обновляет только Bible App, без записи в
+папку отдельной «Азбуки». Необязательный флаг «--with-azbuka» создаёт архив
+публичной сборки; импорт выполняет пользователь её сайта по команде README.
+Файл `public/.htaccess` попадает в сборку и обеспечивает SPA
 fallback для прямого открытия внутренних URL через Apache.
 
 ## Следующая проверка на устройствах

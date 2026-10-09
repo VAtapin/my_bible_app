@@ -95,6 +95,12 @@
 
 ## Важные решения / deployment
 
+- Deployment Bible App и azbuka.bible-desktop.com выполняется разными
+  пользователями Plesk. Скрипт deploy-production.sh по умолчанию обновляет
+  только Bible App в своём checkout; межпользовательского копирования нет.
+  --with-azbuka отдельно создаёт публичный архив, который импортирует
+  пользователь сайта «Азбуки» по README. Для изменений читалки обновление
+  отдельной «Азбуки» не требуется. Её интерфейс в этой задаче не изменён.
 - **ЕДИНСТВЕННЫЙ API — BIBLEDESKTOP, ВКЛЮЧАЯ КАЛЕНДАРЬ** (API_SOURCE.md).
   Исходники D:/Projekte/BibleDesktop, production https://bible-desktop.com/api.
   Этот чат API не изменяет; новые функции согласовываются с его чатом.
@@ -261,8 +267,11 @@
 
 ## Последний связанный commit
 
+- Deployment: текущий atomic блок Separate Bible App deployment from standalone Azbuka.
+  Проверки: 6 сценариев реального Bash-скрипта с изолированными Git/npm,
+  настоящий tar, основной режим без папки Азбуки, явный архив, отказ pull,
+  отсутствующие артефакты и неизвестный флаг. Production не запускался.
 - Книги и толкования: `cf262ba` — Add book library and contextual commentaries.
 - Непрерывное чтение: `6ea7d4b` — Enable continuous book reading and restore verse positions.
 - Поиск: `36152cb` — Add paginated verse search and offline language-aware indexing.
-- Текущий atomic блок: Add independent reading windows and verse synchronization.
-  Hash определяется по Git после commit.
+- Окна: `4fcd884` — Add independent reading windows and verse synchronization.

@@ -2,9 +2,16 @@
 
 set -Eeuo pipefail
 
-readonly app_dir="/var/www/vhosts/biblia-app.ru/httpdocs"
+publish_azbuka=false
+if [[ $# -eq 1 && "$1" == "--with-azbuka" ]]; then
+    publish_azbuka=true
+elif [[ $# -ne 0 ]]; then
+    echo "Usage: bash scripts/deploy-production.sh [--with-azbuka]" >&2
+    exit 2
+fi
+
+readonly app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly node_bin="/opt/plesk/node/22/bin"
-readonly azbuka_public_dir="/var/www/vhosts/bible-desktop.com/my_app/azbuka-web/dist"
 
 cd "$app_dir"
 export PATH="$node_bin:$PATH"
@@ -14,26 +21,23 @@ if [[ "$(node -p 'process.versions.node.split(".")[0]')" != "22" ]]; then
     exit 1
 fi
 
-if [[ ! -d "$azbuka_public_dir" || ! -w "$azbuka_public_dir" ]]; then
-    echo "Azbuka public directory must exist and be writable: $azbuka_public_dir" >&2
-    exit 1
-fi
-
 git pull --ff-only
 npm ci
 npm run build
 
 test -s dist/index.html
 test -s dist/sw.js
-test -s azbuka-web/dist/index.html
-test -s azbuka-web/dist/sw.js
 for icon in bookmarks calendar library prayers setup; do
     test -s "dist/app-icons/${icon}.png"
 done
 
-cp -a azbuka-web/dist/. "$azbuka_public_dir/"
-cmp -s azbuka-web/dist/index.html "$azbuka_public_dir/index.html"
-cmp -s azbuka-web/dist/sw.js "$azbuka_public_dir/sw.js"
-
 echo "Bible App build is ready in $app_dir/dist"
-echo "Azbuka public files updated in $azbuka_public_dir"
+if $publish_azbuka; then
+    # Only the Azbuka owner imports this public archive into their own directory.
+    test -s azbuka-web/dist/index.html
+    test -s azbuka-web/dist/sw.js
+    tar -czf dist/azbuka-release.tar.gz -C azbuka-web/dist .
+    test -s dist/azbuka-release.tar.gz
+    echo "Azbuka archive is ready at https://biblia-app.ru/azbuka-release.tar.gz"
+    echo "Import it separately as the Plesk user serving azbuka.bible-desktop.com (see README)."
+fi

@@ -259,17 +259,19 @@ npm run build
 cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 export PATH="/opt/plesk/node/22/bin:$PATH" && \
 git pull --ff-only && \
-npm ci && \
-npm run build && \
-tar -czf dist/azbuka-release.tar.gz -C azbuka-web/dist .
+bash scripts/deploy-production.sh
 ```
 
 Основная версия создаётся в `dist`, самостоятельная «Азбука» — в
 `azbuka-web/dist`. Домены обслуживают разные пользователи Plesk, поэтому
-`scripts/deploy-production.sh` с прямой записью в обе папки здесь неприменим.
+`scripts/deploy-production.sh` по умолчанию обновляет только Bible App.
+Если изменялась самостоятельная «Азбука» и нужно обновить её отдельно,
+запустите этот скрипт с `--with-azbuka`: он также создаст
+`dist/azbuka-release.tar.gz`; в папку другого пользователя он не записывает.
 Не расширяйте межпользовательские права. Архив содержит только публичную сборку.
 
-Затем от пользователя Plesk домена `bible-desktop.com`:
+Только для обновления отдельной «Азбуки», после создания архива —
+от её пользователя Plesk:
 
 ```bash
 cd /var/www/vhosts/bible-desktop.com/my_app/azbuka-web/dist && \
