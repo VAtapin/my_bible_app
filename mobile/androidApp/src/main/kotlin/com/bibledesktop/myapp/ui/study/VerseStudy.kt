@@ -57,6 +57,7 @@ internal fun VerseStudy(language: String, chapter: BibleChapter, verse: BibleVer
     Column(Modifier.fillMaxWidth().testTag("verse-study"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SelectionContainer { Text(verse.plainText, fontFamily = readingFont(chapter.translation.language.code), fontSize = 19.sp, lineHeight = 29.sp) }
         Text(chapter.translation.name, color = PrimaryBlue)
+        CommentaryPanel(language, chapter, verse, client)
         Text(localized(R.string.study_references, language), style = MaterialTheme.typography.titleMedium)
         if (referenceError) StudyError(language) { retry++ }
         else if (references == null) CircularProgressIndicator(Modifier.size(24.dp))

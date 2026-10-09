@@ -69,6 +69,19 @@ internal class OfflineContentRepository(
             ?.takeIf { it.translation.code == translationCode && it.book.slug == bookSlug && it.chapter.number == chapterNumber && it.verses.isNotEmpty() }
             ?: throw BibleNotInstalled(translationCode)
     }
+    private suspend fun <T> studyContent(key: String, serializer: kotlinx.serialization.KSerializer<T>, fetch: suspend () -> T): T {
+        if (!canRefresh()) store.read(key, serializer)?.let { return it }
+        val value = try { fetch() } catch (cancelled: CancellationException) { throw cancelled }
+        catch (error: java.io.IOException) { return store.read(key, serializer) ?: throw error }
+        store.write(key, serializer, value)
+        return value
+    }
+    override suspend fun getStudyBooks(query: String, offset: Int) = studyContent("study-books:$query:$offset", StudyBookPage.serializer()) { remote.getStudyBooks(query, offset) }
+    override suspend fun getBookContents(book: Long, offset: Int) = studyContent("study-contents:$book:$offset", BookContents.serializer()) { remote.getBookContents(book, offset) }
+    override suspend fun getBookSection(book: Long, section: Long) = studyContent("study-article:$book:$section", StudySection.serializer()) { remote.getBookSection(book, section) }
+    override suspend fun getCommentaryModules() = studyContent("commentary-modules", ListSerializer(CommentaryModule.serializer())) { remote.getCommentaryModules() }
+    override suspend fun getCanonicalSlug(canon: String, osis: String) = content("canonical:$canon:$osis", kotlinx.serialization.serializer<String>()) { remote.getCanonicalSlug(canon, osis) }
+    override suspend fun getCommentaries(book: String, chapter: Int?, modules: List<String>, offset: Int) = studyContent("commentaries:$book:$chapter:${modules.sorted().joinToString(",")}:$offset", CommentaryPage.serializer()) { remote.getCommentaries(book, chapter, modules, offset) }
     override suspend fun getCrossReferences(verseId: Long, translationCode: String) = content("references:$translationCode:$verseId", CrossReferences.serializer()) { remote.getCrossReferences(verseId, translationCode) }
     override suspend fun getStrongTokens(verseId: Long, translationCode: String) = content("tokens:$translationCode:$verseId", StrongTokens.serializer()) { remote.getStrongTokens(verseId, translationCode) }
     override suspend fun getStrongEntry(number: String, verseId: Long) = content("strong:$number:$verseId", StrongEntry.serializer()) { remote.getStrongEntry(number, verseId) }

@@ -1,0 +1,25 @@
+<resources>
+    <string name="study_books">Bücher</string>
+    <string name="study_book_search">Titel oder Autor</string>
+    <string name="study_contents">Inhaltsverzeichnis</string>
+    <string name="study_section">Abschnitt</string>
+    <string name="study_previous">Zurück</string>
+    <string name="study_next">Weiter</string>
+    <string name="study_total">Gesamt</string>
+    <string name="study_material_empty">Keine Materialien gefunden</string>
+    <string name="study_material_error">Materialien konnten nicht geöffnet werden. Verbindung prüfen oder erneut versuchen.</string>
+    <string name="study_cache_hint">Geöffnete Materialien werden auf diesem Gerät gespeichert. Dies lädt nicht die gesamte Quelle herunter.</string>
+    <string name="study_commentaries">Kommentare</string>
+    <string name="study_sources">Quellen</string>
+    <string name="study_choose_sources">Quellen wählen (bis zu 30)</string>
+    <string name="study_scope_book">Zum Buch</string>
+    <string name="study_scope_chapter">Zum Kapitel</string>
+    <string name="study_scope_verse">Zum Vers</string>
+    <string name="study_scope_range">Zum Versbereich</string>
+    <string name="study_scope_visible">Zu sichtbaren Versen</string>
+    <string name="study_first_verse">Erster Vers</string>
+    <string name="study_last_verse">Letzter Vers</string>
+    <string name="study_invalid_range">Einen vorhandenen Versbereich eingeben</string>
+    <string name="study_more">Mehr anzeigen</string>
+    <string name="study_full">Vollständig lesen</string>
+</resources>

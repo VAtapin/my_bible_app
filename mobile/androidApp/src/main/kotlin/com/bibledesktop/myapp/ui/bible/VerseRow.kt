@@ -27,6 +27,8 @@ import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.myapp.ui.theme.*
 import com.bibledesktop.shared.api.BibleChapter
 import com.bibledesktop.shared.api.BibleVerse
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun ChapterReadingContent(
@@ -34,12 +36,21 @@ internal fun ChapterReadingContent(
     onBookmark: (BibleChapter, BibleVerse) -> Unit, onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit, modifier: Modifier = Modifier,
     onStudy: ((BibleChapter, BibleVerse) -> Unit)? = null, initialVerse: Int = 0,
+    onVisibleRange: ((BibleVerse, BibleVerse) -> Unit)? = null,
 ) {
     key(chapter.translation.code, chapter.book.slug, chapter.chapter.number) {
         ReadingViewport(modifier) {
             val listState = rememberLazyListState()
             LaunchedEffect(initialVerse) {
                 chapter.verses.indexOfFirst { it.number == initialVerse }.takeIf { it >= 0 }?.let { listState.scrollToItem(it) }
+            }
+            LaunchedEffect(listState, chapter) {
+                snapshotFlow { listState.layoutInfo.visibleItemsInfo.map { it.index } }.collectLatest { indices ->
+                    delay(180)
+                    val first = indices.firstOrNull()?.let { chapter.verses.getOrNull(it) }
+                    val last = indices.lastOrNull()?.let { chapter.verses.getOrNull(it) }
+                    if (first != null && last != null) onVisibleRange?.invoke(first, last)
+                }
             }
             LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
                 items(chapter.verses, key = BibleVerse::osisRef) { verse ->

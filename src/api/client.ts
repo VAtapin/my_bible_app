@@ -46,13 +46,14 @@ export interface BibleApi {
   searchVerses(query: string, translation: string): Promise<VerseSearchResponse>
 }
 
-interface ApiClientOptions {
+export interface ApiClientOptions {
   baseUrl: string
   timeoutMs?: number
   fetcher?: typeof fetch
 }
 
-export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }: ApiClientOptions): BibleApi {
+/** Shared public JSON transport. Callers validate the full envelope before reading it. */
+export function createApiRequest({ baseUrl, timeoutMs = 10_000, fetcher = fetch }: ApiClientOptions) {
   const request = async <T>(path: string, validate: (data: unknown) => data is T): Promise<T> => {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), timeoutMs)
@@ -75,11 +76,11 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
       let payload: unknown
       try { payload = await response.json() }
       catch { throw new ApiError('invalid-response', 'API вернуло некорректный JSON.') }
-      if (!isEnvelope(payload) || !validate(payload.data)) {
+      if (!validate(payload)) {
         throw new ApiError('invalid-response', 'API вернуло ответ неизвестного формата.')
       }
 
-      return payload.data
+      return payload
     } catch (error) {
       if (error instanceof ApiError) {
         throw error
@@ -93,6 +94,14 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
     }
   }
 
+  return request
+}
+
+export function createBibleApi(options: ApiClientOptions): BibleApi {
+  const { baseUrl } = options
+  const transport = createApiRequest(options)
+  const request = async <T>(path: string, validate: (data: unknown) => data is T): Promise<T> =>
+    (await transport<ApiEnvelope<T>>(path, (payload): payload is ApiEnvelope<T> => isEnvelope(payload) && validate(payload.data))).data
   return {
     getLanguages() {
       return request<LanguageSummary[]>('/languages', isLanguageList)

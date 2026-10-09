@@ -5,6 +5,8 @@ import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -221,6 +224,7 @@ fun BibleReader(
             val chapterNumber = selectedChapter ?: 1
             ChapterScreen(
             language = language,
+            studyClient = client,
             state = chapterState,
             chapterNumber = chapterNumber,
             chaptersCount = selectedBook.chaptersCount,
@@ -327,6 +331,7 @@ private fun BooksScreen(
 @Composable
 private fun ChapterScreen(
     language: String,
+    studyClient: BibleContentSource,
     state: LoadState<BibleChapter>,
     chapterNumber: Int,
     chaptersCount: Int,
@@ -352,6 +357,9 @@ private fun ChapterScreen(
     onChooseBook: () -> Unit,
     onChooseChapter: () -> Unit,
 ) {
+    var showingCommentaries by rememberSaveable { mutableStateOf(false) }
+    var visibleFirst by remember(state) { mutableIntStateOf(initialVerse) }
+    var visibleLast by remember(state) { mutableIntStateOf(initialVerse) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -374,6 +382,7 @@ private fun ChapterScreen(
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 12.dp)) {
             androidx.compose.material3.TextButton(onClick = onCompare) { Text(text(if (comparing) R.string.compare_close else R.string.compare_open, language)) }
             androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_library_title, language)) }
+            androidx.compose.material3.TextButton(onClick = { showingCommentaries = !showingCommentaries }) { Text(text(R.string.study_commentaries, language)) }
         }
 
         when (state) {
@@ -386,11 +395,20 @@ private fun ChapterScreen(
             )
             is LoadState.Ready -> if (comparison != null) comparison(state.value, Modifier.weight(1f)) else if (state.value.verses.isEmpty()) ErrorBox(
                 text(R.string.bible_chapter_unavailable, language), text(R.string.retry, language), onRetry, Modifier.weight(1f),
-            ) else ChapterReadingContent(
+            ) else Column(Modifier.weight(1f)) {
+                ChapterReadingContent(
                 language, state.value, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 modifier = Modifier.weight(1f),
                 onStudy = onStudy, initialVerse = initialVerse,
+                onVisibleRange = { first, last -> visibleFirst = first.number; visibleLast = last.number },
             )
+                if (showingCommentaries) {
+                    val verse = state.value.verses.firstOrNull { it.number == visibleFirst } ?: state.value.verses.first()
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp)) {
+                        com.bibledesktop.myapp.ui.study.CommentaryPanel(language, state.value, verse, studyClient, visibleLast)
+                    }
+                }
+            }
         }
 
         Surface(color = Color.White, shadowElevation = 6.dp) {

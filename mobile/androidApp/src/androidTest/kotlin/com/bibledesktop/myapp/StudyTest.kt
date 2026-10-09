@@ -20,7 +20,8 @@ class StudyTest {
 
     @Test fun realParallelPlacesAndStrongDictionaryLoadAndNavigate() {
         val chapter = runBlocking {
-            val translation = client.getTranslations("ru").first { it.hasStrong }
+            // Import changes catalogue order; not every new module has tokens for this verse.
+            val translation = client.getTranslations("ru").first { it.code == "BQ_RUSSIAN_RST_STRONG" }
             val book = client.getBooks(translation.code).first { it.canonicalBook?.osisCode == "John" }
             client.getChapter(translation.code, book.slug, 3)
         }

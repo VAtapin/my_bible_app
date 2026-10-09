@@ -15,6 +15,8 @@ import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 import VerseActions from './VerseActions.vue'
 import ParallelReading from './ParallelReading.vue'
+import CommentaryPanel from '@/features/study/CommentaryPanel.vue'
+import { studyMessages } from '@/i18n/study'
 import { loadBibleCatalog } from '@/services/bibleCatalog'
 import { enabledWebBibles, readWebChapter, synodalCode, webBibleBooks } from '@/services/webBibleLibrary'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
@@ -51,12 +53,31 @@ function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : f
 
 const comparisonCatalog = ref<TranslationSummary[]>([])
 const comparing = ref(false)
+const studying = ref(false)
+const visibleFirst = ref<number>()
+const visibleLast = ref<number>()
+let visibleTimer: ReturnType<typeof setTimeout> | undefined
+function updateVisibleVerses() {
+  clearTimeout(visibleTimer)
+  visibleTimer = setTimeout(() => {
+    const reader = readingElement.value
+    if (!reader) return
+    const viewport = reader.getBoundingClientRect()
+    const main = reader.closest('.app-content')?.getBoundingClientRect()
+    const top = Math.max(viewport.top, main?.top ?? 0), bottom = Math.min(viewport.bottom, main?.bottom ?? window.innerHeight)
+    const visible = [...reader.querySelectorAll<HTMLElement>('li[data-verse]')].filter(item => { const bounds = item.getBoundingClientRect(); return bounds.bottom > top && bounds.top < bottom })
+    if (visible.length) { visibleFirst.value = Number(visible[0]!.dataset.verse); visibleLast.value = Number(visible.at(-1)!.dataset.verse) }
+  }, 180)
+}
+onMounted(() => document.addEventListener('scroll', updateVisibleVerses, true))
+onUnmounted(() => { document.removeEventListener('scroll', updateVisibleVerses, true); clearTimeout(visibleTimer) })
 const translations = ref<TranslationSummary[]>([])
 const books = ref<BibleBook[]>([])
 const translationCode = ref('')
 const bookSlug = ref('')
 const chapterNumber = ref(1)
 const chapter = ref<BibleChapter>()
+watch([chapter, studying], async () => { await nextTick(); updateVisibleVerses() })
 const bookmarks = ref<Bookmark[]>([])
 const message = ref('')
 const busy = ref(false)
@@ -266,7 +287,8 @@ function formatDate(value: string): string {
     </details>
     <p v-if="message && translations.length && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
 
-    <article v-if="chapter" ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
+    <div v-if="chapter" class="reader-study-layout" :class="{ studying }">
+    <article ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
       <header class="reading-header">
         <button type="button" :disabled="busy || chapterNumber <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
         <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}<small>{{ text.reader.chapterLabel }} {{ chapter.chapter.number }}</small></h2></span>
@@ -274,6 +296,7 @@ function formatDate(value: string): string {
         <button type="button" :disabled="busy || chapterNumber >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
       <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="comparing = !comparing">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
+      <button type="button" class="parallel-toggle" :aria-expanded="studying" @click="studying = !studying">{{ studyMessages[language].commentaries }}</button>
       <ParallelReading v-if="comparing" :primary="chapter" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" @select="selectedVerse = $event" />
       <ol v-else>
         <li v-for="verse in chapter.verses" :key="verse.id" :data-verse="verse.number" :class="{ 'selected-verse': selectedVerse === verse.number }">
@@ -284,6 +307,8 @@ function formatDate(value: string): string {
         </li>
       </ol>
     </article>
+    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false">{{ studyMessages[language].close }}</button><CommentaryPanel :chapter="chapter" :canon="selectedTranslation?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /></aside>
+    </div>
     <VerseActions ref="actions" :chapter="chapter" :selected-verse="selectedVerse" @message="message = $event" />
     <template #footer>
       <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">
@@ -305,5 +330,8 @@ function formatDate(value: string): string {
 </template>
 
 <style scoped>
+.reader-study-layout.studying { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px }
+.studying .reading-card, .study-pane { max-height:calc(100dvh - 220px); overflow:auto; min-width:0; margin-top:0 }
+@media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr) } .studying .reading-card { max-height:40dvh } .study-pane { max-height:40dvh } }
 .parallel-toggle { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white, white); color: var(--ink); font: inherit; cursor: pointer; }
 </style>

@@ -1,0 +1,25 @@
+<resources>
+    <string name="study_books">Книги</string>
+    <string name="study_book_search">Назва або автор</string>
+    <string name="study_contents">Зміст</string>
+    <string name="study_section">Розділ</string>
+    <string name="study_previous">Назад</string>
+    <string name="study_next">Далі</string>
+    <string name="study_total">Усього</string>
+    <string name="study_material_empty">Матеріалів не знайдено</string>
+    <string name="study_material_error">Не вдалося відкрити матеріали. Перевірте з’єднання або повторіть спробу.</string>
+    <string name="study_cache_hint">Відкриті матеріали зберігаються на цьому пристрої. Це не завантаження всього джерела.</string>
+    <string name="study_commentaries">Тлумачення</string>
+    <string name="study_sources">Джерела</string>
+    <string name="study_choose_sources">Оберіть джерела (до 30)</string>
+    <string name="study_scope_book">До книги</string>
+    <string name="study_scope_chapter">До розділу</string>
+    <string name="study_scope_verse">До вірша</string>
+    <string name="study_scope_range">До діапазону віршів</string>
+    <string name="study_scope_visible">До видимих віршів</string>
+    <string name="study_first_verse">Перший вірш</string>
+    <string name="study_last_verse">Останній вірш</string>
+    <string name="study_invalid_range">Укажіть наявний діапазон віршів</string>
+    <string name="study_more">Показати ще</string>
+    <string name="study_full">Читати повністю</string>
+</resources>

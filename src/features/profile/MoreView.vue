@@ -4,6 +4,7 @@ import MobileShell from '@/components/MobileShell.vue'
 import { useI18n } from '@/i18n'
 import { computed } from 'vue'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
+import { studyMessages } from '@/i18n/study'
 import { useAppearance, type AppearanceTheme } from '@/profile/appearance'
 const { language, messages: text } = useI18n()
 const catalogue = computed(() => bibleCatalogMessages[language.value])
@@ -21,6 +22,7 @@ const items = [
   <MobileShell back-to="/today">
     <h1 class="compact-page-title">{{ text.appearance.settingsTitle }}</h1>
     <div class="module-list">
+      <RouterLink to="/books" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ studyMessages[language].books }}</strong></RouterLink>
       <RouterLink to="/bibles" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ catalogue.bible_library_title }} · {{ catalogue.catalog_add }}</strong></RouterLink>
       <RouterLink to="/storage?tab=bookmarks" class="module-card available"><span class="module-icon"><img src="/app-icons/bookmarks.png" alt="" /></span><strong>{{ text.readerActions.myBookmarks }}</strong><span aria-hidden="true">→</span></RouterLink>
       <RouterLink to="/storage?tab=notes" class="module-card available"><span class="module-icon"><img src="/app-icons/setup.png" alt="" /></span><strong>{{ text.readerActions.myNotes }}</strong><span aria-hidden="true">→</span></RouterLink>

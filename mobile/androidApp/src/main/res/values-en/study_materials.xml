@@ -1,0 +1,25 @@
+<resources>
+    <string name="study_books">Books</string>
+    <string name="study_book_search">Title or author</string>
+    <string name="study_contents">Contents</string>
+    <string name="study_section">Section</string>
+    <string name="study_previous">Previous</string>
+    <string name="study_next">Next</string>
+    <string name="study_total">Total</string>
+    <string name="study_material_empty">No materials found</string>
+    <string name="study_material_error">Could not open materials. Check your connection or try again.</string>
+    <string name="study_cache_hint">Opened materials are saved on this device. This does not download the entire source.</string>
+    <string name="study_commentaries">Commentaries</string>
+    <string name="study_sources">Sources</string>
+    <string name="study_choose_sources">Choose sources (up to 30)</string>
+    <string name="study_scope_book">For the book</string>
+    <string name="study_scope_chapter">For the chapter</string>
+    <string name="study_scope_verse">For the verse</string>
+    <string name="study_scope_range">For a verse range</string>
+    <string name="study_scope_visible">For visible verses</string>
+    <string name="study_first_verse">First verse</string>
+    <string name="study_last_verse">Last verse</string>
+    <string name="study_invalid_range">Enter an existing verse range</string>
+    <string name="study_more">Show more</string>
+    <string name="study_full">Read in full</string>
+</resources>

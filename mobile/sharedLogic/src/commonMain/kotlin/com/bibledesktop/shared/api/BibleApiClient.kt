@@ -18,6 +18,35 @@ class BibleApiClient internal constructor(
 ) : BibleContentSource {
     constructor() : this(createPlatformHttpClient())
 
+    override suspend fun getStudyBooks(query: String, offset: Int): StudyBookPage {
+        require(offset >= 0 && query.length <= 100)
+        return client.get("$baseUrl/books") { parameter("q", query); parameter("offset", offset); parameter("limit", 20) }
+            .body<StudyBookPage>().also { require(it.total >= 0 && it.data.all { book -> book.id > 0 }) }
+    }
+    override suspend fun getBookContents(book: Long, offset: Int): BookContents {
+        require(book > 0 && offset >= 0)
+        return client.get("$baseUrl/books/$book") { parameter("offset", offset); parameter("limit", 20) }
+            .body<ApiEnvelope<BookContents>>().data.also { require(it.book.id == book && it.total >= 0 && it.sections.all { section -> section.id > 0 }) }
+    }
+    override suspend fun getBookSection(book: Long, section: Long): StudySection {
+        require(book > 0 && section > 0)
+        return client.get("$baseUrl/books/$book/sections/$section").body<ApiEnvelope<StudySection>>().data
+            .also { require(it.id == section && it.body != null) }
+    }
+    override suspend fun getCommentaryModules(): List<CommentaryModule> = client.get("$baseUrl/commentary-modules")
+        .body<ApiEnvelope<List<CommentaryModule>>>().data
+    override suspend fun getCanonicalSlug(canon: String, osis: String): String {
+        require(Regex("[A-Za-z0-9_-]+").matches(canon))
+        return client.get("$baseUrl/canons/$canon/books").body<ApiEnvelope<CanonBooks>>().data.books
+            .firstOrNull { it.osisCode == osis }?.slug ?: error("Canonical book unavailable")
+    }
+    override suspend fun getCommentaries(book: String, chapter: Int?, modules: List<String>, offset: Int): CommentaryPage {
+        require(Regex("[A-Za-z0-9_-]+").matches(book) && (chapter == null || chapter > 0) && offset >= 0 && modules.size in 1..30)
+        val path = if (chapter == null) "$baseUrl/bible/books/$book/commentaries" else "$baseUrl/bible/books/$book/chapters/$chapter/commentaries"
+        return client.get(path) { parameter("modules", modules.distinct().sorted().joinToString(",")); parameter("offset", offset); parameter("limit", 10) }
+            .body<ApiEnvelope<CommentaryPage>>().data.also { require(it.book == book && it.chapter == chapter && it.total >= 0) }
+    }
+
     override suspend fun getTranslations(language: String?): List<TranslationSummary> {
         val response = client.get("$baseUrl/translations") {
             parameter("catalog", "available") // Public editions, including those hidden from the short default list.

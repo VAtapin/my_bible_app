@@ -122,6 +122,7 @@ private enum class Route {
     Reminders,
     BibleLibrary,
     LinkedBible,
+    Books,
 }
 
 internal sealed interface TranslationState {
@@ -335,6 +336,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
 
         Route.More -> MoreScreen(
             language = language,
+            onOpenBooks = { route = Route.Books },
             onBack = { route = Route.Home },
             onSettings = {
                 quickSetup = false
@@ -359,6 +361,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
                     .putInt("lastChapter", passage.chapter).putInt("lastVerse", passage.verse).apply()
                 route = Route.Bible
             })
+        Route.Books -> com.bibledesktop.myapp.ui.study.BooksScreen(language, client, onBack = { route = Route.More })
         Route.Reminders -> com.bibledesktop.myapp.ui.reminders.RemindersScreen(language) { route = Route.Home }
         Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client,
             onBack = { route = libraryReturn }, onOpen = { code ->

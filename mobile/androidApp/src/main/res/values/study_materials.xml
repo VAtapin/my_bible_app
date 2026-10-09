@@ -1,0 +1,25 @@
+<resources>
+    <string name="study_books">Книги</string>
+    <string name="study_book_search">Название или автор</string>
+    <string name="study_contents">Оглавление</string>
+    <string name="study_section">Раздел</string>
+    <string name="study_previous">Назад</string>
+    <string name="study_next">Далее</string>
+    <string name="study_total">Всего</string>
+    <string name="study_material_empty">Материалов не найдено</string>
+    <string name="study_material_error">Не удалось открыть материалы. Проверьте соединение или повторите попытку.</string>
+    <string name="study_cache_hint">Открытые материалы сохраняются на этом устройстве. Это не загрузка полного источника.</string>
+    <string name="study_commentaries">Толкования</string>
+    <string name="study_sources">Источники</string>
+    <string name="study_choose_sources">Выберите источники (до 30)</string>
+    <string name="study_scope_book">К книге</string>
+    <string name="study_scope_chapter">К главе</string>
+    <string name="study_scope_verse">К стиху</string>
+    <string name="study_scope_range">К диапазону стихов</string>
+    <string name="study_scope_visible">К видимым стихам</string>
+    <string name="study_first_verse">Первый стих</string>
+    <string name="study_last_verse">Последний стих</string>
+    <string name="study_invalid_range">Укажите существующий диапазон стихов</string>
+    <string name="study_more">Показать ещё</string>
+    <string name="study_full">Читать полностью</string>
+</resources>
