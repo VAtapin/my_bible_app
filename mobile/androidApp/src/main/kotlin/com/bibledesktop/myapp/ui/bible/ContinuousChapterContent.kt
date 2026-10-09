@@ -28,7 +28,8 @@ private data class StreamRow(val chapter: BibleChapter, val verse: BibleVerse?, 
 internal fun ContinuousChapterContent(language: String, initial: BibleChapter, client: BibleContentSource, fontSize: Float,
     bookmarkedKeys: Set<String>, onBookmark: (BibleChapter, BibleVerse) -> Unit, onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit, onStudy: ((BibleChapter, BibleVerse) -> Unit)?, initialVerse: Int, modifier: Modifier,
-    onVisiblePlace: ((BibleChapter, BibleVerse, BibleVerse, Int) -> Unit)?) {
+    onVisiblePlace: ((BibleChapter, BibleVerse, BibleVerse, Int) -> Unit)?,
+    followVerse: Int? = null, initialOffset: Int? = null, listTag: String = "continuous-reader", followRequest: Int = 0) {
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE) }
     val sections = remember(initial) { mutableStateMapOf(initial.chapter.number to initial) }
@@ -43,7 +44,11 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
         val index = rows.indexOfFirst { it.verse?.number == initialVerse && it.chapter.chapter.number == initial.chapter.number }.coerceAtLeast(0)
         val restore = preferences.getString("lastTranslation", null) == initial.translation.code && preferences.getString("lastBookSlug", null) == initial.book.slug &&
             preferences.getInt("lastChapter", 0) == initial.chapter.number && preferences.getInt("lastVerse", 0) == initialVerse
-        state.scrollToItem(index, if (restore) preferences.getInt("lastVerseOffset", 0).coerceAtLeast(0) else 0)
+        state.scrollToItem(index, initialOffset?.coerceAtLeast(0) ?: if (restore) preferences.getInt("lastVerseOffset", 0).coerceAtLeast(0) else 0)
+    }
+    LaunchedEffect(followVerse, followRequest) {
+        if (followVerse != null) rows.indexOfFirst { it.verse?.number == followVerse && it.chapter.chapter.number == initial.chapter.number }
+            .takeIf { it >= 0 }?.let { state.scrollToItem(it) }
     }
     val firstNumber = sections.keys.min()
     val lastNumber = sections.keys.max()
@@ -83,7 +88,7 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
                 Text(localized(R.string.reader_continuation_error, language), Modifier.weight(1f))
                 TextButton(onClick = { failed = false; retry++ }) { Text(localized(R.string.retry, language)) }
             }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("continuous-reader"), state = state, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(listTag), state = state, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
                 items(rows, key = StreamRow::key) { row ->
                     if (row.verse == null) {
                         if (row.empty) Text(localized(R.string.bible_chapter_unavailable, language))

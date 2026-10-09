@@ -25,24 +25,35 @@ import kotlinx.coroutines.CancellationException
 
 @Composable
 internal fun ComparisonPane(language: String, primary: BibleChapter, catalog: List<TranslationSummary>,
-    code: String, onCode: (String) -> Unit, source: BibleContentSource, fontSize: Float, initialVerse: Int, modifier: Modifier = Modifier) {
+    code: String, onCode: (String) -> Unit, source: BibleContentSource, fontSize: Float, initialVerse: Int, modifier: Modifier = Modifier,
+    bookmarks: Set<String> = emptySet(), onBookmark: (BibleChapter, BibleVerse) -> Unit = { _, _ -> },
+    onShare: (BibleChapter, BibleVerse) -> Unit = { _, _ -> }, onNote: (BibleChapter, BibleVerse) -> Unit = { _, _ -> },
+    onStudy: ((BibleChapter, BibleVerse) -> Unit)? = null, onVisible: (BibleChapter, BibleVerse, BibleVerse, Int) -> Unit = { _, _, _, _ -> },
+    onCommands: (WindowCommands?) -> Unit = {}) {
     val preferences = LocalContext.current.getSharedPreferences("bible-desktop-native-profile", android.content.Context.MODE_PRIVATE)
     var panes by rememberSaveable { mutableStateOf(preferences.getBoolean("comparePanes", false)) }
     var choosing by rememberSaveable { mutableStateOf(false) }
+    var rowSource by remember(primary) { mutableStateOf(primary) }
+    var rowCode by remember(code) { mutableStateOf(code) }
+    var rowVerse by remember(initialVerse) { mutableIntStateOf(initialVerse) }
+    LaunchedEffect(rowSource, rowVerse, panes) {
+        if (!panes) rowSource.verses.find { it.number == rowVerse }?.let { onVisible(rowSource, it, it, 0) }
+    }
     var second by remember(primary.translation.code, primary.book.slug, primary.chapter.number, code) { mutableStateOf<BibleChapter?>(null) }
     var failure by remember(primary.translation.code, primary.book.slug, primary.chapter.number, code) { mutableIntStateOf(0) }
     var retry by remember { mutableIntStateOf(0) }
-    LaunchedEffect(primary, code, retry) {
+    LaunchedEffect(rowSource, rowCode, retry, panes) {
         second = null; failure = 0
-        if (code.isBlank()) return@LaunchedEffect
-        try { second = loadComparison(primary, code, source) }
+        if (panes) return@LaunchedEffect
+        if (rowCode.isBlank()) return@LaunchedEffect
+        try { second = if (rowCode == rowSource.translation.code) rowSource else loadComparison(rowSource, rowCode, source) }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: ComparisonUnavailable) { failure = R.string.compare_unavailable }
         catch (_: Exception) { failure = R.string.compare_error }
     }
     Column(modifier.testTag("bible-comparison")) {
-        TextButton(onClick = { choosing = true }, modifier = Modifier.testTag("compare-translation")) {
-            Text(catalog.firstOrNull { it.code == code }?.name ?: localized(R.string.compare_choose, language))
+        if (!panes) TextButton(onClick = { choosing = true }, modifier = Modifier.testTag("compare-translation")) {
+            Text(catalog.firstOrNull { it.code == rowCode }?.name ?: localized(R.string.compare_choose, language))
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !panes, onClick = { panes = false; preferences.edit().putBoolean("comparePanes", false).apply() },
@@ -51,18 +62,20 @@ internal fun ComparisonPane(language: String, primary: BibleChapter, catalog: Li
                 label = { Text(localized(R.string.compare_panes, language)) }, modifier = Modifier.weight(1f).testTag("compare-panes"))
         }
         Text(localized(R.string.compare_numbering, language), Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall)
-        when {
-            code.isBlank() -> Text(localized(R.string.compare_choose, language), Modifier.padding(16.dp))
+        if (panes) ReaderWindows(language, primary, code, catalog, source, fontSize, initialVerse, Modifier.weight(1f),
+            bookmarks, onBookmark, onShare, onNote, onStudy, onVisible, onCommands,
+            onPair = { chapter, otherCode, verse -> rowSource = chapter; rowCode = otherCode; rowVerse = verse })
+        else when {
+            rowCode.isBlank() -> Text(localized(R.string.compare_choose, language), Modifier.padding(16.dp))
             failure != 0 -> Column(Modifier.padding(16.dp)) {
                 Text(localized(failure, language))
                 TextButton(onClick = { retry++ }) { Text(localized(R.string.retry, language)) }
             }
             second == null -> CircularProgressIndicator(Modifier.padding(16.dp))
-            else -> if (panes) ComparisonWindows(language, primary, second!!, fontSize, Modifier.weight(1f), initialVerse)
-                else ComparisonRows(language, primary, second!!, fontSize, Modifier.weight(1f), initialVerse)
+            else -> ComparisonRows(language, rowSource, second!!, fontSize, Modifier.weight(1f), rowVerse)
         }
     }
-    if (choosing) TranslationPicker(language, catalog.filter { it.code != primary.translation.code }, code,
+    if (choosing) TranslationPicker(language, catalog.filter { it.code != rowSource.translation.code }, rowCode,
         onSelect = { onCode(it); choosing = false }, onClose = { choosing = false })
 }
 

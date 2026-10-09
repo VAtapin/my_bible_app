@@ -46,7 +46,9 @@ async function openVerseMenu(number: number, event?: MouseEvent, source = chapte
 function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
 
 const comparisonCatalog = ref<TranslationSummary[]>([])
-const comparing = ref(false)
+const comparing = ref(!route.query.book && localStorage.getItem('bible-desktop:compare-open')==='true')
+watch(comparing,value=>localStorage.setItem('bible-desktop:compare-open',String(value)))
+const comparisonView = ref<InstanceType<typeof ParallelReading>>()
 const studying = ref(false)
 const visibleFirst = ref<number>()
 const visibleLast = ref<number>()
@@ -60,20 +62,28 @@ const visibleChapter = ref<BibleChapter>()
 const actionChapter = ref<BibleChapter>()
 const openOffset = ref(0)
 let restoreOffset = 0
+let visibleOffset = 0
 let saveChain: Promise<unknown> = Promise.resolve()
 function selectVerse(source: BibleChapter, verse: BibleChapter['verses'][number]) { actionChapter.value = source; selectedVerse.value = verse.number }
 function visiblePlace(source: BibleChapter, first: BibleChapter['verses'][number], last: BibleChapter['verses'][number], offset: number) {
   visibleChapter.value = source; visibleFirst.value = first.number; visibleLast.value = last.number
+  visibleOffset = offset
   const location = { translationCode: source.translation.code, bookSlug: source.book.slug, chapter: source.chapter.number, verse: first.number, verseOffset: offset, updatedAt: new Date().toISOString() }
   saveChain = saveChain.catch(() => undefined).then(() => libraryRepository.saveReadingLocation(location))
 }
 async function toggleComparison() {
-  if (!comparing.value && visibleChapter.value) {
+  const wasComparing = comparing.value
+  if (visibleChapter.value) {
+    const source = visibleChapter.value, offset = visibleOffset
     const target = visibleFirst.value
-    chapterNumber.value = visibleChapter.value.chapter.number
+    if (comparing.value) comparing.value = false
+    translationCode.value = source.translation.code
+    await loadBooks(source.book.slug)
+    chapterNumber.value = source.chapter.number
+    restoreOffset = offset
     await openChapter(String(target ?? ''))
   }
-  comparing.value = !comparing.value
+  comparing.value = !wasComparing
 }
 const bookmarks = ref<Bookmark[]>([])
 const message = ref('')
@@ -194,6 +204,7 @@ watch(() => route.query, async (query) => {
 })
 
 async function moveChapter(offset: number): Promise<void> {
+  if (comparing.value) { await comparisonView.value?.move(offset); return }
   const book = selectedBook.value
   if (!book) return
   const next = (visibleChapter.value?.chapter.number ?? chapterNumber.value) + offset
@@ -215,9 +226,9 @@ async function toggleBookmark(verse: BibleChapter['verses'][number], source = ch
 
   const value: Bookmark = {
     key,
-    translationCode: translationCode.value,
+    translationCode: source.translation.code,
     translationName: source.translation.name,
-    bookSlug: bookSlug.value,
+    bookSlug: source.book.slug,
     bookName: source.book.name,
     chapter: source.chapter.number,
     verse: verse.number,
@@ -259,7 +270,8 @@ function formatDate(value: string): string {
 
     <p v-if="busy && !translations.length" class="status" role="status">{{ text.loading }}</p>
     <div v-else-if="!translations.length" class="status"><p>{{ message || catalogText.catalog_empty }}</p><RouterLink class="primary-action" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink></div>
-    <details v-if="translations.length && selectedTranslation" class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
+    <button v-if="comparing" class="primary-action" @click="comparisonView?.choosePlace()">{{ text.reader.chooseChapter }}</button>
+    <details v-else-if="translations.length && selectedTranslation" class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
       <summary>{{ text.reader.chooseChapter }} <span aria-hidden="true">⌄</span></summary>
       <h2 id="chapter-form-title" class="visually-hidden">{{ text.reader.chooseChapter }}</h2>
       <div class="fields">
@@ -292,16 +304,16 @@ function formatDate(value: string): string {
     <article ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
       <header class="reading-header">
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
-        <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
+        <span><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
         <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
-        <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
+        <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) >= (visibleChapter ?? chapter).book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
       <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="toggleComparison">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
       <button type="button" class="parallel-toggle" :aria-expanded="studying" @click="studying = !studying">{{ studyMessages[language].commentaries }}</button>
-      <ParallelReading v-if="comparing" :primary="chapter" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" @select="selectedVerse = $event" />
+      <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
       <ContinuousReading v-else :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
     </article>
-    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false">{{ studyMessages[language].close }}</button><CommentaryPanel :chapter="visibleChapter ?? chapter" :canon="selectedTranslation?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /></aside>
+    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false">{{ studyMessages[language].close }}</button><CommentaryPanel :chapter="visibleChapter ?? chapter" :canon="comparisonCatalog.find(item=>item.code===(visibleChapter ?? chapter)?.translation.code)?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /></aside>
     </div>
     <VerseActions ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
     <template #footer>

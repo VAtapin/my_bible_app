@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { BibleChapter, BibleVerse } from '@/api/contracts'
 import type { ChapterService } from '@/services/chapterService'
 import { readWebChapter } from '@/services/webBibleLibrary'
@@ -9,7 +9,7 @@ import { createLongPress } from '@/services/readerActions'
 import { useI18n } from '@/i18n'
 import { continuousReadingMessages } from '@/i18n/continuousReading'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
-const props = defineProps<{ initial: BibleChapter; service: ChapterService; initialVerse?: number; initialOffset?: number; selectedVerse?: number; selectedChapter?: number; bookmarks: Set<string> }>()
+const props = defineProps<{ initial: BibleChapter; service: ChapterService; initialVerse?: number; initialOffset?: number; selectedVerse?: number; selectedChapter?: number; bookmarks: Set<string>; followVerse?:number; followRequest?:number }>()
 const emit = defineEmits<{ visible: [chapter: BibleChapter, first: BibleVerse, last: BibleVerse, offset: number]; select: [chapter: BibleChapter, verse: BibleVerse]; bookmark: [chapter: BibleChapter, verse: BibleVerse]; actions: [chapter: BibleChapter, verse: BibleVerse, event?: MouseEvent] }>()
 const { language, messages } = useI18n(), text = computed(() => continuousReadingMessages[language.value])
 const segments = ref<BibleChapter[]>([props.initial]), viewport = ref<HTMLElement>(), loading = ref(false), failedDirection = ref<1 | -1>(), stopped = ref(false)
@@ -65,6 +65,12 @@ onMounted(async () => {
   probe()
 })
 onUnmounted(() => { stopped.value = true; clearTimeout(timer); longPress.cancel() })
+watch(()=>[props.followVerse,props.followRequest],async ([number])=>{
+  if(number===undefined)return
+  await nextTick()
+  const element=viewport.value,row=element?.querySelector<HTMLElement>(`[data-chapter="${props.initial.chapter.number}"][data-book-verse="${number}"]`)
+  if(element&&row)element.scrollTop+=row.getBoundingClientRect().top-element.getBoundingClientRect().top-(element.querySelector('.chapter-heading')?.getBoundingClientRect().height??0)
+})
 </script>
 <template>
   <div ref="viewport" class="continuous-scroll" tabindex="0" :aria-label="initial.book.name" @scroll="probe">

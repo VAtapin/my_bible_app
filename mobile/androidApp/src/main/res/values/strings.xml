@@ -137,4 +137,14 @@
     <string name="bible_books_not_found">Книги не найдены. Измените поиск или выберите другой Завет.</string>
     <string name="bible_other_books">Прочие книги</string>
     <string name="bible_chapters_count">Глав: %1$d</string>
+    <string name="windows_sync">Синхронно</string>
+    <string name="windows_independent">Независимо</string>
+    <string name="windows_active">Активное окно</string>
+    <string name="windows_swap">Поменять местами</string>
+    <string name="windows_reopen">Открыть окно</string>
+    <string name="windows_place">Место</string>
+    <string name="windows_position">Глава:стих</string>
+    <string name="windows_go">Перейти</string>
+    <string name="windows_error">Не удалось открыть место. Повторите переход.</string>
+    <string name="windows_missing">Точное соответствие стиха не найдено. Место второго окна сохранено.</string>
 </resources>

@@ -137,4 +137,14 @@
     <string name="bible_books_not_found">No books found. Change your search or choose another Testament.</string>
     <string name="bible_other_books">Other books</string>
     <string name="bible_chapters_count">Chapters: %1$d</string>
+    <string name="windows_sync">Synchronized</string>
+    <string name="windows_independent">Independent</string>
+    <string name="windows_active">Active window</string>
+    <string name="windows_swap">Swap</string>
+    <string name="windows_reopen">Open window</string>
+    <string name="windows_place">Passage</string>
+    <string name="windows_position">Chapter:verse</string>
+    <string name="windows_go">Go</string>
+    <string name="windows_error">Could not open the passage. Try again.</string>
+    <string name="windows_missing">No exact verse correspondence found. The other window keeps its place.</string>
 </resources>

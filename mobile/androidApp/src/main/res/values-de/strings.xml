@@ -137,4 +137,14 @@
     <string name="bible_books_not_found">Keine Bücher gefunden. Ändern Sie die Suche oder wählen Sie ein anderes Testament.</string>
     <string name="bible_other_books">Weitere Bücher</string>
     <string name="bible_chapters_count">Kapitel: %1$d</string>
+    <string name="windows_sync">Synchron</string>
+    <string name="windows_independent">Unabhängig</string>
+    <string name="windows_active">Aktives Fenster</string>
+    <string name="windows_swap">Tauschen</string>
+    <string name="windows_reopen">Fenster öffnen</string>
+    <string name="windows_place">Stelle</string>
+    <string name="windows_position">Kapitel:Vers</string>
+    <string name="windows_go">Öffnen</string>
+    <string name="windows_error">Stelle konnte nicht geöffnet werden. Erneut versuchen.</string>
+    <string name="windows_missing">Keine genaue Versentsprechung gefunden. Die zweite Stelle bleibt erhalten.</string>
 </resources>
