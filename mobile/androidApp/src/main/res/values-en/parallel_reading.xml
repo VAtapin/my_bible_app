@@ -1,0 +1,5 @@
+<resources>
+    <string name="compare_mode">Reading mode</string>
+    <string name="compare_interleaved">Verse by verse</string>
+    <string name="compare_panes">Two panes, one below the other</string>
+</resources>

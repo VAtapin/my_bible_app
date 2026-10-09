@@ -5,6 +5,18 @@ export const en: MessageShape<typeof ru> = {
   brand: 'Bible Desktop', brandSubtitle: 'My app', online: 'Online', offline: 'Offline', translationName: 'King James Version',
   navigation: { label: 'Main navigation', back: 'Back', today: 'Today', reading: 'Read', settings: 'Set up', education: 'Learning', more: 'More', prayers: 'Prayers', calendar: 'Calendar' },
   appearance: { settingsTitle: 'Settings', title: 'Appearance', classic: 'Classic', classicDescription: 'Blue day panel, light cards and classic headings', modern: 'Light', modernDescription: 'Clean blue style and the icon of the day', warm: 'Warm', warmDescription: 'Cream colours with green and terracotta accents' },
+  parallel: {
+    open: 'Parallel reading',
+    close: 'One translation',
+    translation: 'Second translation',
+    mode: 'Reading mode',
+    interleaved: 'Verse by verse',
+    panes: 'Two panes, one below the other',
+    numbering: 'Verses match by exact references. Numbering may differ between translations.',
+    missing: 'This verse is absent in this translation.',
+    error: 'Could not open the second translation. The book or chapter may be unavailable; download it first for offline reading.',
+    retry: 'Retry',
+  },
   readerActions: {
     myBookmarks: 'My bookmarks', myNotes: 'My notes', actions: 'Verse actions', search: 'Search the Bible', addNote: 'Add a note', copyLink: 'Copy link',
     saveNote: 'Save note', noteSaved: 'Note saved on this device.', noteFailed: 'Unable to save or open the note.', noteLocal: 'This note is stored only on this device.', searchHint: 'Words or a Bible reference', find: 'Find',

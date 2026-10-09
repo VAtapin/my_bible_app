@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,8 @@ import kotlinx.coroutines.CancellationException
 @Composable
 internal fun ComparisonPane(language: String, primary: BibleChapter, catalog: List<TranslationSummary>,
     code: String, onCode: (String) -> Unit, source: BibleContentSource, fontSize: Float, initialVerse: Int, modifier: Modifier = Modifier) {
+    val preferences = LocalContext.current.getSharedPreferences("bible-desktop-native-profile", android.content.Context.MODE_PRIVATE)
+    var panes by rememberSaveable { mutableStateOf(preferences.getBoolean("comparePanes", false)) }
     var choosing by rememberSaveable { mutableStateOf(false) }
     var second by remember(primary.translation.code, primary.book.slug, primary.chapter.number, code) { mutableStateOf<BibleChapter?>(null) }
     var failure by remember(primary.translation.code, primary.book.slug, primary.chapter.number, code) { mutableIntStateOf(0) }
@@ -41,6 +44,12 @@ internal fun ComparisonPane(language: String, primary: BibleChapter, catalog: Li
         TextButton(onClick = { choosing = true }, modifier = Modifier.testTag("compare-translation")) {
             Text(catalog.firstOrNull { it.code == code }?.name ?: localized(R.string.compare_choose, language))
         }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = !panes, onClick = { panes = false; preferences.edit().putBoolean("comparePanes", false).apply() },
+                label = { Text(localized(R.string.compare_interleaved, language)) }, modifier = Modifier.weight(1f).testTag("compare-interleaved"))
+            FilterChip(selected = panes, onClick = { panes = true; preferences.edit().putBoolean("comparePanes", true).apply() },
+                label = { Text(localized(R.string.compare_panes, language)) }, modifier = Modifier.weight(1f).testTag("compare-panes"))
+        }
         Text(localized(R.string.compare_numbering, language), Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall)
         when {
             code.isBlank() -> Text(localized(R.string.compare_choose, language), Modifier.padding(16.dp))
@@ -49,7 +58,8 @@ internal fun ComparisonPane(language: String, primary: BibleChapter, catalog: Li
                 TextButton(onClick = { retry++ }) { Text(localized(R.string.retry, language)) }
             }
             second == null -> CircularProgressIndicator(Modifier.padding(16.dp))
-            else -> ComparisonRows(language, primary, second!!, fontSize, Modifier.weight(1f), initialVerse)
+            else -> if (panes) ComparisonWindows(language, primary, second!!, fontSize, Modifier.weight(1f), initialVerse)
+                else ComparisonRows(language, primary, second!!, fontSize, Modifier.weight(1f), initialVerse)
         }
     }
     if (choosing) TranslationPicker(language, catalog.filter { it.code != primary.translation.code }, code,
@@ -64,8 +74,7 @@ internal fun ComparisonRows(language: String, primary: BibleChapter, secondary: 
     LaunchedEffect(primary.translation.code, secondary.translation.code, primary.book.slug, primary.chapter.number, initialVerse) {
         state.scrollToItem(rows.indexOfFirst { it.primary?.number == initialVerse }.coerceAtLeast(0))
     }
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val wide = maxWidth >= 700.dp
+    Box(modifier.fillMaxWidth()) {
         LazyColumn(Modifier.fillMaxSize().testTag("comparison-rows"), state = state, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(rows, key = ComparedVerse::reference) { row ->
                 val highlighted = initialVerse > 0 && row.primary?.number == initialVerse
@@ -75,14 +84,9 @@ internal fun ComparisonRows(language: String, primary: BibleChapter, secondary: 
                         val reference = row.primary?.let { "${primary.book.name} ${primary.chapter.number}:${it.number}" }
                             ?: row.secondary!!.let { "${secondary.book.name} ${secondary.chapter.number}:${it.number}" }
                         Text(reference, style = MaterialTheme.typography.labelMedium)
-                        if (wide) Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                            ComparedText(language, primary.translation, row.primary, fontSize, Modifier.weight(1f))
-                            ComparedText(language, secondary.translation, row.secondary, fontSize, Modifier.weight(1f))
-                        } else {
-                            ComparedText(language, primary.translation, row.primary, fontSize)
-                            HorizontalDivider()
-                            ComparedText(language, secondary.translation, row.secondary, fontSize)
-                        }
+                        ComparedText(language, primary.translation, row.primary, fontSize)
+                        HorizontalDivider()
+                        ComparedText(language, secondary.translation, row.secondary, fontSize)
                     }
                 }
             }
@@ -97,6 +101,42 @@ private fun ComparedText(language: String, translation: TranslationSummary, vers
         SelectionContainer {
             Text(verse?.let { if (translation.language.code in setOf("cu", "cu-civil")) readingText(it.text) else it.plainText } ?: localized(R.string.compare_missing, language),
                 fontFamily = readingFont(translation.language.code), fontSize = size.sp, lineHeight = (size * 1.55f).sp)
+        }
+    }
+}
+
+@Composable
+internal fun ComparisonWindows(language: String, primary: BibleChapter, secondary: BibleChapter, fontSize: Float,
+    modifier: Modifier = Modifier, initialVerse: Int = 0) {
+    val rows = remember(primary, secondary) { compareVerses(primary, secondary) }
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(primary, secondary).forEachIndexed { index, chapter ->
+            val state = rememberLazyListState()
+            LaunchedEffect(primary, secondary, initialVerse) {
+                state.scrollToItem(rows.indexOfFirst { it.primary?.number == initialVerse }.coerceAtLeast(0))
+            }
+            Card(Modifier.weight(1f).fillMaxWidth().testTag("comparison-pane-$index")) {
+                Text("${chapter.translation.name} · ${chapter.book.name} ${chapter.chapter.number}",
+                    Modifier.padding(12.dp), style = MaterialTheme.typography.labelMedium)
+                LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("comparison-list-$index"), state = state,
+                    contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(rows, key = ComparedVerse::reference) { row ->
+                        val verse = if (index == 0) row.primary else row.secondary
+                        val highlighted = initialVerse > 0 && row.primary?.number == initialVerse
+                        Surface(color = if (highlighted) LightBlue else androidx.compose.ui.graphics.Color.White,
+                            modifier = Modifier.fillMaxWidth().testTag("pane-$index-${row.reference}").semantics { selected = highlighted }) {
+                            Column(Modifier.padding(8.dp)) {
+                                Text((verse?.number ?: row.primary?.number ?: row.secondary?.number).toString(), style = MaterialTheme.typography.labelSmall)
+                                SelectionContainer {
+                                    Text(verse?.let { if (chapter.translation.language.code in setOf("cu", "cu-civil")) readingText(it.text) else it.plainText }
+                                        ?: localized(R.string.compare_missing, language), fontFamily = readingFont(chapter.translation.language.code),
+                                        fontSize = fontSize.sp, lineHeight = (fontSize * 1.55f).sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

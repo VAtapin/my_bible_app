@@ -1,0 +1,5 @@
+<resources>
+    <string name="compare_mode">Lesemodus</string>
+    <string name="compare_interleaved">Vers unter Vers</string>
+    <string name="compare_panes">Zwei Fenster untereinander</string>
+</resources>

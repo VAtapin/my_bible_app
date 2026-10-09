@@ -16,6 +16,7 @@ import { interfaceLocales } from '@/i18n/locale'
 import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 import VerseActions from './VerseActions.vue'
+import ParallelReading from './ParallelReading.vue'
 import { createLongPress, verseTarget } from '@/services/readerActions'
 
 const chapterRepository = createIndexedDbChapterRepository()
@@ -49,6 +50,8 @@ function startLongPress(event: PointerEvent, number: number): void {
 }
 function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
 
+const comparisonCatalog = ref<TranslationSummary[]>([])
+const comparing = ref(false)
 const translations = ref<TranslationSummary[]>([])
 const books = ref<BibleBook[]>([])
 const translationCode = ref('')
@@ -79,6 +82,7 @@ onMounted(async () => {
       libraryRepository.getReadingLocation(),
       libraryRepository.listBookmarks(),
     ])
+    comparisonCatalog.value = fullCatalog
     const configuredCodes = new Set(configuration?.bible.translationCodes ?? [])
     const requestedCode = typeof route.query.translation === 'string' ? route.query.translation : savedLocation?.translationCode
     translations.value = configuredCodes.size
@@ -322,7 +326,9 @@ function formatDate(value: string): string {
         <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
         <button type="button" :disabled="busy || chapterNumber >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
-      <ol>
+      <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="comparing = !comparing">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
+      <ParallelReading v-if="comparing" :primary="chapter" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" @select="selectedVerse = $event" />
+      <ol v-else>
         <li v-for="verse in chapter.verses" :key="verse.id" :data-verse="verse.number" :class="{ 'selected-verse': selectedVerse === verse.number }">
           <button class="bookmark-button" :class="{ active: bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) }" type="button" :aria-label="formatMessage(text.reader.bookmark, { verse: verse.number })" @click="toggleBookmark(verse)">
             {{ bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) ? '★' : '☆' }}
@@ -350,3 +356,7 @@ function formatDate(value: string): string {
     </template>
   </MobileShell>
 </template>
+
+<style scoped>
+.parallel-toggle { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white, white); color: var(--ink); font: inherit; cursor: pointer; }
+</style>

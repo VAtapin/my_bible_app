@@ -11,6 +11,18 @@ export const de: MessageShape<typeof ru> = {
     modern: 'Hell', modernDescription: 'Klarer blauer Stil und Ikone des Tages',
     warm: 'Warm', warmDescription: 'Cremefarben mit grünen und terrakottafarbenen Akzenten',
   },
+  parallel: {
+    open: 'Parallel lesen',
+    close: 'Eine Übersetzung',
+    translation: 'Zweite Übersetzung',
+    mode: 'Lesemodus',
+    interleaved: 'Vers unter Vers',
+    panes: 'Zwei Fenster untereinander',
+    numbering: 'Verse werden anhand genauer Referenzen zugeordnet. Die Nummerierung kann abweichen.',
+    missing: 'Dieser Vers fehlt in dieser Übersetzung.',
+    error: 'Die zweite Übersetzung konnte nicht geöffnet werden. Buch oder Kapitel kann fehlen; zum Offline-Lesen zuerst herunterladen.',
+    retry: 'Erneut versuchen',
+  },
   readerActions: {
     myBookmarks: 'Meine Lesezeichen', myNotes: 'Meine Notizen',
     actions: 'Versaktionen', search: 'In der Bibel suchen', addNote: 'Notiz hinzufügen', copyLink: 'Link kopieren',

@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -30,8 +31,8 @@ class BibleComparisonUiTest {
             BibleVerse(2, 2, "John.3.2", "Text", "Another verse")))
 
     @Test fun phoneComparisonIsStackedAndMissingVersesAreExplicit() = layout("phone", 390, 844)
-    @Test fun portraitTabletComparisonIsSideBySide() = layout("portrait", 960, 1280)
-    @Test fun landscapeTabletComparisonIsSideBySide() = layout("landscape", 1280, 800)
+    @Test fun portraitTabletComparisonIsInterleaved() = layout("portrait", 960, 1280)
+    @Test fun landscapeTabletComparisonIsInterleaved() = layout("landscape", 1280, 800)
     private fun layout(name: String, width: Int, height: Int) {
         compose.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(DpSize(width.dp, height.dp))) {
@@ -44,12 +45,56 @@ class BibleComparisonUiTest {
         compose.onNodeWithTag("comparison-rows").performScrollToIndex(0)
         val ru = compose.onNodeWithText(chapter(first).verses.first().plainText).getUnclippedBoundsInRoot()
         val en = compose.onNodeWithText(chapter(second).verses.first().plainText).getUnclippedBoundsInRoot()
-        if (width < 700) assertTrue(en.top > ru.top) else assertTrue(en.left > ru.left)
+        assertTrue(en.top > ru.top)
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         context.getExternalFilesDir(null)!!.resolve("comparison-$name.png").outputStream().use {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
     }
+    @Test fun userCanSwitchModesAndSelectionSurvivesRecreation() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val preferences = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
+        val previous = preferences.all["comparePanes"]
+        check(preferences.edit().putBoolean("comparePanes", false).commit())
+        val api = BibleApiClient()
+        val source = object : BibleContentSource by api {
+            override suspend fun getBooks(translationCode: String) = listOf(chapter(first).book.copy(canonicalBook = CanonicalBookSummary("John", "new")))
+            override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = chapter(second)
+        }
+        try {
+            val restoration = StateRestorationTester(compose)
+            restoration.setContent { BibleDesktopTheme { ComparisonPane("ru", chapter(first), listOf(first, second), "B", {}, source, 19f, 1, Modifier.fillMaxSize()) } }
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("comparison-rows").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("compare-panes").performClick()
+            compose.onNodeWithTag("comparison-pane-0").assertIsDisplayed()
+            compose.onNodeWithTag("comparison-pane-1").assertIsDisplayed()
+            assertTrue(preferences.getBoolean("comparePanes", false))
+            restoration.emulateSavedInstanceStateRestore()
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("comparison-pane-0").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("compare-panes").assertIsSelected()
+            compose.onNodeWithTag("compare-interleaved").performClick()
+            compose.onNodeWithTag("comparison-rows").assertIsDisplayed()
+            assertFalse(preferences.getBoolean("comparePanes", true))
+        } finally {
+            val editor = preferences.edit()
+            if (previous is Boolean) editor.putBoolean("comparePanes", previous) else editor.remove("comparePanes")
+            check(editor.commit()); api.close()
+        }
+    }
+
+    @Test fun windowsAreVerticalAndScrollIndependently() {
+        compose.setContent { BibleDesktopTheme {
+            ComparisonWindows("ru", chapter(first), chapter(second).copy(verses = chapter(second).verses.take(1)), 19f,
+                modifier = Modifier.fillMaxSize(), initialVerse = 1)
+        } }
+        val top = compose.onNodeWithTag("comparison-pane-0").getUnclippedBoundsInRoot()
+        val bottom = compose.onNodeWithTag("comparison-pane-1").getUnclippedBoundsInRoot()
+        assertTrue(bottom.top >= top.bottom)
+        compose.onNodeWithTag("comparison-list-1").performScrollToNode(hasText("В этом переводе стих отсутствует."))
+        compose.onNodeWithTag("pane-0-John.3.1").assertIsDisplayed().assertIsSelected()
+        compose.onNodeWithText("В этом переводе стих отсутствует.").assertIsDisplayed()
+    }
+
     @Test fun comparisonHighlightsOnlyTheExactNavigatedVerse() {
         compose.setContent { BibleDesktopTheme {
             ComparisonRows("ru", chapter(first), chapter(second), 19f, initialVerse = 2)

@@ -1,0 +1,5 @@
+<resources>
+    <string name="compare_mode">Режим читання</string>
+    <string name="compare_interleaved">Рядок під рядком</string>
+    <string name="compare_panes">Два вікна — одне під одним</string>
+</resources>

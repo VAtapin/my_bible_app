@@ -18,6 +18,7 @@ export interface TranslationSummary {
 }
 
 export interface BibleBook {
+  canonical_book?: { osis_code: string; testament?: string } | null
   slug: string
   name: string
   short_name: string | null
