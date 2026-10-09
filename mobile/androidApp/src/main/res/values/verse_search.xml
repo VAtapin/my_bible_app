@@ -1,0 +1,24 @@
+<resources>
+    <string name="verse_search_license">Лицензия поиска Snowball</string>
+    <string name="verse_search_morphology">По словоформам (RU/DE/EN)</string>
+    <string name="verse_search_morphology_hint">Словоформы ищутся по основе слова для RU/DE/EN; е/ё объединяются. Для других языков выберите точные слова.</string>
+    <string name="verse_search_title">Поиск стихов</string>
+    <string name="verse_search_exact">Точные слова</string>
+    <string name="verse_search_phrase">Фраза</string>
+    <string name="verse_search_partial">Фрагменты слов</string>
+    <string name="verse_search_strong">Номер Стронга</string>
+    <string name="verse_search_all">Вся Библия</string>
+    <string name="verse_search_old">Ветхий Завет</string>
+    <string name="verse_search_new">Новый Завет</string>
+    <string name="verse_search_psalms">Псалтирь</string>
+    <string name="verse_search_mode">Режим</string>
+    <string name="verse_search_scope">Область</string>
+    <string name="verse_search_book">Книга</string>
+    <string name="verse_search_translations">Загруженные переводы</string>
+    <string name="verse_search_find">Найти</string>
+    <string name="verse_search_total">Всего совпадений</string>
+    <string name="verse_search_missing">Отсутствующих глав источника</string>
+    <string name="verse_search_guide">Поиск работает без сети по загруженным переводам. Первый поиск создаёт локальный индекс. Точные слова сохраняют форму и диакритику; фраза ищет соседние слова. Номера Стронга доступны только при разметке в исходном тексте.</string>
+    <string name="verse_search_invalid">Введите минимум два символа; для Стронга — H430 или G25. Выберите перевод.</string>
+    <string name="verse_search_error">Не удалось выполнить поиск. Проверьте установку выбранного перевода и повторите.</string>
+</resources>

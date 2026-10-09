@@ -1,0 +1,24 @@
+<resources>
+    <string name="verse_search_license">Snowball search license</string>
+    <string name="verse_search_morphology">Word forms (RU/DE/EN)</string>
+    <string name="verse_search_morphology_hint">Word forms use stems for RU/DE/EN; Russian е/ё are equivalent. Choose exact words for other languages.</string>
+    <string name="verse_search_title">Verse search</string>
+    <string name="verse_search_exact">Exact words</string>
+    <string name="verse_search_phrase">Phrase</string>
+    <string name="verse_search_partial">Word fragments</string>
+    <string name="verse_search_strong">Strong number</string>
+    <string name="verse_search_all">Whole Bible</string>
+    <string name="verse_search_old">Old Testament</string>
+    <string name="verse_search_new">New Testament</string>
+    <string name="verse_search_psalms">Psalms</string>
+    <string name="verse_search_mode">Mode</string>
+    <string name="verse_search_scope">Scope</string>
+    <string name="verse_search_book">Book</string>
+    <string name="verse_search_translations">Downloaded translations</string>
+    <string name="verse_search_find">Find</string>
+    <string name="verse_search_total">Total matches</string>
+    <string name="verse_search_missing">Missing source chapters</string>
+    <string name="verse_search_guide">Offline search in downloaded translations. The first search creates a local index. Exact words retain form and accents; phrases find consecutive words. Strong numbers require markers in the source text.</string>
+    <string name="verse_search_invalid">Enter at least two characters; for Strong: H430 or G25. Select a translation.</string>
+    <string name="verse_search_error">Search failed. Check the selected translation installation and try again.</string>
+</resources>

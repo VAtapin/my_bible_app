@@ -74,6 +74,7 @@ fun MoreScreen(
     onOpenReminders: () -> Unit,
     onBibleDownloads: () -> Unit,
     onOpenBooks: () -> Unit = {},
+    onSearch: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showingAbout by rememberSaveable { mutableStateOf(false) }
@@ -119,6 +120,9 @@ fun MoreScreen(
                 Text(localText(R.string.about_title, language))
             } }
             item { OfflinePanel(language) }
+            item { androidx.compose.material3.OutlinedButton(onClick = onSearch, modifier = Modifier.fillMaxWidth()) {
+                Text(localText(R.string.verse_search_title, language))
+            } }
             item { androidx.compose.material3.OutlinedButton(onClick = onOpenBooks, modifier = Modifier.fillMaxWidth()) {
                 Text(localText(R.string.study_books, language))
             } }

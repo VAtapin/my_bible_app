@@ -42,7 +42,7 @@ internal fun ChapterReadingContent(
     onVisiblePlace: ((BibleChapter, BibleVerse, BibleVerse, Int) -> Unit)? = null,
 ) {
     if (client != null) {
-        key(chapter.translation.code, chapter.book.slug, chapter.chapter.number) {
+        key(chapter.translation.code, chapter.book.slug, chapter.chapter.number, initialVerse) {
             ContinuousChapterContent(language, chapter, client, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 onStudy, initialVerse, modifier, onVisiblePlace)
         }

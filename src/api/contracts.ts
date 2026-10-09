@@ -192,9 +192,11 @@ export interface VerseSearchResult {
   verse_id: number
   reference: string
   translation: { code: string }
-  book: { slug: string }
+  book: { slug: string; osis_code?: string }
   chapter_number: number
   verse_number: number
   snippet: string
+  text?: string
+  snippet_segments?: { text: string; match: boolean }[]
 }
 export interface VerseSearchResponse { results: VerseSearchResult[] }

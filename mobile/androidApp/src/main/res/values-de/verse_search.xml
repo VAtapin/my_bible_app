@@ -1,0 +1,24 @@
+<resources>
+    <string name="verse_search_license">Snowball-Suchlizenz</string>
+    <string name="verse_search_morphology">Wortformen (RU/DE/EN)</string>
+    <string name="verse_search_morphology_hint">Wortformen nutzen Wortstämme für RU/DE/EN; russisches е/ё wird vereinheitlicht. Für andere Sprachen exakte Wörter wählen.</string>
+    <string name="verse_search_title">Verssuche</string>
+    <string name="verse_search_exact">Exakte Wörter</string>
+    <string name="verse_search_phrase">Phrase</string>
+    <string name="verse_search_partial">Wortteile</string>
+    <string name="verse_search_strong">Strong-Nummer</string>
+    <string name="verse_search_all">Ganze Bibel</string>
+    <string name="verse_search_old">Altes Testament</string>
+    <string name="verse_search_new">Neues Testament</string>
+    <string name="verse_search_psalms">Psalmen</string>
+    <string name="verse_search_mode">Modus</string>
+    <string name="verse_search_scope">Bereich</string>
+    <string name="verse_search_book">Buch</string>
+    <string name="verse_search_translations">Heruntergeladene Übersetzungen</string>
+    <string name="verse_search_find">Suchen</string>
+    <string name="verse_search_total">Treffer gesamt</string>
+    <string name="verse_search_missing">Fehlende Quellkapitel</string>
+    <string name="verse_search_guide">Offline-Suche in heruntergeladenen Übersetzungen. Die erste Suche erstellt einen lokalen Index. Exakte Wörter behalten Form und Akzente; Phrasen suchen aufeinanderfolgende Wörter. Strong-Nummern benötigen Markierungen im Quelltext.</string>
+    <string name="verse_search_invalid">Mindestens zwei Zeichen; für Strong: H430 oder G25. Übersetzung auswählen.</string>
+    <string name="verse_search_error">Suche fehlgeschlagen. Installation der gewählten Übersetzung prüfen und erneut versuchen.</string>
+</resources>

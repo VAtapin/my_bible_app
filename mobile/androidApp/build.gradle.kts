@@ -39,6 +39,7 @@ kotlin {
         implementation(libs.androidx.work.runtime)
         implementation(libs.kotlinx.serialization.json)
         implementation(libs.kotlinx.coroutines.android)
+        implementation(libs.snowball.stemmer)
         debugImplementation(libs.androidx.compose.ui.tooling)
         debugImplementation(libs.androidx.compose.ui.test.manifest)
         androidTestImplementation(platform(libs.androidx.compose.bom))

@@ -43,7 +43,7 @@ export interface BibleApi {
   getCalendarMonth(date: string, language?: string): Promise<CalendarGridDay[]>
   getCalendarIcon(id: number): Promise<CalendarIconDetail>
   getCalendarService(date: string, language: string): Promise<CalendarServicePlan>
-  searchVerses(query: string, translation: string): Promise<VerseSearchResponse>
+  searchVerses(query: string, translation: string, options?: { match?: 'partial' | 'phrase' | 'all_words'; scope?: 'all' | 'old' | 'new' | 'psalms'; offset?: number; limit?: number }): Promise<VerseSearchResponse>
 }
 
 export interface ApiClientOptions {
@@ -169,15 +169,19 @@ export function createBibleApi(options: ApiClientOptions): BibleApi {
         && Array.isArray(value.assignments) && value.assignments.every((item) => isRecord(item) && typeof item.title === 'string' && typeof item.text === 'string' && typeof item.slot === 'string')
         && Array.isArray(value.expansions) && value.expansions.every((item) => isRecord(item) && typeof item.id === 'string' && typeof item.title === 'string' && typeof item.text === 'string'))
     },
-    searchVerses(query, translation) {
-      const params = new URLSearchParams({ q: query, translation, limit: '30' })
+    searchVerses(query, translation, options = {}) {
+      const params = new URLSearchParams({ q: query, translation, limit: String(options.limit ?? 30) })
+      if (options.match) params.set('match', options.match)
+      if (options.scope) params.set('scope', options.scope)
+      if (options.offset !== undefined) params.set('offset', String(Math.max(0, options.offset)))
       return request<VerseSearchResponse>(`/search/verses?${params}`, (value): value is VerseSearchResponse => isRecord(value)
         && Array.isArray(value.results) && value.results.every((item) => isRecord(item)
           && typeof item.verse_id === 'number' && typeof item.reference === 'string'
           && isRecord(item.translation) && typeof item.translation.code === 'string'
           && isRecord(item.book) && typeof item.book.slug === 'string'
           && typeof item.chapter_number === 'number' && typeof item.verse_number === 'number'
-          && typeof item.snippet === 'string'))
+          && typeof item.snippet === 'string' && (item.text === undefined || typeof item.text === 'string')
+          && (item.snippet_segments === undefined || (Array.isArray(item.snippet_segments) && item.snippet_segments.every(part => isRecord(part) && typeof part.text === 'string' && typeof part.match === 'boolean')))))
     },
   }
 }

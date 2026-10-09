@@ -22,6 +22,7 @@ const items = [
   <MobileShell back-to="/today">
     <h1 class="compact-page-title">{{ text.appearance.settingsTitle }}</h1>
     <div class="module-list">
+      <RouterLink to="/search" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ text.readerActions.search }}</strong></RouterLink>
       <RouterLink to="/books" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ studyMessages[language].books }}</strong></RouterLink>
       <RouterLink to="/bibles" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ catalogue.bible_library_title }} · {{ catalogue.catalog_add }}</strong></RouterLink>
       <RouterLink to="/storage?tab=bookmarks" class="module-card available"><span class="module-icon"><img src="/app-icons/bookmarks.png" alt="" /></span><strong>{{ text.readerActions.myBookmarks }}</strong><span aria-hidden="true">→</span></RouterLink>
@@ -41,5 +42,6 @@ const items = [
       </label>
       </div>
     </fieldset>
+    <a href="/licenses/Snowball-JS-BSD.txt" target="_blank" rel="noopener">Snowball · BSD</a>
   </MobileShell>
 </template>

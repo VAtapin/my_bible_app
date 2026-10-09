@@ -110,6 +110,7 @@ fun BibleReader(
     )) { mutableStateOf<BookmarkEntry?>(null) }
     var noteInitial by rememberSaveable { mutableStateOf("") }
     var studyVerseId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var showingSearch by rememberSaveable { mutableStateOf(false) }
     var studyChapter by remember { mutableStateOf<BibleChapter?>(null) }
     var focusedVerse by rememberSaveable { mutableStateOf(preferences.getInt("lastVerse", 0)) }
     var readingChapter by remember { mutableIntStateOf(selectedChapter ?: 1) }
@@ -132,6 +133,17 @@ fun BibleReader(
         if (translations.isNotEmpty() && translationCode.isBlank()) {
             translationCode = translations.firstOrNull()?.code.orEmpty()
         }
+    }
+
+    if (showingSearch) {
+        BibleSearchScreen(language, client, translationCode, onBack = { showingSearch = false }, onOpen = { hit ->
+            restoringPosition = false
+            translationCode = hit.translation; selectedBookSlug = hit.book; selectedChapter = hit.chapter; focusedVerse = hit.verse
+            preferences.edit().putString("lastTranslation",hit.translation).putString("lastBookSlug",hit.book)
+                .putInt("lastChapter",hit.chapter).putInt("lastVerse",hit.verse).putInt("lastVerseOffset",0).apply()
+            showingSearch = false
+        })
+        return
     }
 
     LaunchedEffect(translationCode, booksRetry) {
@@ -240,6 +252,7 @@ fun BibleReader(
             onBack = { if (comparing) comparing = false else chapterBack() },
             onHome = onBack,
             onRetry = { chapterRetry += 1 },
+            onSearch = { restoringPosition = true; selectedChapter = readingChapter; focusedVerse = readingVerse; showingSearch = true },
             onPrevious = { selectedChapter = (readingChapter - 1).coerceAtLeast(1); focusedVerse = 0 },
             onNext = { selectedChapter = (readingChapter + 1).coerceAtMost(selectedBook.chaptersCount); focusedVerse = 0 },
             initialVerse = focusedVerse,
@@ -356,6 +369,7 @@ private fun ChapterScreen(
     onBack: () -> Unit,
     onHome: () -> Unit,
     onRetry: () -> Unit,
+    onSearch: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onFontSmaller: () -> Unit,
@@ -400,6 +414,7 @@ private fun ChapterScreen(
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 12.dp)) {
             androidx.compose.material3.TextButton(onClick = onCompare) { Text(text(if (comparing) R.string.compare_close else R.string.compare_open, language)) }
             androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_library_title, language)) }
+            androidx.compose.material3.TextButton(onClick = onSearch) { Text(text(R.string.verse_search_title, language)) }
             androidx.compose.material3.TextButton(onClick = { showingCommentaries = !showingCommentaries }) { Text(text(R.string.study_commentaries, language)) }
         }
 

@@ -28,6 +28,7 @@ internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Uni
     val context = LocalContext.current
     val version = remember(context) { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
     var linkFailed by remember { mutableStateOf(false) }
+    var license by remember { mutableStateOf<String?>(null) }
     val open: (String) -> Unit = { url ->
         linkFailed = false
         if (onOpenLink != null) onOpenLink(url)
@@ -53,9 +54,15 @@ internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Uni
                 AboutLink(localized(R.string.about_website, language), "https://bible-desktop.com/", open)
                 AboutLink(localized(R.string.about_privacy, language), "https://bible-app.online/android/privacy/${language.takeIf { it in setOf("ru", "de", "uk", "en") } ?: "ru"}.html", open)
                 if (linkFailed) Text(localized(R.string.about_link_unavailable, language), color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = { license = context.assets.open("licenses/Snowball-BSD.txt").bufferedReader().use { it.readText() } }) {
+                    Text(localized(R.string.verse_search_license, language))
+                }
             }
         }
     }
+    license?.let { content -> AlertDialog(onDismissRequest = { license = null },
+        title = { Text("Snowball · BSD") }, text = { Text(content, Modifier.heightIn(max = 450.dp).verticalScroll(rememberScrollState())) },
+        confirmButton = { TextButton(onClick = { license = null }) { Text(localized(R.string.study_close, language)) } }) }
 }
 
 @Composable
