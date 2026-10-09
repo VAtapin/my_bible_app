@@ -1,0 +1,47 @@
+{
+  "status": "preparing-first-internal-release",
+  "packageName": "com.bibledesktop.myapp",
+  "versionName": "0.1.0",
+  "versionCode": 1,
+  "decisions": {
+    "firstPublication": true,
+    "accountType": "personal",
+    "accountCreationDate": "not confirmed; Play Console determines whether mandatory closed testing applies",
+    "publicationTrack": "internal-testing-first",
+    "loginRequired": false,
+    "advertisingSdkPresent": false,
+    "advertisingDeclaration": "No, subject to owner confirmation before submission",
+    "targetAudience": "Owner must choose the real audience; no automatic children/families claim",
+    "contentRating": "Owner must complete the IARC questionnaire from actual content",
+    "operator": "Volodymyr Atapin / Atapin.de, per owner-provided Impressum",
+    "operatorSource": "https://atapin.de/impressum",
+    "supportEmail": "atapin@gmail.com, public Impressum contact",
+    "dataSafety": "Not submitted; do not select no data collected until server logging is confirmed"
+  },
+  "dataSafetyEvidence": {
+    "localData": ["settings", "reading position", "bookmarks", "verse notes", "reminder schedule", "downloaded texts and previews"],
+    "automaticAppUploads": "No account, profile sync, note upload, FCM, analytics or crash-report SDK in current native implementation",
+    "networkRequests": "BibleDesktop HTTPS GET: selected translations, books, chapters, verse references, dictionary, prayer IDs, calendar dates/languages and icon previews. Server receives IP address and request metadata.",
+    "systemBackup": "allowBackup=true: Android may include preferences/notes/bookmarks in system backup according to device settings; noBackupFilesDir excludes downloaded content",
+    "userInitiatedShare": "Only the selected verse/reference/link or prayer text is sent to the app chosen by the user",
+    "pendingServerFacts": ["which request logs are retained", "retention period and deletion procedure", "whether IP is used to infer location or for profiling", "any server-side analytics or third-party processors"],
+    "transport": "API and calendar media use HTTPS; no claim of encryption at rest for local preferences",
+    "noDataClaimApproved": false
+  },
+  "contentRights": {
+    "status": "owner-confirmation-required-before-publication",
+    "review": ["Bible translation redistribution and offline download rights", "prayer text rights", "calendar content rights", "icon image/preview rights", "original church photograph and store graphics"],
+    "fontLicensesBundled": ["Inter OFL", "Noto Serif OFL", "Ponomar OFL", "Monomakh OFL"],
+    "apiOfflineAllowedIsNotProofOfCopyrightLicense": true
+  },
+  "externalSteps": [
+    "Create a new app in the existing verified Play Console account",
+    "Enable Play App Signing and upload the signed AAB to internal testing",
+    "Confirm support contact, distribution countries, audience, content rating and declarations",
+    "Publish and check the Android privacy URL before closed/public testing",
+    "Obtain the Play App Signing SHA-256 certificate for App Links, not the upload-key fingerprint",
+    "Test Play installation and updates on real devices; inspect pre-launch reports",
+    "For applicable personal accounts: 12 continuously opted-in closed testers for at least 14 days, then apply for production access",
+    "Review and explicitly approve the first public rollout"
+  ]
+}

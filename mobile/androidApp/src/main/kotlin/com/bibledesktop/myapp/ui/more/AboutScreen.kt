@@ -51,7 +51,7 @@ internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Uni
                 }
                 AboutLink(localized(R.string.about_online, language), "https://bible-app.online/${language.takeIf { it in setOf("ru", "de", "uk", "en") } ?: "ru"}", open)
                 AboutLink(localized(R.string.about_website, language), "https://bible-desktop.com/", open)
-                AboutLink(localized(R.string.about_privacy, language), "https://bible-app.online/privacy", open)
+                AboutLink(localized(R.string.about_privacy, language), "https://bible-app.online/android/privacy/${language.takeIf { it in setOf("ru", "de", "uk", "en") } ?: "ru"}.html", open)
                 if (linkFailed) Text(localized(R.string.about_link_unavailable, language), color = MaterialTheme.colorScheme.error)
             }
         }

@@ -23,3 +23,12 @@ mobile/build/
 mobile/androidApp/build/
 mobile/sharedLogic/build/
 mobile/local.properties
+
+# Release keys and local credentials must never enter Git.
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.protected
+keystore.properties
+signing.properties

@@ -36,10 +36,10 @@ class AboutTest {
         compose.onNodeWithText("Vladimir Atapin").performScrollTo().assertIsDisplayed()
         val version = compose.activity.packageManager.getPackageInfo(compose.activity.packageName, 0).versionName
         compose.onNodeWithText("$versionLabel $version").performScrollTo().assertIsDisplayed()
-        listOf("https://bible-app.online/$language", "https://bible-desktop.com/", "https://bible-app.online/privacy").forEach { url ->
+        listOf("https://bible-app.online/$language", "https://bible-desktop.com/", "https://bible-app.online/android/privacy/$language.html").forEach { url ->
             compose.onNodeWithText(url, useUnmergedTree = true).performScrollTo().assertIsDisplayed().performClick()
         }
-        assertEquals(listOf("https://bible-app.online/$language", "https://bible-desktop.com/", "https://bible-app.online/privacy"), links)
+        assertEquals(listOf("https://bible-app.online/$language", "https://bible-desktop.com/", "https://bible-app.online/android/privacy/$language.html"), links)
         compose.onNodeWithContentDescription(homeLabel).performClick()
         assertTrue(home)
         if (language == "ru") {

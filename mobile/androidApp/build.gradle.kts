@@ -5,6 +5,18 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+val releaseSecrets = listOf("BIBLE_RELEASE_STORE_FILE", "BIBLE_RELEASE_STORE_PASSWORD", "BIBLE_RELEASE_KEY_ALIAS", "BIBLE_RELEASE_KEY_PASSWORD")
+    .associateWith { providers.environmentVariable(it).orNull }
+val hasReleaseSigning = releaseSecrets.values.all { !it.isNullOrBlank() }
+val requestedVersionCode = providers.gradleProperty("bibleVersionCode").orNull
+val requestedVersionName = providers.gradleProperty("bibleVersionName").orNull
+val releaseVersionCode = requestedVersionCode?.let {
+    it.toIntOrNull()?.takeIf { code -> code in 1..2_100_000_000 } ?: error("bibleVersionCode must be a positive Play version code")
+} ?: 1
+val releaseVersionName = requestedVersionName?.also {
+    require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(?:[-.][A-Za-z0-9.-]+)?").matches(it)) { "bibleVersionName must be a semantic version" }
+} ?: "0.1.0"
+
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
@@ -45,8 +57,8 @@ android {
         applicationId = "com.bibledesktop.myapp"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -65,13 +77,24 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) create("releaseUpload") {
+            storeFile = file(releaseSecrets.getValue("BIBLE_RELEASE_STORE_FILE")!!)
+            storePassword = releaseSecrets.getValue("BIBLE_RELEASE_STORE_PASSWORD")
+            keyAlias = releaseSecrets.getValue("BIBLE_RELEASE_KEY_ALIAS")
+            keyPassword = releaseSecrets.getValue("BIBLE_RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
         getByName("release") {
+            isDebuggable = false
             isMinifyEnabled = false
+            if (hasReleaseSigning) signingConfig = signingConfigs.getByName("releaseUpload")
         }
     }
 
@@ -80,3 +103,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
+
+val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
+    group = "verification"
+    description = "Prevent unsigned releases and accidental use of debug signing."
+    doLast {
+        check(hasReleaseSigning) { "Release signing is not configured. Use mobile/scripts/Build-Release.ps1; do not put passwords in Gradle arguments." }
+        val key = file(releaseSecrets.getValue("BIBLE_RELEASE_STORE_FILE")!!).canonicalFile
+        check(key.isFile && !key.toPath().startsWith(rootProject.projectDir.parentFile.canonicalFile.toPath())) {
+            "The release keystore must exist outside the repository."
+        }
+        check(key.name != "debug.keystore" && releaseSecrets.getValue("BIBLE_RELEASE_KEY_ALIAS") != "androiddebugkey") {
+            "Debug signing is not permitted for a release."
+        }
+    }
+}
+tasks.matching { it.name in setOf("bundleRelease", "assembleRelease", "packageRelease", "packageReleaseBundle", "validateSigningRelease") }
+    .configureEach { dependsOn(verifyReleaseSigning) }

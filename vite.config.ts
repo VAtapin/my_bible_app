@@ -60,6 +60,8 @@ export default defineConfig({
           revision: createHash('sha256').update(readFileSync(new URL('./public/brand/welcome-church.png', import.meta.url))).digest('hex'),
         }],
         navigateFallback: '/index.html',
+        // Native Android policy is a standalone HTML document, not a Vue route.
+        navigateFallbackDenylist: [/^\/android\/privacy(?:\/|$)/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
