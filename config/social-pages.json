@@ -1,36 +1,36 @@
 {
   "ru": {
-    "title": "Bible Desktop — Библия, молитвы и церковный календарь",
+    "title": "Bible App — Библия, молитвы и церковный календарь",
     "description": "Православное приложение для духовной жизни: чтение Библии, молитвослов, церковный календарь с иконами и праздниками, заметки и закладки. Выберите нужные разделы и читайте сохранённые тексты без интернета — на телефоне или планшете.",
     "locale": "ru_RU",
-    "imageAlt": "Bible Desktop: православное приложение с Библией, молитвами и церковным календарём",
+    "imageAlt": "Bible App: православное приложение с Библией, молитвами и церковным календарём",
     "headline": "Ближе к Богу — каждый день",
     "features": ["Библия и чтение", "Молитвы и правила", "Календарь и иконы", "Закладки и заметки"],
     "footer": "На телефоне и планшете · Сохранённые тексты без интернета"
   },
   "de": {
-    "title": "Bible Desktop — Bibel, Gebete und Kirchenkalender",
+    "title": "Bible App — Bibel, Gebete und Kirchenkalender",
     "description": "Die orthodoxe App für Ihr geistliches Leben: Bibellesen, Gebetbuch, Kirchenkalender mit Ikonen und Festen sowie Notizen und Lesezeichen. Wählen Sie Ihre Bereiche und lesen Sie gespeicherte Texte auch offline — auf dem Smartphone oder Tablet.",
     "locale": "de_DE",
-    "imageAlt": "Bible Desktop: orthodoxe App mit Bibel, Gebeten und Kirchenkalender",
+    "imageAlt": "Bible App: orthodoxe App mit Bibel, Gebeten und Kirchenkalender",
     "headline": "Gott näher — jeden Tag",
     "features": ["Bibel und Lesen", "Gebete und Regeln", "Kalender und Ikonen", "Notizen und Lesezeichen"],
     "footer": "Smartphone und Tablet · Gespeicherte Texte offline lesen"
   },
   "uk": {
-    "title": "Bible Desktop — Біблія, молитви й церковний календар",
+    "title": "Bible App — Біблія, молитви й церковний календар",
     "description": "Православний застосунок для духовного життя: читання Біблії, молитовник, церковний календар з іконами й святами, нотатки та закладки. Виберіть потрібні розділи й читайте збережені тексти без інтернету — на телефоні або планшеті.",
     "locale": "uk_UA",
-    "imageAlt": "Bible Desktop: православний застосунок із Біблією, молитвами й церковним календарем",
+    "imageAlt": "Bible App: православний застосунок із Біблією, молитвами й церковним календарем",
     "headline": "Ближче до Бога — щодня",
     "features": ["Біблія й читання", "Молитви й правила", "Календар та ікони", "Закладки й нотатки"],
     "footer": "На телефоні й планшеті · Збережені тексти без інтернету"
   },
   "en": {
-    "title": "Bible Desktop — Bible, prayers and church calendar",
+    "title": "Bible App — Bible, prayers and church calendar",
     "description": "An Orthodox app for your spiritual life: Bible reading, prayer book, church calendar with icons and feasts, notes and bookmarks. Choose your sections and read saved texts offline — on your phone or tablet.",
     "locale": "en_GB",
-    "imageAlt": "Bible Desktop: an Orthodox app with Bible reading, prayers and church calendar",
+    "imageAlt": "Bible App: an Orthodox app with Bible reading, prayers and church calendar",
     "headline": "Closer to God — every day",
     "features": ["Bible and reading", "Prayers and rules", "Calendar and icons", "Bookmarks and notes"],
     "footer": "Phone and tablet · Read saved texts offline"

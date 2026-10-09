@@ -35,6 +35,10 @@ class AdaptiveWelcomeTest {
             }
         }
         val layout = compose.onNodeWithTag(if (split) "welcome-split" else "welcome-stacked")
+        compose.onNodeWithText("Українська").assertDoesNotExist()
+        compose.onNodeWithText("English").assertDoesNotExist()
+        compose.onNodeWithTag("welcome-settings").assertExists()
+        compose.onNodeWithText("Bible App").assertExists()
         layout.assertExists()
         val parentBounds = layout.fetchSemanticsNode().boundsInRoot
         val heroBounds = compose.onNodeWithTag("welcome-hero").fetchSemanticsNode().boundsInRoot

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bible Desktop</string>
+    <string name="app_name">Bible App</string>
     <string name="app_subtitle">The Word of God every day</string>
     <string name="translations_title">Bible translations</string>
     <string name="translations_description">Loaded directly from Bible Desktop API</string>

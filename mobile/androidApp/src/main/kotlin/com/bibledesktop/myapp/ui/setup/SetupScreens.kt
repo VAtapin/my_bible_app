@@ -111,7 +111,7 @@ internal fun WelcomeScreen(
     client: BibleContentSource,
     translationsState: TranslationState,
     onRetry: () -> Unit,
-    onLanguageChange: (String) -> Unit,
+    onSettings: () -> Unit,
     onQuick: () -> Unit,
     onManual: () -> Unit,
 ) {
@@ -123,7 +123,11 @@ internal fun WelcomeScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(Modifier.padding(horizontal = 16.dp)) { LanguagePicker(language, onLanguageChange) }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.End) {
+            IconButton(onClick = onSettings, modifier = Modifier.testTag("welcome-settings")) {
+                Icon(Icons.Outlined.Settings, contentDescription = localized(R.string.settings_title, language), tint = PrimaryBlue)
+            }
+        }
         Box(Modifier.fillMaxWidth()) {
             if (split) Row(Modifier.fillMaxWidth().testTag("welcome-split")) {
                 WelcomeHero(language, Modifier.weight(1f))

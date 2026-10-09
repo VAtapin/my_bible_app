@@ -253,20 +253,21 @@ class NativeSmokeTest {
     }
 
     @Test fun fourLanguagesAndCalendarBeforeSetup() {
-        compose.onNodeWithText("Українська").performClick()
+        compose.onNodeWithText("Українська").assertDoesNotExist()
+        chooseLanguageInSettings("Українська")
         compose.onNodeWithText("Швидко налаштувати").assertExists()
-        compose.onNodeWithText("English").performScrollTo().performClick()
+        chooseLanguageInSettings("English")
         compose.onNodeWithText("Quick setup").assertExists()
         compose.onNodeWithTag("calendar-overview").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Calendar texts are currently in Russian.").assertExists()
-        compose.onNodeWithText("Deutsch").performScrollTo().performClick()
+        chooseLanguageInSettings("Deutsch")
         compose.onNodeWithText("Schnell einrichten").assertExists()
-        compose.onNodeWithText("Русский").performClick()
+        chooseLanguageInSettings("Русский")
         compose.onNodeWithText("Быстро настроить").assertExists()
     }
 
     @Test fun setupSurvivesActivityRecreation() {
-        compose.onNodeWithText("English").performClick()
+        chooseLanguageInSettings("English")
         compose.onNodeWithText("Set up manually").performScrollTo().performClick()
         compose.activityRule.scenario.recreate()
         compose.onNodeWithText("Choose what to include").assertIsDisplayed()
@@ -275,7 +276,7 @@ class NativeSmokeTest {
     }
 
     @Test fun systemRotationKeepsManualSetupAndLanguage() {
-        compose.onNodeWithText("Українська").performClick()
+        chooseLanguageInSettings("Українська")
         compose.onNodeWithText("Налаштувати самостійно").performScrollTo().performClick()
         try {
             compose.runOnUiThread {
@@ -292,6 +293,15 @@ class NativeSmokeTest {
                 compose.activity.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
         }
+    }
+
+    private fun chooseLanguageInSettings(name: String) {
+        compose.onNodeWithTag("welcome-settings").performScrollTo().performClick()
+        compose.onNodeWithText(name).performClick()
+        assertEquals(mapOf("Русский" to "ru", "Deutsch" to "de", "Українська" to "uk", "English" to "en")[name],
+            compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE).getString("uiLanguage", null))
+        back()
+        compose.onNodeWithTag("welcome-settings").assertExists()
     }
 
     private fun back() {

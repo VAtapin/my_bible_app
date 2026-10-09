@@ -2,7 +2,7 @@ import type { MessageShape } from './index'
 import type { ru } from './ru'
 
 export const de: MessageShape<typeof ru> = {
-  brand: 'Bible Desktop', brandSubtitle: 'Meine App', online: 'Online', offline: 'Offline',
+  brand: 'Bible App', brandSubtitle: 'Meine App', online: 'Online', offline: 'Offline',
   translationName: 'Bibelübersetzung',
   navigation: { label: 'Hauptnavigation', back: 'Zurück', today: 'Heute', reading: 'Lesen', settings: 'Einrichten', education: 'Lernen', more: 'Mehr', prayers: 'Gebete', calendar: 'Kalender' },
   appearance: {
@@ -35,7 +35,7 @@ export const de: MessageShape<typeof ru> = {
     noteUnavailable: 'Notizen sind noch nicht verfügbar.', audioUnavailable: 'Audioaufnahmen sind noch nicht verfügbar.',
   },
   welcome: {
-    eyebrow: 'Persönliche App', title: 'Bible Desktop',
+    eyebrow: 'Persönliche App', title: 'Bible App',
     intro: 'Orthodoxe App für Ihr geistliches Leben',
     startLabel: 'Einrichtungsart', quickTitle: 'Schnell einrichten',
     quickDescription: 'Alle Bereiche mit einem Klick',
@@ -224,7 +224,7 @@ export const de: MessageShape<typeof ru> = {
   eyebrow: 'Meine Bibel', title: 'Gottes Wort für jeden Tag',
   intro: 'Speichern Sie Kapitel auf dem Gerät, um sie auch offline zu lesen.', cardEyebrow: 'Lesen',
   cardTitle: 'Kapitel auswählen', translation: 'Übersetzung', book: 'Buch', chapter: 'Kapitel',
-  download: 'Kapitel laden', openOffline: 'Gespeichert', notification: 'Erinnern', notificationTitle: 'Bible Desktop',
+  download: 'Kapitel laden', openOffline: 'Gespeichert', notification: 'Erinnern', notificationTitle: 'Bible App',
   notificationBody: 'Die Test-Erinnerung funktioniert.', reading: 'Lesen', loading: 'Wird geladen…',
   saved: 'Das Kapitel wurde geladen und lokal gespeichert.', offlineOpened: 'Die lokale Kopie wurde geöffnet.',
   offlineMissing: 'Dieses Kapitel ist noch nicht gespeichert.',

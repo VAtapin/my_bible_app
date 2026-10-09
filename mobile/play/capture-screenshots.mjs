@@ -9,7 +9,7 @@ if (!/^emulator-\d+$/.test(serial || '')) throw new Error('Pass the dedicated em
 const adbPath = process.env.ANDROID_HOME ? resolve(process.env.ANDROID_HOME, 'platform-tools/adb.exe') : 'adb'
 const adb = (...args) => execFileSync(adbPath, ['-s', serial, ...args], { encoding: 'utf8', timeout: 30_000 })
 const avd = adb('emu', 'avd', 'name').trim().split('\n')[0].trim()
-if (!/^BibleDesktop_Release_(16KB_)?37$/.test(avd)) throw new Error('Use a separate BibleDesktop_Release AVD, not a personal device or prototype')
+if (!/^(BibleDesktop|BibleApp)_Release_(16KB_)?37$/.test(avd)) throw new Error('Use a separate release AVD, not a personal device or prototype')
 const destination = resolve(fileURLToPath(new URL('./assets/screenshots/ru/', import.meta.url)))
 mkdirSync(destination, { recursive: true })
 const wait = (ms) => new Promise((accept) => setTimeout(accept, ms))
@@ -44,9 +44,12 @@ adb('shell', 'wm', 'density', '420')
 adb('shell', 'settings', 'put', 'system', 'show_touches', '0')
 adb('shell', 'am', 'start', '-n', 'com.bibledesktop.myapp/.MainActivity')
 if (!process.argv.includes('--resume-reader')) {
+  await expect('Bible App')
+  const settings = (await ui()).includes('App settings') ? 'App settings' : 'Настройки приложения'
+  await click(settings, 'content-desc')
   await expect('Русский')
-  if (!(await ui()).includes('Quick setup') && !(await ui()).includes('Быстро настроить')) throw new Error('Fresh unconfigured release required; do not reset user data')
   await click('Русский')
+  adb('shell', 'input', 'keyevent', '4')
   await expect('Быстро настроить')
   await screenshot('01-welcome')
   await click('Быстро настроить')

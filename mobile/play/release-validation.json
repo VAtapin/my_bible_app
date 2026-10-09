@@ -1,19 +1,20 @@
 {
   "status": "prepared-for-internal-testing-not-submitted",
   "date": "2026-10-09",
-  "baseCommit": "a96a09697113c97e39bcca203ee782019abbe72a",
+  "baseCommit": "6279db7edef45f3b027f2f8725f9ec707708d84e",
+  "displayName": "Bible App",
   "package": "com.bibledesktop.myapp",
   "versionName": "0.1.0",
   "versionCode": 1,
   "artifactSha256": {
-    "androidApp-release.aab": "F80EB459039E35A9CB8362E40B13A265EC16AFFB530856C1AAC281A52ACAFBC0",
-    "androidApp-release.apk": "6552001513653B3551105110570543A9F05B45572B85EDC6126142CECEDE4986"
+    "androidApp-release.aab": "8D7D2DCEFDB6C6F79DFB22E0D3D90B9805DD716183BBAD75C5D1A354E96F6416",
+    "androidApp-release.apk": "3E2362EA8254113598F9C0F21898641501250606FD68D07D330C14016E52EA57"
   },
   "checks": {
     "sharedHostTests": 15,
-    "androidInstrumentationTests": 26,
+    "androidInstrumentationTests": 31,
     "releaseSigningGuardTests": 4,
-    "releaseLint": "0 errors, 51 warnings, 3 hints",
+    "releaseLint": "0 errors, 54 warnings, 3 hints",
     "signatures": "AAB jarsigner and APK apksigner passed",
     "packageAndDebuggable": "com.bibledesktop.myapp; debuggable=false",
     "zipAndElfLoadAlignment": "16 KB passed for arm64-v8a and x86_64",
@@ -22,7 +23,6 @@
   "remainingChecks": [
     "RELRO end is not 16 KB aligned in graphics-path library: warning retained, strict mode rejects; ARM64 16 KB runtime verification required",
     "Real physical device, Play-delivered AAB splits and update installation not tested",
-    "Rebuild after separately changing comparison/web reading code; current artifacts were built before those concurrent changes",
     "Android privacy page needs server deployment and owner review of server processing",
     "Data Safety, audience, content rights and IARC declarations need owner confirmation",
     "Play App Signing certificate and domain association not configured"

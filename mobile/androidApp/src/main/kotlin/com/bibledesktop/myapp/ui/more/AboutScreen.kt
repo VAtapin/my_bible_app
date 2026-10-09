@@ -40,7 +40,7 @@ internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Uni
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
             Column(Modifier.widthIn(max = 640.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Bible Desktop", color = Navy, fontFamily = ReadingSerif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                Text(localized(R.string.app_name, language), color = Navy, fontFamily = ReadingSerif, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 Text(localized(R.string.about_description, language), color = Ink)
                 Text(localized(R.string.about_version, language, version), color = PrimaryBlue)
                 Card(colors = CardDefaults.cardColors(containerColor = LightBlue)) {

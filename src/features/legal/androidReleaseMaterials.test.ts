@@ -5,6 +5,7 @@ import { androidPrivacy, androidPrivacyHtml } from '../../../scripts/android-pri
 
 const listing = JSON.parse(readFileSync(new URL('../../../mobile/play/listings.json', import.meta.url), 'utf8'))
 const checklist = JSON.parse(readFileSync(new URL('../../../mobile/play/submission-checklist.json', import.meta.url), 'utf8'))
+const banners = JSON.parse(readFileSync(new URL('../../../mobile/play/banner-copy.json', import.meta.url), 'utf8'))
 
 describe('native Android publication material', () => {
   it.each(['ru', 'de', 'uk', 'en'])('has a complete crawler-readable Android policy in %s', (language) => {
@@ -22,6 +23,7 @@ describe('native Android publication material', () => {
   })
   it.each(['ru-RU', 'de-DE', 'uk', 'en-US'])('fits Play listing limits in %s without claiming full translated content', (locale) => {
     const text = listing.locales[locale]
+    expect(text.title).toBe('Bible App')
     expect(text.title.length).toBeLessThanOrEqual(30)
     expect(text.shortDescription.length).toBeLessThanOrEqual(80)
     expect(text.fullDescription.length).toBeGreaterThan(700)
@@ -39,6 +41,8 @@ describe('native Android publication material', () => {
     expect(config).toContain('navigateFallbackDenylist: [/^\\/android\\/privacy(?:\\/|$)/]')
   })
   it.each(['ru', 'de', 'uk', 'en'])('has a correctly sized store feature PNG in %s', (language) => {
+    expect(banners[language].features).toHaveLength(4)
+    expect(banners[language].features.every((feature: string[]) => feature[1]!.length >= 40)).toBe(true)
     const png = readFileSync(new URL(`../../../mobile/play/assets/feature-${language}.png`, import.meta.url))
     expect(png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a')
     expect(png.readUInt32BE(16)).toBe(1024)
@@ -49,5 +53,13 @@ describe('native Android publication material', () => {
     expect(png.readUInt32BE(16)).toBe(512)
     expect(png.readUInt32BE(20)).toBe(512)
     expect(png[25]).toBe(2)
+  })
+  it('keeps product branding independent of API identity and persistent package', () => {
+    for (const language of ['ru', 'de', 'uk', 'en']) {
+      expect(androidPrivacy.locales[language].title).toContain('Bible App')
+      expect(androidPrivacyHtml(language)).toContain('com.bibledesktop.myapp')
+    }
+    expect(readFileSync(new URL('../../../index.html', import.meta.url), 'utf8')).toContain('<title>Bible App</title>')
+    expect(readFileSync(new URL('../../../mobile/androidApp/src/main/res/values/strings.xml', import.meta.url), 'utf8')).toContain('<string name="app_name">Bible App</string>')
   })
 })

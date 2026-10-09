@@ -30,7 +30,7 @@ describe('first launch layout', () => {
     expect(html).toContain('welcome-picture')
     expect(html).toContain('/brand/welcome-church.png')
     expect(html).not.toContain('/brand/app-icon-512.png')
-    expect(html).toContain('Bible Desktop</h1>')
+    expect(html).toContain('Bible App</h1>')
     expect(html).toContain(text.welcome.intro)
     expect(html.match(/class="choice-card welcome-choice/g)).toHaveLength(3)
     for (const path of ['/setup/quick', '/setup/manual', '/restore', '/privacy']) expect(html).toContain(`href="${path}"`)

@@ -1,7 +1,7 @@
 <resources>
     <string name="reminder_morning">Ранкова молитва</string>
     <string name="reminder_evening">Вечірня молитва</string>
-    <string name="reminder_message">Відкрийте Bible Desktop для щоденного правила.</string>
+    <string name="reminder_message">Відкрийте Bible App для щоденного правила.</string>
     <string name="reminders_hint">Щоденні нагадування працюють без мережі. Виберіть час і ввімкніть потрібні. Android може затримувати сповіщення для економії батареї. Після примусової зупинки знову відкрийте застосунок.</string>
     <string name="reminders_blocked">Сповіщення вимкнено в Android. Під час збереження їх можна дозволити.</string>
     <string name="reminders_system_settings">Налаштування сповіщень Android</string>

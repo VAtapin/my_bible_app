@@ -1,5 +1,5 @@
 export const ru = {
-  brand: 'Bible Desktop',
+  brand: 'Bible App',
   brandSubtitle: 'Моё приложение',
   online: 'Онлайн',
   offline: 'Офлайн',
@@ -46,7 +46,7 @@ export const ru = {
   },
   welcome: {
     eyebrow: 'Персональное приложение',
-    title: 'Bible Desktop',
+    title: 'Bible App',
     intro: 'Православное приложение для вашей духовной жизни',
     startLabel: 'Способ настройки',
     quickTitle: 'Быстро настроить',
@@ -305,7 +305,7 @@ export const ru = {
   download: 'Скачать главу',
   openOffline: 'Сохранено',
   notification: 'Напомнить',
-  notificationTitle: 'Bible Desktop',
+  notificationTitle: 'Bible App',
   notificationBody: 'Тестовое напоминание работает.',
   reading: 'Читать',
   loading: 'Загрузка…',

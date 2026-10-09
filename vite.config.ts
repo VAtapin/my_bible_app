@@ -28,9 +28,9 @@ export default defineConfig({
         'app-icons/setup.png',
       ],
       manifest: {
-        name: 'Bible Desktop',
-        short_name: 'Bible Desktop',
-        description: 'Personal Bible Desktop application',
+        name: 'Bible App',
+        short_name: 'Bible App',
+        description: 'Personal Bible App application',
         lang: 'mul',
         theme_color: '#4a6b8a',
         background_color: '#f7f5f1',

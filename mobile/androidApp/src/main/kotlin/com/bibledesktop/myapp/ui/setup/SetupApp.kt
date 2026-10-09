@@ -242,7 +242,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             client = client,
             translationsState = translationState,
             onRetry = { reloadKey += 1 },
-            onLanguageChange = changeLanguage,
+            onSettings = { quickSetup = false; route = Route.Sections },
             onQuick = {
                 val available = (translationState as? TranslationState.Content)?.translations.orEmpty()
                 val recommended = recommendedNativeTranslations(available, language)

@@ -9,6 +9,8 @@ describe('static localized messenger previews', () => {
     expect(page).toContain(`https://bible-app.online/${language}`)
     expect(page).toContain(`share-${language}.jpg`)
     expect(page).toContain('summary_large_image')
+    expect(page).toContain('property="og:site_name" content="Bible App"')
+    expect(socialPages[language].title).toContain('Bible App')
     expect(page).toContain('content="1200"')
     expect(page).toContain(socialPages[language].description)
     expect(page).toContain('/assets/app.js')

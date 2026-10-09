@@ -26,7 +26,7 @@ describe('interface language', () => {
     expect(getMessages().setup.manualEyebrow).toBe('MANUELLE EINRICHTUNG')
     expect(getMessages().reader.openChapter).toBe('Kapitel öffnen')
     expect(document.documentElement.lang).toBe('de')
-    expect(document.title).toBe('Bible Desktop — Meine App')
+    expect(document.title).toBe('Bible App — Meine App')
   })
 
   it('uses Russian by default on biblia-app.ru regardless of browser language', () => {

@@ -1,0 +1,50 @@
+{
+  "ru": {
+    "headline": "Православная жизнь всегда рядом!",
+    "intro": "Для молитвы, чтения и изучения веры — в одном приложении.",
+    "features": [
+      ["📖 Библия", "Разные языки, сравнение переводов, закладки, заметки и толкование слов."],
+      ["🗓 Православный календарь", "Праздники, посты, знаки Типикона, чтения и богослужебные тексты дня."],
+      ["🙏 Молитвенная библиотека", "Молитвы на разных языках и церковнославянские шрифты."],
+      ["🖼 Иконы дня", "Святые и праздники каждого дня. Крупная галерея со свайпом."]
+    ],
+    "footer": "Выбирайте нужные разделы · Читайте без сети",
+    "devices": "На телефоне и планшете · Четыре языка интерфейса"
+  },
+  "de": {
+    "headline": "Orthodoxes Leben — immer dabei!",
+    "intro": "Gebet, Bibellesen und Glauben entdecken — in einer App.",
+    "features": [
+      ["📖 Bibel", "Mehrere Sprachen, Übersetzungsvergleich, Lesezeichen, Notizen und Worterklärungen."],
+      ["🗓 Orthodoxer Kalender", "Feste, Fasten, Typikon-Zeichen, Tageslesungen und liturgische Tagestexte."],
+      ["🙏 Gebetsbibliothek", "Gebete in verschiedenen Sprachen und kirchenslawische Schriftarten."],
+      ["🖼 Ikonen des Tages", "Heilige und Feste für jeden Tag. Große Galerie mit Wischgesten."]
+    ],
+    "footer": "Bereiche selbst wählen · Offline lesen",
+    "devices": "Smartphone und Tablet · Vier Oberflächensprachen"
+  },
+  "uk": {
+    "headline": "Православне життя завжди поруч!",
+    "intro": "Для молитви, читання й пізнання віри — в одному застосунку.",
+    "features": [
+      ["📖 Біблія", "Різні мови, порівняння перекладів, закладки, нотатки й пояснення слів."],
+      ["🗓 Православний календар", "Свята, пости, знаки Типікону, читання та богослужбові тексти дня."],
+      ["🙏 Молитовна бібліотека", "Молитви різними мовами та церковнослов’янські шрифти."],
+      ["🖼 Ікони дня", "Святі й свята кожного дня. Велика галерея з гортанням."]
+    ],
+    "footer": "Вибирайте потрібні розділи · Читайте без мережі",
+    "devices": "На телефоні й планшеті · Чотири мови інтерфейсу"
+  },
+  "en": {
+    "headline": "Orthodox life — always close!",
+    "intro": "Prayer, Bible reading and exploring faith — in one app.",
+    "features": [
+      ["📖 Bible", "Multiple languages, translation comparison, bookmarks, notes and word explanations."],
+      ["🗓 Orthodox calendar", "Feasts, fasting, Typikon signs, daily readings and liturgical texts."],
+      ["🙏 Prayer library", "Prayers in different languages and Church Slavonic fonts."],
+      ["🖼 Icons of the day", "Saints and feasts for every day. A large gallery with swipe navigation."]
+    ],
+    "footer": "Choose your sections · Read offline",
+    "devices": "Phone and tablet · Four interface languages"
+  }
+}
