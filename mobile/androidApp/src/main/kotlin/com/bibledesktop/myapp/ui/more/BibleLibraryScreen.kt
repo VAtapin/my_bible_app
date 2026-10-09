@@ -86,6 +86,10 @@ internal fun BibleLibraryContent(language: String, source: BibleContentSource, m
                     label = { Text(localized(title, language)) }, modifier = Modifier.weight(1f).testTag("library-$id"))
             }
         }
+        if (tab == "installed") Button(onClick = { tab = "catalog"; group = ""; languageCode = ""; query = "" },
+            modifier = Modifier.fillMaxWidth().testTag("library-add")) {
+            Text(localized(R.string.catalog_add_other, language))
+        }
         CatalogFilters(language, editions, query, { query = it }, group, { group = it }, languageCode, { languageCode = it })
         if (tab == "catalog") Row {
             Checkbox(wifi, onCheckedChange = { wifi = it; preferences.edit().putBoolean("wifi", it).apply() })
@@ -100,7 +104,6 @@ internal fun BibleLibraryContent(language: String, source: BibleContentSource, m
         LazyColumn(Modifier.weight(1f).testTag("library-list"), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
             if (editions.isEmpty() && tab == "installed") item {
                 Text(localized(R.string.catalog_empty, language))
-                Button(onClick = { tab = "catalog" }, modifier = Modifier.testTag("library-add")) { Text(localized(R.string.catalog_add, language)) }
             }
             else if (visible.isEmpty() && !loading) item { Text(localized(R.string.translation_not_found, language)) }
             items(visible, key = TranslationSummary::code) { edition ->

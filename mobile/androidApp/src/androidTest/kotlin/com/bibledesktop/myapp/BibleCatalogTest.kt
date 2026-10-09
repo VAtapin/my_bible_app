@@ -92,6 +92,23 @@ class BibleCatalogTest {
         compose.onNodeWithTag("library-installed").performClick()
         compose.onNodeWithTag("library-add").assertExists()
     }
+    @Test fun installedBibleKeepsDirectCatalogueActionVisibleWithoutScrolling() {
+        runBlocking {
+            val book = BibleBook("one", "One", chaptersCount = 1)
+            OfflineStore(wrapped).write(biblePackageKey("RU"), BiblePackage.serializer(), BiblePackage(editions[0], listOf(book), done = 1, complete = true))
+        }
+        val fixture = object : BibleContentSource by api { override suspend fun getTranslations(language: String?) = editions }
+        compose.setContent { CompositionLocalProvider(LocalContext provides wrapped) { BibleDesktopTheme { BibleLibraryScreen("ru", fixture, onBack = {}) } } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("library-RU").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("library-add").assertIsDisplayed()
+        compose.onNodeWithText("Скачать другие переводы").assertIsDisplayed()
+        compose.onNodeWithTag("translation-search").performTextInput("no-match")
+        compose.onNodeWithTag("library-add").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("install-DE").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("library-catalog").assertIsSelected()
+        compose.onNodeWithTag("install-DE").assertExists()
+        compose.onNodeWithTag("library-add").assertDoesNotExist()
+    }
     @Test fun fullRealApiCatalogueIsNotTheEightEditionDefaultList() = runBlocking {
         val catalog = api.getTranslations()
         assertTrue(catalog.size > 100)

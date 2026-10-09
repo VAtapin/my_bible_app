@@ -1,25 +1,25 @@
 {
   "status": "prepared-for-internal-testing-not-submitted",
   "date": "2026-10-09",
-  "baseCommit": "a75dfca6e994bddf37e7c81b5c7585b02d6473e7",
+  "baseCommit": "83444fed280275b8f21c57cb8269aa81cff1a909",
   "displayName": "Bible App",
   "package": "com.bibledesktop.myapp",
   "versionName": "0.1.2",
   "versionCode": 3,
   "artifactSha256": {
-    "androidApp-release.aab": "D33AF56BABE9AE0C4A4CA8FBE7D306CA21A468932BB76765382CEC6364D26D6C",
-    "androidApp-release.apk": "C5CFFBD2EEECF6CE9703C7998E55C68B3AF6962AE9BEB472EA03E29DDE3E09F2"
+    "androidApp-release.aab": "DD56236B644AE3B6C1D549E963F7F07522F1CC3AD0CE62298A9E5E2197152A77",
+    "androidApp-release.apk": "3140ED652DC84D22FB7A877403928EAEF32AF4861DE39FC26DC1B48EA78FF864"
   },
   "checks": {
-    "sharedHostTests": 17,
-    "androidInstrumentationTests": "7 distinct tests passed across two runs (6, then 2 with one repeat): actual bundled Synodal 1189 chapters without any network requests, interruption/resume/idempotence, catalogue and empty-reader action",
-    "webTests": "227 passed / 45 files; typecheck and both production builds passed; real browser enabling KJV, reading and comparing Genesis 2 without whole packages, and reload persistence passed",
+    "sharedHostTests": "17 passed previously; unchanged code, release task UP-TO-DATE",
+    "androidInstrumentationTests": "2 catalogue UI tests passed on this revision: prominent direct action with an installed Bible, opening catalogue resets search, group/language filters; previous bundled-Bible revision passed 7 distinct tests including actual 1189 chapters without network, interruption/resume/idempotence and empty-reader action",
+    "webTests": "232 passed / 46 files; typecheck and both production builds passed; real browser verified direct catalogue action visible with enabled Synodal and opening actual API catalogue",
     "releaseSigningGuardTests": "4 passed in previous preparation; unchanged guard, not repeated",
     "releaseLint": "0 errors, 65 warnings, 3 hints",
     "signatures": "AAB jarsigner and APK apksigner passed",
     "packageAndDebuggable": "com.bibledesktop.myapp; debuggable=false",
     "zipAndElfLoadAlignment": "16 KB passed for arm64-v8a and x86_64",
-    "emulatorRuntime": "0.1.2 installed over 0.1.1 and launched on API 37 x86_64 PAGE_SIZE=4096 without clearing data; prior 0.1.0 runtime passed on 16384, not rechecked for this release"
+    "emulatorRuntime": "Updated 0.1.2 revision installed over existing release and launched on API 37 x86_64 PAGE_SIZE=4096 without clearing data; prior 0.1.0 runtime passed on 16384, not rechecked for this release"
   },
   "bundledBible": {
     "code": "BQ_RUSSIAN_RST_STRONG",

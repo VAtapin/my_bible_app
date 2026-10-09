@@ -51,6 +51,7 @@ onMounted(load)
       <button type="button" :aria-pressed="tab === 'enabled'" @click="showTab('enabled')">{{ copy.catalog_installed }}</button>
       <button type="button" :aria-pressed="tab === 'catalog'" @click="showTab('catalog')">{{ copy.catalog_all }}</button>
     </div>
+    <button v-if="tab === 'enabled'" class="catalog-add" type="button" data-testid="catalog-add-other" @click="showTab('catalog')"><span aria-hidden="true">＋</span> {{ copy.catalog_add_other }}</button>
     <label class="catalog-search">{{ copy.catalog_search }}<input v-model="query" type="search" :placeholder="copy.catalog_search" /></label>
     <div class="catalog-filters">
       <label>{{ copy.catalog_group }}<select v-model="group" @change="code = ''"><option value="">{{ copy.catalog_every }}</option><option v-for="id in groups" :key="id" :value="id">{{ groupLabel(id) }}</option></select></label>
@@ -60,7 +61,7 @@ onMounted(load)
     <p v-if="loading" role="status">{{ text.loading }}</p>
     <p v-if="error" role="alert">{{ error }} <button type="button" @click="load">{{ text.parallel.retry }}</button></p>
     <div v-if="!editions.length && tab === 'enabled' && !loading">
-      <p>{{ copy.catalog_empty }}</p><button class="primary-action" type="button" @click="showTab('catalog')">{{ copy.catalog_add }}</button>
+      <p>{{ copy.catalog_empty }}</p>
     </div>
     <p v-else-if="!visible.length && !loading">{{ text.readerActions.noResults }}</p>
     <div class="catalog-cards">
@@ -79,6 +80,7 @@ onMounted(load)
 .library-tabs button { flex: 1; }
 .bible-library button, select, input { font: inherit; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--white, white); color: var(--ink); max-width: 100%; min-width: 0; }
 .library-tabs button[aria-pressed="true"] { background: var(--blue, #315b78); color: white; }
+.bible-library .catalog-add { width: 100%; min-height: 48px; padding: 14px 16px; background: var(--blue, #315b78); color: white; font-weight: 600; cursor: pointer; }
 .catalog-search, .catalog-filters label { display: grid; gap: 6px; min-width: 0; flex: 1; }
 .catalog-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: start; }
 .catalog-edition { background: var(--white, white); padding: 16px; border: 1px solid var(--line); border-radius: 16px; overflow-wrap: anywhere; }

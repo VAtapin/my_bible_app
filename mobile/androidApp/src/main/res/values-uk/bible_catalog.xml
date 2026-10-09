@@ -1,4 +1,5 @@
 <resources>
+    <string name="catalog_add_other">Завантажити інші переклади</string>
     <string name="catalog_bundled">Входить до застосунку — завантажувати не потрібно</string>
     <string name="bible_library_title">Біблії</string>
     <string name="catalog_installed">Завантажені</string>
