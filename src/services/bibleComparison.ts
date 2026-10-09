@@ -1,6 +1,7 @@
 import type { BibleChapter, BibleVerse } from '@/api/contracts'
 import type { BibleApi } from '@/api/client'
 import type { ChapterService } from './chapterService'
+import { readWebChapter, webBibleBooks } from './webBibleLibrary'
 
 export function compareVerses(primary: BibleChapter, secondary: BibleChapter) {
   const index = (verses: BibleVerse[]) => {
@@ -28,5 +29,8 @@ export async function loadComparison(primary: BibleChapter, code: string, api: B
     return value
   }
   if (stored) return validate(stored)
-  throw new Error('Comparison edition is not installed on this device')
+  const books = await webBibleBooks(api, code)
+  const book = books.find(item => item.canonical_book?.osis_code === canonical)
+  if (!book || book.chapters_count < primary.chapter.number) throw new Error('Unavailable canonical book')
+  return validate(await readWebChapter(service, code, book.slug, primary.chapter.number))
 }

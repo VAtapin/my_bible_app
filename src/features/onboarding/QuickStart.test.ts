@@ -14,7 +14,7 @@ describe('one-click complete setup', () => {
     expect(isAppConfiguration(configuration)).toBe(true)
     expect(configuration.sections).toEqual([...sectionIds])
     for (const content of prayerContentIds) expect(configuration.prayers[content]).toBe(true)
-    expect(configuration.bible.translationCode).toBe(defaultBibleTranslations[language])
+    expect(configuration.bible.translationCode).toBe(defaultBibleTranslations.ru)
     expect(configuration.interfaceLanguage).toBe(language)
     expect(configuration.calendar.level).toBe('all')
     expect(configuration.education).toEqual({ pluginIds: ['azbuka'], showClock: true, showProgress: true })

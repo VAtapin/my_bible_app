@@ -5,6 +5,10 @@ import com.bibledesktop.shared.api.TranslationSummary
 import kotlin.test.*
 
 class SetupDefaultsTest {
+    @Test fun bundledSynodalIsDefaultRegardlessOfInterfaceLanguage() {
+        val available = listOf(translation("BQ_RUSSIAN_RST_STRONG", "ru"), translation("DE", "de", true), translation("CU", "cu"))
+        for (language in interfaceLanguages.keys) assertEquals(setOf("BQ_RUSSIAN_RST_STRONG"), recommendedNativeTranslations(available, language))
+    }
     private fun translation(code: String, lang: String, default: Boolean = false) =
         TranslationSummary(code, code, language = LanguageSummary(lang, lang), isDefault = default)
 

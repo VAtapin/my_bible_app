@@ -4,7 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
 import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
-import { installedBibles, searchLocalBible } from '@/services/bibleCatalog'
+import { searchLocalBible } from '@/services/bibleCatalog'
+import { enabledWebBibles, isConnectionFailure } from '@/services/webBibleLibrary'
+import { bibleApi } from '@/api'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import type { VerseSearchResult } from '@/api/contracts'
 import { useI18n } from '@/i18n'
@@ -28,11 +30,16 @@ async function search(): Promise<void> {
   message.value = ''
   try {
     const chapters = createIndexedDbChapterRepository()
-    const installed = await installedBibles(createIndexedDbLibraryRepository(), chapters)
-    if (!explicitTranslation && !installed.some(item => item.translation.code === translation.value)) translation.value = installed[0]?.translation.code ?? ''
-    if (!installed.some(item => item.translation.code === translation.value)) { message.value = bibleCatalogMessages[language.value].catalog_empty; return }
+    const enabled = await enabledWebBibles(bibleApi)
+    if (!explicitTranslation && !enabled.some(item => item.code === translation.value)) translation.value = enabled[0]?.code ?? ''
+    if (!translation.value) { message.value = bibleCatalogMessages[language.value].catalog_empty; return }
     await router.replace({ path: '/search', query: { q: query.value.trim(), translation: translation.value } })
-    const response = await searchLocalBible(chapters, translation.value, query.value.trim())
+    let response: VerseSearchResult[]
+    try { response = (await bibleApi.searchVerses(query.value.trim(), translation.value)).results }
+    catch (error) {
+      if (!isConnectionFailure(error)) throw error
+      response = await searchLocalBible(chapters, translation.value, query.value.trim())
+    }
     if (current !== generation) return
     results.value = response
     message.value = results.value.length ? '' : text.value.readerActions.noResults

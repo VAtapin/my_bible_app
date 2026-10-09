@@ -11,6 +11,7 @@ fun initialInterfaceLanguage(saved: String?, device: String): String =
 val quickNativeSections = setOf("bible", "prayer", "calendar", "study", "reminders")
 
 fun recommendedNativeTranslations(available: List<TranslationSummary>, language: String): Set<String> {
+    available.firstOrNull { it.code == "BQ_RUSSIAN_RST_STRONG" }?.let { return setOf(it.code) }
     val primary = available.firstOrNull { it.language.code == language && it.isDefault }
         ?: available.firstOrNull { it.language.code == language }
         ?: available.firstOrNull { it.language.code == "ru" && it.isDefault }

@@ -1,4 +1,5 @@
 <resources>
+    <string name="catalog_bundled">Входит в приложение — скачивать не нужно</string>
     <string name="bible_library_title">Библии</string>
     <string name="catalog_installed">Загруженные</string>
     <string name="catalog_all">Каталог</string>

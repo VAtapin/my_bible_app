@@ -95,7 +95,7 @@ export function sectionsForPreset(preset: PresetId): AppSectionId[] {
 export function createCompleteConfiguration(language: InterfaceLanguage, now = new Date()): AppConfiguration {
   return createConfiguration({
     interfaceLanguage: language, setupMode: 'quick', preset: null,
-    sections: [...sectionIds], translationCodes: [defaultBibleTranslations[language]],
+    sections: [...sectionIds], translationCodes: [defaultBibleTranslations.ru],
     morningPrayer: true, eveningPrayer: true, prayerBook: true,
     akathists: true, canons: true, horologion: true,
     prayerLanguageCodes: [...new Set([language, 'ru', 'cu', 'cu-civil'])],

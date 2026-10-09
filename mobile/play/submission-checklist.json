@@ -1,8 +1,8 @@
 {
   "status": "preparing-first-internal-release",
   "packageName": "com.bibledesktop.myapp",
-  "versionName": "0.1.0",
-  "versionCode": 1,
+  "versionName": "0.1.2",
+  "versionCode": 3,
   "decisions": {
     "firstPublication": true,
     "accountType": "personal",

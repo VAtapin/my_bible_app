@@ -12,7 +12,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия:
-`0.1.1` (build 2).
+`0.1.2` (build 3).
 
 Android debug имеет отдельный идентификатор `com.bibledesktop.myapp.debug`
 и название «Bible Desktop · Тест». Он не заменяет release-приложение и не
@@ -20,6 +20,14 @@ Android debug имеет отдельный идентификатор `com.bibl
 Capacitor-версии пока не реализована.
 
 ## Реализованные сценарии
+
+Синодальная Библия включена в APK: первый запуск и чтение не требуют сети или
+отдельного скачивания. Пакет из публичного BibleDesktop API содержит 66 книг,
+1189 глав; Даниил 13/14 отсутствуют в источнике и явно отмечены. При запуске
+данные атомарно переносятся из assets в прежнее локальное хранилище; уже
+установленная редакция сохраняется. Другие переводы устанавливаются из каталога.
+Обычная сборка работает без сети к API и проверяет наличие встроенного пакета.
+Для явного обновления снимка: `node mobile/scripts/build-bundled-bible.mjs`.
 
 - интерфейс RU/DE/UK/EN, язык выбирается в настройках, а не на стартовом экране;
   шестерёнка до первоначальной настройки открывает прежний раздел настройки
@@ -270,7 +278,7 @@ activity/Back, пустая глава, настоящее enqueue/cancel/re-enq
 
 ## Подготовка первой публикации Android
 
-Подготовлены версия **0.1.1 / versionCode 2**, пакет `com.bibledesktop.myapp`.
+Подготовлены версия **0.1.2 / versionCode 3**, пакет `com.bibledesktop.myapp`.
 Это новый Play-пакет, а не обновление прежней установки с другим сертификатом.
 Нельзя удалять прежнее приложение ради установки без отдельного решения о его данных.
 
@@ -286,7 +294,7 @@ Git или вместе с материалами магазина. При Play 
 Из корня проекта, в этом Windows-профиле:
 
 ```powershell
-./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 2 -VersionName '0.1.1'
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 3 -VersionName '0.1.2'
 ```
 
 Скрипт запускает shared host tests, release lint, AAB/APK build и проверки подписи,

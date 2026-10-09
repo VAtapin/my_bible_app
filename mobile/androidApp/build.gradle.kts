@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.zip.GZIPInputStream
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -12,10 +13,10 @@ val requestedVersionCode = providers.gradleProperty("bibleVersionCode").orNull
 val requestedVersionName = providers.gradleProperty("bibleVersionName").orNull
 val releaseVersionCode = requestedVersionCode?.let {
     it.toIntOrNull()?.takeIf { code -> code in 1..2_100_000_000 } ?: error("bibleVersionCode must be a positive Play version code")
-} ?: 2
+} ?: 3
 val releaseVersionName = requestedVersionName?.also {
     require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(?:[-.][A-Za-z0-9.-]+)?").matches(it)) { "bibleVersionName must be a semantic version" }
-} ?: "0.1.1"
+} ?: "0.1.2"
 
 kotlin {
     compilerOptions {
@@ -120,3 +121,16 @@ val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
 }
 tasks.matching { it.name in setOf("bundleRelease", "assembleRelease", "packageRelease", "packageReleaseBundle", "validateSigningRelease") }
     .configureEach { dependsOn(verifyReleaseSigning) }
+
+val verifyBundledBible = tasks.register("verifyBundledBible") {
+    group = "verification"
+    val asset = layout.projectDirectory.file("src/main/assets/bibles/synodal.bundle")
+    inputs.file(asset)
+    doLast {
+        check(asset.asFile.isFile && asset.asFile.length() > 1_000_000) { "The bundled Synodal Bible is missing. Run mobile/scripts/build-bundled-bible.mjs explicitly." }
+        GZIPInputStream(asset.asFile.inputStream()).bufferedReader(Charsets.UTF_8).use { reader ->
+            check(reader.readLine().contains("BQ_RUSSIAN_RST_STRONG")) { "Invalid bundled Bible manifest" }
+        }
+    }
+}
+tasks.named("preBuild").configure { dependsOn(verifyBundledBible) }

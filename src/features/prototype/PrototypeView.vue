@@ -15,7 +15,8 @@ import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 import VerseActions from './VerseActions.vue'
 import ParallelReading from './ParallelReading.vue'
-import { installedBibles, type InstalledBible } from '@/services/bibleCatalog'
+import { loadBibleCatalog } from '@/services/bibleCatalog'
+import { enabledWebBibles, readWebChapter, synodalCode, webBibleBooks } from '@/services/webBibleLibrary'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import { createLongPress, verseTarget } from '@/services/readerActions'
 
@@ -59,10 +60,8 @@ const chapter = ref<BibleChapter>()
 const bookmarks = ref<Bookmark[]>([])
 const message = ref('')
 const busy = ref(false)
-const packageVersion = ref('')
 
 const selectedTranslation = computed(() => translations.value.find((item) => item.code === translationCode.value))
-const localLibrary = ref<InstalledBible[]>([])
 const catalogText = computed(() => bibleCatalogMessages[language.value])
 const selectedBook = computed(() => books.value.find((item) => item.slug === bookSlug.value))
 const bookmarkedVerseKeys = computed(() => new Set(bookmarks.value.map((item) => item.key)))
@@ -72,17 +71,21 @@ onMounted(async () => {
   message.value = text.value.reader.catalogLoading
   try {
     const [fullCatalog, savedLocation, savedBookmarks] = await Promise.all([
-      installedBibles(libraryRepository, chapterRepository),
+      enabledWebBibles(bibleApi),
       libraryRepository.getReadingLocation(),
       libraryRepository.listBookmarks(),
     ])
-    localLibrary.value = fullCatalog
-    comparisonCatalog.value = fullCatalog.map(item => item.translation)
-    translations.value = fullCatalog.map(item => item.translation)
+    translations.value = fullCatalog
+    const requestedCode = typeof route.query.translation === 'string' ? route.query.translation : undefined
+    if (requestedCode && !translations.value.some(item => item.code === requestedCode)) {
+      const requested = (await loadBibleCatalog(bibleApi)).find(item => item.code === requestedCode)
+      if (requested) translations.value.push(requested)
+    }
+    comparisonCatalog.value = translations.value
     const catalog = translations.value
     bookmarks.value = savedBookmarks
-    translationCode.value = typeof route.query.translation === 'string' ? route.query.translation : savedLocation?.translationCode
-      ?? catalog.find((item) => item.is_default)?.code
+    translationCode.value = typeof route.query.translation === 'string' ? route.query.translation : catalog.find(item => item.code === savedLocation?.translationCode)?.code
+      ?? catalog.find((item) => item.code === synodalCode)?.code
       ?? catalog[0]?.code
       ?? ''
     const restoredLocation = savedLocation?.translationCode === translationCode.value ? savedLocation : undefined
@@ -104,18 +107,14 @@ onMounted(async () => {
 })
 
 async function loadBooks(preferredBook?: string): Promise<void> {
-  const installed = localLibrary.value.find(item => item.translation.code === translationCode.value)
-  if (!installed) { books.value = []; chapter.value = undefined; message.value = catalogText.value.catalog_empty; return }
-  books.value = installed.books
+  chapter.value = undefined
+  books.value = []
+  books.value = await webBibleBooks(bibleApi, translationCode.value)
   bookSlug.value = books.value.some((item) => item.slug === preferredBook)
     ? preferredBook!
     : books.value[0]?.slug ?? ''
   chapterNumber.value = 1
   chapter.value = undefined
-  const status = { stored: installed.package, totalChapters: installed.package.totalChapters ?? installed.package.chapterCount, updateAvailable: false }
-  packageVersion.value = status.stored
-    ? `${status.stored.chapterCount} ${text.value.reader.chapters} · ${formatDate(status.stored.downloadedAt)}`
-    : `${text.value.reader.notDownloaded} · ${status.totalChapters} ${text.value.reader.chapters}`
 }
 
 async function changeTranslation(): Promise<void> {
@@ -139,9 +138,11 @@ async function openChapter(target?: unknown): Promise<void> {
   }
 
   await run(async () => {
-    chapter.value = await chapterService.readOffline(translationCode.value, bookSlug.value, chapterNumber.value)
-    if (!chapter.value || !chapter.value.verses.length) { message.value = catalogText.value.catalog_local_missing; return }
-    message.value = text.value.reader.openedOffline
+    chapter.value = undefined
+    const value = await readWebChapter(chapterService, translationCode.value, bookSlug.value, chapterNumber.value)
+    if (!value.verses.some(verse => verse.plain_text.trim())) { message.value = catalogText.value.catalog_local_missing; return }
+    chapter.value = value
+    message.value = ''
     pickerOpen.value = false
     selectedVerse.value = verseTarget(target, chapter.value.verses.map((item) => item.number))
     await nextTick()
@@ -228,14 +229,14 @@ function formatDate(value: string): string {
 
 <template>
   <MobileShell back-to="/today">
-    <RouterLink class="storage-link" to="/bibles">{{ catalogText.bible_library_title }} · {{ catalogText.catalog_add }}</RouterLink>
+    <RouterLink class="storage-link" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink>
     <section v-if="!chapter" class="reader-heading">
       <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
       <span><p class="eyebrow dark-eyebrow">{{ text.reader.eyebrow }}</p><h1>{{ text.reader.title }}</h1></span>
-      <RouterLink class="storage-link" to="/storage">{{ text.reader.offline }}</RouterLink>
     </section>
 
-    <p v-if="!translations.length" class="status">{{ catalogText.catalog_empty }}</p>
+    <p v-if="busy && !translations.length" class="status" role="status">{{ text.loading }}</p>
+    <div v-else-if="!translations.length" class="status"><p>{{ message || catalogText.catalog_empty }}</p><RouterLink class="primary-action" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink></div>
     <details v-if="translations.length && selectedTranslation" class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
       <summary>{{ text.reader.chooseChapter }} <span aria-hidden="true">⌄</span></summary>
       <h2 id="chapter-form-title" class="visually-hidden">{{ text.reader.chooseChapter }}</h2>
@@ -262,12 +263,8 @@ function formatDate(value: string): string {
         {{ busy ? text.loading : text.reader.openChapter }}
       </button>
 
-      <div class="package-row">
-        <div><strong>{{ text.reader.offlineTranslation }}</strong><small>{{ packageVersion }}</small></div>
-        <RouterLink to="/bibles">{{ catalogText.catalog_add }}</RouterLink>
-      </div>
     </details>
-    <p v-if="message && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
+    <p v-if="message && translations.length && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
 
     <article v-if="chapter" ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
       <header class="reading-header">

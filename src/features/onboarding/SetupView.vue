@@ -23,9 +23,8 @@ import { initialSetupStep, stepAfterPreset, stepBeforeSummary } from './setupFlo
 import EducationOptions from './EducationOptions.vue'
 import CalendarOptions from './CalendarOptions.vue'
 import BibleLibrary from '@/features/prototype/BibleLibrary.vue'
-import { installedBibles } from '@/services/bibleCatalog'
-import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
-import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
+import { enabledWebBibles } from '@/services/webBibleLibrary'
+import { bibleApi } from '@/api'
 import { learningApps } from '@/features/education/learningApps'
 
 const props = defineProps<{ mode: SetupMode }>()
@@ -115,7 +114,7 @@ onMounted(async () => {
   }
 
   try {
-    translations.value = (await installedBibles(createIndexedDbLibraryRepository(), createIndexedDbChapterRepository())).map(item => item.translation)
+    translations.value = await enabledWebBibles(bibleApi)
     ensureTranslationSelection()
   } catch {
     message.value = text.value.setup.translationsUnavailable

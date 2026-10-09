@@ -13,8 +13,9 @@ internal class OfflineContentRepository(
     private val remote: BibleContentSource,
     internal val store: OfflineStore,
     private val canRefresh: () -> Boolean = { false },
+    private val installBuiltIn: suspend () -> Unit = {},
 ) : BibleContentSource {
-    constructor(context: Context) : this(BibleApiClient(), OfflineStore(context), { isConnected(context) })
+    constructor(context: Context) : this(BibleApiClient(), OfflineStore(context), { isConnected(context) }, { BundledBible.install(context) })
     private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val refreshing = ConcurrentHashMap.newKeySet<String>()
 
@@ -37,23 +38,37 @@ internal class OfflineContentRepository(
     }
 
     override suspend fun getTranslations(language: String?): List<TranslationSummary> {
+        installBuiltIn()
         val serializer = ListSerializer(TranslationSummary.serializer())
-        return store.read("translations:available:${language.orEmpty()}", serializer)
+        val saved = store.read("translations:available:${language.orEmpty()}", serializer)
             ?: store.read("translations:${language.orEmpty()}", serializer)
-            ?: remote.getTranslations(language).also { store.write("translations:available:${language.orEmpty()}", serializer, it) }
+        if (saved != null) return saved
+        if (!canRefresh()) {
+            val local = store.biblePackages().filter { it.isInstalled }.map { it.translation }.filter { language == null || it.language.code == language }
+            if (local.isNotEmpty()) return local
+        }
+        return remote.getTranslations(language).also { store.write("translations:available:${language.orEmpty()}", serializer, it) }
     }
     suspend fun refreshTranslations(): List<TranslationSummary> {
         if (!canRefresh()) return store.read("translations:available:", ListSerializer(TranslationSummary.serializer()))
             ?: store.read("translations:", ListSerializer(TranslationSummary.serializer())) ?: getTranslations()
         return remote.getTranslations().also { store.write("translations:available:", ListSerializer(TranslationSummary.serializer()), it) }
     }
-    suspend fun installedTranslations(): List<TranslationSummary> = store.biblePackages().filter { it.isInstalled }.map { it.translation }
-    override suspend fun getBooks(translationCode: String) =
-        store.read("books:$translationCode", ListSerializer(BibleBook.serializer())) ?: throw BibleNotInstalled(translationCode)
-    override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) =
-        store.read(chapterKey(translationCode, bookSlug, chapterNumber), BibleChapter.serializer())
+    suspend fun installedTranslations(): List<TranslationSummary> {
+        installBuiltIn()
+        return store.biblePackages().filter { it.isInstalled }.map { it.translation }
+            .sortedBy { if (it.code == BundledBible.code) 0 else 1 }
+    }
+    override suspend fun getBooks(translationCode: String): List<BibleBook> {
+        installBuiltIn()
+        return store.read("books:$translationCode", ListSerializer(BibleBook.serializer())) ?: throw BibleNotInstalled(translationCode)
+    }
+    override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int): BibleChapter {
+        installBuiltIn()
+        return store.read(chapterKey(translationCode, bookSlug, chapterNumber), BibleChapter.serializer())
             ?.takeIf { it.translation.code == translationCode && it.book.slug == bookSlug && it.chapter.number == chapterNumber && it.verses.isNotEmpty() }
             ?: throw BibleNotInstalled(translationCode)
+    }
     override suspend fun getCrossReferences(verseId: Long, translationCode: String) = content("references:$translationCode:$verseId", CrossReferences.serializer()) { remote.getCrossReferences(verseId, translationCode) }
     override suspend fun getStrongTokens(verseId: Long, translationCode: String) = content("tokens:$translationCode:$verseId", StrongTokens.serializer()) { remote.getStrongTokens(verseId, translationCode) }
     override suspend fun getStrongEntry(number: String, verseId: Long) = content("strong:$number:$verseId", StrongEntry.serializer()) { remote.getStrongEntry(number, verseId) }

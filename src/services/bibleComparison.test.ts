@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto'
 import { describe, expect, it, vi } from 'vitest'
 import type { BibleChapter } from '@/api/contracts'
 import type { BibleApi } from '@/api/client'
@@ -34,6 +35,11 @@ describe('parallel reading', () => {
     expect(await loadComparison(primary, 'B', api, service)).toEqual(secondary)
     expect(service.download).not.toHaveBeenCalled()
     expect(api.getBooks).not.toHaveBeenCalled()
+  })
+  it('loads an enabled but never downloaded edition through API', async () => {
+    const { api, service } = fixtures()
+    expect(await loadComparison(primary, 'B', api, service)).toEqual(secondary)
+    expect(service.download).toHaveBeenCalledWith('B', 'john', 3)
   })
   it('never guesses from matching slugs when canonical metadata differs', async () => {
     const { api, service } = fixtures()

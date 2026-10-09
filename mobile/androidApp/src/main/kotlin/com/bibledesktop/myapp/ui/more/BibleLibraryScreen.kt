@@ -60,6 +60,7 @@ internal fun BibleLibraryContent(language: String, source: BibleContentSource, m
     val scope = rememberCoroutineScope()
     val installedCallback by rememberUpdatedState(onInstalled)
     LaunchedEffect(work.map { it.id to it.state }, busy) {
+        if (source is OfflineContentRepository) source.installedTranslations()
         do {
             packages = store.biblePackages()
             installedCallback(packages.filter { it.isInstalled }.map { it.translation })
@@ -113,6 +114,7 @@ internal fun BibleLibraryContent(language: String, source: BibleContentSource, m
                 Card(Modifier.fillMaxWidth().testTag("library-${edition.code}")) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(edition.name, style = MaterialTheme.typography.titleSmall)
+                        if (edition.code == BundledBible.code && pack?.isInstalled == true) Text(localized(R.string.catalog_bundled, language), style = MaterialTheme.typography.bodySmall)
                         Text("${edition.language.nativeName ?: edition.language.name} · ${edition.shortName ?: edition.code}", style = MaterialTheme.typography.bodySmall)
                         Text(localized(when {
                             edition.hasOldTestament && edition.hasNewTestament -> R.string.catalog_both_testaments
