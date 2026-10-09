@@ -110,7 +110,11 @@ fun BibleReader(
     )) { mutableStateOf<BookmarkEntry?>(null) }
     var noteInitial by rememberSaveable { mutableStateOf("") }
     var studyVerseId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var studyChapter by remember { mutableStateOf<BibleChapter?>(null) }
     var focusedVerse by rememberSaveable { mutableStateOf(preferences.getInt("lastVerse", 0)) }
+    var readingChapter by remember { mutableIntStateOf(selectedChapter ?: 1) }
+    var readingVerse by remember { mutableIntStateOf(focusedVerse) }
+    var restoringPosition by remember { mutableStateOf(true) }
     var referenceReturn by rememberSaveable { mutableStateOf<String?>(null) }
     var comparing by rememberSaveable { mutableStateOf(false) }
     var compareCode by rememberSaveable { mutableStateOf(preferences.getString("compareTranslation", "").orEmpty()) }
@@ -143,6 +147,7 @@ fun BibleReader(
     LaunchedEffect(translationCode, selectedBookSlug, selectedChapter, chapterRetry) {
         val bookSlug = selectedBookSlug ?: return@LaunchedEffect
         val chapterNumber = selectedChapter ?: return@LaunchedEffect
+        readingChapter = chapterNumber
         chapterState = LoadState.Loading
         chapterState = runCatching {
             client.getChapter(translationCode, bookSlug, chapterNumber)
@@ -155,12 +160,14 @@ fun BibleReader(
     LaunchedEffect(translationCode, selectedBookSlug, selectedChapter, focusedVerse) {
         val bookSlug = selectedBookSlug ?: return@LaunchedEffect
         val chapterNumber = selectedChapter ?: return@LaunchedEffect
-        preferences.edit()
+        val editor = preferences.edit()
             .putString("lastTranslation", translationCode)
             .putString("lastBookSlug", bookSlug)
             .putInt("lastChapter", chapterNumber)
             .putInt("lastVerse", focusedVerse)
-            .apply()
+        if (!restoringPosition) editor.putInt("lastVerseOffset", 0)
+        editor.apply()
+        restoringPosition = false
     }
 
     val selectedBook = (booksState as? LoadState.Ready)?.value
@@ -226,17 +233,25 @@ fun BibleReader(
             language = language,
             studyClient = client,
             state = chapterState,
-            chapterNumber = chapterNumber,
+            chapterNumber = readingChapter,
             chaptersCount = selectedBook.chaptersCount,
             fontSize = fontSize,
             bookmarkedKeys = bookmarkEntries.map { "${it.translationCode}:${it.reference}" }.toSet(),
             onBack = { if (comparing) comparing = false else chapterBack() },
             onHome = onBack,
             onRetry = { chapterRetry += 1 },
-            onPrevious = { selectedChapter = (chapterNumber - 1).coerceAtLeast(1); focusedVerse = 0 },
-            onNext = { selectedChapter = (chapterNumber + 1).coerceAtMost(selectedBook.chaptersCount); focusedVerse = 0 },
+            onPrevious = { selectedChapter = (readingChapter - 1).coerceAtLeast(1); focusedVerse = 0 },
+            onNext = { selectedChapter = (readingChapter + 1).coerceAtMost(selectedBook.chaptersCount); focusedVerse = 0 },
             initialVerse = focusedVerse,
-            onStudy = { _, verse -> studyVerseId = verse.id; focusedVerse = verse.number },
+            onStudy = { source, verse -> studyChapter = source; studyVerseId = verse.id },
+            onVisiblePlace = { source, first, _, offset ->
+                // An old list can finish its delayed observation while a new passage is opening.
+                if (source.translation.code == translationCode && source.book.slug == selectedBookSlug && selectedChapter == chapterNumber) {
+                    readingChapter = source.chapter.number; readingVerse = first.number
+                    preferences.edit().putString("lastTranslation", source.translation.code).putString("lastBookSlug", source.book.slug)
+                        .putInt("lastChapter", source.chapter.number).putInt("lastVerse", first.number).putInt("lastVerseOffset", offset).apply()
+                }
+            },
             comparison = if (comparing) {
                 { value, modifier -> ComparisonPane(language, value, translations, compareCode, { code ->
                     compareCode = code; preferences.edit().putString("compareTranslation", code).apply()
@@ -244,6 +259,7 @@ fun BibleReader(
             } else null,
             comparing = comparing,
             onCompare = {
+                if (!comparing) { selectedChapter = readingChapter; focusedVerse = readingVerse }
                 if (!comparing && (translations.none { it.code == compareCode } || compareCode == translationCode))
                     compareCode = translations.firstOrNull { it.code != translationCode }?.code.orEmpty()
                 comparing = !comparing
@@ -290,7 +306,7 @@ fun BibleReader(
     notePassage?.let { passage ->
         NoteEditor(language, passage, noteInitial, onDismiss = { notePassage = null }, onSaved = { notePassage = null })
     }
-    val chapter = (chapterState as? LoadState.Ready)?.value
+    val chapter = studyChapter ?: (chapterState as? LoadState.Ready)?.value
     chapter?.verses?.firstOrNull { it.id == studyVerseId }?.let { verse ->
         com.bibledesktop.myapp.ui.study.VerseStudyDialog(language, chapter, verse, client, onClose = { studyVerseId = null }, onOpen = { target ->
             noteScope.launch {
@@ -298,7 +314,7 @@ fun BibleReader(
                     val book = client.getBooks(translationCode).firstOrNull { it.canonicalBook?.osisCode == target.osisRef.substringBefore('.') }
                         ?: error("Canonical book unavailable")
                     require(target.chapterNumber in 1..book.chaptersCount)
-                    referenceReturn = "$selectedBookSlug|$selectedChapter|${verse.number}"
+                    referenceReturn = "${chapter.book.slug}|${chapter.chapter.number}|${verse.number}"
                     selectedBookSlug = book.slug; selectedChapter = target.chapterNumber; focusedVerse = target.verseNumber; studyVerseId = null
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { android.widget.Toast.makeText(context, openError, android.widget.Toast.LENGTH_LONG).show() }
@@ -348,6 +364,7 @@ private fun ChapterScreen(
     onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit,
     onStudy: (BibleChapter, BibleVerse) -> Unit,
+    onVisiblePlace: (BibleChapter, BibleVerse, BibleVerse, Int) -> Unit,
     initialVerse: Int,
     comparison: (@Composable (BibleChapter, Modifier) -> Unit)?,
     comparing: Boolean,
@@ -360,6 +377,7 @@ private fun ChapterScreen(
     var showingCommentaries by rememberSaveable { mutableStateOf(false) }
     var visibleFirst by remember(state) { mutableIntStateOf(initialVerse) }
     var visibleLast by remember(state) { mutableIntStateOf(initialVerse) }
+    var visibleChapter by remember(state) { mutableStateOf<BibleChapter?>(null) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -368,7 +386,7 @@ private fun ChapterScreen(
             .navigationBarsPadding(),
     ) {
         val title = (state as? LoadState.Ready)?.value?.let {
-            "${it.book.name} · ${text(R.string.bible_chapter, language, it.chapter.number)}"
+            "${it.book.name} · ${text(R.string.bible_chapter, language, chapterNumber)}${if (visibleFirst > 0) ":$visibleFirst" else ""}"
         } ?: text(R.string.bible_chapter, language, chapterNumber)
         ReadingHeader(title, language, onBack, onHome, com.bibledesktop.myapp.ui.theme.readingFont(textLanguage))
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -400,12 +418,14 @@ private fun ChapterScreen(
                 language, state.value, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 modifier = Modifier.weight(1f),
                 onStudy = onStudy, initialVerse = initialVerse,
-                onVisibleRange = { first, last -> visibleFirst = first.number; visibleLast = last.number },
+                client = studyClient,
+                onVisiblePlace = { source, first, last, offset -> visibleChapter = source; visibleFirst = first.number; visibleLast = last.number; onVisiblePlace(source, first, last, offset) },
             )
                 if (showingCommentaries) {
-                    val verse = state.value.verses.firstOrNull { it.number == visibleFirst } ?: state.value.verses.first()
+                    val source = visibleChapter ?: state.value
+                    val verse = source.verses.firstOrNull { it.number == visibleFirst } ?: source.verses.first()
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp)) {
-                        com.bibledesktop.myapp.ui.study.CommentaryPanel(language, state.value, verse, studyClient, visibleLast)
+                        com.bibledesktop.myapp.ui.study.CommentaryPanel(language, source, verse, studyClient, visibleLast)
                     }
                 }
             }

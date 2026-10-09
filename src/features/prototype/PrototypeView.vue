@@ -15,12 +15,13 @@ import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 import VerseActions from './VerseActions.vue'
 import ParallelReading from './ParallelReading.vue'
+import ContinuousReading from './ContinuousReading.vue'
 import CommentaryPanel from '@/features/study/CommentaryPanel.vue'
 import { studyMessages } from '@/i18n/study'
 import { loadBibleCatalog } from '@/services/bibleCatalog'
 import { enabledWebBibles, readWebChapter, synodalCode, webBibleBooks } from '@/services/webBibleLibrary'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
-import { createLongPress, verseTarget } from '@/services/readerActions'
+import { verseTarget } from '@/services/readerActions'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -33,21 +34,14 @@ const fontSize = ref(19)
 const pickerOpen = ref(true)
 const actions = ref<InstanceType<typeof VerseActions>>()
 const readingElement = ref<HTMLElement>()
-let pressedVerse: number | undefined
-const longPress = createLongPress(() => { if (pressedVerse !== undefined) void openVerseMenu(pressedVerse) })
-onUnmounted(() => longPress.cancel())
-async function openVerseMenu(number: number, event?: MouseEvent): Promise<void> {
+async function openVerseMenu(number: number, event?: MouseEvent, source = chapter.value): Promise<void> {
+  actionChapter.value = source
   selectedVerse.value = number
   const selection = window.getSelection()
   const target = event?.currentTarget as HTMLElement | undefined
   const snippet = target && selection?.anchorNode && selection.focusNode && target.contains(selection.anchorNode) && target.contains(selection.focusNode) ? selection.toString() : ''
   await nextTick()
   await actions.value?.open('menu', snippet)
-}
-function startLongPress(event: PointerEvent, number: number): void {
-  if (event.pointerType === 'mouse') return
-  pressedVerse = number
-  longPress.start(event.clientX, event.clientY)
 }
 function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
 
@@ -56,28 +50,31 @@ const comparing = ref(false)
 const studying = ref(false)
 const visibleFirst = ref<number>()
 const visibleLast = ref<number>()
-let visibleTimer: ReturnType<typeof setTimeout> | undefined
-function updateVisibleVerses() {
-  clearTimeout(visibleTimer)
-  visibleTimer = setTimeout(() => {
-    const reader = readingElement.value
-    if (!reader) return
-    const viewport = reader.getBoundingClientRect()
-    const main = reader.closest('.app-content')?.getBoundingClientRect()
-    const top = Math.max(viewport.top, main?.top ?? 0), bottom = Math.min(viewport.bottom, main?.bottom ?? window.innerHeight)
-    const visible = [...reader.querySelectorAll<HTMLElement>('li[data-verse]')].filter(item => { const bounds = item.getBoundingClientRect(); return bounds.bottom > top && bounds.top < bottom })
-    if (visible.length) { visibleFirst.value = Number(visible[0]!.dataset.verse); visibleLast.value = Number(visible.at(-1)!.dataset.verse) }
-  }, 180)
-}
-onMounted(() => document.addEventListener('scroll', updateVisibleVerses, true))
-onUnmounted(() => { document.removeEventListener('scroll', updateVisibleVerses, true); clearTimeout(visibleTimer) })
 const translations = ref<TranslationSummary[]>([])
 const books = ref<BibleBook[]>([])
 const translationCode = ref('')
 const bookSlug = ref('')
 const chapterNumber = ref(1)
 const chapter = ref<BibleChapter>()
-watch([chapter, studying], async () => { await nextTick(); updateVisibleVerses() })
+const visibleChapter = ref<BibleChapter>()
+const actionChapter = ref<BibleChapter>()
+const openOffset = ref(0)
+let restoreOffset = 0
+let saveChain: Promise<unknown> = Promise.resolve()
+function selectVerse(source: BibleChapter, verse: BibleChapter['verses'][number]) { actionChapter.value = source; selectedVerse.value = verse.number }
+function visiblePlace(source: BibleChapter, first: BibleChapter['verses'][number], last: BibleChapter['verses'][number], offset: number) {
+  visibleChapter.value = source; visibleFirst.value = first.number; visibleLast.value = last.number
+  const location = { translationCode: source.translation.code, bookSlug: source.book.slug, chapter: source.chapter.number, verse: first.number, verseOffset: offset, updatedAt: new Date().toISOString() }
+  saveChain = saveChain.catch(() => undefined).then(() => libraryRepository.saveReadingLocation(location))
+}
+async function toggleComparison() {
+  if (!comparing.value && visibleChapter.value) {
+    const target = visibleFirst.value
+    chapterNumber.value = visibleChapter.value.chapter.number
+    await openChapter(String(target ?? ''))
+  }
+  comparing.value = !comparing.value
+}
 const bookmarks = ref<Bookmark[]>([])
 const message = ref('')
 const busy = ref(false)
@@ -119,7 +116,11 @@ onMounted(async () => {
       : restoredLocation?.chapter ?? 1
     const hasTarget = Boolean(requestedBook || restoredLocation)
     message.value = hasTarget ? text.value.reader.locationRestored : text.value.reader.chooseBook
-    if (hasTarget) await openChapter(route.query.verse)
+    if (hasTarget) {
+      const restoring = !route.query.book && restoredLocation
+      restoreOffset = restoring ? restoredLocation.verseOffset ?? 0 : 0
+      await openChapter(route.query.verse ?? (restoring && restoredLocation.verse ? String(restoredLocation.verse) : undefined))
+    }
   } catch (error) {
     message.value = errorMessage(error)
   } finally {
@@ -160,6 +161,8 @@ async function openChapter(target?: unknown): Promise<void> {
 
   await run(async () => {
     chapter.value = undefined
+    visibleChapter.value = undefined; actionChapter.value = undefined
+    openOffset.value = restoreOffset; restoreOffset = 0
     const value = await readWebChapter(chapterService, translationCode.value, bookSlug.value, chapterNumber.value)
     if (!value.verses.some(verse => verse.plain_text.trim())) { message.value = catalogText.value.catalog_local_missing; return }
     chapter.value = value
@@ -167,7 +170,6 @@ async function openChapter(target?: unknown): Promise<void> {
     pickerOpen.value = false
     selectedVerse.value = verseTarget(target, chapter.value.verses.map((item) => item.number))
     await nextTick()
-    if (selectedVerse.value !== undefined) readingElement.value?.querySelector(`[data-verse="${selectedVerse.value}"]`)?.scrollIntoView({ block: 'center', behavior: 'instant' })
     await libraryRepository.saveReadingLocation({
       translationCode: translationCode.value,
       bookSlug: bookSlug.value,
@@ -181,7 +183,6 @@ watch(() => route.query, async (query) => {
   const requestedBook = query.book
   const requestedTranslation = query.translation
   if (typeof requestedBook !== 'string' || !translationCode.value) return
-  longPress.cancel()
   await run(async () => {
     if (typeof requestedTranslation === 'string' && requestedTranslation !== translationCode.value) { translationCode.value = requestedTranslation; await loadBooks(requestedBook) }
     if (!books.value.some((book) => book.slug === requestedBook)) return
@@ -195,15 +196,15 @@ watch(() => route.query, async (query) => {
 async function moveChapter(offset: number): Promise<void> {
   const book = selectedBook.value
   if (!book) return
-  const next = chapterNumber.value + offset
+  const next = (visibleChapter.value?.chapter.number ?? chapterNumber.value) + offset
   if (next < 1 || next > book.chapters_count) return
   chapterNumber.value = next
   await openChapter()
 }
 
-async function toggleBookmark(verse: BibleChapter['verses'][number]): Promise<void> {
-  if (!chapter.value) return
-  const key = bookmarkKey(translationCode.value, bookSlug.value, chapterNumber.value, verse.number)
+async function toggleBookmark(verse: BibleChapter['verses'][number], source = chapter.value): Promise<void> {
+  if (!source) return
+  const key = bookmarkKey(source.translation.code, source.book.slug, source.chapter.number, verse.number)
   const existing = bookmarks.value.find((item) => item.key === key)
   if (existing) {
     await libraryRepository.deleteBookmark(key)
@@ -215,10 +216,10 @@ async function toggleBookmark(verse: BibleChapter['verses'][number]): Promise<vo
   const value: Bookmark = {
     key,
     translationCode: translationCode.value,
-    translationName: chapter.value.translation.name,
+    translationName: source.translation.name,
     bookSlug: bookSlug.value,
-    bookName: chapter.value.book.name,
-    chapter: chapterNumber.value,
+    bookName: source.book.name,
+    chapter: source.chapter.number,
     verse: verse.number,
     text: verse.plain_text,
     createdAt: new Date().toISOString(),
@@ -290,26 +291,19 @@ function formatDate(value: string): string {
     <div v-if="chapter" class="reader-study-layout" :class="{ studying }">
     <article ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
       <header class="reading-header">
-        <button type="button" :disabled="busy || chapterNumber <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
-        <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}<small>{{ text.reader.chapterLabel }} {{ chapter.chapter.number }}</small></h2></span>
+        <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
+        <span><p>{{ chapter.translation.name }}</p><h2>{{ chapter.book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
         <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
-        <button type="button" :disabled="busy || chapterNumber >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
+        <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) >= chapter.book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
-      <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="comparing = !comparing">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
+      <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="toggleComparison">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
       <button type="button" class="parallel-toggle" :aria-expanded="studying" @click="studying = !studying">{{ studyMessages[language].commentaries }}</button>
       <ParallelReading v-if="comparing" :primary="chapter" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" @select="selectedVerse = $event" />
-      <ol v-else>
-        <li v-for="verse in chapter.verses" :key="verse.id" :data-verse="verse.number" :class="{ 'selected-verse': selectedVerse === verse.number }">
-          <button class="bookmark-button" :class="{ active: bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) }" type="button" :aria-label="formatMessage(text.reader.bookmark, { verse: verse.number })" @click="toggleBookmark(verse)">
-            {{ bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) ? '★' : '☆' }}
-          </button>
-          <button class="verse-text" type="button" :aria-pressed="selectedVerse === verse.number" @click="selectedVerse = verse.number" @contextmenu.prevent="openVerseMenu(verse.number, $event)" @pointerdown="startLongPress($event, verse.number)" @pointermove="longPress.move($event.clientX, $event.clientY)" @pointerup="longPress.cancel()" @pointercancel="longPress.cancel()" @pointerleave="longPress.cancel()"><span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text || catalogText.catalog_verse_missing }}</button>
-        </li>
-      </ol>
+      <ContinuousReading v-else :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
     </article>
-    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false">{{ studyMessages[language].close }}</button><CommentaryPanel :chapter="chapter" :canon="selectedTranslation?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /></aside>
+    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false">{{ studyMessages[language].close }}</button><CommentaryPanel :chapter="visibleChapter ?? chapter" :canon="selectedTranslation?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /></aside>
     </div>
-    <VerseActions ref="actions" :chapter="chapter" :selected-verse="selectedVerse" @message="message = $event" />
+    <VerseActions ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
     <template #footer>
       <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">
         <template v-if="appearance.theme.value === 'warm'">
@@ -331,7 +325,7 @@ function formatDate(value: string): string {
 
 <style scoped>
 .reader-study-layout.studying { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px }
-.studying .reading-card, .study-pane { max-height:calc(100dvh - 220px); overflow:auto; min-width:0; margin-top:0 }
-@media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr) } .studying .reading-card { max-height:40dvh } .study-pane { max-height:40dvh } }
+.studying .reading-card { min-width:0; margin-top:0 }.study-pane { max-height:calc(100dvh - 220px); overflow:auto; min-width:0; margin-top:0 }
+@media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr) } .studying :deep(.continuous-scroll) { height:35dvh } .study-pane { max-height:35dvh } }
 .parallel-toggle { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white, white); color: var(--ink); font: inherit; cursor: pointer; }
 </style>

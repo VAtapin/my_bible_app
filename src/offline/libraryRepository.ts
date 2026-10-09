@@ -2,6 +2,8 @@ export interface ReadingLocation {
   translationCode: string
   bookSlug: string
   chapter: number
+  verse?: number
+  verseOffset?: number
   updatedAt: string
 }
 

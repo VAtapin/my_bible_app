@@ -46,7 +46,7 @@ internal fun LinkedBibleReader(language: String, link: ReaderLink, client: Bible
             require(link.verse == 0 || chapter.verses.any { it.number == link.verse })
             context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE).edit()
                 .putString("lastTranslation", link.translationCode).putString("lastBookSlug", link.bookSlug)
-                .putInt("lastChapter", link.chapter).putInt("lastVerse", link.verse).apply()
+                .putInt("lastChapter", link.chapter).putInt("lastVerse", link.verse).putInt("lastVerseOffset", 0).apply()
             applied = true
             catalog = editions
         } catch (cancelled: CancellationException) { throw cancelled }

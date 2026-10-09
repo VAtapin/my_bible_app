@@ -27,6 +27,7 @@ import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.myapp.ui.theme.*
 import com.bibledesktop.shared.api.BibleChapter
 import com.bibledesktop.shared.api.BibleVerse
+import com.bibledesktop.shared.api.BibleContentSource
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.delay
 
@@ -37,7 +38,16 @@ internal fun ChapterReadingContent(
     onNote: (BibleChapter, BibleVerse) -> Unit, modifier: Modifier = Modifier,
     onStudy: ((BibleChapter, BibleVerse) -> Unit)? = null, initialVerse: Int = 0,
     onVisibleRange: ((BibleVerse, BibleVerse) -> Unit)? = null,
+    client: BibleContentSource? = null,
+    onVisiblePlace: ((BibleChapter, BibleVerse, BibleVerse, Int) -> Unit)? = null,
 ) {
+    if (client != null) {
+        key(chapter.translation.code, chapter.book.slug, chapter.chapter.number) {
+            ContinuousChapterContent(language, chapter, client, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
+                onStudy, initialVerse, modifier, onVisiblePlace)
+        }
+        return
+    }
     key(chapter.translation.code, chapter.book.slug, chapter.chapter.number) {
         ReadingViewport(modifier) {
             val listState = rememberLazyListState()

@@ -25,7 +25,7 @@ class PassageNavigationTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val preferences get() = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
-    private val keys = listOf("lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "verseNotesV1")
+    private val keys = listOf("lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "lastVerseOffset", "verseNotesV1")
     private var original = emptyMap<String, Any?>()
     private val api = BibleApiClient()
     private val translation = TranslationSummary("fixture", "Синодальный", language = LanguageSummary("ru", "Русский"))

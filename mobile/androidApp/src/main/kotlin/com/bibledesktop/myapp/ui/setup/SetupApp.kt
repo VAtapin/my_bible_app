@@ -351,6 +351,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
                     .putString("lastBookSlug", bookmark.bookSlug)
                     .putInt("lastChapter", bookmark.chapter)
                     .putInt("lastVerse", bookmark.verse)
+                    .putInt("lastVerseOffset", 0)
                     .apply()
                 route = Route.Bible
             },
@@ -358,7 +359,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
         Route.Study -> com.bibledesktop.myapp.ui.study.StudyScreen(language, client,
             onBack = { route = Route.Home }, onBible = { chooseBiblePassage = true; route = Route.Bible }, onOpen = { passage ->
                 preferences.edit().putString("lastTranslation", passage.translationCode).putString("lastBookSlug", passage.bookSlug)
-                    .putInt("lastChapter", passage.chapter).putInt("lastVerse", passage.verse).apply()
+                    .putInt("lastChapter", passage.chapter).putInt("lastVerse", passage.verse).putInt("lastVerseOffset", 0).apply()
                 route = Route.Bible
             })
         Route.Books -> com.bibledesktop.myapp.ui.study.BooksScreen(language, client, onBack = { route = Route.More })

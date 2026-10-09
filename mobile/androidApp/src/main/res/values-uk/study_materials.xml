@@ -1,4 +1,5 @@
 <resources>
+    <string name="reader_continuation_error">Наступну частину книги поки не вдалося відкрити.</string>
     <string name="study_books">Книги</string>
     <string name="study_book_search">Назва або автор</string>
     <string name="study_contents">Зміст</string>

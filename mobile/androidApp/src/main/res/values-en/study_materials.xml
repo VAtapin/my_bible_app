@@ -1,4 +1,5 @@
 <resources>
+    <string name="reader_continuation_error">The next part of the book could not be opened yet.</string>
     <string name="study_books">Books</string>
     <string name="study_book_search">Title or author</string>
     <string name="study_contents">Contents</string>
