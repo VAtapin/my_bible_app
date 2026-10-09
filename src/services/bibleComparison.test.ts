@@ -30,8 +30,10 @@ describe('parallel reading', () => {
   })
   it('opens a canonical book with a different slug', async () => {
     const { api, service } = fixtures()
+    vi.mocked(service.listStored).mockResolvedValue([{ key: 'B:john:3', savedAt: '', data: secondary }])
     expect(await loadComparison(primary, 'B', api, service)).toEqual(secondary)
-    expect(service.download).toHaveBeenCalledWith('B', 'john', 3)
+    expect(service.download).not.toHaveBeenCalled()
+    expect(api.getBooks).not.toHaveBeenCalled()
   })
   it('never guesses from matching slugs when canonical metadata differs', async () => {
     const { api, service } = fixtures()

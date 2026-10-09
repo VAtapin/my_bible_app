@@ -83,7 +83,8 @@ class OfflineStoreTest {
         val day = repository.getCalendarDay("2026-10-08", "en")
         val prayer = repository.getPrayer(1)
         val service = repository.getCalendarService("2026-10-08", "cu-civil")
-        val chapter = repository.getChapter("RU", "john", 3)
+        val chapter = online.getChapter("RU", "john", 3)
+        store.write(chapterKey("RU", "john", 3), BibleChapter.serializer(), chapter)
         val calls = online.calls
         online.offline = true
         val reopened = OfflineContentRepository(online, OfflineStore(root))

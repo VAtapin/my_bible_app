@@ -18,5 +18,5 @@
     <string name="bible_download_progress">Збережено розділів: %1$d / %2$d</string>
     <string name="bible_download_size">Тексти: %1$.1f МБ</string>
     <string name="bible_download_complete">Весь переклад збережено й доступний без мережі.</string>
-    <string name="bible_download_failed">Не вдалося завершити завантаження. Перевірте мережу та вільне місце (сховище до 256 МБ). Збережені розділи не втрачено; можна продовжити.</string>
+    <string name="bible_download_failed">Не вдалося завершити завантаження. Перевірте мережу та вільне місце. Збережені розділи не втрачено; можна продовжити.</string>
 </resources>

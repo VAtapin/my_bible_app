@@ -10,6 +10,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bibledesktop.myapp.data.ReaderLink
+import com.bibledesktop.myapp.data.OfflineStore
+import com.bibledesktop.shared.api.isInstalled
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +31,9 @@ class NativeReaderLinksTest {
     )
     private fun withProfile(test: () -> Unit) {
         check(context.packageName == "com.bibledesktop.myapp.debug")
+        org.junit.Assume.assumeTrue("Install the Russian edition before link integration tests", kotlinx.coroutines.runBlocking {
+            OfflineStore(context).biblePackages().any { it.translation.code == "BQ_RUSSIAN_RST_STRONG" && it.isInstalled }
+        })
         val keys = listOf("setupComplete", "uiLanguage", "lastTranslation", "lastBookSlug", "lastChapter", "lastVerse")
         val original = keys.associateWith { preferences.all[it] }
         check(preferences.edit().putBoolean("setupComplete", false).putString("uiLanguage", "ru")

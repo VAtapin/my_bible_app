@@ -99,7 +99,8 @@ private fun ComparedText(language: String, translation: TranslationSummary, vers
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(translation.name, style = MaterialTheme.typography.labelMedium)
         SelectionContainer {
-            Text(verse?.let { if (translation.language.code in setOf("cu", "cu-civil")) readingText(it.text) else it.plainText } ?: localized(R.string.compare_missing, language),
+            Text(verse?.let { if (translation.language.code in setOf("cu", "cu-civil")) readingText(it.text) else it.plainText }
+                ?.takeIf { it.isNotBlank() } ?: localized(R.string.compare_missing, language),
                 fontFamily = readingFont(translation.language.code), fontSize = size.sp, lineHeight = (size * 1.55f).sp)
         }
     }
@@ -129,7 +130,7 @@ internal fun ComparisonWindows(language: String, primary: BibleChapter, secondar
                                 Text((verse?.number ?: row.primary?.number ?: row.secondary?.number).toString(), style = MaterialTheme.typography.labelSmall)
                                 SelectionContainer {
                                     Text(verse?.let { if (chapter.translation.language.code in setOf("cu", "cu-civil")) readingText(it.text) else it.plainText }
-                                        ?: localized(R.string.compare_missing, language), fontFamily = readingFont(chapter.translation.language.code),
+                                        ?.takeIf { it.isNotBlank() } ?: localized(R.string.compare_missing, language), fontFamily = readingFont(chapter.translation.language.code),
                                         fontSize = fontSize.sp, lineHeight = (fontSize * 1.55f).sp)
                                 }
                             }

@@ -36,9 +36,24 @@ internal class OfflineContentRepository(
         return store.read(key, serializer) ?: error("Saved content is unreadable")
     }
 
-    override suspend fun getTranslations(language: String?) = content("translations:${language.orEmpty()}", ListSerializer(TranslationSummary.serializer())) { remote.getTranslations(language) }
-    override suspend fun getBooks(translationCode: String) = content("books:$translationCode", ListSerializer(BibleBook.serializer())) { remote.getBooks(translationCode) }
-    override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = content("chapter:$translationCode:$bookSlug:$chapterNumber", BibleChapter.serializer()) { remote.getChapter(translationCode, bookSlug, chapterNumber) }
+    override suspend fun getTranslations(language: String?): List<TranslationSummary> {
+        val serializer = ListSerializer(TranslationSummary.serializer())
+        return store.read("translations:available:${language.orEmpty()}", serializer)
+            ?: store.read("translations:${language.orEmpty()}", serializer)
+            ?: remote.getTranslations(language).also { store.write("translations:available:${language.orEmpty()}", serializer, it) }
+    }
+    suspend fun refreshTranslations(): List<TranslationSummary> {
+        if (!canRefresh()) return store.read("translations:available:", ListSerializer(TranslationSummary.serializer()))
+            ?: store.read("translations:", ListSerializer(TranslationSummary.serializer())) ?: getTranslations()
+        return remote.getTranslations().also { store.write("translations:available:", ListSerializer(TranslationSummary.serializer()), it) }
+    }
+    suspend fun installedTranslations(): List<TranslationSummary> = store.biblePackages().filter { it.isInstalled }.map { it.translation }
+    override suspend fun getBooks(translationCode: String) =
+        store.read("books:$translationCode", ListSerializer(BibleBook.serializer())) ?: throw BibleNotInstalled(translationCode)
+    override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) =
+        store.read(chapterKey(translationCode, bookSlug, chapterNumber), BibleChapter.serializer())
+            ?.takeIf { it.translation.code == translationCode && it.book.slug == bookSlug && it.chapter.number == chapterNumber && it.verses.isNotEmpty() }
+            ?: throw BibleNotInstalled(translationCode)
     override suspend fun getCrossReferences(verseId: Long, translationCode: String) = content("references:$translationCode:$verseId", CrossReferences.serializer()) { remote.getCrossReferences(verseId, translationCode) }
     override suspend fun getStrongTokens(verseId: Long, translationCode: String) = content("tokens:$translationCode:$verseId", StrongTokens.serializer()) { remote.getStrongTokens(verseId, translationCode) }
     override suspend fun getStrongEntry(number: String, verseId: Long) = content("strong:$number:$verseId", StrongEntry.serializer()) { remote.getStrongEntry(number, verseId) }
@@ -64,6 +79,8 @@ internal class OfflineContentRepository(
     }
     override fun close() { refreshScope.cancel(); remote.close() }
 }
+
+internal class BibleNotInstalled(code: String) : IllegalStateException("Bible text is not installed: $code")
 
 internal fun isConnected(context: Context): Boolean {
     val manager = context.getSystemService(ConnectivityManager::class.java)

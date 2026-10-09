@@ -302,26 +302,21 @@ internal fun SectionsScreen(
 @Composable
 internal fun TranslationsScreen(
     language: String,
-    state: TranslationState,
-    filter: TranslationFilter,
-    selectedCodes: Set<String>,
-    onFilterChange: (TranslationFilter) -> Unit,
-    onToggle: (String) -> Unit,
+    source: com.bibledesktop.shared.api.BibleContentSource,
+    onInstalled: (List<TranslationSummary>) -> Unit,
     onBack: () -> Unit,
-    onRetry: () -> Unit,
     onNext: () -> Unit,
 ) {
     SetupScaffold(
         language = language,
         step = 2,
-        title = localized(R.string.setup_translations_title, language),
-        subtitle = localized(R.string.setup_translations_subtitle, language),
+        title = localized(R.string.bible_library_title, language),
+        subtitle = localized(R.string.catalog_setup_hint, language),
         onBack = onBack,
         scrollContent = false,
         footer = {
             Button(
                 onClick = onNext,
-                enabled = selectedCodes.isNotEmpty(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -331,46 +326,7 @@ internal fun TranslationsScreen(
             }
         },
     ) {
-        TranslationFilters(language, filter, onFilterChange)
-        Text(
-            text = localized(R.string.selected_count, language, selectedCodes.size),
-            modifier = Modifier.padding(vertical = 10.dp),
-            color = PrimaryBlue,
-            fontSize = 12.sp,
-        )
-
-        when (state) {
-            TranslationState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            TranslationState.Error -> Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(localized(R.string.load_error, language), color = Ink)
-                Button(onClick = onRetry, modifier = Modifier.padding(top = 12.dp)) {
-                    Text(localized(R.string.retry, language))
-                }
-            }
-            is TranslationState.Content -> {
-                val visible = state.translations.filter {
-                    filter.code == null || it.language.code == filter.code
-                }
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(visible, key = TranslationSummary::code) { translation ->
-                        TranslationSelectionRow(
-                            translation = translation,
-                            selected = translation.code in selectedCodes,
-                            onClick = { onToggle(translation.code) },
-                        )
-                    }
-                }
-            }
-        }
+        com.bibledesktop.myapp.ui.more.BibleLibraryContent(language, source, Modifier.fillMaxSize(), onInstalled)
     }
 }
 

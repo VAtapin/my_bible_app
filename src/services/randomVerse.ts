@@ -19,8 +19,7 @@ export async function loadRandomVerse(service: ChapterService, translation: stri
   const target = passages[Math.min(passages.length - 1, Math.floor(random() * passages.length))]!
   let chapter = await service.readOffline(translation, target.book, target.chapter)
   if (!chapter) {
-    try { chapter = await service.download(translation, target.book, target.chapter) }
-    catch { chapter = (await service.listStored()).find((item) => item.data.translation.code === translation)?.data }
+    chapter = (await service.listStored()).find((item) => item.data.translation.code === translation)?.data
   }
   return chapter ? chooseVerse(chapter, random) : undefined
 }

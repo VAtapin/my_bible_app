@@ -122,7 +122,7 @@ fun BibleReader(
     }
 
     LaunchedEffect(translations, translationCode) {
-        if (translations.isNotEmpty() && (translationCode.isBlank() || translations.none { it.code == translationCode })) {
+        if (translations.isNotEmpty() && translationCode.isBlank()) {
             translationCode = translations.firstOrNull()?.code.orEmpty()
         }
     }
@@ -172,6 +172,17 @@ fun BibleReader(
         }
     }
 
+    if (translations.isEmpty() || translations.none { it.code == translationCode }) {
+        Column(Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding()) {
+            ReadingHeader(text(R.string.section_bible, language), language, onBack, onBack)
+            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(text(R.string.catalog_empty, language))
+                Button(onClick = onDownloads, modifier = Modifier.testTag("reader-install")) { Text(text(R.string.catalog_add, language)) }
+            }
+        }
+        return
+    }
+
     when {
         selectedBook == null -> pickerState.SaveableStateProvider("book-picker") {
             BooksScreen(
@@ -192,6 +203,7 @@ fun BibleReader(
                 },
                 onRetry = { booksRetry += 1 },
                 onBack = onBack,
+                onDownloads = onDownloads,
             )
         }
 
@@ -228,7 +240,7 @@ fun BibleReader(
             } else null,
             comparing = comparing,
             onCompare = {
-                if (!comparing && (compareCode.isBlank() || compareCode == translationCode))
+                if (!comparing && (translations.none { it.code == compareCode } || compareCode == translationCode))
                     compareCode = translations.firstOrNull { it.code != translationCode }?.code.orEmpty()
                 comparing = !comparing
             },
@@ -301,12 +313,14 @@ private fun BooksScreen(
     onBookClick: (BibleBook) -> Unit,
     onRetry: () -> Unit,
     onBack: () -> Unit,
+    onDownloads: () -> Unit,
 ) {
     BookPicker(
         language, translations, selectedTranslationCode,
         books = (state as? LoadState.Ready)?.value,
         error = state is LoadState.Error,
         onTranslationChange, onBookClick, onRetry, onBack,
+        onAddBibles = onDownloads,
     )
 }
 
@@ -359,15 +373,15 @@ private fun ChapterScreen(
         }
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 12.dp)) {
             androidx.compose.material3.TextButton(onClick = onCompare) { Text(text(if (comparing) R.string.compare_close else R.string.compare_open, language)) }
-            androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_download_title, language)) }
+            androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_library_title, language)) }
         }
 
         when (state) {
             LoadState.Loading -> LoadingBox(Modifier.weight(1f))
             LoadState.Error -> ErrorBox(
-                text(R.string.bible_chapter_error, language),
-                text(R.string.retry, language),
-                onRetry,
+                text(R.string.catalog_local_missing, language),
+                text(R.string.catalog_add, language),
+                onDownloads,
                 Modifier.weight(1f),
             )
             is LoadState.Ready -> if (comparison != null) comparison(state.value, Modifier.weight(1f)) else if (state.value.verses.isEmpty()) ErrorBox(

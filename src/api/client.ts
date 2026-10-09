@@ -98,7 +98,7 @@ export function createBibleApi({ baseUrl, timeoutMs = 10_000, fetcher = fetch }:
       return request<LanguageSummary[]>('/languages', isLanguageList)
     },
     getTranslations(language) {
-      const query = language ? `?language=${encodeURIComponent(language)}` : ''
+      const query = `?catalog=available${language ? `&language=${encodeURIComponent(language)}` : ''}`
       return request<TranslationSummary[]>(`/translations${query}`, isTranslationList)
     },
     async getBooks(translationCode) {

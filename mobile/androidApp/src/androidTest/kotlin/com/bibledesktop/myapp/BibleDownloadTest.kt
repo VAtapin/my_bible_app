@@ -28,6 +28,7 @@ class BibleDownloadTest {
         var failAt = 0
         var wrong = false
         var empty = false
+        var blankVerse = false
         override suspend fun getTranslations(language: String?) = translations
         override suspend fun getBooks(translationCode: String) = books
         override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int): BibleChapter {
@@ -35,8 +36,10 @@ class BibleDownloadTest {
             if (calls == failAt) throw IOException("fixture interruption")
             val book = books.first { it.slug == bookSlug }
             if (empty && chapterNumber == 2) return BibleChapter(translations.single(), book, ChapterSummary(chapterNumber, 0), emptyList())
+            val verses = listOf(BibleVerse(1, 1, "${book.canonicalBook!!.osisCode}.$chapterNumber.1", "text", "text")) +
+                if (blankVerse) listOf(BibleVerse(2, 2, "${book.canonicalBook!!.osisCode}.$chapterNumber.2", "", "")) else emptyList()
             return BibleChapter(translations.single().copy(code = if (wrong) "OTHER" else translationCode), book,
-                ChapterSummary(chapterNumber, 1), listOf(BibleVerse(1, 1, "${book.canonicalBook!!.osisCode}.$chapterNumber.1", "text", "text")))
+                ChapterSummary(chapterNumber, verses.size), verses)
         }
     }
     @Test fun fullCatalogDownloadSurvivesRestartAndNeedsNoNetworkForEveryChapter() = runBlocking {
@@ -116,6 +119,20 @@ class BibleDownloadTest {
         } finally { fixture.close() }
     }
     /** Every advertised chapter is requested; API-empty chapters remain explicitly unavailable. */
+    @Test fun blankSourceVersesStayExplicitAndCanBeRechecked() = runBlocking {
+        val fixture = Fixture()
+        try {
+            fixture.blankVerse = true
+            assertTrue(BibleDownloadEngine(fixture, OfflineStore(root), pause = {}).download("TEST") {})
+            val pack = OfflineStore(root).read(biblePackageKey("TEST"), BiblePackage.serializer())!!
+            assertTrue(pack.isInstalled); assertFalse(pack.complete); assertEquals(3, pack.done)
+            assertEquals(3, pack.missingVerses.size)
+            assertTrue(OfflineStore(root).read(chapterKey("TEST", "one", 1), BibleChapter.serializer())!!.verses[1].plainText.isBlank())
+            fixture.blankVerse = false
+            assertTrue(BibleDownloadEngine(fixture, OfflineStore(root), pause = {}).download("TEST") {})
+            assertTrue(OfflineStore(root).read(biblePackageKey("TEST"), BiblePackage.serializer())!!.complete)
+        } finally { fixture.close() }
+    }
     @Test fun realEntireRussianCatalogIsSavedAndMissingChaptersAreExplicit() = runBlocking {
         val source = BibleApiClient()
         try {

@@ -18,13 +18,14 @@ import com.bibledesktop.shared.api.TranslationSummary
 internal fun TranslationPicker(language: String, translations: List<TranslationSummary>, selected: String,
     onSelect: (String) -> Unit, onClose: () -> Unit) {
     var query by remember { mutableStateOf("") }
+    var group by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
     AlertDialog(onDismissRequest = onClose, title = { Text(localized(R.string.bible_choose_translation, language)) },
         confirmButton = { TextButton(onClick = onClose) { Text(localized(R.string.study_close, language)) } },
         text = {
             Column {
-                OutlinedTextField(query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth().testTag("translation-search"),
-                    label = { Text(localized(R.string.translation_search, language)) }, singleLine = true)
-                val visible = translations.filter { listOf(it.name, it.code, it.shortName.orEmpty(), it.language.name, it.language.nativeName.orEmpty()).any { text -> text.contains(query.trim(), ignoreCase = true) } }
+                CatalogFilters(language, translations, query, { query = it }, group, { group = it }, code, { code = it })
+                val visible = matchingTranslations(translations, query, group, code)
                 if (visible.isEmpty()) Text(localized(R.string.translation_not_found, language))
                 LazyColumn(Modifier.heightIn(max = 400.dp)) {
                     items(visible, key = TranslationSummary::code) { item ->

@@ -63,9 +63,12 @@ async function getState(key: string): Promise<StateRecord | undefined> {
 }
 
 async function putState(record: StateRecord): Promise<void> {
-  await withDatabase(async (database) => runRequest(
-    database.transaction(offlineStores.state, 'readwrite').objectStore(offlineStores.state).put(record),
-  ))
+  await withDatabase(async (database) => new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(offlineStores.state, 'readwrite')
+    transaction.oncomplete = () => resolve()
+    transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('Library storage failed'))
+    transaction.objectStore(offlineStores.state).put(record)
+  }))
 }
 
 async function withDatabase<T>(action: (database: IDBDatabase) => Promise<T>): Promise<T> {

@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
-import { bibleApi } from '@/api'
 import type { TranslationSummary } from '@/api/contracts'
 import { useI18n } from '@/i18n'
 import { languageSwitchUrl, interfaceLanguageIds, interfaceLanguageNames, defaultBibleTranslations, type InterfaceLanguage } from '@/i18n/locale'
@@ -23,6 +22,10 @@ import { recordProductMetric } from '@/diagnostics/productDiagnostics'
 import { initialSetupStep, stepAfterPreset, stepBeforeSummary } from './setupFlow'
 import EducationOptions from './EducationOptions.vue'
 import CalendarOptions from './CalendarOptions.vue'
+import BibleLibrary from '@/features/prototype/BibleLibrary.vue'
+import { installedBibles } from '@/services/bibleCatalog'
+import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
+import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
 import { learningApps } from '@/features/education/learningApps'
 
 const props = defineProps<{ mode: SetupMode }>()
@@ -36,7 +39,6 @@ const interfaceLanguage = ref<InterfaceLanguage>(language.value)
 const preset = ref<PresetId>('daily')
 const sections = ref<AppSectionId[]>(props.mode === 'quick' ? sectionsForPreset('daily') : ['bible'])
 const translations = ref<TranslationSummary[]>([])
-const translationsLoading = ref(true)
 const translationCodes = ref<string[]>([defaultTranslationCode(interfaceLanguage.value)])
 const morningPrayer = ref(true)
 const eveningPrayer = ref(true)
@@ -65,19 +67,6 @@ const selectedSectionLabels = computed(() => sections.value.flatMap((id) => id =
 const selectedTranslationNames = computed(() => translationCodes.value.map((code) => (
   translations.value.find((item) => item.code === code)?.name ?? code
 )))
-const translationGroups = computed(() => {
-  const groups = new Map<string, { code: string; name: string; translations: TranslationSummary[] }>()
-  for (const translation of translations.value) {
-    const group = groups.get(translation.language.code) ?? {
-      code: translation.language.code,
-      name: translation.language.name,
-      translations: [],
-    }
-    group.translations.push(translation)
-    groups.set(translation.language.code, group)
-  }
-  return [...groups.values()]
-})
 const selectedPrayerLabels = computed(() => [
   morningPrayer.value ? text.value.setup.morningPrayer : '',
   eveningPrayer.value ? text.value.setup.eveningPrayer : '',
@@ -126,12 +115,10 @@ onMounted(async () => {
   }
 
   try {
-    translations.value = await bibleApi.getTranslations()
+    translations.value = (await installedBibles(createIndexedDbLibraryRepository(), createIndexedDbChapterRepository())).map(item => item.translation)
     ensureTranslationSelection()
   } catch {
     message.value = text.value.setup.translationsUnavailable
-  } finally {
-    translationsLoading.value = false
   }
 })
 
@@ -166,16 +153,6 @@ function toggleSection(section: AppSectionId): void {
     ? sections.value.filter((current) => current !== section)
     : [...sections.value, section]
   message.value = ''
-}
-
-function toggleTranslation(code: string): void {
-  translationCodes.value = translationCodes.value.includes(code)
-    ? translationCodes.value.filter((current) => current !== code)
-    : [...translationCodes.value, code]
-}
-
-function setPrimaryTranslation(code: string): void {
-  translationCodes.value = [code, ...translationCodes.value.filter((current) => current !== code)]
 }
 
 function togglePrayerLanguage(code: string): void {
@@ -306,14 +283,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
       <div v-if="sections.includes('bible')" class="option-group">
         <h3>{{ text.setup.translationTitle }}</h3>
         <p class="option-hint">{{ text.setup.translationDescription }}</p>
-        <p v-if="translationsLoading" class="option-hint">{{ text.setup.translationsLoading }}</p>
-        <details v-for="group in translationGroups" v-else :key="group.code" class="translation-group" :open="group.code === interfaceLanguage">
-          <summary>{{ group.name }}</summary>
-          <label v-for="translation in group.translations" :key="translation.code" class="toggle-row">
-            <span><strong>{{ translation.name }}</strong><small>{{ translation.short_name ?? translation.code }}</small></span>
-            <input type="checkbox" :checked="translationCodes.includes(translation.code)" @change="toggleTranslation(translation.code)" />
-          </label>
-        </details>
+        <BibleLibrary @installed="translations = $event; translationCodes = $event.map(item => item.code)" />
       </div>
 
       <div v-if="sections.includes('prayers')" class="option-group">
@@ -364,21 +334,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
         <div v-if="sections.includes('bible')">
           <dt>{{ text.setup.summaryTranslations }}</dt>
           <dd v-if="mode === 'quick'">
-            <select :value="translationCodes[0]" @change="setPrimaryTranslation(($event.target as HTMLSelectElement).value)">
-              <optgroup v-for="group in translationGroups" :key="group.code" :label="group.name">
-                <option v-for="translation in group.translations" :key="translation.code" :value="translation.code">{{ translation.name }}</option>
-              </optgroup>
-            </select>
-            <details class="quick-translation-options">
-              <summary>{{ text.setup.addTranslations }}</summary>
-              <div v-for="group in translationGroups" :key="group.code" class="quick-translation-group">
-                <strong>{{ group.name }}</strong>
-                <label v-for="translation in group.translations.filter((item) => item.code !== translationCodes[0])" :key="translation.code">
-                  <input type="checkbox" :checked="translationCodes.includes(translation.code)" @change="toggleTranslation(translation.code)" />
-                  <span>{{ translation.name }}</span>
-                </label>
-              </div>
-            </details>
+            <BibleLibrary @installed="translations = $event; translationCodes = $event.map(item => item.code)" />
           </dd>
           <dd v-else>{{ selectedTranslationNames.join(', ') }}</dd>
         </div>

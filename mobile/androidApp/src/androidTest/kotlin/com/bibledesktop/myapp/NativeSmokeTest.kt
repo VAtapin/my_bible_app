@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bibledesktop.shared.api.BibleApiClient
+import com.bibledesktop.shared.api.isInstalled
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -73,7 +74,7 @@ class NativeSmokeTest {
     @Test fun manualSavePersistsSettingsAndOpensToday() {
         compose.onNodeWithText("Настроить самому").performScrollTo().performClick()
         compose.onNodeWithText("Далее").performClick()
-        if (compose.onAllNodes(hasText("Выберите переводы Библии")).fetchSemanticsNodes().isNotEmpty()) {
+        if (compose.onAllNodesWithTag("library-installed").fetchSemanticsNodes().isNotEmpty()) {
             compose.waitUntil(30_000) {
                 compose.onAllNodes(hasText("Далее") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
             }
@@ -129,7 +130,9 @@ class NativeSmokeTest {
         compose.onNodeWithText("Молитвы").assertIsDisplayed()
         back()
         compose.onNode(hasText("Библия") and isSelectable()).performClick()
-        compose.onNodeWithText("Книги Библии").assertIsDisplayed()
+        if (compose.onAllNodesWithTag("reader-install").fetchSemanticsNodes().isNotEmpty())
+            compose.onNodeWithTag("reader-install").assertIsDisplayed()
+        else compose.onNodeWithText("Книги Библии").assertIsDisplayed()
         back()
         compose.onNodeWithText("Календарь").assertIsDisplayed()
     }
@@ -139,8 +142,13 @@ class NativeSmokeTest {
         compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
         compose.onNodeWithText("Изучение Библии").performScrollTo().performClick()
         compose.onNodeWithText("Выбрать место в Библии").assertIsDisplayed().performClick()
-        compose.onNode(hasText("Книги Библии") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.isDialog())).assertIsDisplayed()
-        compose.onNode(hasContentDescription("На главную") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        if (compose.onAllNodesWithTag("reader-install").fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithTag("reader-install").assertIsDisplayed()
+            compose.onNodeWithContentDescription("На главную").performClick()
+        } else {
+            compose.onNode(hasText("Книги Библии") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.isDialog())).assertIsDisplayed()
+            compose.onNode(hasContentDescription("На главную") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.isDialog())).performClick()
+        }
         compose.onNodeWithText("Напоминания").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("reminder-toggle-calendar").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("reminder-toggle-morning").assertIsOff()
@@ -156,8 +164,7 @@ class NativeSmokeTest {
         val intent = android.content.Intent(compose.activity, MainActivity::class.java)
             .putExtra(com.bibledesktop.myapp.data.ReminderScheduler.destinationExtra, "bible")
         androidx.test.core.app.ActivityScenario.launch<MainActivity>(intent).use { scenario ->
-            compose.waitUntil(15_000) { compose.onAllNodes(hasText("Книги Библии")).fetchSemanticsNodes().isNotEmpty() }
-            compose.onNodeWithText("Книги Библии").assertIsDisplayed()
+            compose.waitUntil(15_000) { compose.onAllNodes(hasText("Книги Библии")).fetchSemanticsNodes().isNotEmpty() || compose.onAllNodesWithTag("reader-install").fetchSemanticsNodes().isNotEmpty() }
         }
     }
 
@@ -178,6 +185,7 @@ class NativeSmokeTest {
     }
 
     @Test fun parallelReferenceOpensExactVerseAndBackRestoresSource() {
+        requireInstalled("BQ_RUSSIAN_RST_STRONG")
         val client = BibleApiClient()
         val source = try { runBlocking {
             val edition = client.getTranslations("ru").first { it.hasStrong }
@@ -205,7 +213,9 @@ class NativeSmokeTest {
         }
     }
 
-    @Test fun readerComparesUnconfiguredTranslationAndKeepsItOnRecreation() {
+    @Test fun readerComparesInstalledTranslationAndKeepsItOnRecreation() {
+        requireInstalled("BQ_RUSSIAN_RST_STRONG")
+        requireInstalled("BQ_ENGLISH_KJV_1769")
         val api = BibleApiClient()
         val source = try { runBlocking {
             val ru = api.getTranslations("ru").first()
@@ -236,6 +246,7 @@ class NativeSmokeTest {
     }
 
     @Test fun directChapterPickerSurvivesRecreationAndOpensRealChapter() {
+        requireInstalled("BQ_RUSSIAN_RST_STRONG")
         val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
         check(preferences.edit().putString("lastTranslation", "BQ_RUSSIAN_RST_STRONG")
             .putString("lastBookSlug", "genesis").putInt("lastChapter", 18).putInt("lastVerse", 0).commit())
@@ -309,7 +320,14 @@ class NativeSmokeTest {
         compose.waitForIdle()
     }
 
+    /** Reader integration requires genuinely installed editions, not implicit on-demand HTTP. */
+    private fun requireInstalled(code: String) = runBlocking {
+        org.junit.Assume.assumeTrue("Install the available edition before this reader integration test: $code",
+            com.bibledesktop.myapp.data.OfflineStore(compose.activity).biblePackages().any { it.translation.code == code && it.isInstalled })
+    }
+
     @Test fun verseNoteIsAccessibleFromMoreAfterLeavingReader() {
+        requireInstalled("BQ_RUSSIAN_RST_STRONG")
         val client = BibleApiClient()
         val book = try { runBlocking {
             val translation = client.getTranslations("ru").let { all -> all.firstOrNull { it.isDefault } ?: all.first() }

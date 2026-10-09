@@ -348,36 +348,6 @@ internal fun SectionToggleRow(
 }
 
 @Composable
-internal fun TranslationFilters(
-    language: String,
-    selected: TranslationFilter,
-    onChange: (TranslationFilter) -> Unit,
-) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        val options = listOf(
-            TranslationFilter.All to localized(R.string.language_all, language),
-            TranslationFilter.Russian to "Русский",
-            TranslationFilter.German to "Deutsch",
-            TranslationFilter.Ukrainian to "Українська",
-            TranslationFilter.English to "English",
-        )
-        options.forEach { (filter, title) ->
-            FilterChip(
-                selected = selected == filter,
-                onClick = { onChange(filter) },
-                label = { Text(title) },
-                colors = FilterChipDefaults.filterChipColors(
-                    containerColor = Color.White,
-                    labelColor = Ink,
-                    selectedContainerColor = Navy,
-                    selectedLabelColor = Color.White,
-                ),
-            )
-        }
-    }
-}
-
-@Composable
 internal fun TranslationSelectionRow(
     translation: TranslationSummary,
     selected: Boolean,

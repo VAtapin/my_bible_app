@@ -1,29 +1,31 @@
 {
   "status": "prepared-for-internal-testing-not-submitted",
   "date": "2026-10-09",
-  "baseCommit": "6279db7edef45f3b027f2f8725f9ec707708d84e",
+  "baseCommit": "e74dee443a8b09b57379967f7c82001b98980770",
   "displayName": "Bible App",
   "package": "com.bibledesktop.myapp",
-  "versionName": "0.1.0",
-  "versionCode": 1,
+  "versionName": "0.1.1",
+  "versionCode": 2,
   "artifactSha256": {
-    "androidApp-release.aab": "8D7D2DCEFDB6C6F79DFB22E0D3D90B9805DD716183BBAD75C5D1A354E96F6416",
-    "androidApp-release.apk": "3E2362EA8254113598F9C0F21898641501250606FD68D07D330C14016E52EA57"
+    "androidApp-release.aab": "341A065A423B281D3EBEC66F1F8EEC71C8C383F9A84807F9FAE79F7E2623516A",
+    "androidApp-release.apk": "CBE7708CB6ED86B20A52488CBCB8F14FBF2AF98207B29F8C0F7A70DB85466E38"
   },
   "checks": {
-    "sharedHostTests": 15,
-    "androidInstrumentationTests": 31,
+    "sharedHostTests": 16,
+    "androidInstrumentationTests": "42 passed / 4 skipped (RU/KJV whole-app scenarios require installed packages); final download regression 6 passed; real new NT full install passed separately",
+    "webTests": "221 passed / 44 files; typecheck and both production builds passed",
     "releaseSigningGuardTests": 4,
-    "releaseLint": "0 errors, 54 warnings, 3 hints",
+    "releaseLint": "0 errors, 65 warnings, 3 hints",
     "signatures": "AAB jarsigner and APK apksigner passed",
     "packageAndDebuggable": "com.bibledesktop.myapp; debuggable=false",
     "zipAndElfLoadAlignment": "16 KB passed for arm64-v8a and x86_64",
-    "emulatorRuntime": "Android API 37 x86_64: PAGE_SIZE=4096 and 16384; release installed/launched, 16 KB pageSizeCompat=0; real GET API navigation"
+    "emulatorRuntime": "0.1.1 installed over previous release and launched on API 37 x86_64 PAGE_SIZE=4096 without clearing data; prior 0.1.0 runtime passed on 16384, not rechecked for this release"
   },
   "remainingChecks": [
     "RELRO end is not 16 KB aligned in graphics-path library: warning retained, strict mode rejects; ARM64 16 KB runtime verification required",
     "Real physical device, Play-delivered AAB splits and update installation not tested",
-    "Android privacy page needs server deployment and owner review of server processing",
+    "Owner review of Android privacy and server processing; no production deployment performed in this task",
+    "Five existing Play screenshots show 0.1.0; refresh catalogue screenshots before submission",
     "Data Safety, audience, content rights and IARC declarations need owner confirmation",
     "Play App Signing certificate and domain association not configured"
   ]

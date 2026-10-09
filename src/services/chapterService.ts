@@ -1,6 +1,7 @@
 import type { BibleApi } from '@/api/client'
 import type { BibleChapter } from '@/api/contracts'
 import { chapterKey, type ChapterRepository } from '@/offline/chapterRepository'
+import { validChapter } from './chapterValidation'
 
 export interface ChapterService {
   download(translationCode: string, bookSlug: string, chapter: number): Promise<BibleChapter>
@@ -13,6 +14,7 @@ export function createChapterService(api: BibleApi, repository: ChapterRepositor
   return {
     async download(translationCode, bookSlug, chapterNumber) {
       const data = await api.getChapter(translationCode, bookSlug, chapterNumber)
+      if (!validChapter(data, translationCode, bookSlug, chapterNumber)) throw new Error('Invalid chapter in Bible package')
       await repository.put({
         key: chapterKey(translationCode, bookSlug, chapterNumber),
         savedAt: new Date().toISOString(),
@@ -22,7 +24,7 @@ export function createChapterService(api: BibleApi, repository: ChapterRepositor
     },
     async readOffline(translationCode, bookSlug, chapterNumber) {
       const stored = await repository.get(chapterKey(translationCode, bookSlug, chapterNumber))
-      return stored?.data
+      return stored && validChapter(stored.data, translationCode, bookSlug, chapterNumber) ? stored.data : undefined
     },
     listStored() {
       return repository.list()

@@ -29,7 +29,7 @@ class BibleLibraryTest {
     private val source = BibleApiClient()
     @Before fun before() {
         check(context.packageName == "com.bibledesktop.myapp.debug")
-        Assume.assumeTrue(WorkManager.getInstance(context).getWorkInfosForUniqueWork(BibleDownloads.name).get().none { !it.state.isFinished })
+        Assume.assumeTrue(WorkManager.getInstance(context).getWorkInfosByTag(BibleDownloads.name).get().none { !it.state.isFinished })
         val preferences = context.getSharedPreferences(BibleDownloads.name, Context.MODE_PRIVATE)
         original = keys.associateWith { preferences.all[it] }
     }
@@ -40,9 +40,11 @@ class BibleLibraryTest {
         check(editor.commit()); source.close()
     }
     @Test fun fullDownloadCanBeQueuedCancelledAndContinuedFromRealUi() {
-        compose.setContent { BibleDesktopTheme { BibleLibraryScreen("ru", source) {} } }
-        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("bible-download-start") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("bible-download-start").performScrollTo().performClick()
+        compose.setContent { BibleDesktopTheme { BibleLibraryScreen("ru", source, onBack = {}) } }
+        compose.onNodeWithTag("library-catalog").performClick()
+        compose.onNodeWithTag("translation-search").performTextInput("RST-Strong")
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("install-BQ_RUSSIAN_RST_STRONG").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("install-BQ_RUSSIAN_RST_STRONG").performScrollTo().performClick()
         compose.waitUntil(15_000) { compose.onAllNodesWithText("Отменить загрузку").fetchSemanticsNodes().isNotEmpty() }
         owned = context.getSharedPreferences(BibleDownloads.name, Context.MODE_PRIVATE).getString("id", null)
         assertNotNull(owned)
@@ -50,11 +52,11 @@ class BibleLibraryTest {
         compose.waitUntil(15_000) { WorkManager.getInstance(context).getWorkInfoById(UUID.fromString(owned)).get()?.state?.isFinished == true }
         compose.waitUntil(15_000) { compose.onAllNodesWithText("Отменить загрузку").fetchSemanticsNodes().isEmpty() }
         val cancelledId = owned
-        compose.onNodeWithTag("bible-download-start").performScrollTo().performClick()
+        compose.onNodeWithTag("install-BQ_RUSSIAN_RST_STRONG").performScrollTo().performClick()
         compose.waitUntil(15_000) { context.getSharedPreferences(BibleDownloads.name, Context.MODE_PRIVATE).getString("id", null) != cancelledId }
         owned = context.getSharedPreferences(BibleDownloads.name, Context.MODE_PRIVATE).getString("id", null)
-        compose.waitUntil(15_000) { compose.onAllNodesWithTag("bible-download-cancel").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("bible-download-cancel").performScrollTo().performClick()
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("cancel-BQ_RUSSIAN_RST_STRONG").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("cancel-BQ_RUSSIAN_RST_STRONG").performScrollTo().performClick()
     }
     @Test fun unavailableChaptersRemainVisibleAndAreNeverLabelledComplete(): Unit = runBlocking {
         val root = File(context.cacheDir, "library-test-${UUID.randomUUID()}")
@@ -71,7 +73,9 @@ class BibleLibraryTest {
             // A UI fixture, not a claimed download or remote integration.
             OfflineStore(wrapped).write(biblePackageKey("TEST"), BiblePackage.serializer(),
                 BiblePackage(edition, listOf(book), done = 2, bytes = 1234, unavailable = listOf("Книга 2")))
-            compose.setContent { CompositionLocalProvider(LocalContext provides wrapped) { BibleDesktopTheme { BibleLibraryScreen("ru", fixture) {} } } }
+            compose.setContent { CompositionLocalProvider(LocalContext provides wrapped) { BibleDesktopTheme { BibleLibraryScreen("ru", fixture, onBack = {}) } } }
+            compose.waitUntil(10_000) { compose.onAllNodesWithText("Размер и отсутствующие главы").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithText("Размер и отсутствующие главы").performScrollTo().performClick()
             compose.waitUntil(10_000) { compose.onAllNodesWithText("Книга 2").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithText("Книга 2").assertExists()
             compose.onNodeWithText("Весь перевод сохранён и доступен без сети.").assertDoesNotExist()

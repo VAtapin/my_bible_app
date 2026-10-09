@@ -55,6 +55,7 @@ internal fun BookPicker(
     books: List<BibleBook>?, error: Boolean, onTranslationChange: (String) -> Unit,
     onBookClick: (BibleBook) -> Unit, onRetry: () -> Unit, onBack: () -> Unit,
     onHome: () -> Unit = onBack,
+    onAddBibles: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var testament by rememberSaveable { mutableStateOf("all") }
@@ -70,6 +71,9 @@ internal fun BookPicker(
     val selected = translations.firstOrNull { it.code == selectedTranslationCode }
     Column(Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding()) {
         ReadingHeader(localized(R.string.bible_books_title, language), language, onBack, onHome)
+        if (onAddBibles != null) TextButton(onClick = onAddBibles, modifier = Modifier.testTag("book-add-bible")) {
+            Text(localized(R.string.catalog_add, language))
+        }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), color = Color.White,
                 border = androidx.compose.foundation.BorderStroke(1.dp, WarmBorder),

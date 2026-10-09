@@ -31,7 +31,7 @@ internal fun LinkedBibleReader(language: String, link: ReaderLink, client: Bible
     LaunchedEffect(link, retry) {
         catalog = null; error = false
         try {
-            val editions = client.getTranslations()
+            val editions = if (client is com.bibledesktop.myapp.data.OfflineContentRepository) client.installedTranslations() else client.getTranslations()
             if (applied) {
                 catalog = editions
                 return@LaunchedEffect
@@ -63,6 +63,7 @@ internal fun LinkedBibleReader(language: String, link: ReaderLink, client: Bible
                 else {
                     Text(localized(R.string.reader_link_unavailable, language))
                     Button(onClick = { retry++ }) { Text(localized(R.string.retry, language)) }
+                    Button(onClick = onDownloads) { Text(localized(R.string.catalog_add, language)) }
                 }
             }
         }

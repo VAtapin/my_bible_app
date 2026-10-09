@@ -124,14 +124,6 @@ private enum class Route {
     LinkedBible,
 }
 
-internal enum class TranslationFilter(val code: String?) {
-    All(null),
-    Russian("ru"),
-    German("de"),
-    Ukrainian("uk"),
-    English("en"),
-}
-
 internal sealed interface TranslationState {
     data object Loading : TranslationState
     data class Content(val translations: List<TranslationSummary>) : TranslationState
@@ -184,11 +176,14 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             },
         )
     }
-    var translationFilter by rememberSaveable { mutableStateOf(TranslationFilter.All) }
+    var libraryReturn by rememberSaveable { mutableStateOf(Route.Home) }
+    var installedTranslations by remember { mutableStateOf<List<TranslationSummary>>(emptyList()) }
     var chooseBiblePassage by rememberSaveable { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
     var translationState by remember { mutableStateOf<TranslationState>(TranslationState.Loading) }
     val client = remember { OfflineContentRepository(context.applicationContext) }
+
+    LaunchedEffect(route) { installedTranslations = client.installedTranslations() }
 
     val selectedSections = remember(selectedSectionIds) {
         selectedSectionIds.split(',').filter(String::isNotBlank).toSet()
@@ -208,16 +203,6 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
                 onSuccess = { TranslationState.Content(it) },
                 onFailure = { TranslationState.Error },
             )
-    }
-
-    LaunchedEffect(route, translationState, language) {
-        if (route == Route.Translations && selectedTranslations.isEmpty()) {
-            val available = (translationState as? TranslationState.Content)?.translations.orEmpty()
-            val recommended = available.firstOrNull { it.language.code == language && it.isDefault }
-                ?: available.firstOrNull { it.language.code == language }
-                ?: available.firstOrNull()
-            recommended?.let { selectedTranslationCodes = it.code }
-        }
     }
 
     BackHandler(
@@ -276,23 +261,16 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
 
         Route.Translations -> TranslationsScreen(
             language = language,
-            state = translationState,
-            filter = translationFilter,
-            selectedCodes = selectedTranslations,
-            onFilterChange = { translationFilter = it },
-            onToggle = { code -> selectedTranslationCodes = toggleCsv(selectedTranslations, code) },
+            source = client,
+            onInstalled = { installedTranslations = it; selectedTranslationCodes = it.joinToString(",") { edition -> edition.code } },
             onBack = { route = if (quickSetup) Route.Welcome else Route.Sections },
-            onRetry = { reloadKey += 1 },
             onNext = { route = Route.Summary },
         )
 
         Route.Summary -> SummaryScreen(
             language = language,
             selectedSections = selectedSections,
-            selectedTranslations = (translationState as? TranslationState.Content)
-                ?.translations
-                .orEmpty()
-                .filter { it.code in selectedTranslations }
+            selectedTranslations = installedTranslations
                 .sortedBy { if (it.language.code == language) 0 else 1 },
             onBack = {
                 route = if ("bible" in selectedSections) Route.Translations else Route.Sections
@@ -313,10 +291,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             language = language,
             client = client,
             selectedSections = selectedSections,
-            selectedTranslations = (translationState as? TranslationState.Content)
-                ?.translations
-                .orEmpty()
-                .filter { it.code in selectedTranslations }
+            selectedTranslations = installedTranslations
                 .sortedBy { if (it.language.code == language) 0 else 1 },
             onEdit = {
                 quickSetup = false
@@ -332,20 +307,18 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
 
         Route.Bible -> BibleReader(
             language = language,
-            translations = (translationState as? TranslationState.Content)
-                ?.translations
-                .orEmpty()
+            translations = installedTranslations
                 .sortedBy { if (it.language.code == language) 0 else 1 },
             client = client,
             onBack = { chooseBiblePassage = false; route = Route.Home },
-            onDownloads = { chooseBiblePassage = false; route = Route.BibleLibrary },
+            onDownloads = { chooseBiblePassage = false; libraryReturn = Route.Bible; route = Route.BibleLibrary },
             choosePassageOnOpen = chooseBiblePassage,
         )
 
         Route.LinkedBible -> initialReaderLink?.let { link ->
             com.bibledesktop.myapp.ui.bible.LinkedBibleReader(language, link, client,
                 onBack = { route = if (setupComplete) Route.Home else Route.Welcome },
-                onDownloads = { route = Route.BibleLibrary })
+                onDownloads = { libraryReturn = Route.LinkedBible; route = Route.BibleLibrary })
         }
 
         Route.Prayers -> PrayersScreen(
@@ -369,7 +342,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             },
             onOpenStudy = { route = Route.Study },
             onOpenReminders = { route = Route.Reminders },
-            onBibleDownloads = { route = Route.BibleLibrary },
+            onBibleDownloads = { libraryReturn = Route.More; route = Route.BibleLibrary },
             onOpenBookmark = { bookmark: BookmarkEntry ->
                 preferences.edit()
                     .putString("lastTranslation", bookmark.translationCode)
@@ -387,7 +360,11 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
                 route = Route.Bible
             })
         Route.Reminders -> com.bibledesktop.myapp.ui.reminders.RemindersScreen(language) { route = Route.Home }
-        Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client) { route = if (setupComplete) Route.Home else Route.Welcome }
+        Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client,
+            onBack = { route = libraryReturn }, onOpen = { code ->
+                preferences.edit().putString("lastTranslation", code).remove("lastBookSlug").remove("lastChapter").remove("lastVerse").apply()
+                route = Route.Bible
+            })
     }
 }
 

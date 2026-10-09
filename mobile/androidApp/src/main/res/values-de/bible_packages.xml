@@ -18,5 +18,5 @@
     <string name="bible_download_progress">Gespeicherte Kapitel: %1$d / %2$d</string>
     <string name="bible_download_size">Texte: %1$.1f MB</string>
     <string name="bible_download_complete">Die gesamte Übersetzung ist offline verfügbar.</string>
-    <string name="bible_download_failed">Download nicht abgeschlossen. Netzwerk und freien Speicher prüfen (Speicherlimit: 256 MB). Gespeicherte Kapitel bleiben erhalten; der Download kann fortgesetzt werden.</string>
+    <string name="bible_download_failed">Download nicht abgeschlossen. Netzwerk und freien Speicher prüfen. Gespeicherte Kapitel bleiben erhalten; der Download kann fortgesetzt werden.</string>
 </resources>

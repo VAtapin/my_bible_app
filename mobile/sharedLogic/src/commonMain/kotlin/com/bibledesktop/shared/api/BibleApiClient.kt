@@ -20,6 +20,7 @@ class BibleApiClient internal constructor(
 
     override suspend fun getTranslations(language: String?): List<TranslationSummary> {
         val response = client.get("$baseUrl/translations") {
+            parameter("catalog", "available") // Public editions, including those hidden from the short default list.
             language?.takeIf(String::isNotBlank)?.let { parameter("language", it) }
         }
 

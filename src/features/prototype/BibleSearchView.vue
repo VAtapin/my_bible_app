@@ -2,14 +2,18 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
-import { bibleApi } from '@/api'
+import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
+import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
+import { installedBibles, searchLocalBible } from '@/services/bibleCatalog'
+import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import type { VerseSearchResult } from '@/api/contracts'
 import { useI18n } from '@/i18n'
 import { useProfileStore } from '@/stores/profileStore'
 const route = useRoute()
 const router = useRouter()
-const { messages: text } = useI18n()
+const { language, messages: text } = useI18n()
 const profile = useProfileStore()
+const explicitTranslation = typeof route.query.translation === 'string'
 const query = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const translation = ref(typeof route.query.translation === 'string' ? route.query.translation : profile.load()?.bible.translationCodes[0] ?? '')
 const results = ref<VerseSearchResult[]>([])
@@ -23,10 +27,14 @@ async function search(): Promise<void> {
   busy.value = true
   message.value = ''
   try {
+    const chapters = createIndexedDbChapterRepository()
+    const installed = await installedBibles(createIndexedDbLibraryRepository(), chapters)
+    if (!explicitTranslation && !installed.some(item => item.translation.code === translation.value)) translation.value = installed[0]?.translation.code ?? ''
+    if (!installed.some(item => item.translation.code === translation.value)) { message.value = bibleCatalogMessages[language.value].catalog_empty; return }
     await router.replace({ path: '/search', query: { q: query.value.trim(), translation: translation.value } })
-    const response = await bibleApi.searchVerses(query.value.trim(), translation.value)
+    const response = await searchLocalBible(chapters, translation.value, query.value.trim())
     if (current !== generation) return
-    results.value = response.results
+    results.value = response
     message.value = results.value.length ? '' : text.value.readerActions.noResults
   } catch { if (current === generation) message.value = text.value.readerActions.searchFailed }
   finally { if (current === generation) busy.value = false }

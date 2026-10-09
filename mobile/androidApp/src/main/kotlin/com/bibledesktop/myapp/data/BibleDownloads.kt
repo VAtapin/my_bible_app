@@ -27,13 +27,19 @@ internal class BibleDownloadEngine(
         require(chapter.verses.isNotEmpty() && chapter.verses.size == chapter.chapter.versesCount) {
             "Incomplete chapter $code/${book.slug}/$number: ${chapter.verses.size}/${chapter.chapter.versesCount}"
         }
-        require(chapter.verses.all { it.number > 0 && it.osisRef.isNotBlank() && it.plainText.isNotBlank() })
+        require(chapter.verses.all { it.number > 0 && it.osisRef.isNotBlank() })
+        require(chapter.verses.any { it.plainText.isNotBlank() })
         require(chapter.verses.map { it.osisRef }.distinct().size == chapter.verses.size)
     }
     suspend fun download(code: String, progress: suspend (BiblePackage) -> Unit): Boolean {
         require(code.isNotBlank())
-        val catalog = store.read("translations:", ListSerializer(TranslationSummary.serializer()))
-            ?: source.getTranslations().also { store.write("translations:", ListSerializer(TranslationSummary.serializer()), it) }
+        var catalog = store.read("translations:available:", ListSerializer(TranslationSummary.serializer()))
+            ?: store.read("translations:", ListSerializer(TranslationSummary.serializer()))
+            ?: source.getTranslations().also { store.write("translations:available:", ListSerializer(TranslationSummary.serializer()), it) }
+        if (catalog.none { it.code == code }) {
+            catalog = source.getTranslations()
+            store.write("translations:available:", ListSerializer(TranslationSummary.serializer()), catalog)
+        }
         val translation = catalog.firstOrNull { it.code == code } ?: error("Unknown translation")
         var pack = store.read(biblePackageKey(code), BiblePackage.serializer()) ?: run {
             pause()
@@ -53,11 +59,11 @@ internal class BibleDownloadEngine(
         for (book in pack.books) for (number in 1..book.chaptersCount) {
             currentCoroutineContext().ensureActive()
             val saved = store.read(chapterKey(code, book.slug, number), BibleChapter.serializer())
-            if (saved != null && runCatching { validate(saved, code, book, number) }.isSuccess)
+            if (saved != null && runCatching { validate(saved, code, book, number) }.isSuccess && saved.verses.none { it.plainText.isBlank() })
                 bytes += json.encodeToString(BibleChapter.serializer(), saved).encodeToByteArray().size
             else missing += book to number
         }
-        pack = pack.copy(done = pack.total - missing.size, bytes = bytes, complete = missing.isEmpty(), unavailable = emptyList())
+        pack = pack.copy(done = pack.total - missing.size, bytes = bytes, complete = missing.isEmpty(), unavailable = emptyList(), missingVerses = emptyList())
         store.write(biblePackageKey(code), BiblePackage.serializer(), pack)
         progress(pack)
         for ((book, number) in missing) {
@@ -66,7 +72,7 @@ internal class BibleDownloadEngine(
             pause()
             val chapter = source.getChapter(code, book.slug, number)
             require(chapter.translation.code == code && chapter.book.slug == book.slug && chapter.chapter.number == number)
-            if (chapter.verses.isEmpty() && chapter.chapter.versesCount == 0) {
+            if (chapter.verses.size == chapter.chapter.versesCount && chapter.verses.all { it.plainText.isBlank() }) {
                 pack = pack.copy(unavailable = pack.unavailable + "${book.name} $number", complete = false)
                 store.write(biblePackageKey(code), BiblePackage.serializer(), pack)
                 progress(pack)
@@ -79,7 +85,8 @@ internal class BibleDownloadEngine(
             validate(saved, code, book, number)
             pack = pack.copy(done = pack.done + 1,
                 bytes = pack.bytes + json.encodeToString(BibleChapter.serializer(), saved).encodeToByteArray().size,
-                complete = pack.done + 1 == pack.total)
+                missingVerses = pack.missingVerses + saved.verses.filter { it.plainText.isBlank() }.map { it.osisRef },
+                complete = pack.done + 1 == pack.total && pack.missingVerses.isEmpty() && saved.verses.none { it.plainText.isBlank() })
             store.write(biblePackageKey(code), BiblePackage.serializer(), pack)
             progress(pack)
         }
@@ -90,18 +97,20 @@ internal class BibleDownloadEngine(
 internal object BibleDownloads {
     const val name = "native-bible-offline"
     private val enqueueLock = Mutex()
+    internal val downloadLock = Mutex()
     suspend fun enqueue(context: Context, code: String, wifi: Boolean) = withContext(Dispatchers.IO) {
         enqueueLock.withLock {
             require(code.isNotBlank() && code.length <= 128)
             val manager = WorkManager.getInstance(context)
-            if (manager.getWorkInfosForUniqueWork(name).get().any { !it.state.isFinished }) return@withLock
+            if (manager.getWorkInfosByTag(name).get().any { !it.state.isFinished && "bible-code:$code" in it.tags }) return@withLock
             val request = OneTimeWorkRequestBuilder<BibleDownloadWorker>()
+                .addTag(name).addTag("bible-code:$code")
                 .setInputData(workDataOf("code" to code))
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(if (wifi) NetworkType.UNMETERED else NetworkType.CONNECTED).build())
                 .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS).build()
             check(context.getSharedPreferences(name, Context.MODE_PRIVATE).edit()
-                .putString("code", code).putString("id", request.id.toString()).putBoolean("wifi", wifi).commit())
-            manager.enqueueUniqueWork(name, ExistingWorkPolicy.KEEP, request).result.get()
+                .putString("code", code).putString("id", request.id.toString()).putString("id:$code", request.id.toString()).putBoolean("wifi", wifi).commit())
+            manager.enqueueUniqueWork("$name:$code", ExistingWorkPolicy.KEEP, request).result.get()
         }
     }
 }
@@ -112,11 +121,13 @@ class BibleDownloadWorker(context: Context, parameters: WorkerParameters) : Coro
         val code = inputData.getString("code")?.takeIf { it.isNotBlank() } ?: return Result.failure()
         val source = BibleApiClient()
         val store = OfflineStore(applicationContext)
-        val deadline = android.os.SystemClock.elapsedRealtime() + 6 * 60_000
         try {
             if (System.currentTimeMillis() < (store.read("bible-api-retry-at", Long.serializer()) ?: 0)) return Result.retry()
-            val complete = BibleDownloadEngine(source, store, shouldYield = { android.os.SystemClock.elapsedRealtime() >= deadline }).download(code) {
-                setProgress(workDataOf("done" to it.done, "total" to it.total))
+            val complete = BibleDownloads.downloadLock.withLock {
+                val deadline = android.os.SystemClock.elapsedRealtime() + 6 * 60_000
+                BibleDownloadEngine(source, store, shouldYield = { android.os.SystemClock.elapsedRealtime() >= deadline }).download(code) {
+                    setProgress(workDataOf("done" to it.done, "total" to it.total))
+                }
             }
             if (!complete) return Result.retry()
             return if (store.read(biblePackageKey(code), BiblePackage.serializer())?.complete == true) Result.success()

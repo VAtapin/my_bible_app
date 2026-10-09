@@ -18,5 +18,5 @@
     <string name="bible_download_progress">Сохранено глав: %1$d / %2$d</string>
     <string name="bible_download_size">Тексты: %1$.1f МБ</string>
     <string name="bible_download_complete">Весь перевод сохранён и доступен без сети.</string>
-    <string name="bible_download_failed">Не удалось завершить загрузку. Проверьте сеть и свободное место (хранилище до 256 МБ). Сохранённые главы не потеряны; можно продолжить.</string>
+    <string name="bible_download_failed">Не удалось завершить загрузку. Проверьте сеть и свободное место. Сохранённые главы не потеряны; можно продолжить.</string>
 </resources>

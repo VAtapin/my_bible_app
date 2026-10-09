@@ -163,7 +163,17 @@ class BibleComparisonUiTest {
             val translations = api.getTranslations()
             val ru = translations.first { it.language.code == "ru" }
             val en = translations.first { it.language.code == "en" }
-            val book = repository.getBooks(ru.code).first { it.canonicalBook?.osisCode == "John" }
+            // Installation is explicit; viewing a chapter must no longer fetch or cache it implicitly.
+            val store = OfflineStore(root)
+            val ruBooks = api.getBooks(ru.code)
+            val enBooks = api.getBooks(en.code)
+            store.write("books:${ru.code}", kotlinx.serialization.builtins.ListSerializer(BibleBook.serializer()), ruBooks)
+            store.write("books:${en.code}", kotlinx.serialization.builtins.ListSerializer(BibleBook.serializer()), enBooks)
+            val book = ruBooks.first { it.canonicalBook?.osisCode == "John" }
+            val enBook = enBooks.first { it.canonicalBook?.osisCode == "John" }
+            store.write(chapterKey(ru.code, book.slug, 3), BibleChapter.serializer(), api.getChapter(ru.code, book.slug, 3))
+            store.write(chapterKey(en.code, enBook.slug, 3), BibleChapter.serializer(), api.getChapter(en.code, enBook.slug, 3))
+            offline = true
             val primary = repository.getChapter(ru.code, book.slug, 3)
             val secondary = loadComparison(primary, en.code, repository)
             assertEquals("John.3.16", compareVerses(primary, secondary).first { it.reference == "John.3.16" }.secondary?.osisRef)

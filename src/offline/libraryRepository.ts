@@ -17,6 +17,8 @@ export interface Bookmark {
   createdAt: string
 }
 
+import type { BibleBook, TranslationSummary } from '@/api/contracts'
+
 export interface OfflinePackage {
   key: string
   translationCode: string
@@ -25,6 +27,19 @@ export interface OfflinePackage {
   chapterCount: number
   approximateBytes: number
   downloadedAt: string
+  translation?: TranslationSummary
+  books?: BibleBook[]
+  totalChapters?: number
+  finished?: boolean
+  complete?: boolean
+  unavailable?: string[]
+  missingVerses?: string[]
+}
+
+export function isInstalledPackage(value: OfflinePackage): boolean {
+  const total = value.totalChapters ?? value.chapterCount
+  return value.chapterCount > 0 && (value.finished === undefined || value.finished)
+    && value.chapterCount + (value.unavailable?.length ?? 0) === total
 }
 
 export interface LibraryRepository {

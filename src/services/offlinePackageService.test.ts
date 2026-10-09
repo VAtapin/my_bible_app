@@ -52,7 +52,7 @@ describe('offline package service', () => {
 
     expect(storedChapters).toHaveLength(2)
     expect(result.chapterCount).toBe(2)
-    expect(library.putPackage).toHaveBeenCalledTimes(1)
+    expect(library.putPackage).toHaveBeenLastCalledWith(expect.objectContaining({ finished: true, complete: true, chapterCount: 2 }))
     expect(progress).toHaveBeenLastCalledWith(expect.objectContaining({ current: 2, total: 2 }))
   })
 

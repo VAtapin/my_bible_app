@@ -18,5 +18,5 @@
     <string name="bible_download_progress">Saved chapters: %1$d / %2$d</string>
     <string name="bible_download_size">Texts: %1$.1f MB</string>
     <string name="bible_download_complete">The entire translation is saved and available offline.</string>
-    <string name="bible_download_failed">Download could not finish. Check your connection and free space (storage limit: 256 MB). Saved chapters are kept; you can resume.</string>
+    <string name="bible_download_failed">Download could not finish. Check your connection and free space. Saved chapters are kept; you can resume.</string>
 </resources>

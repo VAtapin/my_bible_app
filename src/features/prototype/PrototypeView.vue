@@ -8,23 +8,21 @@ import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepo
 import { createIndexedDbLibraryRepository } from '@/offline/indexedDbLibraryRepository'
 import { bookmarkKey, type Bookmark } from '@/offline/libraryRepository'
 import { createChapterService } from '@/services/chapterService'
-import { createOfflinePackageService, type PackageProgress } from '@/services/offlinePackageService'
-import { recordProductMetric, recordSanitizedError } from '@/diagnostics/productDiagnostics'
-import { useProfileStore } from '@/stores/profileStore'
+import { recordSanitizedError } from '@/diagnostics/productDiagnostics'
 import { formatMessage, useI18n } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
 import { useAppearance } from '@/profile/appearance'
 import AppIcon from '../../../azbuka-web/src/components/AppIcon.vue'
 import VerseActions from './VerseActions.vue'
 import ParallelReading from './ParallelReading.vue'
+import { installedBibles, type InstalledBible } from '@/services/bibleCatalog'
+import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import { createLongPress, verseTarget } from '@/services/readerActions'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
 const chapterService = createChapterService(bibleApi, chapterRepository)
-const packageService = createOfflinePackageService(bibleApi, chapterRepository, libraryRepository)
 const route = useRoute()
-const profile = useProfileStore()
 const { language, messages: text } = useI18n()
 const appearance = useAppearance()
 const selectedVerse = ref<number>()
@@ -61,14 +59,11 @@ const chapter = ref<BibleChapter>()
 const bookmarks = ref<Bookmark[]>([])
 const message = ref('')
 const busy = ref(false)
-const packageBusy = ref(false)
-const packageProgress = ref<PackageProgress>()
 const packageVersion = ref('')
-const packageUpdateAvailable = ref(false)
-const packageStored = ref(false)
-let packageAbortController: AbortController | undefined
 
 const selectedTranslation = computed(() => translations.value.find((item) => item.code === translationCode.value))
+const localLibrary = ref<InstalledBible[]>([])
+const catalogText = computed(() => bibleCatalogMessages[language.value])
 const selectedBook = computed(() => books.value.find((item) => item.slug === bookSlug.value))
 const bookmarkedVerseKeys = computed(() => new Set(bookmarks.value.map((item) => item.key)))
 
@@ -76,31 +71,29 @@ onMounted(async () => {
   busy.value = true
   message.value = text.value.reader.catalogLoading
   try {
-    const configuration = profile.load()
     const [fullCatalog, savedLocation, savedBookmarks] = await Promise.all([
-      bibleApi.getTranslations(),
+      installedBibles(libraryRepository, chapterRepository),
       libraryRepository.getReadingLocation(),
       libraryRepository.listBookmarks(),
     ])
-    comparisonCatalog.value = fullCatalog
-    const configuredCodes = new Set(configuration?.bible.translationCodes ?? [])
-    const requestedCode = typeof route.query.translation === 'string' ? route.query.translation : savedLocation?.translationCode
-    translations.value = configuredCodes.size
-      ? fullCatalog.filter((item) => configuredCodes.has(item.code) || item.code === requestedCode)
-      : fullCatalog
+    localLibrary.value = fullCatalog
+    comparisonCatalog.value = fullCatalog.map(item => item.translation)
+    translations.value = fullCatalog.map(item => item.translation)
     const catalog = translations.value
     bookmarks.value = savedBookmarks
     translationCode.value = typeof route.query.translation === 'string' ? route.query.translation : savedLocation?.translationCode
       ?? catalog.find((item) => item.is_default)?.code
       ?? catalog[0]?.code
       ?? ''
-    const requestedBook = typeof route.query.book === 'string' ? route.query.book : savedLocation?.bookSlug
+    const restoredLocation = savedLocation?.translationCode === translationCode.value ? savedLocation : undefined
+    const requestedBook = typeof route.query.book === 'string' ? route.query.book : restoredLocation?.bookSlug
     const requestedChapter = Number(route.query.chapter)
     await loadBooks(requestedBook)
+    if (!books.value.length) { message.value = catalogText.value.catalog_empty; return }
     chapterNumber.value = Number.isInteger(requestedChapter) && requestedChapter > 0
       ? requestedChapter
-      : savedLocation?.chapter ?? 1
-    const hasTarget = Boolean(requestedBook || savedLocation)
+      : restoredLocation?.chapter ?? 1
+    const hasTarget = Boolean(requestedBook || restoredLocation)
     message.value = hasTarget ? text.value.reader.locationRestored : text.value.reader.chooseBook
     if (hasTarget) await openChapter(route.query.verse)
   } catch (error) {
@@ -111,19 +104,18 @@ onMounted(async () => {
 })
 
 async function loadBooks(preferredBook?: string): Promise<void> {
-  if (!translationCode.value) return
-  books.value = await bibleApi.getBooks(translationCode.value)
+  const installed = localLibrary.value.find(item => item.translation.code === translationCode.value)
+  if (!installed) { books.value = []; chapter.value = undefined; message.value = catalogText.value.catalog_empty; return }
+  books.value = installed.books
   bookSlug.value = books.value.some((item) => item.slug === preferredBook)
     ? preferredBook!
     : books.value[0]?.slug ?? ''
   chapterNumber.value = 1
   chapter.value = undefined
-  const status = await packageService.inspect(translationCode.value)
+  const status = { stored: installed.package, totalChapters: installed.package.totalChapters ?? installed.package.chapterCount, updateAvailable: false }
   packageVersion.value = status.stored
     ? `${status.stored.chapterCount} ${text.value.reader.chapters} · ${formatDate(status.stored.downloadedAt)}`
     : `${text.value.reader.notDownloaded} · ${status.totalChapters} ${text.value.reader.chapters}`
-  packageStored.value = Boolean(status.stored)
-  packageUpdateAvailable.value = status.updateAvailable
 }
 
 async function changeTranslation(): Promise<void> {
@@ -147,14 +139,9 @@ async function openChapter(target?: unknown): Promise<void> {
   }
 
   await run(async () => {
-    try {
-      chapter.value = await chapterService.download(translationCode.value, bookSlug.value, chapterNumber.value)
-      message.value = text.value.reader.chapterSaved
-    } catch (networkError) {
-      chapter.value = await chapterService.readOffline(translationCode.value, bookSlug.value, chapterNumber.value)
-      if (!chapter.value) throw networkError
-      message.value = text.value.reader.openedOffline
-    }
+    chapter.value = await chapterService.readOffline(translationCode.value, bookSlug.value, chapterNumber.value)
+    if (!chapter.value || !chapter.value.verses.length) { message.value = catalogText.value.catalog_local_missing; return }
+    message.value = text.value.reader.openedOffline
     pickerOpen.value = false
     selectedVerse.value = verseTarget(target, chapter.value.verses.map((item) => item.number))
     await nextTick()
@@ -219,40 +206,6 @@ async function toggleBookmark(verse: BibleChapter['verses'][number]): Promise<vo
   message.value = formatMessage(text.value.reader.bookmarkAdded, { verse: verse.number })
 }
 
-async function downloadTranslation(): Promise<void> {
-  const translation = selectedTranslation.value
-  if (!translation || !window.confirm(formatMessage(text.value.reader.downloadConfirm, { name: translation.name }))) return
-
-  packageAbortController = new AbortController()
-  packageBusy.value = true
-  packageProgress.value = undefined
-  message.value = text.value.reader.downloadStarting
-  try {
-    const result = await packageService.download(
-      translation,
-      (progress) => { packageProgress.value = progress },
-      packageAbortController.signal,
-    )
-    packageVersion.value = `${result.chapterCount} ${text.value.reader.chapters} · ${formatDate(result.downloadedAt)}`
-    packageStored.value = true
-    packageUpdateAvailable.value = false
-    recordProductMetric('offline_download_completed')
-    message.value = text.value.reader.downloadReady
-  } catch (error) {
-    if (!(error instanceof DOMException && error.name === 'AbortError')) recordSanitizedError('offline_download')
-    message.value = error instanceof DOMException && error.name === 'AbortError'
-      ? text.value.reader.downloadStopped
-      : errorMessage(error)
-  } finally {
-    packageBusy.value = false
-    packageAbortController = undefined
-  }
-}
-
-function stopPackageDownload(): void {
-  packageAbortController?.abort()
-}
-
 async function run(action: () => Promise<void>): Promise<void> {
   busy.value = true
   try {
@@ -275,46 +228,43 @@ function formatDate(value: string): string {
 
 <template>
   <MobileShell back-to="/today">
+    <RouterLink class="storage-link" to="/bibles">{{ catalogText.bible_library_title }} · {{ catalogText.catalog_add }}</RouterLink>
     <section v-if="!chapter" class="reader-heading">
       <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
       <span><p class="eyebrow dark-eyebrow">{{ text.reader.eyebrow }}</p><h1>{{ text.reader.title }}</h1></span>
       <RouterLink class="storage-link" to="/storage">{{ text.reader.offline }}</RouterLink>
     </section>
 
-    <details class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
+    <p v-if="!translations.length" class="status">{{ catalogText.catalog_empty }}</p>
+    <details v-if="translations.length && selectedTranslation" class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
       <summary>{{ text.reader.chooseChapter }} <span aria-hidden="true">⌄</span></summary>
       <h2 id="chapter-form-title" class="visually-hidden">{{ text.reader.chooseChapter }}</h2>
       <div class="fields">
         <label class="translation-field">
           <span>{{ text.translation }}</span>
-          <select v-model="translationCode" :disabled="busy || packageBusy" @change="changeTranslation">
+          <select v-model="translationCode" :disabled="busy" @change="changeTranslation">
             <option v-for="translation in translations" :key="translation.code" :value="translation.code">{{ translation.name }}</option>
           </select>
         </label>
         <label>
           <span>{{ text.book }}</span>
-          <select v-model="bookSlug" :disabled="busy || packageBusy" @change="changeBook">
+          <select v-model="bookSlug" :disabled="busy" @change="changeBook">
             <option v-for="book in books" :key="book.slug" :value="book.slug">{{ book.name }}</option>
           </select>
         </label>
         <label>
           <span>{{ text.chapter }}</span>
-          <input v-model.number="chapterNumber" type="number" min="1" :max="selectedBook?.chapters_count ?? 1" inputmode="numeric" :disabled="busy || packageBusy" />
+          <input v-model.number="chapterNumber" type="number" min="1" :max="selectedBook?.chapters_count ?? 1" inputmode="numeric" :disabled="busy" />
         </label>
       </div>
 
-      <button :disabled="busy || packageBusy || !selectedBook" class="primary-action" type="button" @click="openChapter">
+      <button :disabled="busy || !selectedBook" class="primary-action" type="button" @click="openChapter">
         {{ busy ? text.loading : text.reader.openChapter }}
       </button>
 
       <div class="package-row">
-        <div><strong>{{ text.reader.offlineTranslation }}</strong><small>{{ packageVersion }}<template v-if="packageUpdateAvailable"> · {{ text.reader.updateAvailable }}</template></small></div>
-        <button v-if="!packageBusy" type="button" :disabled="busy" @click="downloadTranslation">{{ packageStored ? text.reader.update : text.reader.download }}</button>
-        <button v-else type="button" class="danger-text" @click="stopPackageDownload">{{ text.reader.stop }}</button>
-      </div>
-      <div v-if="packageProgress" class="download-progress" role="progressbar" :aria-valuenow="packageProgress.current" :aria-valuemax="packageProgress.total">
-        <span :style="{ width: `${(packageProgress.current / packageProgress.total) * 100}%` }"></span>
-        <small>{{ packageProgress.bookName }}, {{ packageProgress.chapter }} · {{ packageProgress.current }}/{{ packageProgress.total }}</small>
+        <div><strong>{{ text.reader.offlineTranslation }}</strong><small>{{ packageVersion }}</small></div>
+        <RouterLink to="/bibles">{{ catalogText.catalog_add }}</RouterLink>
       </div>
     </details>
     <p v-if="message && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
@@ -333,7 +283,7 @@ function formatDate(value: string): string {
           <button class="bookmark-button" :class="{ active: bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) }" type="button" :aria-label="formatMessage(text.reader.bookmark, { verse: verse.number })" @click="toggleBookmark(verse)">
             {{ bookmarkedVerseKeys.has(bookmarkKey(translationCode, bookSlug, chapterNumber, verse.number)) ? '★' : '☆' }}
           </button>
-          <button class="verse-text" type="button" :aria-pressed="selectedVerse === verse.number" @click="selectedVerse = verse.number" @contextmenu.prevent="openVerseMenu(verse.number, $event)" @pointerdown="startLongPress($event, verse.number)" @pointermove="longPress.move($event.clientX, $event.clientY)" @pointerup="longPress.cancel()" @pointercancel="longPress.cancel()" @pointerleave="longPress.cancel()"><span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text }}</button>
+          <button class="verse-text" type="button" :aria-pressed="selectedVerse === verse.number" @click="selectedVerse = verse.number" @contextmenu.prevent="openVerseMenu(verse.number, $event)" @pointerdown="startLongPress($event, verse.number)" @pointermove="longPress.move($event.clientX, $event.clientY)" @pointerup="longPress.cancel()" @pointercancel="longPress.cancel()" @pointerleave="longPress.cancel()"><span class="verse-number">{{ verse.number }}</span>{{ verse.plain_text || catalogText.catalog_verse_missing }}</button>
         </li>
       </ol>
     </article>

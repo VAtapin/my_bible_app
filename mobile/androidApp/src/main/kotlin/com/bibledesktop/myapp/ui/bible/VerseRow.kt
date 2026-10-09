@@ -72,7 +72,7 @@ internal fun VerseRow(
         Text(verse.number.toString(), Modifier.padding(top = 6.dp).widthIn(min = 20.dp), color = PrimaryBlue,
             fontSize = 12.sp, fontWeight = FontWeight.Bold)
         SelectionContainer(Modifier.weight(1f).padding(horizontal = 6.dp, vertical = 3.dp)) {
-            Text(body, color = Ink, fontFamily = readingFont(chapter.translation.language.code),
+            Text(body.ifBlank { localized(R.string.catalog_verse_missing, language) }, color = Ink, fontFamily = readingFont(chapter.translation.language.code),
                 fontSize = fontSize.sp, lineHeight = (fontSize * 1.5f).sp)
         }
         Box {

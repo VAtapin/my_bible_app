@@ -27,12 +27,6 @@ export async function loadComparison(primary: BibleChapter, code: string, api: B
     compareVerses(primary, value)
     return value
   }
-  try {
-    const target = (await api.getBooks(code)).find(book => book.canonical_book?.osis_code === canonical)
-    if (!target || target.chapters_count < primary.chapter.number) throw new Error('Unavailable canonical chapter')
-    return validate(await service.download(code, target.slug, primary.chapter.number))
-  } catch (error) {
-    if (stored) return validate(stored)
-    throw error
-  }
+  if (stored) return validate(stored)
+  throw new Error('Comparison edition is not installed on this device')
 }

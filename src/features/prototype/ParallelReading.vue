@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import type { BibleChapter, TranslationSummary } from '@/api/contracts'
 import { bibleApi } from '@/api'
 import type { ChapterService } from '@/services/chapterService'
@@ -34,7 +35,7 @@ watch([() => props.primary, code, retry], async (_, __, onCleanup) => {
   onCleanup(() => { stale = true })
   secondary.value = undefined
   failed.value = false
-  if (!code.value || code.value === props.primary.translation.code) {
+  if (!props.catalog.some(item => item.code === code.value) || code.value === props.primary.translation.code) {
     code.value = props.catalog.find(item => item.code !== props.primary.translation.code)?.code ?? ''
     return
   }
@@ -63,6 +64,7 @@ function font(chapter: BibleChapter) {
     </div>
     <p class="parallel-hint">{{ text.parallel.numbering }}</p>
     <p v-if="failed" role="alert">{{ text.parallel.error }} <button type="button" @click="retry++">{{ text.parallel.retry }}</button></p>
+    <RouterLink v-else-if="!code" to="/bibles">{{ text.setup.addTranslations }}</RouterLink>
     <p v-else-if="!secondary" role="status">{{ text.loading }}</p>
     <div v-else :class="['parallel-content', mode]" :style="mode === 'panes' ? { height: `${paneHeight}px` } : undefined">
       <template v-if="mode === 'interleaved'">
@@ -70,7 +72,7 @@ function font(chapter: BibleChapter) {
           <div v-for="(value, index) in [row.primary, row.secondary]" :key="index" class="parallel-verse" :style="{ fontFamily: font(index === 0 ? primary : secondary) }">
             <small>{{ (index === 0 ? primary : secondary).translation.name }}</small>
             <button v-if="index === 0 && value" type="button" class="verse-text" :aria-pressed="value.number === selectedVerse" @click="emit('select', value.number)"><span class="verse-number">{{ value.number }}</span>{{ value.plain_text }}</button>
-            <p v-else><span v-if="value" class="verse-number">{{ value.number }}</span>{{ value?.plain_text ?? text.parallel.missing }}</p>
+            <p v-else><span v-if="value" class="verse-number">{{ value.number }}</span>{{ value?.plain_text || text.parallel.missing }}</p>
           </div>
         </div>
       </template>
@@ -78,8 +80,8 @@ function font(chapter: BibleChapter) {
         <section v-for="(value, index) in [primary, secondary]" :key="value.translation.code" class="parallel-pane" :aria-label="value.translation.name" tabindex="0">
           <h3>{{ value.translation.name }} · {{ value.book.name }} {{ value.chapter.number }}</h3>
           <div v-for="row in rows" :key="row.reference" :data-primary-verse="row.primary?.number" :class="{ 'selected-verse': row.primary?.number === selectedVerse }" class="parallel-verse" :style="{ fontFamily: font(value) }">
-            <button v-if="index === 0 && row.primary" type="button" class="verse-text" :aria-pressed="row.primary.number === selectedVerse" @click="emit('select', row.primary.number)"><span class="verse-number">{{ row.primary.number }}</span>{{ row.primary.plain_text }}</button>
-            <p v-else><span class="verse-number">{{ (index === 0 ? row.primary : row.secondary)?.number ?? row.primary?.number ?? row.secondary?.number }}</span>{{ (index === 0 ? row.primary : row.secondary)?.plain_text ?? text.parallel.missing }}</p>
+            <button v-if="index === 0 && row.primary" type="button" class="verse-text" :aria-pressed="row.primary.number === selectedVerse" @click="emit('select', row.primary.number)"><span class="verse-number">{{ row.primary.number }}</span>{{ row.primary.plain_text || text.parallel.missing }}</button>
+            <p v-else><span class="verse-number">{{ (index === 0 ? row.primary : row.secondary)?.number ?? row.primary?.number ?? row.secondary?.number }}</span>{{ (index === 0 ? row.primary : row.secondary)?.plain_text || text.parallel.missing }}</p>
           </div>
         </section>
       </template>

@@ -16,9 +16,12 @@ export function createIndexedDbChapterRepository(): ChapterRepository {
     async put(chapter) {
       const database = await openOfflineDatabase()
       try {
-        await runRequest(
-          database.transaction(offlineStores.chapters, 'readwrite').objectStore(offlineStores.chapters).put(chapter),
-        )
+        await new Promise<void>((resolve, reject) => {
+          const transaction = database.transaction(offlineStores.chapters, 'readwrite')
+          transaction.oncomplete = () => resolve()
+          transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('Chapter storage failed'))
+          transaction.objectStore(offlineStores.chapters).put(chapter)
+        })
       } finally {
         database.close()
       }

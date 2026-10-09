@@ -12,6 +12,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun fullPublicCatalogIncludesNonDefaultEditions() = runBlocking {
+        val engine = MockEngine { request ->
+            assertEquals("available", request.url.parameters["catalog"])
+            assertEquals("am", request.url.parameters["language"])
+            respond("""{"data":[{"code":"HIDDEN","name":"Edition","language":{"code":"am","name":"AM"},"is_listed_by_default":false}]}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+        try { assertEquals("HIDDEN", client.getTranslations("am").single().code) } finally { client.close() }
+    }
     @Test fun decodesStudyAndUsesRealVerseIdentityAndTranslation() = runBlocking {
         val engine = MockEngine { request ->
             val path = request.url.encodedPath

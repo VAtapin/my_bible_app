@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import PrototypeView from '@/features/prototype/PrototypeView.vue'
 import BibleSearchView from '@/features/prototype/BibleSearchView.vue'
+import BibleLibraryView from '@/features/prototype/BibleLibraryView.vue'
 import WelcomeView from '@/features/onboarding/WelcomeView.vue'
 import SetupView from '@/features/onboarding/SetupView.vue'
 import RestoreView from '@/features/onboarding/RestoreView.vue'
@@ -25,6 +26,7 @@ configureAzbukaIntegration('/education/azbuka')
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/bibles', name: 'bible-library', component: BibleLibraryView },
     { path: '/search', name: 'bible-search', component: BibleSearchView },
     {
       path: '/',
