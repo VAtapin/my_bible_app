@@ -1,0 +1,6 @@
+import { createApiRequest, type ApiClientOptions } from './client'
+export interface StudyPackage { id: string; kind: 'dictionary' | 'commentary' | 'strong' | 'cross_references'; version: string; bytes: number; sha256: string; url: string }
+export interface StudyPackageManifest { schema: 1; generated_at: string | null; packages: StudyPackage[] }
+const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
+export function isStudyPackage(v: unknown): v is StudyPackage { return record(v) && typeof v.id === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(v.id) && ['dictionary','commentary','strong','cross_references'].includes(String(v.kind)) && typeof v.sha256 === 'string' && /^[a-f0-9]{64}$/.test(v.sha256) && v.version === v.sha256 && Number.isSafeInteger(v.bytes) && Number(v.bytes) > 0 && v.url === `/api/offline/packages/${v.id}` }
+export function createStudyPackageApi(options: ApiClientOptions) { const request = createApiRequest(options); return { manifest: () => request('/offline/packages', (v): v is StudyPackageManifest => record(v) && v.schema === 1 && (v.generated_at === null || typeof v.generated_at === 'string') && Array.isArray(v.packages) && v.packages.every(isStudyPackage)) } }

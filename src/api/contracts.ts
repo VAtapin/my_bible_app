@@ -33,6 +33,8 @@ export interface BibleVerse {
   text: string
   plain_text: string
   has_strong_markup: boolean
+  markup_format?:'mybible'|'biblequote'|'legacy_html'|'unknown'
+  annotations?:import('./sourceAnnotations').SourceAnnotations
 }
 
 export interface BibleChapter {
@@ -199,4 +201,9 @@ export interface VerseSearchResult {
   text?: string
   snippet_segments?: { text: string; match: boolean }[]
 }
-export interface VerseSearchResponse { results: VerseSearchResult[] }
+export interface VerseSearchResponse {
+  results: VerseSearchResult[]
+  match?: 'exact_word' | 'forms' | 'all_words' | 'phrase' | 'partial' | 'strong' | 'fuzzy'
+  total?: number; has_more?: boolean; offset?: number; limit?: number; book?: string | null
+  forms_fallback?: string[]
+}

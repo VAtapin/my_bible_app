@@ -11,28 +11,38 @@ import { useI18n } from '@/i18n'
 import { verseSearchMessages, morphologyMessages } from '@/i18n/verseSearch'
 import { readCalendarState, writeCalendarState } from '@/offline/calendarMedia'
 import {prepareSearchStemming} from '@/services/searchStemming'
+import {searchContractMessages} from '@/i18n/searchContract'
+import {createStudyApi} from '@/api/study'
+import {createStudyService} from '@/services/studyService'
+import {apiBaseUrl} from '@/config/api'
+const canonicalService=createStudyService(createStudyApi({baseUrl:apiBaseUrl})),canonicalSlugs=new Map<string,string>()
 const route = useRoute(), router = useRouter(), { language, messages: text } = useI18n()
-const labels = computed(() => ({...verseSearchMessages[language.value],...morphologyMessages[language.value]}))
+const labels = computed(() => ({...verseSearchMessages[language.value],...morphologyMessages[language.value],...searchContractMessages[language.value]}))
 const query = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const codes = ref<string[]>(typeof route.query.translation === 'string' ? route.query.translation.split(',') : [])
-const match = ref<SearchMatch>(['exact','phrase','partial','strong','morphology'].includes(String(route.query.match)) ? route.query.match as SearchMatch : 'exact')
+const match = ref<SearchMatch>(['exact','all_words','phrase','partial','strong','morphology'].includes(String(route.query.match)) ? route.query.match as SearchMatch : 'exact')
 const scope = ref<SearchScope>(['all','old','new','psalms'].includes(String(route.query.scope)) ? route.query.scope as SearchScope : 'all')
 const book=ref(typeof route.query.book==='string'?route.query.book:''), books=ref<BibleBook[]>([])
-watch(codes,async(value,_,cleanup)=>{let stale=false;cleanup(()=>stale=true);try{const values=await Promise.all(value.map(code=>webBibleBooks(bibleApi,code)));if(!stale)books.value=[...new Map(values.flat().filter(item=>item.canonical_book?.osis_code).map(item=>[item.canonical_book!.osis_code,item])).values()]}catch{if(!stale)books.value=[]}},{deep:true,immediate:true})
+const booksByCode=ref<Record<string,BibleBook[]>>({})
+watch(codes,async(value,_,cleanup)=>{let stale=false;cleanup(()=>stale=true);try{const values=await Promise.all(value.map(code=>webBibleBooks(bibleApi,code)));if(!stale){booksByCode.value=Object.fromEntries(value.map((code,index)=>[code,values[index]!]));books.value=[...new Map(values.flat().filter(item=>item.canonical_book?.osis_code).map(item=>[item.canonical_book!.osis_code,item])).values()]}}catch{if(!stale)books.value=[]}},{deep:true,immediate:true})
+function resultBook(item:VerseSearchResult){return booksByCode.value[item.translation.code]?.find(book=>book.canonical_book?.osis_code===item.book.osis_code)?.slug??item.book.slug}
 const editions = ref<TranslationSummary[]>([]), results = ref<VerseSearchResult[]>([]), busy = ref(false), message = ref(''), local = ref(false)
 const cursors = ref<Record<string, number>>({}), pending = ref<string[]>([])
+const totals=ref<Record<string,number>>({}),formsFallback=ref<string[]>([]),legacy=ref(false)
+const total=computed(()=>active.value.query&&active.value.codes.every(code=>totals.value[code]!==undefined)?active.value.codes.reduce((sum,code)=>sum+totals.value[code]!,0):undefined)
 let generation = 0
 const active = ref({query:'', codes:[] as string[], match:'exact' as SearchMatch, scope:'all' as SearchScope,book:''})
-const cacheKey = () => `verse-search:v2:${JSON.stringify(active.value)}`
+const cacheKey = () => `verse-search:v3:${JSON.stringify(active.value)}`
 function saveResults() {
   // Vue proxies cannot be structured-cloned by IndexedDB.
-  const saved=JSON.parse(JSON.stringify({results:results.value,cursors:cursors.value,pending:pending.value,local:local.value,scroll:document.querySelector('.app-content')?.scrollTop??0}))
+  const saved=JSON.parse(JSON.stringify({results:results.value,cursors:cursors.value,pending:pending.value,local:local.value,totals:totals.value,formsFallback:formsFallback.value,legacy:legacy.value,scroll:document.querySelector('.app-content')?.scrollTop??0}))
   return writeCalendarState(cacheKey(),saved).catch(()=>{})
 }
 function valid() { return query.value.trim().length >= 2 && query.value.length <= 500 && codes.value.length > 0 && (match.value !== 'strong' || /^[HG]\d{1,5}$/iu.test(query.value.trim())) }
 async function search() {
   if (!valid()) { message.value = labels.value.invalid; return }
   generation++; results.value=[]; cursors.value={}; pending.value=[...codes.value]; local.value=false
+  totals.value={};formsFallback.value=[];legacy.value=false
   active.value={query:query.value.trim(), codes:[...codes.value], match:match.value, scope:scope.value,book:book.value}
   await router.replace({path:'/search',query:{q:active.value.query,translation:active.value.codes.join(','),match:active.value.match,scope:active.value.scope,...(book.value?{book:book.value}:{})}})
   await more()
@@ -44,11 +54,19 @@ async function more() {
   try {
     const pageCodes=[...pending.value]
     for (const code of pageCodes) {
-      const page=await searchVersePage(bibleApi,createIndexedDbChapterRepository(),code,searching.query,{match:searching.match,scope:searching.scope,offset:cursors.value[code]??0,...(searching.book?{book:searching.book}:{})})
+      if(searching.book&&booksByCode.value[code]&&!booksByCode.value[code]!.some(item=>item.canonical_book?.osis_code===searching.book)) {
+        totals.value[code]=0;pending.value=pending.value.filter(item=>item!==code);continue
+      }
+      let canonicalBook:string|undefined
+      const canon=editions.value.find(item=>item.code===code)?.canon_code
+      if(searching.book&&canon){const key=`${canon}:${searching.book}`;canonicalBook=canonicalSlugs.get(key)??await canonicalService.canonicalSlug(canon,searching.book);canonicalSlugs.set(key,canonicalBook)}
+      const page=await searchVersePage(bibleApi,createIndexedDbChapterRepository(),code,searching.query,{match:searching.match,scope:searching.scope,offset:cursors.value[code]??0,...(searching.book?{book:searching.book,canonicalBook}:{})})
       if (current !== generation) return
       const known=new Set(results.value.filter(row => row.translation.code===code).map(row => row.verse_id))
       results.value.push(...page.results.filter(row => !known.has(row.verse_id)))
       cursors.value[code]=page.next; local.value ||= page.local
+      if(page.total!==undefined)totals.value[code]=page.total
+      formsFallback.value=[...new Set([...formsFallback.value,...page.formsFallback])];legacy.value ||=page.legacy
       if (!page.more) pending.value=pending.value.filter(item => item!==code)
     }
     await saveResults()
@@ -63,9 +81,10 @@ onMounted(async () => {
     if (valid()) {
       if(match.value==='morphology')await prepareSearchStemming()
       active.value={query:query.value.trim(),codes:[...codes.value],match:match.value,scope:scope.value,book:book.value}
-      const saved=await readCalendarState<{results:VerseSearchResult[];cursors:Record<string,number>;pending:string[];local:boolean;scroll?:number}>(cacheKey())
+      const saved=await readCalendarState<{results:VerseSearchResult[];cursors:Record<string,number>;pending:string[];local:boolean;totals?:Record<string,number>;formsFallback?:string[];legacy?:boolean;scroll?:number}>(cacheKey())
       if (saved) {
         results.value=saved.results;cursors.value=saved.cursors;pending.value=saved.pending;local.value=saved.local
+        totals.value=saved.totals??{};formsFallback.value=saved.formsFallback??[];legacy.value=saved.legacy??false
         await nextTick(); const content=document.querySelector('.app-content');if(content)content.scrollTop=saved.scroll??0
       }
       else await search()
@@ -79,16 +98,18 @@ onBeforeUnmount(()=>{generation++;if(active.value.query)void saveResults()})
     <h1 class="bible-search-title">{{ text.readerActions.search }}</h1>
     <form class="search-options" @submit.prevent="search">
       <label>{{ text.readerActions.search }}<input v-model="query" type="search" maxlength="500" :placeholder="text.readerActions.searchHint" :disabled="busy" /></label>
-      <label>{{ labels.modes }}<select v-model="match" :disabled="busy"><option v-for="mode in (['exact','phrase','partial','strong','morphology'] as const)" :key="mode" :value="mode">{{ labels[mode] }}</option></select></label>
+      <label>{{ labels.modes }}<select v-model="match" :disabled="busy"><option v-for="mode in (['exact','all_words','phrase','partial','strong','morphology'] as const)" :key="mode" :value="mode">{{ labels[mode] }}</option></select></label>
       <label>{{ labels.scope }}<select v-model="scope" :disabled="busy"><option v-for="area in (['all','old','new','psalms'] as const)" :key="area" :value="area">{{ labels[area] }}</option></select></label>
       <label>{{ text.book }}<select v-model="book" :disabled="busy"><option value="">{{ labels.all }}</option><option v-for="item in books" :key="item.canonical_book!.osis_code" :value="item.canonical_book!.osis_code">{{ item.name }}</option></select></label>
       <fieldset :disabled="busy"><legend>{{ labels.translations }}</legend><label v-for="edition in editions" :key="edition.code" class="edition-choice"><input v-model="codes" type="checkbox" :value="edition.code" />{{ edition.name }}</label></fieldset>
       <button :disabled="busy" type="submit" class="primary-action">{{ busy?text.loading:text.readerActions.find }}</button>
     </form>
     <p class="status">{{ labels.guide }}</p><p v-if="match==='morphology'">{{ labels.morphologyHint }}</p><p v-if="local" role="status">{{ labels.local }}</p><p v-if="message" role="status">{{ message }}</p>
+    <p v-if="legacy" role="status">{{labels.legacy}}</p><p v-if="formsFallback.length" role="status">{{labels.fallback}} {{formsFallback.map(code=>editions.find(item=>item.code===code)?.name??code).join(', ')}}</p>
+    <p v-if="total!==undefined">{{labels.total}}: {{total}}</p>
     <p v-if="results.length">{{ labels.found }}: {{ results.length }}</p>
     <div class="content-catalog">
-      <RouterLink v-for="item in results" :key="`${item.translation.code}-${item.verse_id}`" class="search-result" :to="{path:'/reader',query:{translation:item.translation.code,book:item.book.slug,chapter:String(item.chapter_number),verse:String(item.verse_number)}}"><strong>{{ item.reference }}</strong><small v-if="active.codes.length>1"> · {{ editions.find(e=>e.code===item.translation.code)?.name ?? item.translation.code }}</small><p><template v-for="(part,index) in (active.match==='morphology'&&item.snippet_segments?.some(part=>part.match) ? item.snippet_segments : searchSegments(item.snippet,active.query,active.match,editions.find(e=>e.code===item.translation.code)?.language.code))" :key="index"><mark v-if="part.match">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></p></RouterLink>
+      <RouterLink v-for="item in results" :key="`${item.translation.code}-${item.verse_id}`" class="search-result" :to="{path:'/reader',query:{translation:item.translation.code,book:resultBook(item),chapter:String(item.chapter_number),verse:String(item.verse_number)}}"><strong>{{ item.reference }}</strong><small v-if="active.codes.length>1"> · {{ editions.find(e=>e.code===item.translation.code)?.name ?? item.translation.code }}</small><p><template v-for="(part,index) in (item.snippet_segments?.some(part=>part.match) ? item.snippet_segments : searchSegments(item.snippet,active.query,active.match,editions.find(e=>e.code===item.translation.code)?.language.code))" :key="index"><mark v-if="part.match">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></p></RouterLink>
     </div>
     <button v-if="pending.length" :disabled="busy" @click="more">{{ busy?text.loading:labels.more }}</button>
     <p v-else-if="results.length">{{ labels.exhausted }}</p>

@@ -11,6 +11,10 @@ describe('continuous reading boundaries', () => {
   it('continues from an explicitly empty chapter without substituting a different edition', () => {
     expect(validateContinuation({ ...chapter, verses: [] }, next, 6)).toBe(next)
   })
+  it('preserves published canonical references when module chapter numbering differs',()=>{
+    const value={...next,verses:[{...next.verses[0]!,osis_ref:'Acts.5.1'}]}
+    expect(validateContinuation(chapter,value,6)).toBe(value)
+  })
   it.each([
     { ...next, translation: { ...next.translation, code: 'OTHER' } },
     { ...next, chapter: { ...next.chapter, number: 7 } },

@@ -22,6 +22,24 @@ import { loadBibleCatalog } from '@/services/bibleCatalog'
 import { enabledWebBibles, readWebChapter, synodalCode, webBibleBooks } from '@/services/webBibleLibrary'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import { verseTarget } from '@/services/readerActions'
+import { reactive } from 'vue'
+import { ReaderNavigationHistory, type ReaderHistoryPlace } from '@/services/readerHistory'
+import { useReaderPreferences, effectiveReaderPreferences } from '@/profile/readerPreferences'
+import { readerControlMessages } from '@/i18n/readerControls'
+import ReaderSettings from './ReaderSettings.vue'
+import ReaderHistoryPanel from './ReaderHistoryPanel.vue'
+import FavoriteTranslationSelect from './FavoriteTranslationSelect.vue'
+import VerseNavigation from './VerseNavigation.vue'
+import VerseStudyPanel from '@/features/study/VerseStudyPanel.vue'
+import TemporaryPassage from '@/features/study/TemporaryPassage.vue'
+import DictionaryContext from '@/features/study/DictionaryContext.vue'
+import SourceCard from '@/features/study/SourceCard.vue'
+import { createStudyApi } from '@/api/study'
+import { createStudyService } from '@/services/studyService'
+import { apiBaseUrl } from '@/config/api'
+import { resolvedVerseChapter } from '@/services/verseLocations'
+import type { ReferenceGroup } from '@/services/verseStudy'
+import type { SavedPassage } from '@/services/personalStudy'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -29,6 +47,19 @@ const chapterService = createChapterService(bibleApi, chapterRepository)
 const route = useRoute()
 const { language, messages: text } = useI18n()
 const appearance = useAppearance()
+const readerPreferences = useReaderPreferences(); readerPreferences.initialize()
+const display = computed(() => effectiveReaderPreferences(readerPreferences.preferences.value))
+const controlText = computed(() => readerControlMessages[language.value])
+const settingsOpen = ref(false), historyOpen = ref(false), versePickerOpen = ref(false), translationsOpen = ref(false)
+const history = reactive(new ReaderNavigationHistory(localStorage,'bible-desktop:reader-history:main'))
+let historyRestoring = false, initialOpening = true
+async function restoreHistory(place?: ReaderHistoryPlace) {
+  if (!place) return
+  historyRestoring=true
+  try {translationCode.value=place.code;await loadBooks(place.book);chapterNumber.value=place.chapter;restoreOffset=place.offset;await openChapter(String(place.verse))} finally {historyRestoring=false}
+}
+function historyBack(){if(comparing.value)comparisonView.value?.historyBack();else void restoreHistory(history.back())}
+function historyForward(){if(comparing.value)comparisonView.value?.historyForward();else void restoreHistory(history.forward())}
 const selectedVerse = ref<number>()
 const fontSize = ref(19)
 const pickerOpen = ref(true)
@@ -43,13 +74,23 @@ async function openVerseMenu(number: number, event?: MouseEvent, source = chapte
   await nextTick()
   await actions.value?.open('menu', snippet)
 }
-function changeFontSize(): void { fontSize.value = fontSize.value >= 23 ? 17 : fontSize.value + 2 }
+function changeFontSize(): void { readerPreferences.setPreferences({...readerPreferences.preferences.value,fontSize:display.value.fontSize>=23?17:display.value.fontSize+2}) }
+watch(()=>display.value.fontSize,value=>fontSize.value=value,{immediate:true})
 
 const comparisonCatalog = ref<TranslationSummary[]>([])
 const comparing = ref(!route.query.book && localStorage.getItem('bible-desktop:compare-open')==='true')
 watch(comparing,value=>localStorage.setItem('bible-desktop:compare-open',String(value)))
 const comparisonView = ref<InstanceType<typeof ParallelReading>>()
 const studying = ref(false)
+const selection = ref<SavedPassage>()
+const studyPanel = ref<InstanceType<typeof VerseStudyPanel>>()
+const studySource = ref<BibleChapter>()
+const studyVerse = ref<number>()
+const temporary = ref<ReferenceGroup>()
+const canonicalSlug = ref('')
+const studyService = createStudyService(createStudyApi({baseUrl:apiBaseUrl}))
+async function openStudy(source:BibleChapter,verse:BibleChapter['verses'][number]){studying.value=true;studySource.value=source;studyVerse.value=verse.number}
+async function openStrong(number:string,source:BibleChapter,verse:BibleChapter['verses'][number]){studying.value=true;studySource.value=source;studyVerse.value=verse.number;await nextTick();studyPanel.value?.openStrong(number)}
 const visibleFirst = ref<number>()
 const visibleLast = ref<number>()
 const translations = ref<TranslationSummary[]>([])
@@ -60,6 +101,8 @@ const chapterNumber = ref(1)
 const chapter = ref<BibleChapter>()
 const visibleChapter = ref<BibleChapter>()
 const actionChapter = ref<BibleChapter>()
+const contextualChapter = computed(()=>visibleChapter.value??chapter.value)
+watch(contextualChapter,async(source,_,cleanup)=>{let stale=false;cleanup(()=>stale=true);canonicalSlug.value='';if(!source)return;try{const edition=translations.value.find(t=>t.code===source.translation.code);if(!edition?.canon_code)return;const slug=await studyService.canonicalSlug(edition.canon_code,source.verses[0]?.osis_ref.split('.')[0]??'');if(!stale)canonicalSlug.value=slug}catch{/* No canonical match is shown as unavailable rather than guessed. */}})
 const openOffset = ref(0)
 let restoreOffset = 0
 let visibleOffset = 0
@@ -68,6 +111,7 @@ function selectVerse(source: BibleChapter, verse: BibleChapter['verses'][number]
 function visiblePlace(source: BibleChapter, first: BibleChapter['verses'][number], last: BibleChapter['verses'][number], offset: number) {
   visibleChapter.value = source; visibleFirst.value = first.number; visibleLast.value = last.number
   visibleOffset = offset
+  if(!comparing.value)history.observe({code:source.translation.code,book:source.book.slug,chapter:source.chapter.number,verse:first.number,offset})
   const location = { translationCode: source.translation.code, bookSlug: source.book.slug, chapter: source.chapter.number, verse: first.number, verseOffset: offset, updatedAt: new Date().toISOString() }
   saveChain = saveChain.catch(() => undefined).then(() => libraryRepository.saveReadingLocation(location))
 }
@@ -135,6 +179,7 @@ onMounted(async () => {
     message.value = errorMessage(error)
   } finally {
     busy.value = false
+    initialOpening = false
   }
 })
 
@@ -151,8 +196,18 @@ async function loadBooks(preferredBook?: string): Promise<void> {
 
 async function changeTranslation(): Promise<void> {
   await run(async () => {
-    await loadBooks()
-    message.value = text.value.reader.booksUpdated
+    const previous=visibleChapter.value??chapter.value
+    if(!previous){await loadBooks();return}
+    const previousOffset=visibleOffset, ref=previous.verses.find(v=>v.number===visibleFirst.value)?.osis_ref??previous.verses[0]?.osis_ref
+    try {
+      const nextBooks=await webBibleBooks(bibleApi,translationCode.value), target=nextBooks.find(b=>b.canonical_book?.osis_code===ref?.split('.')[0])
+      if(!target)throw Error('Missing book')
+      if(!ref)throw Error("Missing canonical reference")
+      const candidate=await resolvedVerseChapter(translationCode.value,ref,chapterService)
+      const verse=candidate.verses.find(v=>v.osis_ref===ref&&v.plain_text.trim())
+      if(!verse)throw Error('Missing verse')
+      books.value=nextBooks;bookSlug.value=target.slug;chapterNumber.value=candidate.chapter.number;restoreOffset=0;await openChapter(String(verse.number))
+    } catch {translationCode.value=previous.translation.code;restoreOffset=previousOffset;message.value=controlText.value.invalid}
   })
 }
 
@@ -176,6 +231,7 @@ async function openChapter(target?: unknown): Promise<void> {
     const value = await readWebChapter(chapterService, translationCode.value, bookSlug.value, chapterNumber.value)
     if (!value.verses.some(verse => verse.plain_text.trim())) { message.value = catalogText.value.catalog_local_missing; return }
     chapter.value = value
+    if(!initialOpening&&!historyRestoring&&!comparing.value)history.navigate({code:value.translation.code,book:value.book.slug,chapter:value.chapter.number,verse:verseTarget(target,value.verses.map(v=>v.number))??value.verses[0]?.number??1,offset:openOffset.value})
     message.value = ''
     pickerOpen.value = false
     selectedVerse.value = verseTarget(target, chapter.value.verses.map((item) => item.number))
@@ -212,6 +268,7 @@ async function moveChapter(offset: number): Promise<void> {
   chapterNumber.value = next
   await openChapter()
 }
+async function moveBook(offset:number){const source=visibleChapter.value??chapter.value;if(!source)return;const index=books.value.findIndex(b=>b.slug===source.book.slug),book=books.value[index+offset];if(book){bookSlug.value=book.slug;chapterNumber.value=1;await openChapter('1')}}
 
 async function toggleBookmark(verse: BibleChapter['verses'][number], source = chapter.value): Promise<void> {
   if (!source) return
@@ -301,7 +358,7 @@ function formatDate(value: string): string {
     <p v-if="message && translations.length && (!chapter || ![text.reader.chapterSaved, text.reader.locationRestored].includes(message))" class="status reader-status" role="status" aria-live="polite">{{ message }}</p>
 
     <div v-if="chapter" class="reader-study-layout" :class="{ studying }">
-    <article ref="readingElement" class="reading-card" :style="{ '--reading-size': `${fontSize}px` }">
+    <article ref="readingElement" class="reading-card" :class="{'reader-night':display.night}" :style="{ '--reading-size': `${fontSize}px`, '--reader-line-height':String(display.lineHeight) }">
       <header class="reading-header">
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
         <span><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
@@ -310,12 +367,24 @@ function formatDate(value: string): string {
       </header>
       <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="toggleComparison">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
       <button type="button" class="parallel-toggle" :aria-expanded="studying" @click="studying = !studying">{{ studyMessages[language].commentaries }}</button>
-      <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
-      <ContinuousReading v-else :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
+      <button class="parallel-toggle" @click="settingsOpen=true">{{controlText.settings}}</button>
+      <button class="parallel-toggle" :aria-pressed="display.night" @click="readerPreferences.setPreferences({...readerPreferences.preferences.value,night:!display.night})">{{display.night?'☀':'☾'}} {{display.night?controlText.day:controlText.night}}</button>
+      <button class="parallel-toggle" @click="historyBack">{{controlText.back}}</button><button class="parallel-toggle" @click="historyForward">{{controlText.forward}}</button>
+      <button class="parallel-toggle" @click="comparing ? comparisonView?.showHistory() : historyOpen=true">{{controlText.history}}</button>
+      <button class="parallel-toggle" @click="comparing ? comparisonView?.choosePlace() : versePickerOpen=!versePickerOpen">{{controlText.digital}} / {{controlText.visual}}</button>
+      <button class="parallel-toggle" @click="translationsOpen=!translationsOpen">{{controlText.favorites}}</button>
+      <FavoriteTranslationSelect v-if="translationsOpen" :translations="translations" :selected="visibleChapter?.translation.code??translationCode" @select="code=>{if(comparing)comparisonView?.changeTranslation(code);else{translationCode=code;changeTranslation()}translationsOpen=false}" />
+      <VerseNavigation v-if="versePickerOpen&&selectedBook&&!comparing" :code="translationCode" :book="selectedBook" :chapter="visibleChapter?.chapter.number??chapterNumber" :service="chapterService" @select="(number,verse)=>{chapterNumber=number;openChapter(String(verse));versePickerOpen=false}" @close="versePickerOpen=false" />
+      <ReaderSettings v-if="settingsOpen" @close="settingsOpen=false" />
+      <SourceCard v-if="visibleChapter??chapter" :metadata="comparisonCatalog.find(item=>item.code===(comparisonView?.source()??visibleChapter??chapter)?.translation.code)??(comparisonView?.source()??visibleChapter??chapter)!.translation"/>
+      <ReaderHistoryPanel v-if="historyOpen" :state="history.state" :can-back="history.canBack" :can-forward="history.canForward" @back="historyBack" @forward="historyForward" @select="index=>restoreHistory(history.select(index))" @close="historyOpen=false" />
+      <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
+      <ContinuousReading v-else @chapter="moveChapter" @book="moveBook" :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
     </article>
-    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false">{{ studyMessages[language].close }}</button><CommentaryPanel :chapter="visibleChapter ?? chapter" :canon="comparisonCatalog.find(item=>item.code===(visibleChapter ?? chapter)?.translation.code)?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /></aside>
+    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false;studySource=undefined;studyVerse=undefined">{{ studyMessages[language].close }}</button><CommentaryPanel v-if="contextualChapter" :chapter="contextualChapter" :canon="comparisonCatalog.find(item=>item.code===contextualChapter?.translation.code)?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /><VerseStudyPanel v-if="studySource??contextualChapter" ref="studyPanel" :chapter="(studySource??contextualChapter)!" :verse="studyVerse??visibleFirst" @open="temporary=$event"/><DictionaryContext v-if="contextualChapter" :book="canonicalSlug" :osis="contextualChapter.verses[0]?.osis_ref.split('.')[0]" :verse-numbers="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>Number(v.osis_ref.split('.')[2]))" :verse-chapters="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>Number(v.osis_ref.split('.')[1]))" :chapter="contextualChapter.chapter.number" :verse-ids="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>v.id)"/></aside>
     </div>
-    <VerseActions ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
+    <VerseActions :service="chapterService" @selection="selection=$event" ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
+    <TemporaryPassage v-if="temporary" :group="temporary" :code="(studySource??contextualChapter)!.translation.code" :service="chapterService" :windows-available="!!comparisonView" @assign="(source,verse,id)=>{comparisonView?.preview(source,verse,id);temporary=undefined;studying=false}" @close="temporary=undefined"/>
     <template #footer>
       <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">
         <template v-if="appearance.theme.value === 'warm'">
@@ -340,4 +409,5 @@ function formatDate(value: string): string {
 .studying .reading-card { min-width:0; margin-top:0 }.study-pane { max-height:calc(100dvh - 220px); overflow:auto; min-width:0; margin-top:0 }
 @media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr) } .studying :deep(.continuous-scroll) { height:35dvh } .study-pane { max-height:35dvh } }
 .parallel-toggle { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white, white); color: var(--ink); font: inherit; cursor: pointer; }
+.reader-night{--white:#17212d;--ink:#e2eaf4;--line:#415061;--light-blue:#2d4157;background:#101821;color:#e2eaf4}.reader-night :deep(.verse-text){color:#e2eaf4}.reader-night :deep(.chapter-heading){background:#17212d;color:#e2eaf4}
 </style>

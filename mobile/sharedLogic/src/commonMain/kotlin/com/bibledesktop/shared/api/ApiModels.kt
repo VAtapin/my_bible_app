@@ -66,6 +66,8 @@ data class BibleVerse(
     val text: String,
     @SerialName("plain_text") val plainText: String,
     @SerialName("has_strong_markup") val hasStrongMarkup: Boolean = false,
+    @SerialName("markup_format") val markupFormat:String?=null,
+    val annotations:SourceAnnotations?=null,
 )
 
 @Serializable

@@ -86,8 +86,9 @@ class StudyBooksTest {
         compose.onNodeWithText("К диапазону стихов").performScrollTo().performClick()
         compose.onNode(hasSetTextAction() and hasText("Первый стих")).performScrollTo().performTextReplacement("2")
         compose.onNode(hasSetTextAction() and hasText("Последний стих")).performTextReplacement("3")
+        compose.waitUntil(30_000) { compose.onAllNodesWithTag("commentary-${expected.id}").fetchSemanticsNodes().isNotEmpty() }
         compose.onAllNodesWithTag("commentary-${expected.id}").assertCountEquals(1)
-        compose.onAllNodesWithText("Читать полностью")[0].performScrollTo().performClick()
+        compose.onNode(hasText("Читать полностью") and hasAnyAncestor(hasTestTag("commentary-${expected.id}"))).performScrollTo().performClick()
         compose.onNodeWithText(studyReadingText(expected.body)).assertExists()
     }
 }

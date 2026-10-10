@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MobileShell from '@/components/MobileShell.vue'
 import PrayerContent from '@/components/PrayerContent.vue'
+import CommentaryAnnotations from './CommentaryAnnotations.vue'
 import { useI18n } from '@/i18n'
 import { studyMessages } from '@/i18n/study'
 import { createStudyApi, type BookContents, type StudyArticle } from '@/api/study'
@@ -48,7 +49,7 @@ async function move(delta: number) {
       <p v-if="contents.book.description">{{ contents.book.description }}</p>
       <template v-if="article">
         <h2>{{ article.title || text.section }}</h2><p v-if="article.author">{{ article.author }}</p>
-        <div ref="reading" class="study-reading" @scroll="savePosition"><PrayerContent :content="article.body" /></div>
+        <div ref="reading" class="study-reading" @scroll="savePosition"><PrayerContent :content="article.body" /><CommentaryAnnotations :annotations="article.annotations" :module-code="contents.book.module_code" :source="sourceNames.get(contents.book.module_code)??contents.book.module_code"/></div>
         <nav><button :disabled="busy || offset + index <= 0 || index < 0" @click="move(-1)">{{ text.previous }}</button><RouterLink :to="`/books/${bookId}?offset=${offset}`">{{ text.contents }}</RouterLink><button :disabled="busy || index < 0 || offset + index + 1 >= contents.total" @click="move(1)">{{ text.next }}</button></nav>
       </template>
       <template v-else>

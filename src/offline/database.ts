@@ -1,5 +1,5 @@
 export const offlineDatabaseName = 'my-bible-app'
-export const offlineDatabaseVersion = 3
+export const offlineDatabaseVersion = 4
 
 export const offlineStores = {
   chapters: 'chapters',
@@ -29,6 +29,10 @@ export function openOfflineDatabase(): Promise<IDBDatabase> {
       }
       if (!database.objectStoreNames.contains(offlineStores.calendar)) {
         database.createObjectStore(offlineStores.calendar, { keyPath: 'key' })
+      }
+      const state = request.transaction!.objectStore(offlineStores.state)
+      for (const name of ['studyPackage','studyTable','studyId','studySource','studySourceId','studyBook','studyParent','studyApiId','studyVariation']) {
+        if (!state.indexNames.contains(name)) state.createIndex(name,name)
       }
     }
     request.onsuccess = () => resolve(request.result)

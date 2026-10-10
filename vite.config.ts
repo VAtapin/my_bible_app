@@ -26,6 +26,7 @@ export default defineConfig({
         'app-icons/library.png',
         'app-icons/prayers.png',
         'app-icons/setup.png',
+        'data/bible-geo.json',
       ],
       manifest: {
         name: 'Bible App',

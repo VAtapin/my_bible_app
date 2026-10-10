@@ -12,6 +12,26 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun strongEntryRejectsContradictoryScopeAndIdentityButAllowsLegacyBareNumbers() = runBlocking {
+        suspend fun read(request: String, returned: String, metadata: String = ""): Result<StrongEntry> {
+            val engine = MockEngine {
+                respond("""{"data":{"number":"$returned"$metadata,"lexicon":{"name":"Actual lexicon","language":"en"}}}""",
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+            val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+            return try { runCatching { client.getStrongEntry(request, 42) } } finally { client.close() }
+        }
+        assertTrue(read("H430", "430", """, "scope":"G"""").isFailure)
+        assertTrue(read("H430", "430", """, "canonical_number":"G430"""").isFailure)
+        assertTrue(read("H430", "G430").isFailure)
+        assertTrue(read("H430", "H431").isFailure)
+        assertTrue(read("430", "430", """, "scope":"H", "canonical_number":"G430"""").isFailure)
+        assertTrue(read("430", "G430", """, "scope":"H"""").isFailure)
+        assertEquals("430", read("H430", "430").getOrThrow().number)
+        assertEquals("H430", read("H430", "H430", """, "scope":"H", "canonical_number":"H430"""").getOrThrow().canonicalNumber)
+        // A bare request does not imply Hebrew or Greek from the reader's language.
+        assertEquals("G", read("430", "430", """, "scope":"G", "canonical_number":"G430"""").getOrThrow().scope)
+    }
     @Test fun fullPublicCatalogIncludesNonDefaultEditions() = runBlocking {
         val engine = MockEngine { request ->
             assertEquals("available", request.url.parameters["catalog"])

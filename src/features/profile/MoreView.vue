@@ -5,6 +5,11 @@ import { useI18n } from '@/i18n'
 import { computed } from 'vue'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import { studyMessages } from '@/i18n/study'
+import { dictionaryMessages } from '@/i18n/dictionaries'
+import { personalStudyMessages } from '@/i18n/personalStudy'
+import { studyPackagesMessages } from '@/i18n/studyPackages'
+import {readerHelpMessages} from '@/i18n/readerHelp'
+import {geographyMessages} from '@/i18n/geography'
 import { useAppearance, type AppearanceTheme } from '@/profile/appearance'
 const { language, messages: text } = useI18n()
 const catalogue = computed(() => bibleCatalogMessages[language.value])
@@ -22,6 +27,11 @@ const items = [
   <MobileShell back-to="/today">
     <h1 class="compact-page-title">{{ text.appearance.settingsTitle }}</h1>
     <div class="module-list">
+      <RouterLink to="/help" class="module-card available"><span class="module-icon"><img src="/app-icons/setup.png" alt="" /></span><strong>{{readerHelpMessages[language].title}}</strong></RouterLink>
+      <RouterLink to="/atlas" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{geographyMessages[language].title}}</strong></RouterLink>
+      <RouterLink to="/study-downloads" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ studyPackagesMessages[language].title }}</strong></RouterLink>
+      <RouterLink to="/dictionaries" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ dictionaryMessages[language].title }}</strong></RouterLink>
+      <RouterLink to="/storage?tab=study" class="module-card available"><span class="module-icon"><img src="/app-icons/bookmarks.png" alt="" /></span><strong>{{ personalStudyMessages[language].library }}</strong></RouterLink>
       <RouterLink to="/search" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ text.readerActions.search }}</strong></RouterLink>
       <RouterLink to="/books" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ studyMessages[language].books }}</strong></RouterLink>
       <RouterLink to="/bibles" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ catalogue.bible_library_title }} · {{ catalogue.catalog_add }}</strong></RouterLink>

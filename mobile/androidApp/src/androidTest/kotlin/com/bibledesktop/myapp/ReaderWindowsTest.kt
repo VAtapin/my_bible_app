@@ -28,6 +28,7 @@ class ReaderWindowsTest {
     private val preferences get() = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
     private val api = BibleApiClient()
     private var commands: WindowCommands? = null
+    private lateinit var temporaryChapter:BibleChapter
     private var showing by mutableStateOf(true)
     private fun mount() = runBlocking {
         val store = OfflineStore(File(context.cacheDir, "windows-test-${UUID.randomUUID()}"))
@@ -37,6 +38,7 @@ class ReaderWindowsTest {
         }
         val client = OfflineContentRepository(noNetwork, store, { false })
         val chapter = client.getChapter(BundledBible.code, "acts", 5)
+        temporaryChapter=client.getChapter(BundledBible.code,"acts",8)
         compose.setContent { BibleDesktopTheme { if (showing) ReaderWindows("ru", chapter, chapter.translation.code, listOf(chapter.translation),
             client, 19f, 1, Modifier.fillMaxSize(), emptySet(), { _, _ -> }, { _, _ -> }, { _, _ -> }, null,
             { _, _, _, _ -> }, { commands = it }, preferencesName) } }
@@ -49,6 +51,67 @@ class ReaderWindowsTest {
         compose.onNodeWithText("Перейти", useUnmergedTree = true).performClick()
     }
     @After fun close() { api.close() }
+
+    @Test fun translationCommandResolvesActiveVerseAcrossDifferentModuleChapterBoundaries() {
+        val first = TranslationSummary("SOURCE", "Source edition", language = LanguageSummary("en", "English"))
+        val other = first.copy(code = "TARGET", name = "Target edition")
+        val text = "Actual fixture verse body. ".repeat(100)
+        val source = BibleChapter(first, BibleBook("source-gen", "Genesis", chaptersCount = 1), ChapterSummary(1, 2),
+            listOf(BibleVerse(11, 1, "Gen.1.1", text, text), BibleVerse(12, 2, "Gen.1.2", text, text)))
+        val target = BibleChapter(other, BibleBook("target-gen", "Genesis", chaptersCount = 8), ChapterSummary(8, 1),
+            listOf(BibleVerse(22, 2, "Gen.1.2", text, text)))
+        val requests = mutableListOf<List<String>>()
+        val chapterRequests = mutableListOf<Int>()
+        val client = object : BibleContentSource by api {
+            override suspend fun getVerseLocations(translationCode: String, osis: List<String>): List<VerseLocation> {
+                assertEquals("TARGET", translationCode)
+                requests += osis
+                return osis.map { ref -> if (ref == "Gen.1.2") VerseLocation(22, ref, "target-gen", 8, 2)
+                    else VerseLocation(21, ref, "target-gen", 6, 1) }
+            }
+            override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int): BibleChapter {
+                assertEquals("TARGET", translationCode); assertEquals("target-gen", bookSlug)
+                chapterRequests += chapterNumber
+                return when (chapterNumber) {
+                    8 -> target
+                    6 -> target.copy(chapter = ChapterSummary(6, 1), verses = listOf(BibleVerse(21, 1, "Gen.1.1", text, text)))
+                    else -> error("No neighboring fixture chapter")
+                }
+            }
+        }
+        preferences.edit().putBoolean("sync", false).putBoolean("open1", false).commit()
+        compose.setContent { BibleDesktopTheme { ReaderWindows("ru", source, first.code, listOf(first, other), client,
+            19f, 2, Modifier.fillMaxSize(), emptySet(), { _, _ -> }, { _, _ -> }, { _, _ -> }, null,
+            { _, _, _, _ -> }, { commands = it }, preferencesName) } }
+        compose.waitUntil(10_000) { commands != null && JSONArray(preferences.getString("places", "[]")).length() == 2 && place(0).getInt("verse") == 2 }
+        compose.runOnIdle { commands!!.translation(other.code) }
+        compose.waitUntil(10_000) { place(0).getString("code") == other.code && place(0).getInt("chapter") == 8 }
+        assertEquals("target-gen", place(0).getString("book"))
+        assertEquals(2, place(0).getInt("verse"))
+        assertEquals(listOf(listOf("Gen.1.2")), requests)
+        assertEquals(listOf(8), chapterRequests)
+        compose.runOnIdle { assertEquals(target, commands!!.source()) }
+    }
+
+    @Test fun resolverRejectsWrongChapterOrVerseIdentityEvenWhenStoredReferenceMatches() = runBlocking {
+        val translation = TranslationSummary("SOURCE", "Source", language = LanguageSummary("en", "English"))
+        val source = BibleChapter(translation, BibleBook("gen", "Genesis", chaptersCount = 1), ChapterSummary(1, 1),
+            listOf(BibleVerse(1, 2, "Gen.1.2", "Source", "Source")))
+        val correct = source.copy(translation = translation.copy(code = "TARGET"), book = source.book.copy(slug = "target-gen", chaptersCount = 8),
+            chapter = ChapterSummary(8, 1), verses = listOf(source.verses.single().copy(id = 22)))
+        val invalid = listOf(correct.copy(translation = translation), correct.copy(book = source.book),
+            correct.copy(chapter = ChapterSummary(6, 1)), correct.copy(verses = listOf(correct.verses.single().copy(id = 23))),
+            correct.copy(verses = listOf(correct.verses.single().copy(number = 1))),
+            correct.copy(verses = listOf(correct.verses.single().copy(osisRef = "Gen.1.1"))),
+            correct.copy(verses = listOf(correct.verses.single().copy(plainText = " "))))
+        for (chapter in invalid) {
+            val client = object : BibleContentSource by api {
+                override suspend fun getVerseLocations(translationCode: String, osis: List<String>) = listOf(VerseLocation(22, "Gen.1.2", "target-gen", 8, 2))
+                override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = chapter
+            }
+            assertTrue("Wrong published identity must be rejected: $chapter", runCatching { resolveWindowVerse(source, "TARGET", "Gen.1.2", client) }.isFailure)
+        }
+    }
 
     @Test fun independentNavigationActiveCommandsCloseSwapDividerAndRestore() {
         mount()
@@ -86,4 +149,32 @@ class ReaderWindowsTest {
         assertEquals(6, place(0).getInt("chapter")); assertEquals(3, place(0).getInt("verse"))
         assertEquals(6, place(1).getInt("chapter")); assertEquals(3, place(1).getInt("verse"))
     }
+    @Test fun temporaryAssignmentPreservesOriginalPlacesSyncActiveClosedPaneAndDivider() {
+        mount()
+        compose.onNodeWithTag("windows-sync").performClick()
+        go(1,"6:3")
+        compose.waitUntil(15000){place(1).getInt("chapter")==6&&place(1).getInt("verse")==3}
+        compose.onNodeWithTag("windows-slider").performSemanticsAction(SemanticsActions.SetProgress){it(.65f)}
+        compose.onNodeWithTag("windows-close-0").performClick()
+        compose.waitForIdle()
+        val original=preferences.getString("places",null)
+        val active=preferences.getInt("active",-1)
+        compose.runOnIdle{commands!!.preview(temporaryChapter,1,0)}
+        compose.onNodeWithTag("windows-preview-return").assertExists()
+        compose.runOnIdle{assertEquals(8,commands!!.source()!!.chapter.number)}
+        compose.onNodeWithTag("comparison-pane-0").assertExists()
+        compose.onNodeWithTag("windows-sync").assertIsNotEnabled()
+        compose.waitForIdle()
+        assertEquals(original,preferences.getString("places",null))
+        assertFalse(preferences.getBoolean("open0",true))
+        compose.onNodeWithTag("windows-preview-return").performClick()
+        compose.waitUntil(15000){compose.onAllNodesWithTag("windows-preview-return").fetchSemanticsNodes().isEmpty()}
+        compose.onNodeWithTag("comparison-pane-0").assertDoesNotExist()
+        assertEquals(original,preferences.getString("places",null))
+        assertEquals(active,preferences.getInt("active",-1))
+        compose.runOnIdle{assertEquals(6,commands!!.source()!!.chapter.number)}
+        assertFalse(preferences.getBoolean("sync",true))
+        assertEquals(.65f,preferences.getFloat("ratio",0f),.01f)
+    }
+
 }

@@ -14,6 +14,10 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity() {
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent): Boolean =
+        com.bibledesktop.myapp.ui.bible.ReaderVolumeKeys.dispatch(event) || super.onKeyDown(keyCode,event)
+    override fun onKeyUp(keyCode: Int, event: android.view.KeyEvent): Boolean =
+        com.bibledesktop.myapp.ui.bible.ReaderVolumeKeys.dispatch(event) || super.onKeyUp(keyCode,event)
     private var readerLink by mutableStateOf<ReaderLink?>(null)
     private var destination by mutableStateOf<String?>(null)
     private var requestNumber by mutableIntStateOf(0)

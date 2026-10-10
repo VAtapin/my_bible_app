@@ -1,0 +1,24 @@
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { createDictionaryApi, type DictionaryModule, type DictionaryTopic } from '@/api/dictionaries'
+import { createDictionaryService } from '@/services/dictionaryService'
+import { apiBaseUrl } from '@/config/api'
+import { dictionaryMessages } from '@/i18n/dictionaries'
+import { useI18n } from '@/i18n'
+import { prayerExcerpt } from '@/services/prayerContent'
+const props = defineProps<{ book: string; chapter?: number; verseIds?: number[]; verseNumbers?: number[]; verseChapters?: number[]; osis?: string }>()
+const { language, messages } = useI18n(), text = computed(() => dictionaryMessages[language.value]), service = createDictionaryService(createDictionaryApi({ baseUrl: apiBaseUrl }))
+const modules = ref<DictionaryModule[]>([]), selected = ref<string[]>([]), entries = ref<DictionaryTopic[]>([]), busy = ref(false), failed = ref(false), retry = ref(0)
+const sourceQuery=ref(''),sourceLanguage=ref(''),languages=computed(()=>[...new Set(modules.value.map(m=>m.language_code).filter((code):code is string=>Boolean(code)))].sort()),foundSources=computed(()=>modules.value.filter(m=>(!sourceLanguage.value||m.language_code===sourceLanguage.value)&&prayerExcerpt(m.name).toLocaleLowerCase().includes(sourceQuery.value.trim().toLocaleLowerCase())))
+void service.modules().then(value => { modules.value = value; const stored: unknown = JSON.parse(localStorage.getItem('dictionary:context-sources') ?? '[]'); if (Array.isArray(stored)) selected.value = stored.filter(code => value.some(m => m.code === code)).slice(0, 30) }).catch(() => { failed.value = true })
+watch([() => props.book, () => props.chapter, () => props.verseIds?.join(','), () => props.verseNumbers?.join(','), () => props.verseChapters?.join(','), () => props.osis, selected, retry], async (_, __, cleanup) => {
+ let stale = false; cleanup(() => { stale = true }); entries.value = []; failed.value = false; if (!selected.value.length) return; busy.value = true
+ const codes = [...selected.value]; localStorage.setItem('dictionary:context-sources', JSON.stringify(codes))
+ try { const unique = new Map<string, DictionaryTopic>(); const ids = [...new Set(props.verseIds ?? [])]; const contexts: (number | undefined)[] = ids.length ? ids : [undefined]
+  for (const [index,id] of contexts.entries()) { let offset = 0; while (!stale) { const number=props.verseNumbers?.[index],chapter=props.verseChapters?.[index]??props.chapter;const page = id ? chapter&&number ? await service.verseAt(id,props.book,chapter,number,codes,offset,props.osis) : await service.verse(id, codes, offset) : await service.context(props.book, props.chapter ?? null, codes, offset); for (const item of page.data) unique.set(`${item.module_code}:${item.key}`, item); offset += page.data.length; if (!page.data.length || offset >= page.total) break } }
+  if (!stale) entries.value = [...unique.values()]
+ } catch { if (!stale) failed.value = true } finally { if (!stale) busy.value = false }
+}, { deep: true })
+</script>
+<template><section><h2>{{ text.title }}</h2><details><summary>{{ text.sources }} · {{ selected.length }}/30</summary><input v-model="sourceQuery" type="search" :aria-label="text.sources" :placeholder="text.sources"><select v-model="sourceLanguage" :aria-label="text.sources"><option value="">{{ text.all }}</option><option v-for="code in languages" :key="code" :value="code">{{ code }}</option></select><div class="source-list"><label v-for="module in foundSources" :key="module.code"><input v-model="selected" type="checkbox" :value="module.code" :disabled="!selected.includes(module.code) && selected.length >= 30">{{ prayerExcerpt(module.name) }} · {{ module.language_code }}</label></div></details><div class="selected-sources"><button v-for="module in modules.filter(m=>selected.includes(m.code))" :key="module.code" @click="selected=selected.filter(code=>code!==module.code)">{{ prayerExcerpt(module.name) }} ×</button></div><p v-if="busy" role="status">{{ messages.loading }}</p><p v-if="failed" role="alert">{{ text.error }} <button @click="retry++">{{ text.retry }}</button></p><RouterLink v-for="entry in entries" :key="`${entry.module_code}:${entry.key}`" class="module-card" :to="{ path: '/dictionaries', query: { module: entry.module_code, entry: entry.key } }">{{ prayerExcerpt(entry.topic) }} · {{ prayerExcerpt(entry.module_name??'') }}</RouterLink><p v-if="selected.length && !busy && !entries.length && !failed">{{ text.empty }}</p></section></template>
+<style scoped>label{display:flex;align-items:center;gap:8px;font-size:14px;padding:8px}.source-list{max-height:280px;overflow:auto}.selected-sources{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}.selected-sources button{font-size:12px;max-width:100%;overflow-wrap:anywhere}.module-card{display:block;margin:8px 0}</style>

@@ -28,17 +28,53 @@ describe('verse search semantics', () => {
     const result = await searchVersePage(api, {} as ChapterRepository, 'RST', 'бог', {match:'exact', scope:'new', offset:50})
     expect(result.results).toEqual([])
     expect(result.next).toBe(51)
-    expect(api.searchVerses).toHaveBeenCalledWith('бог','RST',{match:'partial',scope:'new',offset:50,limit:50})
+    expect(api.searchVerses).toHaveBeenCalledWith('бог','RST',{match:'exact_word',scope:'new',offset:50,limit:50})
   })
   it('does not hide HTTP failure with cached text', async () => {
     const api = {searchVerses: vi.fn().mockRejectedValue(new ApiError('http','Forbidden',403))} as unknown as BibleApi
     await expect(searchVersePage(api, {} as ChapterRepository, 'RST','бог',{match:'exact',scope:'all',offset:0})).rejects.toMatchObject({status:403})
   })
+  it('uses the authoritative total, has_more and canonical book filter from the new contract',async()=>{
+    const item={verse_id:1,snippet:'Бог',book:{slug:'john',osis_code:'John'}}
+    const api={searchVerses:vi.fn().mockResolvedValue({results:[item],match:'exact_word',total:57,has_more:true,forms_fallback:[]})}as unknown as BibleApi
+    const page=await searchVersePage(api,{}as ChapterRepository,'RST','Бог',{match:'exact',scope:'all',offset:50,book:'John',canonicalBook:'john'})
+    expect(page).toMatchObject({results:[item],total:57,more:true,next:51,legacy:false})
+    expect(api.searchVerses).toHaveBeenCalledWith('Бог','RST',{match:'exact_word',scope:'all',offset:50,limit:50,book:'john'})
+  })
+  it('shows no fuzzy substitutes on an authoritative empty result and follows has_more on full final pages',async()=>{
+    const api={searchVerses:vi.fn().mockResolvedValue({results:[],match:'exact_word',total:0,has_more:false,forms_fallback:[]})}as unknown as BibleApi
+    expect(await searchVersePage(api,{}as ChapterRepository,'RST','нетсовпадений',{match:'exact',scope:'all',offset:0})).toMatchObject({results:[],total:0,more:false})
+    const items=Array.from({length:50},(_,verse_id)=>({verse_id,snippet:'Бог'}))
+    vi.mocked(api.searchVerses).mockResolvedValue({results:items as never,match:'partial',total:50,has_more:false,forms_fallback:[]})
+    expect((await searchVersePage(api,{}as ChapterRepository,'RST','Бог',{match:'partial',scope:'all',offset:0})).more).toBe(false)
+  })
+  it('separates exact-word/all-word/form requests and exposes unavailable language forms explicitly',async()=>{
+    const api={searchVerses:vi.fn().mockResolvedValue({results:[],match:'forms',total:0,has_more:false,forms_fallback:['COPT']})}as unknown as BibleApi
+    const page=await searchVersePage(api,{}as ChapterRepository,'COPT','слово',{match:'morphology',scope:'all',offset:0})
+    expect(page.formsFallback).toEqual(['COPT']);expect(page.legacy).toBe(false)
+    vi.mocked(api.searchVerses).mockResolvedValue({results:[],match:'all_words',total:0,has_more:false,forms_fallback:[]})
+    await searchVersePage(api,{}as ChapterRepository,'RST','Бог любовь',{match:'all_words',scope:'all',offset:0})
+    expect(api.searchVerses).toHaveBeenLastCalledWith('Бог любовь','RST',{match:'all_words',scope:'all',offset:0,limit:50})
+  })
+  it('keeps legacy filtered pagination but does not invent a global count',async()=>{
+    const items=Array.from({length:50},(_,verse_id)=>({verse_id,snippet:'богатство',text:'богатство'}))
+    const api={searchVerses:vi.fn().mockResolvedValue({results:items})}as unknown as BibleApi
+    const page=await searchVersePage(api,{}as ChapterRepository,'RST','Бог',{match:'exact',scope:'all',offset:0})
+    expect(page).toMatchObject({results:[],more:true,next:50,legacy:true});expect(page.total).toBeUndefined()
+  })
+  it('searches a testament offline only from real saved book metadata, never edition order guesses',async()=>{
+    const api={searchVerses:vi.fn().mockRejectedValue(new ApiError('offline','No network'))}as unknown as BibleApi
+    const data={translation:{code:'RST',language:{code:'ru'}},book:{slug:'source-john',name:'Иоанна'},chapter:{number:3},verses:[{id:1,number:16,osis_ref:'John.3.16',plain_text:'Бог',text:'Бог',has_strong_markup:false}]}
+    const chapters={list:vi.fn().mockResolvedValue([{data}])}as unknown as ChapterRepository
+    const bookMetadata=[{slug:'source-john',name:'Иоанна',short_name:null,order:1,chapters_count:21,canonical_book:{osis_code:'John',testament:'new'}}]
+    expect(await searchVersePage(api,chapters,'RST','Бог',{match:'exact',scope:'new',offset:0,bookMetadata})).toMatchObject({total:1,local:true,more:false})
+    await expect(searchVersePage(api,chapters,'RST','Бог',{match:'exact',scope:'old',offset:0,bookMetadata})).rejects.toThrow('saved metadata')
+  })
   it('uses the language-aware server mode for word forms, without pretending fragments are morphology', async () => {
     const item={verse_id:1,snippet:'Богу'}
     const api={searchVerses:vi.fn().mockResolvedValue({results:[item]})} as unknown as BibleApi
     expect((await searchVersePage(api,{} as ChapterRepository,'RST','Бог',{match:'morphology',scope:'all',offset:0})).results).toEqual([item])
-    expect(api.searchVerses).toHaveBeenCalledWith('Бог','RST',{match:'all_words',scope:'all',offset:0,limit:50})
+    expect(api.searchVerses).toHaveBeenCalledWith('Бог','RST',{match:'forms',scope:'all',offset:0,limit:50})
   })
   it('filters a selected book by canonical identity without assuming edition slugs match', async () => {
     const items=[{verse_id:1,snippet:'Бог',text:'Бог',book:{slug:'source-john',osis_code:'John'}},{verse_id:2,snippet:'Бог',text:'Бог',book:{slug:'acts',osis_code:'Acts'}}]

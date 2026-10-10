@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.reading.ReadingViewport
@@ -18,6 +19,8 @@ import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.animateScrollBy
 
 private data class StreamRow(val chapter: BibleChapter, val verse: BibleVerse?, val empty: Boolean = false) {
     val key: String get() = verse?.osisRef ?: "${chapter.book.slug}:${chapter.chapter.number}:${if (empty) "empty" else "heading"}"
@@ -29,7 +32,10 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
     bookmarkedKeys: Set<String>, onBookmark: (BibleChapter, BibleVerse) -> Unit, onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit, onStudy: ((BibleChapter, BibleVerse) -> Unit)?, initialVerse: Int, modifier: Modifier,
     onVisiblePlace: ((BibleChapter, BibleVerse, BibleVerse, Int) -> Unit)?,
-    followVerse: Int? = null, initialOffset: Int? = null, listTag: String = "continuous-reader", followRequest: Int = 0) {
+    followVerse: Int? = null, initialOffset: Int? = null, listTag: String = "continuous-reader", followRequest: Int = 0,
+    inputActive: Boolean = true, followOffset: Int = 0,
+    onPersonal: ((BibleChapter,BibleVerse)->Unit)? = null, selection: SavedPassage? = null,
+    onStrong: ((BibleChapter,BibleVerse,String)->Unit)? = null) {
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE) }
     val sections = remember(initial) { mutableStateMapOf(initial.chapter.number to initial) }
@@ -40,6 +46,13 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
         listOf(StreamRow(chapter, null)) + if (chapter.verses.isEmpty()) listOf(StreamRow(chapter, null, true)) else chapter.verses.map { StreamRow(chapter, it) }
     }
     val state = rememberLazyListState()
+    val display=LocalReaderPreferences.current
+    val actions=LocalReaderNavigationActions.current
+    val scope=rememberCoroutineScope()
+    val lineMeasurements=remember{ReaderLineMeasurements()}
+    val textToolbar=androidx.compose.ui.platform.LocalTextToolbar.current
+    fun page(direction:Int) {scope.launch {pageMeasuredReader(state,lineMeasurements,direction)}}
+    ReaderVolumePaging(display.volumePaging&&inputActive,::page)
     LaunchedEffect(initial) {
         val index = rows.indexOfFirst { it.verse?.number == initialVerse && it.chapter.chapter.number == initial.chapter.number }.coerceAtLeast(0)
         val restore = preferences.getString("lastTranslation", null) == initial.translation.code && preferences.getString("lastBookSlug", null) == initial.book.slug &&
@@ -48,7 +61,7 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
     }
     LaunchedEffect(followVerse, followRequest) {
         if (followVerse != null) rows.indexOfFirst { it.verse?.number == followVerse && it.chapter.chapter.number == initial.chapter.number }
-            .takeIf { it >= 0 }?.let { state.scrollToItem(it) }
+            .takeIf { it >= 0 }?.let { state.scrollToItem(it,followOffset.coerceAtLeast(0)) }
     }
     val firstNumber = sections.keys.min()
     val lastNumber = sections.keys.max()
@@ -61,7 +74,7 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
             val value = client.getChapter(initial.translation.code, initial.book.slug, number)
             require(value.translation.code == initial.translation.code && value.book.slug == initial.book.slug && value.chapter.number == number)
             val osis = initial.verses.firstOrNull()?.osisRef?.substringBefore('.') ?: value.verses.firstOrNull()?.osisRef?.substringBefore('.')
-            require(value.verses.all { it.osisRef == "$osis.$number.${it.number}" } && value.verses.map { it.osisRef }.distinct().size == value.verses.size)
+            require(value.verses.all { Regex("${Regex.escape(requireNotNull(osis))}\\.[1-9]\\d*\\.${it.number}").matches(it.osisRef) } && value.verses.map { it.osisRef }.distinct().size == value.verses.size)
             val index = state.firstVisibleItemIndex
             val offset = state.firstVisibleItemScrollOffset
             sections[number] = value
@@ -82,23 +95,25 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
             onVisiblePlace?.invoke(top.chapter, top.verse!!, last.verse!!, (-visible.first().second).coerceAtLeast(0))
         }
     }
-    ReadingViewport(modifier) {
+    CompositionLocalProvider(LocalReaderLineMeasurements provides lineMeasurements) {ReadingViewport(modifier) {
         Column(Modifier.fillMaxSize()) {
             if (failed) Row(Modifier.fillMaxWidth().padding(8.dp)) {
                 Text(localized(R.string.reader_continuation_error, language), Modifier.weight(1f))
                 TextButton(onClick = { failed = false; retry++ }) { Text(localized(R.string.retry, language)) }
             }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(listTag), state = state, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(listTag).onGloballyPositioned{lineMeasurements.viewport=it}.readerGestures(display,{selection!=null||textToolbar.status==androidx.compose.ui.platform.TextToolbarStatus.Shown},::page,actions.chapter,actions.book,lineMeasurements::ordinaryTextAt), state = state, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
                 items(rows, key = StreamRow::key) { row ->
                     if (row.verse == null) {
                         if (row.empty) Text(localized(R.string.bible_chapter_unavailable, language))
-                        else Text("${row.chapter.book.name} ${row.chapter.chapter.number}", Modifier.padding(vertical = 12.dp).testTag("stream-chapter-${row.chapter.chapter.number}"), style = MaterialTheme.typography.titleMedium)
+                        else if(display.chapterLabels)Text("${row.chapter.book.name} ${row.chapter.chapter.number}", Modifier.padding(vertical = 12.dp).testTag("stream-chapter-${row.chapter.chapter.number}"), style = MaterialTheme.typography.titleMedium)
                     } else VerseRow(language, row.chapter, row.verse, fontSize, "${row.chapter.translation.code}:${row.verse.osisRef}" in bookmarkedKeys,
                         onBookmark = { onBookmark(row.chapter, row.verse) }, onShare = { onShare(row.chapter, row.verse) }, onNote = { onNote(row.chapter, row.verse) },
-                        onStudy = onStudy?.let { { it(row.chapter, row.verse) } }, highlighted = row.chapter.chapter.number == initial.chapter.number && row.verse.number == initialVerse)
+                        onStudy = onStudy?.let { { it(row.chapter, row.verse) } }, highlighted = row.chapter.chapter.number == initial.chapter.number && row.verse.number == initialVerse,
+                        selection = selection, onPersonal = onPersonal?.let { handler -> { handler(row.chapter,row.verse) } },
+                        onStrong = onStrong?.let { handler -> { number -> handler(row.chapter,row.verse,number) } })
                 }
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
-    }
+    }}
 }

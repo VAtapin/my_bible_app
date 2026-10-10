@@ -143,6 +143,7 @@ class RemindersTest {
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("reminder-time-morning").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("reminder-time-morning").assertTextContains("08:00 · Изменить время").performClick()
         androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom(android.widget.TimePicker::class.java))
+            .inRoot(androidx.test.espresso.matcher.RootMatchers.isDialog())
             .perform(object : androidx.test.espresso.ViewAction {
                 override fun getConstraints() = androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom(android.widget.TimePicker::class.java)
                 override fun getDescription() = "Set native time picker to 06:45"
@@ -153,6 +154,7 @@ class RemindersTest {
                 }
             })
         androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.withId(android.R.id.button1))
+            .inRoot(androidx.test.espresso.matcher.RootMatchers.isDialog())
             .perform(androidx.test.espresso.action.ViewActions.click())
         compose.onNodeWithTag("reminder-time-morning").assertTextContains("06:45 · Изменить время")
         compose.onNodeWithText("Сохранить").performClick()

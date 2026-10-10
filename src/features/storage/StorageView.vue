@@ -11,6 +11,8 @@ import { createVerseNoteRepository, type VerseNote } from '@/offline/verseNotes'
 import { savedVerseLink } from '@/services/readerActions'
 import { formatMessage, useI18n } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
+import PersonalStudyLibrary from './PersonalStudyLibrary.vue'
+import { personalStudyMessages } from '@/i18n/personalStudy'
 
 const chaptersRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -21,7 +23,7 @@ const chapters = ref<StoredChapter[]>([])
 const packages = ref<OfflinePackage[]>([])
 const bookmarks = ref<Bookmark[]>([])
 const notes = ref<VerseNote[]>([])
-const tab = computed(() => route.query.tab === 'notes' ? 'notes' : route.query.tab === 'bookmarks' ? 'bookmarks' : 'all')
+const tab = computed(() => route.query.tab === 'study' ? 'study' : route.query.tab === 'notes' ? 'notes' : route.query.tab === 'bookmarks' ? 'bookmarks' : 'all')
 const title = computed(() => tab.value === 'notes' ? text.value.readerActions.myNotes : tab.value === 'bookmarks' ? text.value.readerActions.myBookmarks : text.value.storage.title)
 const sortedBookmarks = computed(() => [...bookmarks.value].sort((a, b) => b.createdAt.localeCompare(a.createdAt)))
 const noteEntries = computed(() => notes.value.map((note) => {
@@ -122,6 +124,7 @@ function formatDate(value: string): string {
       <h1>{{ title }}</h1>
       <p class="reader-status">{{ tab === 'all' ? text.storage.intro : text.storage.personalLocal }}</p>
       <nav class="saved-tabs" :aria-label="text.storage.personal">
+        <RouterLink to="/storage?tab=study" :class="{active:tab==='study'}">{{ personalStudyMessages[language].library }}</RouterLink>
         <RouterLink to="/storage?tab=bookmarks" :class="{ active: tab === 'bookmarks' }">{{ text.storage.bookmarks }} · {{ bookmarks.length }}</RouterLink>
         <RouterLink to="/storage?tab=notes" :class="{ active: tab === 'notes' }">{{ text.storage.notes }} · {{ notes.length }}</RouterLink>
         <RouterLink to="/storage" :class="{ active: tab === 'all' }">{{ text.reader.offline }}</RouterLink>
@@ -160,7 +163,8 @@ function formatDate(value: string): string {
         <p v-else class="empty-state">{{ text.storage.noChapters }}</p>
       </section>
 
-      <section v-if="tab !== 'notes' && loaded" class="storage-section">
+      <PersonalStudyLibrary v-if="tab === 'study'" />
+      <section v-if="tab !== 'notes' && tab !== 'study' && loaded" class="storage-section">
         <div v-if="tab === 'all'" class="section-heading-row"><span><small>{{ text.storage.personal }}</small><h2>{{ text.storage.bookmarks }}</h2></span></div>
         <div v-if="bookmarks.length" class="storage-list">
           <div v-for="item in sortedBookmarks" :key="item.key" class="storage-item bookmark-item">
@@ -170,7 +174,7 @@ function formatDate(value: string): string {
         </div>
         <p v-else class="empty-state">{{ text.storage.noBookmarks }}</p>
       </section>
-      <section v-if="tab !== 'bookmarks' && loaded" class="storage-section">
+      <section v-if="tab !== 'bookmarks' && tab !== 'study' && loaded" class="storage-section">
         <div v-if="tab === 'all'" class="section-heading-row"><h2>{{ text.readerActions.myNotes }}</h2></div>
         <div v-if="noteEntries.length" class="storage-list">
           <article v-for="entry in noteEntries" :key="entry.note.key" class="saved-note">

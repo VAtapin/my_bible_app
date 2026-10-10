@@ -1,0 +1,6 @@
+export const commentaryRulesMessages = {
+ ru: { saveRange: 'Применить источники к этому отрывку', ranges: 'Источники по отрывкам', removeRange: 'Снять правило', bookRule: 'Источники для этой книги', useDefault: 'Общий выбор источников', saveRule: 'Запомнить для этой книги', position: 'стих или глава:стих', invalid: 'Укажите существующий диапазон: стих или глава:стих' },
+ de: { saveRange: 'Quellen auf diesen Abschnitt anwenden', ranges: 'Quellen nach Abschnitten', removeRange: 'Regel entfernen', bookRule: 'Quellen für dieses Buch', useDefault: 'Allgemeine Quellenauswahl', saveRule: 'Für dieses Buch speichern', position: 'Vers oder Kapitel:Vers', invalid: 'Gültigen Bereich eingeben: Vers oder Kapitel:Vers' },
+ uk: { saveRange: 'Застосувати джерела до цього уривка', ranges: 'Джерела за уривками', removeRange: 'Прибрати правило', bookRule: 'Джерела для цієї книги', useDefault: 'Загальний вибір джерел', saveRule: 'Запам’ятати для цієї книги', position: 'вірш або глава:вірш', invalid: 'Укажіть наявний діапазон: вірш або глава:вірш' },
+ en: { saveRange: 'Apply sources to this passage', ranges: 'Sources by passage', removeRange: 'Remove rule', bookRule: 'Sources for this book', useDefault: 'General source selection', saveRule: 'Remember for this book', position: 'verse or chapter:verse', invalid: 'Enter an existing range: verse or chapter:verse' },
+}

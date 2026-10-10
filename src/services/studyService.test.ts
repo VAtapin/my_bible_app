@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/client'
 import { createStudyService, overlaps, type StudyCache } from './studyService'
 import type { StudyApi } from '@/api/study'
+vi.mock('./installedStudyLibrary',()=>({installedStudyBooks:async()=>undefined,installedStudyContents:async()=>undefined,installedStudyArticle:async()=>undefined,installedCommentaryModules:async()=>[],installedCommentaries:async()=>undefined}))
 describe('study material ranges and offline access', () => {
   const range = { chapter_from: 3, verse_from: 16, chapter_to: 4, verse_to: 2 }
   it('includes range intersections and introductions exactly, without equating adjacent verses', () => {

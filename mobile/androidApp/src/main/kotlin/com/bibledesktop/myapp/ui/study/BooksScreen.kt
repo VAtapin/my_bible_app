@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
@@ -29,6 +30,7 @@ internal fun studyReadingText(body: String): String {
     val safe = body.replace(Regex("<(script|style|iframe|object)\\b[^>]*>[\\s\\S]*?</\\1\\s*>", RegexOption.IGNORE_CASE), "")
     return if (Regex("</?[A-Za-z][^>]*>").containsMatchIn(safe)) readingText(safe) else safe
 }
+internal fun studySourceName(value:String) = studyReadingText("<span>$value</span>")
 
 @Composable
 internal fun BooksScreen(language: String, client: BibleContentSource, onBack: () -> Unit, preferencesName: String = "bible-desktop-study") {
@@ -119,13 +121,24 @@ internal fun BooksScreen(language: String, client: BibleContentSource, onBack: (
             if (article != null) {
                 val section = article!!
                 key(bookId, section.id) {
+                    if(section.body.orEmpty().length>=largeStudyBodyThreshold){
+                        ReadingViewport(Modifier.weight(1f)){
+                            LargeStudyBody(section.body.orEmpty(),Modifier.fillMaxSize().padding(18.dp).testTag("study-book-body"),
+                                preferences=preferences,positionKey="position:$bookId:${section.id}",
+                                style=TextStyle(color=Ink,fontSize=19.sp,lineHeight=29.sp,fontFamily=ReadingSerif),
+                                leading={Text(section.title?:localized(R.string.study_section,language),style=MaterialTheme.typography.titleLarge);section.author?.let{Text(it,color=PrimaryBlue)}},
+                                trailing={CommentaryAnnotationsContent(language,section.annotations,client,moduleCode=data.book.moduleCode)})
+                        }
+                    }else{
                     val scroll = rememberScrollState(preferences.getInt("position:$bookId:${section.id}", 0))
                     LaunchedEffect(scroll.value) { preferences.edit().putInt("position:$bookId:${section.id}", scroll.value).apply() }
                     ReadingViewport(Modifier.weight(1f)) { SelectionContainer { Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(18.dp)) {
                         Text(section.title ?: localized(R.string.study_section, language), style = MaterialTheme.typography.titleLarge)
                         section.author?.let { Text(it, color = PrimaryBlue) }
                         Text(studyReadingText(section.body.orEmpty()), Modifier.testTag("study-book-body"), color = Ink, fontSize = 19.sp, lineHeight = 29.sp, fontFamily = ReadingSerif)
+                        CommentaryAnnotationsContent(language,section.annotations,client,moduleCode=data.book.moduleCode)
                     } } }
+                    }
                 }
                 val index = data.sections.indexOfFirst { it.id == sectionId }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

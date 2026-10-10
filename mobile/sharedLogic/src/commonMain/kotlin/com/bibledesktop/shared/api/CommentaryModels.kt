@@ -12,7 +12,7 @@ data class StudyBookPage(val data: List<StudyBook>, val total: Int)
 data class StudySection(val id: Long, val title: String? = null, val author: String? = null,
     @SerialName("chapter_from") val chapterFrom: Int, @SerialName("verse_from") val verseFrom: Int,
     @SerialName("chapter_to") val chapterTo: Int? = null, @SerialName("verse_to") val verseTo: Int? = null,
-    @SerialName("book_osis_code") val bookOsisCode: String? = null, val body: String? = null)
+    @SerialName("book_osis_code") val bookOsisCode: String? = null, val body: String? = null,val annotations:CommentaryAnnotations? = null)
 @Serializable
 data class BookContents(val book: StudyBook, val sections: List<StudySection>, val total: Int)
 @Serializable
@@ -23,7 +23,7 @@ data class CommentaryEntry(val id: Long, val title: String? = null, val author: 
     @SerialName("chapter_from") val chapterFrom: Int, @SerialName("verse_from") val verseFrom: Int,
     @SerialName("chapter_to") val chapterTo: Int? = null, @SerialName("verse_to") val verseTo: Int? = null,
     @SerialName("commentary_book_id") val commentaryBookId: Long? = null,
-    @SerialName("module_code") val moduleCode: String, @SerialName("module_name") val moduleName: String)
+    @SerialName("module_code") val moduleCode: String, @SerialName("module_name") val moduleName: String,val annotations:CommentaryAnnotations? = null)
 @Serializable
 data class CommentaryPage(val book: String, val chapter: Int? = null, val entries: List<CommentaryEntry>, val total: Int)
 @Serializable

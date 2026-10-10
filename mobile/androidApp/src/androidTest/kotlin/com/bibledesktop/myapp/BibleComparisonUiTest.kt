@@ -59,7 +59,8 @@ class BibleComparisonUiTest {
         val api = BibleApiClient()
         val source = object : BibleContentSource by api {
             override suspend fun getBooks(translationCode: String) = listOf(chapter(first).book.copy(canonicalBook = CanonicalBookSummary("John", "new")))
-            override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = chapter(second)
+            override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int):BibleChapter {require(bookSlug=="john"&&chapterNumber==3);return chapter(if(translationCode=="A")first else second)}
+            override suspend fun getVerseLocations(translationCode:String,osisReferences:List<String>)=chapter(if(translationCode=="A")first else second).verses.filter{it.osisRef in osisReferences}.map{VerseLocation(it.id,it.osisRef,"john",3,it.number)}
         }
         try {
             val restoration = StateRestorationTester(compose)
@@ -120,6 +121,7 @@ class BibleComparisonUiTest {
             override suspend fun getBooks(translationCode: String): List<BibleBook> = listOf(BibleBook("john", "Иоанна", chaptersCount = 21,
                 canonicalBook = CanonicalBookSummary(if (translationCode == "A") "John" else "Gen", "new")))
             override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int): BibleChapter = error("No guessed chapter fetch")
+            override suspend fun getVerseLocations(translationCode:String,osisReferences:List<String>)=emptyList<VerseLocation>()
         }
         try { assertTrue(runCatching { loadComparison(chapter(first), "B", source) }.exceptionOrNull() is ComparisonUnavailable) }
         finally { api.close() }
@@ -186,4 +188,20 @@ class BibleComparisonUiTest {
             reopened.close()
         } finally { repository.close(); root.walkBottomUp().forEach { check(it.delete()) } }
     }
+    @Test fun splitComparisonStrongActionsKeepActualModuleChapterAndVerse() {
+        val primary=chapter(first)
+        val a=chapter(second).copy(chapter=ChapterSummary(4,1),verses=listOf(chapter(second).verses[0]))
+        val b=chapter(second).copy(chapter=ChapterSummary(5,1),verses=listOf(chapter(second).verses[1].copy(id=502,text="Another G99 verse",hasStrongMarkup=true)))
+        val api=BibleApiClient();var selected=""
+        val source=object:BibleContentSource by api{override suspend fun getChapter(translationCode:String,bookSlug:String,chapterNumber:Int):BibleChapter=error("Fixture has no continuation; no network")}
+        try{
+            compose.setContent{BibleDesktopTheme{CompositionLocalProvider(LocalReaderPreferences provides ReaderPreferences(strongNumbers=true,crossReferences=false,commentaryLinks=false)){
+                ComparisonRows("ru",primary,a,19f,modifier=Modifier.fillMaxSize(),initialVerse=2,source=source,secondaryChapters=listOf(a,b),onStrong={c,v,n->selected="${c.translation.code}:${c.chapter.number}:${v.id}:$n"})
+            }}}
+            compose.onNodeWithTag("comparison-rows").performScrollToNode(hasText("G99"))
+            compose.onNodeWithText("G99").performClick()
+            compose.runOnIdle{assertEquals("B:5:502:G99",selected)}
+        }finally{api.close()}
+    }
+
 }

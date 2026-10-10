@@ -1,0 +1,6 @@
+export const sourceInfoMessages={
+ ru:{title:'Об источнике',name:'Полное название',shortName:'Краткое название',language:'Язык',author:'Автор / переводчик / составитель',edition:'Издание',source:'Электронный источник',version:'Версия модуля',updated:'Дата обновления',capabilities:'Состав и разметка',unknown:'Не указано источником'},
+ de:{title:'Über die Quelle',name:'Vollständiger Name',shortName:'Kurzname',language:'Sprache',author:'Autor / Übersetzer / Herausgeber',edition:'Ausgabe',source:'Elektronische Quelle',version:'Modulversion',updated:'Aktualisierungsdatum',capabilities:'Inhalt und Auszeichnung',unknown:'Von der Quelle nicht angegeben'},
+ uk:{title:'Про джерело',name:'Повна назва',shortName:'Коротка назва',language:'Мова',author:'Автор / перекладач / упорядник',edition:'Видання',source:'Електронне джерело',version:'Версія модуля',updated:'Дата оновлення',capabilities:'Склад і розмітка',unknown:'Не вказано джерелом'},
+ en:{title:'About the source',name:'Full name',shortName:'Short name',language:'Language',author:'Author / translator / compiler',edition:'Edition',source:'Electronic source',version:'Module version',updated:'Update date',capabilities:'Contents and markup',unknown:'Not supplied by the source'},
+}

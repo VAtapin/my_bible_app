@@ -5,15 +5,27 @@ import type { BibleChapter } from '@/api/contracts'
 import { bookmarkKey } from '@/offline/libraryRepository'
 import { createVerseNoteRepository } from '@/offline/verseNotes'
 import { useI18n } from '@/i18n'
+import PersonalStudyPanel from './PersonalStudyPanel.vue'
+import { personalStudyMessages } from '@/i18n/personalStudy'
+import { bibleApi } from '@/api'
+import { createChapterService, type ChapterService } from '@/services/chapterService'
+import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
+import type { SavedPassage } from '@/services/personalStudy'
+import { dictionaryMessages } from '@/i18n/dictionaries'
+import { dictionaryLookupLink } from '@/services/dictionaryLookup'
 
-const props = defineProps<{ chapter?: BibleChapter; selectedVerse?: number }>()
-const emit = defineEmits<{ message: [value: string] }>()
+const props = defineProps<{ chapter?: BibleChapter; selectedVerse?: number; service?: ChapterService }>()
+const emit = defineEmits<{ message: [value: string]; selection: [passage: SavedPassage] }>()
 const router = useRouter()
-const { messages: text } = useI18n()
+const { messages: text, language } = useI18n()
+const studyText = computed(() => personalStudyMessages[language.value])
+const dictionaryText=computed(()=>dictionaryMessages[language.value])
+const dictionaryLink=computed(()=>dictionaryLookupLink(snippet.value))
+const chapterService = props.service ?? createChapterService(bibleApi, createIndexedDbChapterRepository())
 const repository = createVerseNoteRepository()
 const dialog = ref<HTMLDialogElement>()
 const textarea = ref<HTMLTextAreaElement>()
-const mode = ref<'menu' | 'note' | 'share'>('menu')
+const mode = ref<'menu' | 'note' | 'share' | 'study'>('menu')
 const snippet = ref('')
 const draft = ref('')
 const busy = ref(false)
@@ -80,13 +92,17 @@ defineExpose({ open })
       <RouterLink class="verse-menu-action" to="/storage?tab=notes" @click="dialog?.close()">{{ text.readerActions.myNotes }}</RouterLink>
       <button type="button" class="verse-menu-action" :disabled="!chapter" @click="mode = 'share'">{{ text.readerActions.share }}</button>
       <button type="button" class="verse-menu-action" :disabled="!chapter" @click="search">{{ text.readerActions.search }}</button>
+      <RouterLink v-if="dictionaryLink" class="verse-menu-action" :to="dictionaryLink" @click="dialog?.close()">{{dictionaryText.title}} · {{snippet}}</RouterLink>
       <button type="button" class="verse-menu-action" :disabled="!verse" @click="open('note', snippet)">{{ text.readerActions.addNote }}</button>
+      <button type="button" class="verse-menu-action" :disabled="!verse" @click="mode = 'study'">{{ studyText.title }}</button>
+      <RouterLink class="verse-menu-action" to="/storage?tab=study" @click="dialog?.close()">{{ studyText.library }}</RouterLink>
       <small v-if="!verse">{{ text.readerActions.selectVerse }}</small>
     </template>
     <template v-else-if="mode === 'share'">
       <button type="button" class="verse-menu-action" @click="share()">{{ text.readerActions.share }}</button>
       <button type="button" class="verse-menu-action" @click="share(true)">{{ text.readerActions.copyLink }}</button>
     </template>
+    <PersonalStudyPanel v-else-if="mode === 'study' && chapter && selectedVerse" :chapter="chapter" :verse="selectedVerse" :service="chapterService" :selected-text="snippet" @message="emit('message',$event)" @selection="emit('selection',$event)" />
     <form v-else @submit.prevent="saveNote">
       <label :for="'verse-note'">{{ text.readerActions.note }}</label>
       <textarea id="verse-note" ref="textarea" v-model="draft" rows="5" maxlength="10000" :disabled="busy" />

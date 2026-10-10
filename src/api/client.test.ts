@@ -53,7 +53,7 @@ describe('Bible API client', () => {
     const chapter = await api.getChapter('L1_RST', 'genesis', 1)
 
     expect(fetcher).toHaveBeenCalledWith(
-      'https://example.test/api/translations/L1_RST/books/genesis/chapters/1',
+      'https://example.test/api/translations/L1_RST/books/genesis/chapters/1?annotations=1',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
     expect(chapter.verses[0]?.plain_text).toBe('В начале')

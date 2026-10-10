@@ -75,9 +75,16 @@ fun MoreScreen(
     onBibleDownloads: () -> Unit,
     onOpenBooks: () -> Unit = {},
     onSearch: () -> Unit = {},
+    onDictionaries: () -> Unit = {},
+    onPersonalStudy: () -> Unit = {},
+    onStudyDownloads: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showingAbout by rememberSaveable { mutableStateOf(false) }
+    var showingHelp by rememberSaveable {mutableStateOf(false)}
+    if(showingHelp){ReaderHelpScreen(language,{showingHelp=false});return}
+    var showingAtlas by rememberSaveable{mutableStateOf(false)}
+    if(showingAtlas){com.bibledesktop.myapp.ui.study.GeoAtlasScreen(language,{showingAtlas=false});return}
     if (showingAbout) {
         AboutScreen(language, onBack = { showingAbout = false }, onHome = onBack)
         return
@@ -116,10 +123,21 @@ fun MoreScreen(
             item {
                 SettingsCard(language, onSettings)
             }
+            item { androidx.compose.material3.OutlinedButton(onClick={showingHelp=true},modifier=Modifier.fillMaxWidth()){Text(readerHelpTitle(language))} }
+            item { androidx.compose.material3.OutlinedButton(onClick={showingAtlas=true},modifier=Modifier.fillMaxWidth()){Text(com.bibledesktop.myapp.ui.study.geoTexts(language).title)} }
             item { androidx.compose.material3.OutlinedButton(onClick = { showingAbout = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(localText(R.string.about_title, language))
             } }
             item { OfflinePanel(language) }
+            item { androidx.compose.material3.OutlinedButton(onClick = onDictionaries, modifier = Modifier.fillMaxWidth()) {
+                Text(com.bibledesktop.myapp.ui.study.dictionaryTexts(language).title)
+            } }
+            item { androidx.compose.material3.OutlinedButton(onClick = onPersonalStudy, modifier = Modifier.fillMaxWidth()) {
+                Text(com.bibledesktop.myapp.ui.bible.personalStudyText(language, "library"))
+            } }
+            item { androidx.compose.material3.OutlinedButton(onClick = onStudyDownloads, modifier = Modifier.fillMaxWidth()) {
+                Text(com.bibledesktop.myapp.ui.study.studyDownloadsTitle(language))
+            } }
             item { androidx.compose.material3.OutlinedButton(onClick = onSearch, modifier = Modifier.fillMaxWidth()) {
                 Text(localText(R.string.verse_search_title, language))
             } }

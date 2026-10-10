@@ -26,6 +26,10 @@ configureAzbukaIntegration('/education/azbuka')
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/atlas', component: () => import('@/features/study/AtlasView.vue') },
+    { path: '/help', component: () => import('@/features/profile/ReaderHelpView.vue') },
+    { path: '/study-downloads', component: () => import('@/features/study/StudyDownloadsView.vue') },
+    { path: '/dictionaries', component: () => import('@/features/study/DictionariesView.vue') },
     { path: '/books', component: () => import('@/features/study/BooksView.vue') },
     { path: '/books/:id', component: () => import('@/features/study/StudyBookView.vue') },
     { path: '/bibles', name: 'bible-library', component: BibleLibraryView },

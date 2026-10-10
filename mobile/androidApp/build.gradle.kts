@@ -4,6 +4,7 @@ import java.util.zip.GZIPInputStream
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 val releaseSecrets = listOf("BIBLE_RELEASE_STORE_FILE", "BIBLE_RELEASE_STORE_PASSWORD", "BIBLE_RELEASE_KEY_ALIAS", "BIBLE_RELEASE_KEY_PASSWORD")
@@ -13,10 +14,10 @@ val requestedVersionCode = providers.gradleProperty("bibleVersionCode").orNull
 val requestedVersionName = providers.gradleProperty("bibleVersionName").orNull
 val releaseVersionCode = requestedVersionCode?.let {
     it.toIntOrNull()?.takeIf { code -> code in 1..2_100_000_000 } ?: error("bibleVersionCode must be a positive Play version code")
-} ?: 3
+} ?: 4
 val releaseVersionName = requestedVersionName?.also {
     require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(?:[-.][A-Za-z0-9.-]+)?").matches(it)) { "bibleVersionName must be a semantic version" }
-} ?: "0.1.2"
+} ?: "0.1.3"
 
 kotlin {
     compilerOptions {

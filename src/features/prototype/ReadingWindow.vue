@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import{computed,ref,watch}from'vue'
 import type{BibleBook,BibleChapter,BibleVerse,TranslationSummary}from'@/api/contracts'
+import type{SavedPassage}from'@/services/personalStudy'
 import type{ChapterService}from'@/services/chapterService'
 import type{WindowPlace}from'@/services/readerWindows'
 import{webBibleBooks}from'@/services/webBibleLibrary'
@@ -8,8 +9,11 @@ import{bibleApi}from'@/api'
 import{readerWindowMessages}from'@/i18n/readerWindows'
 import{useI18n}from'@/i18n'
 import ContinuousReading from'./ContinuousReading.vue'
-const props=defineProps<{id:number;source?:BibleChapter;place:WindowPlace;catalog:TranslationSummary[];service:ChapterService;active:boolean;followVerse?:number;followRequest?:number;bookmarks:Set<string>;error?:string;navigationOnly?:boolean}>()
-const emit=defineEmits<{activate:[];navigate:[place:WindowPlace];close:[];visible:[chapter:BibleChapter,first:BibleVerse,last:BibleVerse,offset:number];select:[number:number,source:BibleChapter];bookmark:[source:BibleChapter,verse:BibleVerse];actions:[source:BibleChapter,verse:BibleVerse,event?:MouseEvent]}>()
+import VerseNavigation from './VerseNavigation.vue'
+import FavoriteTranslationSelect from './FavoriteTranslationSelect.vue'
+async function moveBook(direction:number){try{const list=await webBibleBooks(bibleApi,props.place.code),index=list.findIndex(b=>b.slug===props.place.book),target=list[index+direction];if(target)emit('navigate',{...props.place,book:target.slug,chapter:1,verse:1,offset:0})}catch{invalid.value=true}}
+const props=defineProps<{id:number;source?:BibleChapter;place:WindowPlace;catalog:TranslationSummary[];service:ChapterService;active:boolean;followVerse?:number;followRequest?:number;bookmarks:Set<string>;error?:string;navigationOnly?:boolean;selection?:SavedPassage}>()
+const emit=defineEmits<{study:[chapter:BibleChapter,verse:BibleVerse];strong:[number:string,chapter:BibleChapter,verse:BibleVerse];activate:[];navigate:[place:WindowPlace];close:[];visible:[chapter:BibleChapter,first:BibleVerse,last:BibleVerse,offset:number];select:[number:number,source:BibleChapter];bookmark:[source:BibleChapter,verse:BibleVerse];actions:[source:BibleChapter,verse:BibleVerse,event?:MouseEvent]}>()
 const{language,messages:text}=useI18n(),labels=computed(()=>readerWindowMessages[language.value])
 const choosing=ref(false),draftCode=ref(props.place.code),draftBook=ref(props.place.book),position=ref(`${props.place.chapter}:${props.place.verse||1}`),books=ref<BibleBook[]>([]),invalid=ref(false)
 watch(()=>props.place.code,code=>{if(!choosing.value)draftCode.value=code})
@@ -20,14 +24,15 @@ defineExpose({openPicker})
 </script>
 <template><section class="reading-window" :class="{active}" :data-window="id" @pointerdown="emit('activate')" @focusin="emit('activate')">
   <header class="window-heading"><strong :title="`${source?.translation.name} · ${source?.book.name} ${place.chapter}:${place.verse||1}`"><span class="window-edition">{{source?.translation.name??catalog.find(e=>e.code===place.code)?.name}}</span>{{source?.book.name}} {{place.chapter}}:{{place.verse||1}}<small v-if="active"> · {{labels.active}}</small></strong><button @click="openPicker">{{labels.place}}</button><button v-if="!navigationOnly" :aria-label="`${labels.close} ${id+1}`" @click="emit('close')">×</button></header>
-  <form v-if="choosing" class="window-picker" @submit.prevent="go">
-    <label>{{text.translation}}<select v-model="draftCode"><option v-for="edition in catalog" :key="edition.code" :value="edition.code">{{edition.name}}</option></select></label>
+  <div v-if="choosing" class="window-picker">
+    <FavoriteTranslationSelect :translations="catalog" :selected="draftCode" @select="draftCode=$event" />
     <label>{{text.book}}<select v-model="draftBook"><option v-for="item in books" :key="item.slug" :value="item.slug">{{item.name}}</option></select></label>
     <label>{{labels.place}}<input v-model="position" inputmode="numeric" pattern="[0-9]+(:[0-9]+)?" maxlength="14" /></label>
-    <button>{{labels.go}}</button><p v-if="invalid" role="alert">{{labels.error}}</p>
-  </form>
+    <button @click="go">{{labels.go}}</button><p v-if="invalid" role="alert">{{labels.error}}</p>
+    <VerseNavigation v-if="books.find(b=>b.slug===draftBook)" :code="draftCode" :book="books.find(b=>b.slug===draftBook)!" :chapter="Number(position.split(':')[0])||1" :service="service" @select="(chapter,verse)=>{emit('navigate',{code:draftCode,book:draftBook,chapter,verse,offset:0});choosing=false}" @close="choosing=false" />
+  </div>
   <p v-if="error" role="alert">{{error}}</p>
-  <ContinuousReading v-if="source&&!navigationOnly" :key="`${source.translation.code}:${source.book.slug}:${source.chapter.number}`" :initial="source" :service="service" :initial-verse="place.verse" :initial-offset="place.offset" :follow-verse="followVerse" :follow-request="followRequest" :bookmarks="bookmarks" @visible="(chapter,first,last,offset)=>emit('visible',chapter,first,last,offset)" @select="(chapter,verse)=>emit('select',verse.number,chapter)" @bookmark="(chapter,verse)=>emit('bookmark',chapter,verse)" @actions="(chapter,verse,event)=>emit('actions',chapter,verse,event)" />
+  <ContinuousReading @chapter="direction=>{const chapter=place.chapter+direction;if(chapter>=1&&chapter<=(source?.book.chapters_count??0))emit('navigate',{...place,chapter,verse:1,offset:0})}" @book="moveBook" v-if="source&&!navigationOnly" :key="`${source.translation.code}:${source.book.slug}:${source.chapter.number}`" :selection="selection" @strong="(number,chapter,verse)=>emit('strong',number,chapter,verse)" @study="(chapter,verse)=>emit('study',chapter,verse)" :initial="source" :service="service" :initial-verse="place.verse" :initial-offset="place.offset" :follow-verse="followVerse" :follow-request="followRequest" :bookmarks="bookmarks" @visible="(chapter,first,last,offset)=>emit('visible',chapter,first,last,offset)" @select="(chapter,verse)=>emit('select',verse.number,chapter)" @bookmark="(chapter,verse)=>emit('bookmark',chapter,verse)" @actions="(chapter,verse,event)=>emit('actions',chapter,verse,event)" />
   <p v-else-if="!source&&!error" role="status">{{text.loading}}</p>
 </section></template>
 <style scoped>.reading-window{display:flex;flex-direction:column;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:8px}.window-heading{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--white);font-size:12px}.window-heading strong{flex:1;min-width:0}.window-edition{display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:10px}.window-heading button{font-size:12px;padding:4px;min-height:28px}.active>.window-heading{background:var(--light-blue,#e8f2fa);box-shadow:inset 3px 0 #3883c0}.window-picker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:8px;font-size:12px}.window-picker input,.window-picker select{width:100%;min-width:0}.reading-window :deep(.continuous-scroll){flex:1;height:auto;min-height:0}</style>

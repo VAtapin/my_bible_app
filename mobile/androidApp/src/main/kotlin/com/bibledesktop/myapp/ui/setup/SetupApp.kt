@@ -124,6 +124,9 @@ private enum class Route {
     LinkedBible,
     Books,
     Search,
+    Dictionaries,
+    PersonalStudy,
+    StudyDownloads,
 }
 
 internal sealed interface TranslationState {
@@ -339,6 +342,9 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             language = language,
             onOpenBooks = { route = Route.Books },
             onSearch = { route = Route.Search },
+            onDictionaries = { route = Route.Dictionaries },
+            onPersonalStudy = { route = Route.PersonalStudy },
+            onStudyDownloads = { route = Route.StudyDownloads },
             onBack = { route = Route.Home },
             onSettings = {
                 quickSetup = false
@@ -365,6 +371,13 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
                 route = Route.Bible
             })
         Route.Books -> com.bibledesktop.myapp.ui.study.BooksScreen(language, client, onBack = { route = Route.More })
+        Route.Dictionaries -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More })
+        Route.StudyDownloads -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More }, downloads = true)
+        Route.PersonalStudy -> com.bibledesktop.myapp.ui.bible.PersonalStudyLibrary(language, onBack = { route = Route.More }, onOpen = { passage ->
+            preferences.edit().putString("lastTranslation", passage.translationCode).putString("lastBookSlug", passage.bookSlug)
+                .putInt("lastChapter", passage.start.chapter).putInt("lastVerse", passage.start.verse).putInt("lastVerseOffset", 0).apply()
+            chooseBiblePassage = false; route = Route.Bible
+        }, onReminders = { route = Route.Reminders })
         Route.Search -> com.bibledesktop.myapp.ui.bible.BibleSearchScreen(language, client,
             preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More }, onOpen = { hit ->
                 preferences.edit().putString("lastTranslation", hit.translation).putString("lastBookSlug",hit.book)

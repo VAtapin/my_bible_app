@@ -40,6 +40,11 @@ class BibleApiClient internal constructor(
         return client.get("$baseUrl/canons/$canon/books").body<ApiEnvelope<CanonBooks>>().data.books
             .firstOrNull { it.osisCode == osis }?.slug ?: error("Canonical book unavailable")
     }
+    override suspend fun resolveCanonicalOsis(canon: String, bookSlug: String): String {
+        require(Regex("[A-Za-z0-9_-]+").matches(canon))
+        return client.get("$baseUrl/canons/$canon/books").body<ApiEnvelope<CanonBooks>>().data.books
+            .firstOrNull { it.slug == bookSlug }?.osisCode ?: error("Canonical book unavailable")
+    }
     override suspend fun getCommentaries(book: String, chapter: Int?, modules: List<String>, offset: Int): CommentaryPage {
         require(Regex("[A-Za-z0-9_-]+").matches(book) && (chapter == null || chapter > 0) && offset >= 0 && modules.size in 1..30)
         val path = if (chapter == null) "$baseUrl/bible/books/$book/commentaries" else "$baseUrl/bible/books/$book/chapters/$chapter/commentaries"
@@ -68,17 +73,27 @@ class BibleApiClient internal constructor(
     ): BibleChapter {
         val response = client.get(
             "$baseUrl/translations/$translationCode/books/$bookSlug/chapters/$chapterNumber",
-        )
-        return response.body<ApiEnvelope<BibleChapter>>().data
+        ){parameter("annotations",1)}
+        return response.body<ApiEnvelope<BibleChapter>>().data.also{value->require(value.verses.all{verse->verse.annotations?.validFor(verse.plainText)!=false})}
     }
 
+    override suspend fun getVerseLocations(translationCode: String, osis: List<String>): List<VerseLocation> {
+        require(translationCode.isNotBlank() && osis.size in 1..200 && osis.distinct().size == osis.size)
+        require(osis.all { Regex("[A-Za-z0-9]+\\.[1-9]\\d*\\.[1-9]\\d*").matches(it) })
+        return client.get("$baseUrl/translations/$translationCode/verse-locations") { osis.forEach { parameter("osis_refs[]", it) } }
+            .body<ApiEnvelope<List<VerseLocation>>>().data.also { values ->
+                require(values.map { it.osis }.distinct().size == values.size)
+                require(values.all { it.osis in osis && it.verseId > 0 && it.book.isNotBlank() && it.chapter > 0 && it.verse > 0 })
+            }
+    }
     override suspend fun getCrossReferences(verseId: Long, translationCode: String): CrossReferences {
         require(verseId > 0 && translationCode.isNotBlank())
         return client.get("$baseUrl/verses/$verseId/cross-references") {
             parameter("translation", translationCode)
         }.body<ApiEnvelope<CrossReferences>>().data.also {
             require(it.verse.id == verseId && it.translationCode == translationCode)
-        }
+            require(it.references.all{ref->ref.versification.status in setOf("unknown","raw","ambiguous","verified")})
+        }.guardedReferences()
     }
 
     override suspend fun getStrongTokens(verseId: Long, translationCode: String): StrongTokens {
@@ -89,9 +104,28 @@ class BibleApiClient internal constructor(
     }
 
     override suspend fun getStrongEntry(number: String, verseId: Long): StrongEntry {
-        require(Regex("[GH]?[0-9]{1,5}").matches(number) && verseId > 0)
+        require(Regex("[GH]?[0-9]{1,5}").matches(number) && number.dropWhile(Char::isLetter).toInt() > 0 && verseId > 0)
         return client.get("$baseUrl/strong/$number") { parameter("verse", verseId) }
-            .body<ApiEnvelope<StrongEntry>>().data
+            .body<ApiEnvelope<StrongEntry>>().data.also { entry ->
+                require(Regex("[GH]?[0-9]{1,5}").matches(entry.number))
+                val requestedDigits = number.dropWhile(Char::isLetter).toInt()
+                require(entry.number.dropWhile(Char::isLetter).toInt() == requestedDigits)
+                val requestedScope = number.first().takeIf { it == 'H' || it == 'G' }?.toString()
+                val returnedScope = entry.number.first().takeIf { it == 'H' || it == 'G' }?.toString()
+                require(entry.scope == null || entry.scope in setOf("H", "G"))
+                val canonical = entry.canonicalNumber
+                if (canonical != null) {
+                    require(Regex("[HG][0-9]{1,5}").matches(canonical) && canonical.substring(1).toInt() == requestedDigits)
+                    require(entry.scope == null || entry.scope == canonical.first().toString())
+                    require(returnedScope == null || returnedScope == canonical.first().toString())
+                }
+                require(entry.scope == null || returnedScope == null || entry.scope == returnedScope)
+                if (requestedScope != null) {
+                    require(canonical == null || canonical == number)
+                    require(entry.scope == null || entry.scope == requestedScope)
+                    require(returnedScope == null || returnedScope == requestedScope)
+                }
+            }
     }
 
     override suspend fun getPrayers(language: String): List<PrayerSummary> {

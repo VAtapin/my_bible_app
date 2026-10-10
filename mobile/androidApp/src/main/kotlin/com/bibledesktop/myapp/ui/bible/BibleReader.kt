@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,9 +61,13 @@ import com.bibledesktop.shared.api.BibleBook
 import com.bibledesktop.shared.api.BibleChapter
 import com.bibledesktop.shared.api.BibleVerse
 import com.bibledesktop.shared.api.TranslationSummary
+import com.bibledesktop.shared.api.SavedPassage
 import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 
 private sealed interface LoadState<out T> {
     data object Loading : LoadState<Nothing>
@@ -104,6 +109,14 @@ fun BibleReader(
     var booksRetry by remember { mutableStateOf(0) }
     var chapterRetry by remember { mutableStateOf(0) }
     var fontSize by rememberSaveable { mutableFloatStateOf(preferences.getFloat("readerFontSize", 19f)) }
+    val (controlPreferences,setControlPreferences)=rememberReaderPreferences()
+    LaunchedEffect(controlPreferences.fontSize) {fontSize=controlPreferences.fontSize}
+    var settingsOpen by remember {mutableStateOf(false)}
+    var translationsOpen by remember {mutableStateOf(false)}
+    var historyOpen by remember {mutableStateOf(false)}
+    val history=remember {ReaderHistoryStore(context,"main")}
+    var historyRestoring by remember {mutableStateOf(false)}
+    var firstHistoryOpening by remember {mutableStateOf(true)}
     var bookmarkEntries by remember { mutableStateOf(BookmarkStore.load(context)) }
     var notePassage by rememberSaveable(stateSaver = Saver<BookmarkEntry?, String>(
         save = { it?.toJson()?.toString() }, restore = { bookmarkFromJson(org.json.JSONObject(it)) },
@@ -111,11 +124,24 @@ fun BibleReader(
     var noteInitial by rememberSaveable { mutableStateOf("") }
     var studyVerseId by rememberSaveable { mutableStateOf<Long?>(null) }
     var showingSearch by rememberSaveable { mutableStateOf(false) }
+    var personalChapter by remember { mutableStateOf<BibleChapter?>(null) }
+    var personalVerse by remember { mutableStateOf<BibleVerse?>(null) }
+    var selectedPassage by remember { mutableStateOf<SavedPassage?>(null) }
+    var personalLibrary by remember { mutableStateOf(false) }
+    var sourceInfoOpen by remember { mutableStateOf(false) }
+    var initialStrong by remember { mutableStateOf<String?>(null) }
     var studyChapter by remember { mutableStateOf<BibleChapter?>(null) }
     var focusedVerse by rememberSaveable { mutableStateOf(preferences.getInt("lastVerse", 0)) }
     var readingChapter by remember { mutableIntStateOf(selectedChapter ?: 1) }
     var readingVerse by remember { mutableIntStateOf(focusedVerse) }
     var restoringPosition by remember { mutableStateOf(true) }
+    fun historyNavigate(place: ReaderHistoryPlace?) {
+        if(place==null)return
+        historyRestoring=true
+        restoringPosition=true
+        translationCode=place.code;selectedBookSlug=place.book;selectedChapter=place.chapter;focusedVerse=place.verse
+        preferences.edit().putString("lastTranslation",place.code).putString("lastBookSlug",place.book).putInt("lastChapter",place.chapter).putInt("lastVerse",place.verse).putInt("lastVerseOffset",place.offset).apply()
+    }
     var referenceReturn by rememberSaveable { mutableStateOf<String?>(null) }
     var comparing by rememberSaveable { mutableStateOf(preferences.getBoolean("readerComparing", false)) }
     var windowCommands by remember { mutableStateOf<WindowCommands?>(null) }
@@ -191,6 +217,12 @@ fun BibleReader(
 
     val selectedBook = (booksState as? LoadState.Ready)?.value
         ?.firstOrNull { it.slug == selectedBookSlug }
+    LaunchedEffect(chapterState,focusedVerse) {
+        val source=(chapterState as? LoadState.Ready)?.value ?: return@LaunchedEffect
+        if(source.translation.code!=translationCode || source.book.slug!=selectedBookSlug || source.chapter.number!=selectedChapter)return@LaunchedEffect
+        if(!firstHistoryOpening&&!historyRestoring)history.navigate(ReaderHistoryPlace(source.translation.code,source.book.slug,source.chapter.number,focusedVerse.coerceAtLeast(1)))
+        firstHistoryOpening=false;historyRestoring=false
+    }
 
     BackHandler {
         when {
@@ -248,7 +280,10 @@ fun BibleReader(
 
         else -> {
             val chapterNumber = selectedChapter ?: 1
-            ChapterScreen(
+            ReaderTheme(controlPreferences) {CompositionLocalProvider(com.bibledesktop.myapp.ui.study.LocalVerseStudyClient provides client, LocalReaderNavigationActions provides ReaderNavigationActions(
+                chapter={delta->if(comparing)windowCommands?.move?.invoke(delta) else {selectedChapter=(readingChapter+delta).coerceIn(1,selectedBook.chaptersCount);focusedVerse=1}},
+                book={delta->val list=(booksState as? LoadState.Ready)?.value.orEmpty();val next=list.getOrNull(list.indexOfFirst{it.slug==selectedBookSlug}+delta);next?.let{selectedBookSlug=it.slug;selectedChapter=1;focusedVerse=1}}
+            )) {ChapterScreen(
             language = language,
             studyClient = client,
             state = chapterState,
@@ -260,17 +295,28 @@ fun BibleReader(
             onHome = onBack,
             onRetry = { chapterRetry += 1 },
             onSearch = { if (comparing) closeComparison(); restoringPosition = true; selectedChapter = readingChapter; focusedVerse = readingVerse; showingSearch = true },
+            onSettings={settingsOpen=true},
+            onToggleNight={setControlPreferences(controlPreferences.copy(night=!controlPreferences.night))},
+            onSourceInfo={sourceInfoOpen=true},
+            onTranslations={translationsOpen=true},
+            onHistory={if(comparing)windowCommands?.history?.invoke() else historyOpen=true},
+            onHistoryBack={if(comparing)windowCommands?.back?.invoke() else historyNavigate(history.back())},
+            onHistoryForward={if(comparing)windowCommands?.forward?.invoke() else historyNavigate(history.forward())},
             onPrevious = { if (comparing && windowCommands != null) windowCommands?.move?.invoke(-1) else { selectedChapter = (readingChapter - 1).coerceAtLeast(1); focusedVerse = 0 } },
             onNext = { if (comparing && windowCommands != null) windowCommands?.move?.invoke(1) else { selectedChapter = (readingChapter + 1).coerceAtMost(selectedBook.chaptersCount); focusedVerse = 0 } },
             initialVerse = focusedVerse,
             comparisonSource = if (comparing) windowChapter else null,
             comparisonVerse = readingVerse,
             comparisonLast = windowLast,
-            onStudy = { source, verse -> studyChapter = source; studyVerseId = verse.id },
+            onStudy = { source, verse -> initialStrong = null; studyChapter = source; studyVerseId = verse.id },
+            onPersonal = { source, verse -> personalChapter = source; personalVerse = verse },
+            selection = selectedPassage,
+            onStrong = { source, verse, number -> initialStrong = number; studyChapter = source; studyVerseId = verse.id },
             onVisiblePlace = { source, first, _, offset ->
                 // An old list can finish its delayed observation while a new passage is opening.
                 if (source.translation.code == translationCode && source.book.slug == selectedBookSlug && selectedChapter == chapterNumber) {
                     readingChapter = source.chapter.number; readingVerse = first.number
+                    history.observe(ReaderHistoryPlace(source.translation.code,source.book.slug,source.chapter.number,first.number,offset))
                     preferences.edit().putString("lastTranslation", source.translation.code).putString("lastBookSlug", source.book.slug)
                         .putInt("lastChapter", source.chapter.number).putInt("lastVerse", first.number).putInt("lastVerseOffset", offset).apply()
                 }
@@ -287,7 +333,10 @@ fun BibleReader(
                         catch (cancelled: CancellationException) { throw cancelled }
                         catch (_: Exception) { android.widget.Toast.makeText(context, notesErrorText, android.widget.Toast.LENGTH_LONG).show() }
                     } },
-                    onStudy = { source, verse -> studyChapter = source; studyVerseId = verse.id },
+                    onStudy = { source, verse -> initialStrong = null; studyChapter = source; studyVerseId = verse.id },
+            onPersonal = { source, verse -> personalChapter = source; personalVerse = verse },
+            selection = selectedPassage,
+            onStrong = { source, verse, number -> initialStrong = number; studyChapter = source; studyVerseId = verse.id },
                     onVisible = { source, first, last, offset -> windowChapter = source; windowLast = last.number; readingChapter = source.chapter.number; readingVerse = first.number
                         preferences.edit().putString("lastTranslation", source.translation.code).putString("lastBookSlug", source.book.slug)
                             .putInt("lastChapter", source.chapter.number).putInt("lastVerse", first.number).putInt("lastVerseOffset", offset).apply() },
@@ -309,10 +358,12 @@ fun BibleReader(
             onFontSmaller = {
                 fontSize = (fontSize - 1f).coerceAtLeast(15f)
                 preferences.edit().putFloat("readerFontSize", fontSize).apply()
+                setControlPreferences(controlPreferences.copy(fontSize=fontSize))
             },
             onFontLarger = {
                 fontSize = (fontSize + 1f).coerceAtMost(28f)
                 preferences.edit().putFloat("readerFontSize", fontSize).apply()
+                setControlPreferences(controlPreferences.copy(fontSize=fontSize))
             },
             onBookmark = { chapter, verse ->
                 bookmarkEntries = BookmarkStore.toggle(context, bookmarkEntries, chapter, verse)
@@ -332,7 +383,7 @@ fun BibleReader(
                     }
                 }
             },
-        )
+        )} }
         }
     }
     if (choosingPassage) PassagePicker(language, translations, client, translationCode, selectedBook, selectedChapter,
@@ -340,13 +391,43 @@ fun BibleReader(
             translationCode = code; selectedBookSlug = book.slug; selectedChapter = number
             focusedVerse = 0; referenceReturn = null; studyVerseId = null; choosingPassage = false
         }, onClose = { choosingPassage = false }, onHome = { choosingPassage = false; onBack() },
-        initialBookSlug = selectedBookSlug)
+        initialBookSlug = selectedBookSlug,onVerseSelect={code,book,number,verse ->
+            translationCode=code;selectedBookSlug=book.slug;selectedChapter=number;focusedVerse=verse;referenceReturn=null;studyVerseId=null;choosingPassage=false
+        })
+    if(settingsOpen)ReaderSettingsDialog(language,controlPreferences,setControlPreferences){settingsOpen=false}
+    if(translationsOpen)TranslationPicker(language,translations,if(comparing)windowChapter?.translation?.code?:translationCode else translationCode,onSelect={code->
+        translationsOpen=false
+        if(comparing)windowCommands?.translation?.invoke(code) else noteScope.launch {
+            val source=(chapterState as? LoadState.Ready)?.value ?: return@launch
+            val ref=source.verses.firstOrNull{it.number==readingVerse}?.osisRef ?: source.verses.firstOrNull()?.osisRef ?: return@launch
+            try {
+                val location=client.getVerseLocations(code,listOf(ref)).firstOrNull() ?: error("Verse unavailable")
+                val target=client.getChapter(code,location.book,location.chapter)
+                val verse=target.verses.firstOrNull{it.osisRef==ref && it.plainText.isNotBlank()} ?: error("Verse unavailable")
+                translationCode=code;selectedBookSlug=target.book.slug;selectedChapter=target.chapter.number;focusedVerse=verse.number
+            } catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){android.widget.Toast.makeText(context,readerControlText(language,"invalid"),android.widget.Toast.LENGTH_LONG).show()}
+        }
+    },onClose={translationsOpen=false})
+    if(historyOpen)ReaderHistoryDialog(language,history,::historyNavigate){historyOpen=false}
     notePassage?.let { passage ->
         NoteEditor(language, passage, noteInitial, onDismiss = { notePassage = null }, onSaved = { notePassage = null })
     }
+    if (personalLibrary) androidx.compose.ui.window.Dialog(onDismissRequest = { personalLibrary = false }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) { Surface(androidx.compose.ui.Modifier.fillMaxSize()) { PersonalStudyLibrary(language, onBack = { personalLibrary = false }, onOpen = { passage ->
+        if (comparing) closeComparison()
+        translationCode = passage.translationCode; selectedBookSlug = passage.bookSlug; selectedChapter = passage.start.chapter; focusedVerse = passage.start.verse; selectedPassage = passage; personalLibrary = false
+    }) } }
+    personalChapter?.let { source -> personalVerse?.let { verse -> PersonalStudyPanel(language, source, verse, client, onClose = { personalChapter = null; personalVerse = null }, onSelection = { selectedPassage = it }, onLibrary = { personalChapter = null; personalVerse = null; personalLibrary = true }) } }
+    if(sourceInfoOpen) {
+        val actual=if(comparing)windowCommands?.source?.invoke()?:windowChapter else (chapterState as? LoadState.Ready)?.value
+        actual?.let { value -> androidx.compose.material3.AlertDialog(onDismissRequest={sourceInfoOpen=false},
+            confirmButton={androidx.compose.material3.TextButton(onClick={sourceInfoOpen=false}){Text(text(R.string.study_close,language))}},
+            text={Column(Modifier.verticalScroll(rememberScrollState())) {com.bibledesktop.myapp.ui.study.ModuleSourceCard(language,Json.encodeToJsonElement(translations.firstOrNull{it.code==value.translation.code}?:value.translation).jsonObject)}}) }
+    }
     val chapter = studyChapter ?: (chapterState as? LoadState.Ready)?.value
     chapter?.verses?.firstOrNull { it.id == studyVerseId }?.let { verse ->
-        com.bibledesktop.myapp.ui.study.VerseStudyDialog(language, chapter, verse, client, onClose = { studyVerseId = null }, onOpen = { target ->
+        CompositionLocalProvider(com.bibledesktop.myapp.ui.study.LocalTemporaryWindowAssignment provides
+            windowCommands?.let { commands -> { source: BibleChapter, number: Int, id: Int -> commands.preview(source,number,id); studyVerseId=null } }) {
+        com.bibledesktop.myapp.ui.study.VerseStudyDialog(language, chapter, verse, client, initialStrong = initialStrong, onClose = { studyVerseId = null }, onOpen = { target ->
             noteScope.launch {
                 try {
                     val book = client.getBooks(translationCode).firstOrNull { it.canonicalBook?.osisCode == target.osisRef.substringBefore('.') }
@@ -358,6 +439,7 @@ fun BibleReader(
                 catch (_: Exception) { android.widget.Toast.makeText(context, openError, android.widget.Toast.LENGTH_LONG).show() }
             }
         })
+        }
     }
 }
 
@@ -395,6 +477,13 @@ private fun ChapterScreen(
     onHome: () -> Unit,
     onRetry: () -> Unit,
     onSearch: () -> Unit,
+    onSettings: () -> Unit,
+    onToggleNight: () -> Unit,
+    onSourceInfo: () -> Unit,
+    onTranslations: () -> Unit,
+    onHistory: () -> Unit,
+    onHistoryBack: () -> Unit,
+    onHistoryForward: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onFontSmaller: () -> Unit,
@@ -403,6 +492,9 @@ private fun ChapterScreen(
     onShare: (BibleChapter, BibleVerse) -> Unit,
     onNote: (BibleChapter, BibleVerse) -> Unit,
     onStudy: (BibleChapter, BibleVerse) -> Unit,
+    onPersonal: (BibleChapter, BibleVerse) -> Unit,
+    selection: SavedPassage?,
+    onStrong: (BibleChapter, BibleVerse, String) -> Unit,
     onVisiblePlace: (BibleChapter, BibleVerse, BibleVerse, Int) -> Unit,
     initialVerse: Int,
     comparison: (@Composable (BibleChapter, Modifier) -> Unit)?,
@@ -423,7 +515,7 @@ private fun ChapterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Cream)
+            .background(androidx.compose.material3.MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
@@ -445,6 +537,13 @@ private fun ChapterScreen(
             androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_library_title, language)) }
             androidx.compose.material3.TextButton(onClick = onSearch) { Text(text(R.string.verse_search_title, language)) }
             androidx.compose.material3.TextButton(onClick = { showingCommentaries = !showingCommentaries }) { Text(text(R.string.study_commentaries, language)) }
+            androidx.compose.material3.TextButton(onClick=onSettings) {Text(readerControlText(language,"settings"))}
+            androidx.compose.material3.TextButton(onClick=onToggleNight) {val night=LocalReaderPreferences.current.night;Text("${if(night) "☀" else "☾"} ${readerControlText(language,if(night) "day" else "night")}")}
+            androidx.compose.material3.TextButton(onClick=onSourceInfo) {Text(com.bibledesktop.myapp.ui.study.moduleSourceTitle(language))}
+            androidx.compose.material3.TextButton(onClick=onTranslations) {Text(readerControlText(language,"favorites"))}
+            androidx.compose.material3.TextButton(onClick=onHistoryBack) {Text(readerControlText(language,"back"))}
+            androidx.compose.material3.TextButton(onClick=onHistoryForward) {Text(readerControlText(language,"forward"))}
+            androidx.compose.material3.TextButton(onClick=onHistory) {Text(readerControlText(language,"history"))}
         }
 
         when (state) {
@@ -470,7 +569,7 @@ private fun ChapterScreen(
                 ChapterReadingContent(
                 language, state.value, fontSize, bookmarkedKeys, onBookmark, onShare, onNote,
                 modifier = Modifier.weight(1f),
-                onStudy = onStudy, initialVerse = initialVerse,
+                onStudy = onStudy, initialVerse = initialVerse, onPersonal = onPersonal, selection = selection, onStrong = onStrong,
                 client = studyClient,
                 onVisiblePlace = { source, first, last, offset -> visibleChapter = source; visibleFirst = first.number; visibleLast = last.number; onVisiblePlace(source, first, last, offset) },
             )
@@ -484,7 +583,7 @@ private fun ChapterScreen(
             }
         }
 
-        Surface(color = Color.White, shadowElevation = 6.dp) {
+        Surface(color = androidx.compose.material3.MaterialTheme.colorScheme.surface, shadowElevation = 6.dp) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Row(
                     modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),

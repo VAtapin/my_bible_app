@@ -1,0 +1,7 @@
+export interface CommentaryAnnotationLink {kind:'bible'|'commentary'|'dictionary'|'external'|'unknown';href:string;label:string;status:string;book_slug?:string;chapter?:number;verse?:number}
+export interface CommentaryAnnotationMedia {src?:string;alt?:string;status:string;fragment_id?:string;module?:string;textual?:string;media_id?:number;url?:string;sha256?:string;mime_type?:string;bytes?:number}
+export interface CommentaryAnnotations {source_sha256:string;links:CommentaryAnnotationLink[];media:CommentaryAnnotationMedia[]}
+export function isCommentaryAnnotations(value:unknown):value is CommentaryAnnotations {
+ if(!value||typeof value!=='object')return false;const row=value as Record<string,unknown>
+ return typeof row.source_sha256==='string'&&/^[a-f0-9]{64}$/i.test(row.source_sha256)&&Array.isArray(row.links)&&row.links.every(link=>link&&typeof link==='object'&&['bible','commentary','dictionary','external','unknown'].includes(link.kind)&&typeof link.href==='string'&&typeof link.label==='string'&&typeof link.status==='string'&&(link.book_slug===undefined||typeof link.book_slug==='string')&&[link.chapter,link.verse].every(n=>n===undefined||Number.isSafeInteger(n)&&n>=0))&&Array.isArray(row.media)&&row.media.every(media=>media&&typeof media==='object'&&typeof media.status==='string'&&[media.src,media.alt,media.fragment_id,media.module,media.textual].every(v=>v===undefined||typeof v==='string'))
+}

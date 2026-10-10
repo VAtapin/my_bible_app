@@ -17,6 +17,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.isDialog
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bibledesktop.shared.api.BibleApiClient
@@ -34,16 +38,20 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class NativeSmokeTest {
     private val compose = createAndroidComposeRule<MainActivity>()
-    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "verseNotesV1", "compareTranslation")
+    private val fixtureKeys = listOf("setupComplete", "uiLanguage", "sections", "translations", "lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "lastVerseOffset", "verseNotesV1", "compareTranslation")
     private var original: Map<String, Any?> = emptyMap()
+    private val isolatedNamespaces=listOf("bible-desktop-reader-controls","bible-desktop-reader-history","bible-desktop-reader-windows")
+    private var originalReaderSettings:Map<String,Map<String,*>> = emptyMap()
     private val fixture = object : ExternalResource() {
         override fun before() {
             val context = InstrumentationRegistry.getInstrumentation().targetContext
             check(context.packageName == "com.bibledesktop.myapp.debug")
             val preferences = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
             original = fixtureKeys.associateWith { preferences.all[it] }
+            originalReaderSettings=isolatedNamespaces.associateWith{name->context.getSharedPreferences(name,Context.MODE_PRIVATE).all.toMap()}
+            isolatedNamespaces.forEach{name->check(context.getSharedPreferences(name,Context.MODE_PRIVATE).edit().clear().commit())}
             check(preferences.edit().putBoolean("setupComplete", false).putString("uiLanguage", "ru")
-                .remove("lastTranslation").remove("lastBookSlug").remove("lastChapter").remove("lastVerse").remove("verseNotesV1").commit())
+                .remove("lastTranslation").remove("lastBookSlug").remove("lastChapter").remove("lastVerse").remove("lastVerseOffset").remove("verseNotesV1").commit())
         }
 
         override fun after() {
@@ -58,6 +66,7 @@ class NativeSmokeTest {
                 }
             }
             check(editor.commit())
+            originalReaderSettings.forEach{(name,values)->val saved=context.getSharedPreferences(name,Context.MODE_PRIVATE).edit().clear();values.forEach{(key,value)->when(value){is Boolean->saved.putBoolean(key,value);is String->saved.putString(key,value);is Int->saved.putInt(key,value);is Float->saved.putFloat(key,value);is Long->saved.putLong(key,value);is Set<*>->saved.putStringSet(key,value.filterIsInstance<String>().toSet())}};check(saved.commit())}
         }
     }
 
@@ -187,11 +196,19 @@ class NativeSmokeTest {
     @Test fun parallelReferenceOpensExactVerseAndBackRestoresSource() {
         requireInstalled("BQ_RUSSIAN_RST_STRONG")
         val client = BibleApiClient()
-        val source = try { runBlocking {
-            val edition = client.getTranslations("ru").first { it.hasStrong }
-            val book = client.getBooks(edition.code).first { it.canonicalBook?.osisCode == "John" }
-            client.getChapter(edition.code, book.slug, 3)
+        val loaded = try { runBlocking {
+            val actual=com.bibledesktop.myapp.data.OfflineContentRepository(client,com.bibledesktop.myapp.data.OfflineStore(compose.activity))
+            val book = actual.getBooks("BQ_RUSSIAN_RST_STRONG").first { it.canonicalBook?.osisCode == "John" }
+            val source = actual.getChapter("BQ_RUSSIAN_RST_STRONG", book.slug, 3)
+            val location = actual.getVerseLocations(source.translation.code, listOf("1John.4.10")).single()
+            val target = actual.getChapter(source.translation.code, location.book, location.chapter).verses.single {
+                it.id == location.verseId && it.number == location.verse && it.osisRef == location.osis && it.plainText.isNotBlank()
+            }
+            source to target
         } } finally { client.close() }
+        val source = loaded.first
+        val target = loaded.second
+        assertEquals("BQ_RUSSIAN_RST_STRONG",source.translation.code)
         val verse = source.verses.first { it.number == 16 }
         val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
         check(preferences.edit().putBoolean("setupComplete", true).putString("sections", "bible,study")
@@ -205,10 +222,16 @@ class NativeSmokeTest {
             compose.onNodeWithText("Изучить стих").performClick()
             compose.waitUntil(30_000) { compose.onAllNodesWithTag("reference-1John.4.10").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("reference-1John.4.10").performScrollTo().performClick()
-            compose.waitUntil(30_000) { compose.onAllNodes(hasText("1 Иоанна · Глава 4")).fetchSemanticsNodes().isNotEmpty() }
-            compose.onNodeWithTag("verse-10").assertIsDisplayed().assertIsSelected()
-            compose.onNodeWithContentDescription("Назад").performClick()
-            compose.waitUntil(30_000) { compose.onAllNodes(hasText("Иоанна · Глава 3")).fetchSemanticsNodes().isNotEmpty() }
+            compose.waitUntil(30_000) { compose.onAllNodes(hasText(target.plainText, substring = true) and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNode(androidx.compose.ui.test.hasTestTag("verse-${target.number}") and hasAnyAncestor(isDialog())).assertIsDisplayed().assertIsSelected()
+            compose.onNode(hasText(target.plainText, substring = true) and hasAnyAncestor(isDialog())).assertIsDisplayed()
+            assertEquals("1John.4.10", target.osisRef)
+            assertEquals(source.book.slug, preferences.getString("lastBookSlug", null))
+            assertEquals(3, preferences.getInt("lastChapter", 0))
+            assertEquals(16, preferences.getInt("lastVerse", 0))
+            compose.onNodeWithText("Вернуться к сравнению").performClick()
+            compose.onNodeWithText("Закрыть").performScrollTo().performClick()
+            compose.waitUntil(30_000) { compose.onAllNodes(hasText("${source.book.name} · Глава 3", substring = true)).fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("verse-16").assertIsDisplayed().assertIsSelected()
         }
     }
@@ -218,10 +241,11 @@ class NativeSmokeTest {
         requireInstalled("BQ_ENGLISH_KJV_1769")
         val api = BibleApiClient()
         val source = try { runBlocking {
-            val ru = api.getTranslations("ru").first()
-            val book = api.getBooks(ru.code).first { it.canonicalBook?.osisCode == "John" }
-            api.getChapter(ru.code, book.slug, 3)
+            val actual = com.bibledesktop.myapp.data.OfflineContentRepository(api, com.bibledesktop.myapp.data.OfflineStore(compose.activity))
+            val book = actual.getBooks("BQ_RUSSIAN_RST_STRONG").first { it.canonicalBook?.osisCode == "John" }
+            actual.getChapter("BQ_RUSSIAN_RST_STRONG", book.slug, 3)
         } } finally { api.close() }
+        assertEquals("BQ_RUSSIAN_RST_STRONG", source.translation.code)
         val preferences = compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
         check(preferences.edit().putBoolean("setupComplete", true).putString("sections", "bible")
             .putString("translations", source.translation.code).putString("lastTranslation", source.translation.code)
@@ -258,7 +282,9 @@ class NativeSmokeTest {
         compose.activityRule.scenario.recreate()
         compose.waitUntil(30_000) { compose.onAllNodesWithTag("choose-chapter-5").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("choose-chapter-5").performClick()
-        compose.waitUntil(30_000) { compose.onAllNodesWithTag("verse-1").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(30_000) { compose.onAllNodesWithTag("choose-verse-1").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("choose-verse-1").performClick()
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("Глава 5",substring=true) and androidx.compose.ui.test.hasTestTag("reader-choose-chapter")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 5", substring = true)
         assertEquals(5, preferences.getInt("lastChapter", 0))
     }
@@ -330,17 +356,22 @@ class NativeSmokeTest {
         requireInstalled("BQ_RUSSIAN_RST_STRONG")
         val client = BibleApiClient()
         val book = try { runBlocking {
-            val translation = client.getTranslations("ru").let { all -> all.firstOrNull { it.isDefault } ?: all.first() }
-            client.getBooks(translation.code).minBy { it.order }
+            com.bibledesktop.myapp.data.OfflineContentRepository(client,com.bibledesktop.myapp.data.OfflineStore(compose.activity)).getBooks("BQ_RUSSIAN_RST_STRONG").minBy { it.order }
         } } finally { client.close() }
+        check(compose.activity.getSharedPreferences("bible-desktop-native-profile",Context.MODE_PRIVATE).edit().putString("lastTranslation","BQ_RUSSIAN_RST_STRONG").commit())
         compose.waitUntil(30_000) { compose.onAllNodes(hasText("Быстро настроить") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Быстро настроить").performScrollTo().performClick()
         compose.onNode(hasText("Библия") and isSelectable()).performClick()
         compose.waitUntil(30_000) { compose.onAllNodes(hasText(book.name)).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("book-search").performTextInput(book.name)
         compose.onNodeWithTag("book-${book.slug}").performScrollTo().performClick()
-        compose.onNodeWithText("1").performClick()
+        compose.waitUntil(30_000) { compose.onAllNodesWithTag("choose-chapter-1").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("choose-chapter-1").performClick()
+        // The main book grid opens a chapter directly; the modal passage picker has a verse step.
+        compose.waitUntil(30_000) { compose.onAllNodes(hasText("${book.name} · Глава 1", substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 1", substring = true)
         compose.waitUntil(30_000) { compose.onAllNodes(hasContentDescription("Действия со стихом 1")).fetchSemanticsNodes().isNotEmpty() }
+        assertEquals("BQ_RUSSIAN_RST_STRONG", compose.activity.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE).getString("lastTranslation", null))
         compose.onNodeWithContentDescription("Действия со стихом 1").performClick()
         compose.onNodeWithText("Заметка к стиху").performClick()
         compose.onNodeWithTag("note-body").performTextInput("Проверочная заметка")
@@ -353,6 +384,10 @@ class NativeSmokeTest {
         compose.onNodeWithContentDescription("На главную").performClick()
         compose.onAllNodes(hasText("Церковный календарь"))[0].assertExists()
         compose.onNodeWithText("Ещё").performClick()
+        // Notes are below the study/download controls and may not be composed by LazyColumn yet.
+        compose.waitUntil(10_000) { runCatching {
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Проверочная заметка"))
+        }.isSuccess }
         compose.onNodeWithText("Проверочная заметка").performScrollTo().assertIsDisplayed()
     }
 }

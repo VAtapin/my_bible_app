@@ -28,21 +28,22 @@ import java.io.File
 
 @Composable
 internal fun BibleSearchScreen(language: String, client: BibleContentSource, initialCode: String, onBack: () -> Unit, onOpen: (VerseSearchHit) -> Unit,
-    preferencesName: String = "bible-desktop-search", indexFile: File? = null) {
+    preferencesName: String = "bible-desktop-search", indexFile: File? = null,
+    initialQuery: String? = null, initialMatch: VerseSearchMatch? = null) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE) }
     val repository = client as? OfflineContentRepository
     val index = remember(client) { repository?.let { LocalBibleSearch(it.store, indexFile ?: File(context.noBackupFilesDir, "verse-search-v1.sqlite")) } }
-    var query by rememberSaveable { mutableStateOf(prefs.getString("query", "").orEmpty()) }
+    var query by rememberSaveable { mutableStateOf(initialQuery ?: prefs.getString("query", "").orEmpty()) }
     val restoreOnOpen=remember{query.trim().length>=2}
-    var match by rememberSaveable { mutableStateOf(runCatching { VerseSearchMatch.valueOf(prefs.getString("match", "EXACT")!!) }.getOrDefault(VerseSearchMatch.EXACT)) }
+    var match by rememberSaveable { mutableStateOf(initialMatch ?: runCatching { VerseSearchMatch.valueOf(prefs.getString("match", "EXACT")!!) }.getOrDefault(VerseSearchMatch.EXACT)) }
     var scope by rememberSaveable { mutableStateOf(runCatching { VerseSearchScope.valueOf(prefs.getString("scope", "ALL")!!) }.getOrDefault(VerseSearchScope.ALL)) }
-    var codes by remember { mutableStateOf(prefs.getStringSet("codes", setOf(initialCode)).orEmpty().toSet()) }
+    var codes by remember { mutableStateOf(if (initialQuery != null) setOf(initialCode) else prefs.getStringSet("codes", setOf(initialCode)).orEmpty().toSet()) }
     var editions by remember { mutableStateOf<List<TranslationSummary>>(emptyList()) }
     var books by remember { mutableStateOf<List<BibleBook>>(emptyList()) }
     var book by rememberSaveable { mutableStateOf(prefs.getString("book", null)) }
     var page by remember { mutableStateOf<LocalVerseSearchPage?>(null) }
-    var offset by rememberSaveable { mutableIntStateOf(prefs.getInt("offset", 0)) }
+    var offset by rememberSaveable { mutableIntStateOf(if (initialQuery != null) 0 else prefs.getInt("offset", 0)) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
     var invalid by remember { mutableStateOf(false) }

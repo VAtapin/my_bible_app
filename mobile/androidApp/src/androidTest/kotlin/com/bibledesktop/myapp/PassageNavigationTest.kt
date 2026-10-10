@@ -27,6 +27,7 @@ class PassageNavigationTest {
     private val preferences get() = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE)
     private val keys = listOf("lastTranslation", "lastBookSlug", "lastChapter", "lastVerse", "lastVerseOffset", "verseNotesV1")
     private var original = emptyMap<String, Any?>()
+    private var originalControls:Map<String,*> = emptyMap<String,Any?>()
     private val api = BibleApiClient()
     private val translation = TranslationSummary("fixture", "Синодальный", language = LanguageSummary("ru", "Русский"))
     private val books = listOf(BibleBook("genesis", "Бытие", chaptersCount = 50), BibleBook("john", "Иоанна", chaptersCount = 21))
@@ -34,7 +35,7 @@ class PassageNavigationTest {
         override suspend fun getBooks(translationCode: String) = books
         override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = BibleChapter(
             translation, books.first { it.slug == bookSlug }, ChapterSummary(chapterNumber, 1),
-            listOf(BibleVerse(chapterNumber.toLong(), 1, "$bookSlug.$chapterNumber.1", "", "Текст $bookSlug $chapterNumber")))
+            listOf(BibleVerse(chapterNumber.toLong(), 1, "${if(bookSlug=="genesis")"Gen"else"John"}.$chapterNumber.1", "", "Текст $bookSlug $chapterNumber")))
         override suspend fun getPrayers(language: String) = if (language == "cu") listOf(
             PrayerSummary(2, "cu", "common", title = "Отче наш", excerpt = "")) else emptyList()
     }
@@ -42,8 +43,10 @@ class PassageNavigationTest {
         override fun before() {
             check(context.packageName == "com.bibledesktop.myapp.debug")
             original = keys.associateWith { preferences.all[it] }
+            val controls=context.getSharedPreferences("bible-desktop-reader-controls",Context.MODE_PRIVATE)
+            originalControls=controls.all.toMap();check(controls.edit().clear().commit())
             check(preferences.edit().putString("lastTranslation", translation.code).putString("lastBookSlug", "genesis")
-                .putInt("lastChapter", 18).putInt("lastVerse", 0).remove("verseNotesV1").commit())
+                .putInt("lastChapter", 18).putInt("lastVerse", 0).remove("lastVerseOffset").remove("verseNotesV1").commit())
         }
         override fun after() {
             val editor = preferences.edit()
@@ -53,6 +56,9 @@ class PassageNavigationTest {
                 else -> editor.remove(key)
             } }
             check(editor.commit()); api.close()
+            val controls=context.getSharedPreferences("bible-desktop-reader-controls",Context.MODE_PRIVATE).edit().clear()
+            originalControls.forEach{(key,value)->when(value){is Boolean->controls.putBoolean(key,value);is Int->controls.putInt(key,value);is String->controls.putString(key,value);is Float->controls.putFloat(key,value);is Long->controls.putLong(key,value);is Set<*>->controls.putStringSet(key,value.filterIsInstance<String>().toSet())}}
+            check(controls.commit())
         }
     }
     @get:Rule val rules: RuleChain = RuleChain.outerRule(fixture).around(compose)
@@ -69,6 +75,12 @@ class PassageNavigationTest {
     private fun awaitTag(tag: String) = compose.waitUntil(10_000) {
         compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
     }
+    private fun chooseChapterAndActualVerse(chapter:Int){
+        awaitTag("choose-chapter-$chapter");compose.onNodeWithTag("choose-chapter-$chapter").performClick()
+        awaitTag("choose-verse-1");compose.onNodeWithTag("choose-verse-1").performClick()
+        compose.waitUntil(10_000){compose.onAllNodes(hasTestTag("reader-choose-chapter") and hasText("Глава $chapter",substring=true)).fetchSemanticsNodes().isNotEmpty()}
+        compose.onNode(hasTestTag("verse-1") and isSelected()).assertIsDisplayed()
+    }
     private fun capture(name: String) {
         compose.waitForIdle()
         // Wait for the separate dialog window's SurfaceControl frame, not just Compose idleness.
@@ -83,12 +95,12 @@ class PassageNavigationTest {
         compose.onNodeWithTag("reader-choose-chapter").assertIsDisplayed().performClick()
         awaitTag("choose-chapter-5")
         capture("native-chapter-picker")
-        compose.onNodeWithTag("choose-chapter-5").performClick()
+        chooseChapterAndActualVerse(5)
         compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 5", substring = true)
         compose.onNodeWithTag("reader-choose-book").performClick()
         awaitTag("book-john")
         compose.onNodeWithTag("book-john").performClick()
-        compose.onNodeWithTag("choose-chapter-3").performClick()
+        chooseChapterAndActualVerse(3)
         compose.waitUntil(10_000) { compose.onAllNodesWithText("Текст john 3").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 3", substring = true)
         capture("native-direct-reader")
@@ -108,7 +120,7 @@ class PassageNavigationTest {
         compose.onNodeWithTag("picker-choose-book").performClick()
         compose.onNodeWithTag("book-search").performTextInput("john")
         compose.onNodeWithTag("book-john").performClick()
-        compose.onNodeWithTag("choose-chapter-1").performClick()
+        chooseChapterAndActualVerse(1)
         compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 1", substring = true)
     }
     @Test fun wideReaderKeepsDirectControlsAndChapterGrid() {
@@ -116,7 +128,7 @@ class PassageNavigationTest {
         compose.onNodeWithTag("reader-choose-book").assertIsDisplayed()
         compose.onNodeWithTag("reader-choose-chapter").performClick()
         awaitTag("choose-chapter-21")
-        compose.onNodeWithTag("choose-chapter-21").performClick()
+        chooseChapterAndActualVerse(21)
         compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 21", substring = true)
         capture("native-direct-reader-wide")
     }
@@ -126,7 +138,7 @@ class PassageNavigationTest {
         } }
         awaitTag("book-john")
         compose.onNodeWithTag("book-john").performClick()
-        compose.onNodeWithTag("choose-chapter-2").performClick()
+        chooseChapterAndActualVerse(2)
         compose.onNodeWithTag("reader-choose-chapter").assertTextContains("Глава 2", substring = true)
     }
     @Test fun slavonicBookNamesUseEditionFontInCatalogue() {

@@ -1,3 +1,4 @@
+import {isSourceAnnotations}from'./sourceAnnotations'
 import type {
   ApiEnvelope,
   BibleBook,
@@ -15,6 +16,7 @@ import type {
 } from './contracts'
 import { isCalendarMonth, normalizeCalendarAssets, normalizeCalendarMonthAssets, type CalendarGridDay } from './calendar'
 import { readCalendarState } from '@/offline/calendarMedia'
+import { createVerseLocationApi, type VerseLocation } from './verseLocations'
 
 export type ApiErrorKind = 'offline' | 'timeout' | 'http' | 'invalid-response'
 
@@ -34,6 +36,7 @@ export interface BibleApi {
   getLanguages(): Promise<LanguageSummary[]>
   getTranslations(language?: string): Promise<TranslationSummary[]>
   getBooks(translationCode: string): Promise<BibleBook[]>
+  getVerseLocations?(translationCode:string,osis:string[]):Promise<VerseLocation[]>
   getChapter(translationCode: string, bookSlug: string, chapter: number): Promise<BibleChapter>
   getPrayers(language?: string): Promise<PrayerSummary[]>
   getPrayer(id: number): Promise<PrayerDetail>
@@ -43,7 +46,7 @@ export interface BibleApi {
   getCalendarMonth(date: string, language?: string): Promise<CalendarGridDay[]>
   getCalendarIcon(id: number): Promise<CalendarIconDetail>
   getCalendarService(date: string, language: string): Promise<CalendarServicePlan>
-  searchVerses(query: string, translation: string, options?: { match?: 'partial' | 'phrase' | 'all_words'; scope?: 'all' | 'old' | 'new' | 'psalms'; offset?: number; limit?: number }): Promise<VerseSearchResponse>
+  searchVerses(query: string, translation: string, options?: { match?: 'exact_word' | 'forms' | 'partial' | 'phrase' | 'all_words' | 'strong'; scope?: 'all' | 'old' | 'new' | 'psalms'; offset?: number; limit?: number; book?: string }): Promise<VerseSearchResponse>
 }
 
 export interface ApiClientOptions {
@@ -119,10 +122,11 @@ export function createBibleApi(options: ApiClientOptions): BibleApi {
     },
     getChapter(translationCode, bookSlug, chapter) {
       return request<BibleChapter>(
-        `/translations/${encodeURIComponent(translationCode)}/books/${encodeURIComponent(bookSlug)}/chapters/${chapter}`,
+        `/translations/${encodeURIComponent(translationCode)}/books/${encodeURIComponent(bookSlug)}/chapters/${chapter}?annotations=1`,
         isBibleChapter,
       )
     },
+    getVerseLocations: createVerseLocationApi(options),
     getPrayers(language = 'ru') {
       return request<PrayerSummary[]>(`/prayers?language=${encodeURIComponent(language)}`, isPrayerList)
     },
@@ -173,8 +177,13 @@ export function createBibleApi(options: ApiClientOptions): BibleApi {
       const params = new URLSearchParams({ q: query, translation, limit: String(options.limit ?? 30) })
       if (options.match) params.set('match', options.match)
       if (options.scope) params.set('scope', options.scope)
+      if (options.book) params.set('book', options.book)
       if (options.offset !== undefined) params.set('offset', String(Math.max(0, options.offset)))
       return request<VerseSearchResponse>(`/search/verses?${params}`, (value): value is VerseSearchResponse => isRecord(value)
+        && (value.total === undefined || (Number.isSafeInteger(value.total) && Number(value.total)>=0))
+        && (value.has_more === undefined || typeof value.has_more==='boolean')
+        && (value.forms_fallback === undefined || (Array.isArray(value.forms_fallback)&&value.forms_fallback.every(code=>typeof code==='string')))
+        && (value.match === undefined || ['exact_word','forms','all_words','phrase','partial','strong','fuzzy'].includes(String(value.match)))
         && Array.isArray(value.results) && value.results.every((item) => isRecord(item)
           && typeof item.verse_id === 'number' && typeof item.reference === 'string'
           && isRecord(item.translation) && typeof item.translation.code === 'string'
@@ -252,6 +261,8 @@ function isBibleVerse(value: unknown): value is BibleChapter['verses'][number] {
     && typeof value.text === 'string'
     && typeof value.plain_text === 'string'
     && typeof value.has_strong_markup === 'boolean'
+    && (value.markup_format===undefined||['mybible','biblequote','legacy_html','unknown'].includes(String(value.markup_format)))
+    && (value.annotations===undefined||isSourceAnnotations(value.annotations,value.plain_text))
 }
 
 function isLanguageSummary(value: unknown): value is TranslationSummary['language'] {

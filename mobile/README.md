@@ -20,8 +20,15 @@ PWA.
   Multiplatform;
 - production API — `https://bible-desktop.com/api`.
 
-Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия:
-`0.1.2` (build 3).
+Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
+`0.1.3` (build 4).
+
+Android включает новые инструменты читалки, личные пометки, каталоги книг и
+словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
+Актуальные возможности и ограничения данных описаны в
+[READER_STUDY_AUDIT.md](../docs/READER_STUDY_AUDIT.md), форматы пакетов — в
+[OFFLINE_STUDY.md](../docs/OFFLINE_STUDY.md), выполненные проверки — в
+[PROJECT_STATUS.md](../PROJECT_STATUS.md). Этот этап не переносит новые экраны в iOS.
 
 Android debug имеет отдельный идентификатор `com.bibledesktop.myapp.debug`
 и название «Bible Desktop · Тест». Он не заменяет release-приложение и не
@@ -287,7 +294,7 @@ activity/Back, пустая глава, настоящее enqueue/cancel/re-enq
 
 ## Подготовка первой публикации Android
 
-Подготовлены версия **0.1.2 / versionCode 3**, пакет `com.bibledesktop.myapp`.
+Подготовлены версия **0.1.3 / versionCode 4**, пакет `com.bibledesktop.myapp`.
 Это новый Play-пакет, а не обновление прежней установки с другим сертификатом.
 Нельзя удалять прежнее приложение ради установки без отдельного решения о его данных.
 
@@ -303,7 +310,7 @@ Git или вместе с материалами магазина. При Play 
 Из корня проекта, в этом Windows-профиле:
 
 ```powershell
-./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 3 -VersionName '0.1.2'
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 4 -VersionName '0.1.3'
 ```
 
 Скрипт запускает shared host tests, release lint, AAB/APK build и проверки подписи,
@@ -321,7 +328,7 @@ Git или вместе с материалами магазина. При Play 
 Каждая следующая загрузка в Play требует большего `VersionCode`, даже если это
 другая тестовая сборка той же версии. Build не отправляет файлы в Console.
 
-16-КБ проверка: подписанный APK установлен и запущен на отдельных x86_64
+16-КБ проверка версии 0.1.3: подписанный APK установлен и запущен на отдельных x86_64
 API 37 эмуляторах с PAGE_SIZE 4096 и 16384; `pageSizeCompat=0`, без сбоев приложения.
 ZIP и ELF LOAD обеих 64-bit архитектур проходят. Конец RELRO встроенной
 `libandroidx.graphics.path.so` не кратен 16 КБ: скрипт **явно предупреждает**,
