@@ -3,6 +3,7 @@ import type { BibleApi } from '@/api/client'
 import type { CalendarDay, PrayerDetail } from '@/api/contracts'
 import type { DailyContentRepository, StoredCalendarDay, StoredPrayer } from '@/offline/dailyContentRepository'
 import { createDailyContentService } from './dailyContentService'
+import { apiBaseUrl } from '@/config/api'
 
 const prayer: PrayerDetail = {
   id: 1, language_code: 'ru', category: 'common', liturgy_key: null, title: 'Отче наш',
@@ -37,6 +38,23 @@ function api(): BibleApi {
 }
 
 describe('daily content service', () => {
+  it('retains the verified civil edition offline without changing legacy language or text', async () => {
+    const storage = repository()
+    const onlineApi = api()
+    onlineApi.getLiturgicalWorks = vi.fn(async () => [{ id: 1, slug: 'prayer-1', title: prayer.title, collections: ['prayers'], available_languages: ['cu-civil'], source_url: `${apiBaseUrl}/prayers/1`, editions: [{ code: 'civil', title: 'Civil', language: 'cu-civil', orthography: 'civil', reader_profile: 'full' }] }])
+    const online = await createDailyContentService(onlineApi, storage).openPrayer(1)
+    expect(online.data.text_edition).toEqual({ language: 'cu-civil', orthography: 'civil' })
+    expect(online.data.language_code).toBe('ru')
+    expect(online.data.body).toBe(prayer.body)
+    const offlineApi = api()
+    vi.mocked(offlineApi.getPrayer).mockRejectedValue(new Error('offline'))
+    expect((await createDailyContentService(offlineApi, storage).openPrayer(1)).data.text_edition).toEqual(online.data.text_edition)
+  })
+  it('keeps declared language and readable prayer when catalogue lookup fails', async () => {
+    const source = api()
+    source.getLiturgicalWorks = vi.fn(async () => { throw new Error('unavailable') })
+    expect((await createDailyContentService(source, repository()).openPrayer(1)).data).toEqual(prayer)
+  })
   it('enriches multiple day icons with their exact calendar record associations and caches them', async () => {
     const source = api()
     source.getCalendarDay = vi.fn(async () => ({ ...calendarDay, icons: [

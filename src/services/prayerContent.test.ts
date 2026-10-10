@@ -1,11 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { normalizePrayerText, prayerBlocks, prayerExcerpt } from './prayerContent'
-import { prayerEdition, prayerLanguageLabel } from './prayerEditions'
+import { linkedPrayerEdition, prayerEdition, prayerLanguageLabel, prayerTextPresentation } from './prayerEditions'
 import { ru } from '@/i18n/ru'
 import { de } from '@/i18n/de'
 import type { LiturgicalWorkSummary } from '@/api/contracts'
 
 describe('prayer presentation', () => {
+  const work: LiturgicalWorkSummary = { id: 4259, slug: 'prayer-5', title: 'Утренняя молитва', collections: ['prayers'], available_languages: ['cu-civil'], source_url: 'https://bible-desktop.com/api/prayers/5', editions: [{ code: 'civil', title: 'Prayer book', language: 'cu-civil', orthography: 'civil', reader_profile: 'full' }] }
+  it('uses the exact linked catalogue language, not the legacy language or interface', () => {
+    const edition = linkedPrayerEdition(5, [work], 'https://bible-desktop.com/api/')
+    expect(prayerTextPresentation({ language_code: 'ru', text_edition: edition })).toEqual({ language: 'cu-civil', civil: true, traditional: false })
+    expect(prayerTextPresentation({ language_code: 'ru' })).toEqual({ language: 'ru', civil: false, traditional: false })
+    expect(prayerTextPresentation({ language_code: 'cu' }).traditional).toBe(true)
+    expect(prayerTextPresentation({ language_code: 'cu', text_edition: { language: 'cu', orthography: 'civil-accented' } }).civil).toBe(true)
+  })
+  it('does not infer language from matching titles, unrelated sources or ambiguous editions', () => {
+    expect(linkedPrayerEdition(6, [work], 'https://bible-desktop.com/api')).toBeUndefined()
+    expect(linkedPrayerEdition(5, [{ ...work, source_url: 'https://foreign.test/api/prayers/5' }], 'https://bible-desktop.com/api')).toBeUndefined()
+    expect(linkedPrayerEdition(5, [{ ...work, editions: [...work.editions, { ...work.editions[0]!, language: 'ru' }] }], 'https://bible-desktop.com/api')).toBeUndefined()
+  })
   it('keeps paragraphs, rubrics and emphasis without any source image or link', () => {
     const blocks = prayerBlocks('<p><a href="https://foreign.test"><img src="https://foreign.test/icon.jpg"></a></p><p><em>Востав от сна</em></p><p>Во и́мя Отца́.</p><p><strong>Молитва мытаря<br><em>Лк. 18:13</em></strong></p>')
     expect(blocks).toHaveLength(3)

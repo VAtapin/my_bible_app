@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { PrayerDetail } from '@/api/contracts'
 import { bibleApi } from '@/api'
@@ -8,11 +8,13 @@ import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyC
 import { createDailyContentService } from '@/services/dailyContentService'
 import PrayerContent from '@/components/PrayerContent.vue'
 import { useI18n } from '@/i18n'
+import { prayerTextPresentation } from '@/services/prayerEditions'
 
 const route = useRoute()
 const service = createDailyContentService(bibleApi, createIndexedDbDailyContentRepository())
 const { messages: text } = useI18n()
 const prayer = ref<PrayerDetail>()
+const presentation = computed(() => prayer.value ? prayerTextPresentation(prayer.value) : undefined)
 const message = ref('')
 
 onMounted(async () => {
@@ -34,7 +36,7 @@ onMounted(async () => {
 
 <template>
   <MobileShell back-to="/prayers">
-    <article v-if="prayer" class="prayer-reading" :class="{ 'traditional-prayer': prayer.language_code === 'cu', 'civil-prayer': prayer.language_code === 'cu-civil' }" :lang="prayer.language_code.startsWith('cu') ? 'cu' : prayer.language_code">
+    <article v-if="prayer && presentation" class="prayer-reading" :class="{ 'traditional-prayer': presentation.traditional, 'civil-prayer': presentation.civil }" :lang="presentation.language.startsWith('cu') ? 'cu' : presentation.language">
       <h1>{{ prayer.title }}</h1>
       <PrayerContent v-if="prayer.intro" :content="prayer.intro" />
       <PrayerContent :content="prayer.body" />

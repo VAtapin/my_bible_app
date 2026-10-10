@@ -1,14 +1,22 @@
 import type { BibleApi } from '@/api/client'
-import type { CalendarDay, PrayerDetail } from '@/api/contracts'
+import type { CalendarDay } from '@/api/contracts'
 import type { DailyContentRepository } from '@/offline/dailyContentRepository'
 import { addCalendarDays } from './calendarDates'
+import { linkedPrayerEdition, type PresentedPrayer } from './prayerEditions'
+import { apiBaseUrl } from '@/config/api'
 
 export function createDailyContentService(api: BibleApi, repository: DailyContentRepository) {
   const iconMappings = new Map<number, string[]>()
   return {
-    async openPrayer(id: number): Promise<{ data: PrayerDetail; offline: boolean }> {
+    async openPrayer(id: number): Promise<{ data: PresentedPrayer; offline: boolean }> {
       try {
-        const data = await api.getPrayer(id)
+        const data: PresentedPrayer = { ...await api.getPrayer(id) }
+        try {
+          if (typeof api.getLiturgicalWorks === 'function') {
+            const edition = linkedPrayerEdition(id, await api.getLiturgicalWorks('prayers') ?? [], apiBaseUrl)
+            if (edition) data.text_edition = edition
+          }
+        } catch { /* A catalogue failure must not hide a prayer or guess its language. */ }
         await repository.putPrayer({ key: String(id), savedAt: new Date().toISOString(), data })
         return { data, offline: false }
       } catch (networkError) {
