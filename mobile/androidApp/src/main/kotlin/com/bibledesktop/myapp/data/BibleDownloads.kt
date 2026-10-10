@@ -119,6 +119,7 @@ internal class BibleDownloadEngine(
             progress(pack)
         }
         if(refreshPass!=null)store.write(bibleRefreshKey(code),BibleRefreshPass.serializer(),refreshPass.copy(finished=pack.complete,attempted=true))
+        if(pack.isInstalled)store.scheduleBibleSearch(code)
         return true
     }
 }

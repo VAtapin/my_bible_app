@@ -18,6 +18,7 @@ class LocalBibleSearchTest {
         val file=File(directory,"index.sqlite")
         val index=LocalBibleSearch(store,file)
         val codes=setOf(BundledBible.code)
+        assertTrue(index.prepare(BundledBible.code))
         val first=index.search(codes,"Бог",VerseSearchMatch.EXACT,VerseSearchScope.ALL)
         assertTrue(first.total>1000)
         assertEquals(50,first.results.size)
@@ -43,9 +44,9 @@ class LocalBibleSearchTest {
         val strong=index.search(codes,"H430",VerseSearchMatch.STRONG,VerseSearchScope.ALL)
         assertTrue(strong.total>0)
         assertEquals("Gen.1.1",strong.results.first().reference)
-        var rebuilt=false
-        val reopened=LocalBibleSearch(OfflineStore(File(directory,"content")),file).search(codes,"Бог",VerseSearchMatch.EXACT,VerseSearchScope.ALL){done,total->if(done<total)rebuilt=true}
-        assertFalse(rebuilt)
+        val stamp=file.lastModified()
+        val reopened=LocalBibleSearch(OfflineStore(File(directory,"content")),file).search(codes,"Бог",VerseSearchMatch.EXACT,VerseSearchScope.ALL)
+        assertEquals(stamp,file.lastModified())
         assertEquals(first,reopened)
         assertEquals(0,index.search(codes,"НеСуществующееСлово",VerseSearchMatch.EXACT,VerseSearchScope.ALL).total)
     }

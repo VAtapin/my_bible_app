@@ -18,7 +18,7 @@
     <string name="verse_search_find">Find</string>
     <string name="verse_search_total">Total matches</string>
     <string name="verse_search_missing">Missing source chapters</string>
-    <string name="verse_search_guide">Offline search in downloaded translations. The first search creates a local index. Exact words retain form and accents; phrases find consecutive words. Strong numbers require markers in the source text.</string>
+    <string name="verse_search_guide">Offline search in downloaded translations. The local index is prepared in the background after installation; search requests never create it. Exact words retain form and accents; phrases find consecutive words. Strong numbers require markers in the source text.</string>
     <string name="verse_search_invalid">Enter at least two characters; for Strong: H430 or G25. Select a translation.</string>
     <string name="verse_search_error">Search failed. Check the selected translation installation and try again.</string>
 </resources>

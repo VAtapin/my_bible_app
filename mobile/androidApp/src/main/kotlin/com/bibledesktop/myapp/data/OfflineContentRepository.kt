@@ -24,6 +24,7 @@ internal class OfflineContentRepository(
     constructor(context: Context) : this(BibleApiClient(), OfflineStore(context), { isConnected(context) }, { BundledBible.install(context) }) {
         studyPackages = StudyPackageStore(context)
         strongLanguage = context.getSharedPreferences("bible-desktop-native-profile", Context.MODE_PRIVATE).getString("uiLanguage", "ru") ?: "ru"
+        refreshScope.launch { try{BibleSearchIndexes.bootstrap(context.applicationContext)}catch(cancelled:CancellationException){throw cancelled}catch(_:Exception){ /* Startup discovery retries next process. */ } }
     }
     private var studyPackages: StudyPackageStore? = null
     private fun installedStudyLibrary() = studyPackages?.let(::InstalledStudyLibrary)

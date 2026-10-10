@@ -47,8 +47,10 @@ internal fun BibleSearchScreen(language: String, client: BibleContentSource, ini
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
     var invalid by remember { mutableStateOf(false) }
-    var indexed by remember { mutableIntStateOf(0) }
-    var indexTotal by remember { mutableIntStateOf(0) }
+    var indexReady by remember { mutableStateOf(false) }
+    var indexCurrent by remember { mutableStateOf(false) }
+    var waitingForIndex by remember { mutableStateOf(false) }
+    val indexText=searchIndexText(language)
     var run by remember { mutableStateOf<Job?>(null) }
     var generation by remember { mutableIntStateOf(0) }
     var resultQuery by remember { mutableStateOf(query) }
@@ -61,7 +63,7 @@ internal fun BibleSearchScreen(language: String, client: BibleContentSource, ini
         R.string.verse_search_scope,R.string.verse_search_book,R.string.verse_search_translations,R.string.verse_search_find,R.string.verse_search_total,
         R.string.verse_search_missing,R.string.verse_search_guide,R.string.verse_search_invalid,R.string.verse_search_error,R.string.verse_search_morphology,R.string.verse_search_morphology_hint).associateWith { localized(it, language) }
     val l: (Int) -> String = { strings.getValue(it) }
-    fun invalidate() { page=null;offset=0 }
+    fun invalidate() { page=null;offset=0;waitingForIndex=false }
     fun search(position: Int, restore: Boolean = false) {
         if (query.trim().length !in 2..500 || codes.isEmpty() || (match == VerseSearchMatch.STRONG && !Regex("[HG]\\d{1,5}",RegexOption.IGNORE_CASE).matches(query.trim()))) { invalid=true; return }
         if(match==VerseSearchMatch.MORPHOLOGY && editions.filter{it.code in codes}.any{it.language.code !in stemmingLanguages}) { invalid=true;return }
@@ -70,12 +72,13 @@ internal fun BibleSearchScreen(language: String, client: BibleContentSource, ini
         prefs.edit().putString("query", searching).putString("match",mode.name).putString("scope",area.name).putStringSet("codes",selected).putString("book",chosenBook).putInt("offset",position).apply()
         run=coroutine.launch {
             try {
-                page = index?.search(selected, searching, mode, area, chosenBook, position) { done, total -> indexed=done;indexTotal=total }
+                page = index?.search(selected, searching, mode, area, chosenBook, position)
                     ?: error("Search needs installed storage")
                 resultQuery=searching;resultMatch=mode
                 offset=position
                 if(restore) listState.scrollToItem(prefs.getInt("row",0),prefs.getInt("rowOffset",0)) else listState.scrollToItem(0)
             } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: BibleSearchIndexNotReady) { if(current==generation){indexReady=false;waitingForIndex=true;page=null} }
             catch (_: Exception) { if(current==generation)error=true }
             finally { if(current==generation)busy=false }
         }
@@ -85,8 +88,16 @@ internal fun BibleSearchScreen(language: String, client: BibleContentSource, ini
             editions=repository?.installedTranslations().orEmpty()
             codes=codes.filter { code -> editions.any { it.code==code } }.toSet().ifEmpty { editions.firstOrNull()?.let { setOf(it.code) }.orEmpty() }
             books=editions.firstOrNull()?.let { client.getBooks(it.code) }.orEmpty()
-            if (restoreOnOpen && codes.isNotEmpty()) search(offset,true)
+            if (restoreOnOpen && codes.isNotEmpty()) waitingForIndex=true
         } catch (_: Exception) { error=true }
+    }
+    LaunchedEffect(index,codes) {
+        while(isActive){
+            val status=index?.status(codes)
+            indexReady=status?.ready==true;indexCurrent=status?.current==true
+            if(indexReady&&waitingForIndex){waitingForIndex=false;search(offset,true)}
+            delay(1000)
+        }
     }
     DisposableEffect(Unit) { onDispose { prefs.edit().putInt("row",listState.firstVisibleItemIndex).putInt("rowOffset",listState.firstVisibleItemScrollOffset).apply() } }
     BackHandler(onBack=onBack)
@@ -105,8 +116,10 @@ internal fun BibleSearchScreen(language: String, client: BibleContentSource, ini
                         Text(edition.name,Modifier.padding(top=12.dp))
                     } }
                 } }
-                if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("$indexed / $indexTotal"); TextButton(onClick={run?.cancel()}){Text(l(R.string.note_cancel))} }
-                else Button(onClick={search(0)},modifier=Modifier.testTag("verse-search-submit")){Text(l(R.string.verse_search_find))}
+                if(!indexReady)Text(indexText.preparing,Modifier.testTag("verse-search-preparing"))
+                else if(!indexCurrent)Text(indexText.updating,Modifier.testTag("verse-search-index-updating"))
+                if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick={run?.cancel()}){Text(l(R.string.note_cancel))} }
+                else Button(onClick={search(0)},enabled=indexReady,modifier=Modifier.testTag("verse-search-submit")){Text(l(R.string.verse_search_find))}
                 Text(l(R.string.verse_search_guide),style=MaterialTheme.typography.bodySmall)
                 Text(l(R.string.verse_search_morphology_hint),style=MaterialTheme.typography.bodySmall)
                 if (invalid) Text(l(R.string.verse_search_invalid),color=MaterialTheme.colorScheme.error)

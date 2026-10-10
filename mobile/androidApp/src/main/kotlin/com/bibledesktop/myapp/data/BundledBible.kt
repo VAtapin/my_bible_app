@@ -48,6 +48,7 @@ internal object BundledBible {
                 store.write("books:$code", ListSerializer(BibleBook.serializer()), pack.books)
                 // Commit visibility last, so partial/cancelled copies are resumed rather than advertised as ready.
                 store.write(biblePackageKey(code), BiblePackage.serializer(), pack)
+                store.scheduleBibleSearch(code)
             }
         }
     }

@@ -13,7 +13,9 @@ import java.security.MessageDigest
 
 /** Durable content, outside Android's evictable cache and outside automatic cloud backup. */
 internal class OfflineStore(private val root: File) {
-    constructor(context: Context) : this(File(context.noBackupFilesDir, "offline-content-v1"))
+    constructor(context: Context) : this(File(context.noBackupFilesDir, "offline-content-v1")) { applicationContext=context.applicationContext }
+    private var applicationContext:Context?=null
+    internal suspend fun scheduleBibleSearch(code:String){applicationContext?.let{BibleSearchIndexes.enqueue(it,code)}}
     companion object {
         private val lock = Mutex()
         private val packageCodes = mutableMapOf<String, Set<String>>()
@@ -105,6 +107,7 @@ internal class OfflineStore(private val root: File) {
             keys.forEach { key -> val target=file(key,".json");require(target.canonicalFile.parentFile==root.canonicalFile);AtomicFile(target).delete() }
             packageCodes[root.absolutePath]?.let { packageCodes[root.absolutePath]=it-code }
         } }
+        applicationContext?.let{BibleSearchIndexes.remove(it,this,code)}
     }
 
     suspend fun image(url: String): File? = withContext(Dispatchers.IO) {

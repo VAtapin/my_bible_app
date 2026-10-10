@@ -18,7 +18,7 @@
     <string name="verse_search_find">Suchen</string>
     <string name="verse_search_total">Treffer gesamt</string>
     <string name="verse_search_missing">Fehlende Quellkapitel</string>
-    <string name="verse_search_guide">Offline-Suche in heruntergeladenen Übersetzungen. Die erste Suche erstellt einen lokalen Index. Exakte Wörter behalten Form und Akzente; Phrasen suchen aufeinanderfolgende Wörter. Strong-Nummern benötigen Markierungen im Quelltext.</string>
+    <string name="verse_search_guide">Offline-Suche in heruntergeladenen Übersetzungen. Der lokale Index wird nach der Installation im Hintergrund vorbereitet; Suchanfragen erstellen ihn nicht. Exakte Wörter behalten Form und Akzente; Phrasen suchen aufeinanderfolgende Wörter. Strong-Nummern benötigen Markierungen im Quelltext.</string>
     <string name="verse_search_invalid">Mindestens zwei Zeichen; für Strong: H430 oder G25. Übersetzung auswählen.</string>
     <string name="verse_search_error">Suche fehlgeschlagen. Installation der gewählten Übersetzung prüfen und erneut versuchen.</string>
 </resources>
