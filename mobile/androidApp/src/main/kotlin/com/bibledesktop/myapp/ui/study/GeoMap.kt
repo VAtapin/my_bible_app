@@ -35,7 +35,7 @@ import kotlinx.coroutines.withContext
  Column(Modifier.fillMaxSize().padding(12.dp)){
   Row{TextButton(onClick=onBack){Text(text.back)};Text(text.title,style=MaterialTheme.typography.titleLarge)}
   OutlinedTextField(query,{query=it;selected=null},label={Text(text.search)},modifier=Modifier.fillMaxWidth(),singleLine=true)
-  if(references.isNotEmpty()){Text(geoNumberingNotice(language));data?.let{Text(it.referenceSystem)};Row{Checkbox(filtered,{filtered=it;selected=null});Text(text.context)}}
+  if(references.isNotEmpty()){Row{Checkbox(filtered,{filtered=it;selected=null});Text(text.context)}}
   if(failed)Row{Text(text.error);TextButton(onClick={attempt++}){Text(text.retry)}}else if(data==null)CircularProgressIndicator()
   data?.let{atlas->
    GeoMap(atlas,available,selected,variants,journey,text,{place,location->selected=place;variants=variants+(place.id to location.id)},Modifier.fillMaxWidth().height(280.dp),language)
@@ -45,7 +45,7 @@ import kotlinx.coroutines.withContext
     selected?.let{place->item{Text(place.name,style=MaterialTheme.typography.titleLarge);Text(text.variants)};items(place.locations,key={"variant:${it.id}"}){location->OutlinedButton(onClick={variants=variants+(place.id to location.id)}){Text("${location.name.ifBlank{place.name}} · ${location.lat}, ${location.lon} · ${location.type}\n${location.score?.let{"${text.score}: $it"}?:text.unknown}")}};item{Text("${text.refs} (${place.verses.size}): ${place.verses.joinToString(" · ")}")}}
     if(available.isEmpty())item{Text(text.empty)}
     items(available,key={"place:${it.id}"}){place->TextButton(onClick={selected=place;place.locations.firstOrNull()?.let{variants=variants+(place.id to it.id)}}){Text("${place.name} · ${place.locations.size}\n${place.aliases.joinToString(" · ")}")}}
-    item{Text(text.sources,style=MaterialTheme.typography.titleLarge);Text(atlas.referenceSystem)}
+    item{Text(text.sources,style=MaterialTheme.typography.titleLarge)}
     items(atlas.sources,key={it.url}){source->Column{TextButton(onClick={context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(source.url)))}){Text(source.name)};TextButton(onClick={source.licenseUrl?.let{context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(it)))}}){Text(source.license)}}}
    }
   }

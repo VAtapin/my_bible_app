@@ -22,11 +22,18 @@ internal fun displayReferenceGroups(references:List<CrossReference>,sources:List
   map[key]=if(existing==null)group else existing.copy(source=(existing.source.split(" · ")+group.source).filter{it.isNotBlank()}.distinct().joinToString(" · "),type=listOf(existing.type,group.type).filter{it.isNotBlank()}.distinct().joinToString(" · "))
  };return map.values.toList()
 }
-internal fun referenceCopyText(group:ReferenceGroup,translation:String)="${group.label} · $translation${if(group.source.isNotBlank()) " · ${group.source}" else ""}\n"+group.targets.joinToString("\n"){"${it.verseNumber} ${(if(it.versification.verified)it.text else null)?.replace(Regex("<[^>]*>"),"")?.replace(Regex("\\b[HG]\\d{1,5}\\b"),"") ?: "—"}"}
+internal fun referenceCopyText(group:ReferenceGroup,translation:String,actualText:Map<String,String> = emptyMap()):String {
+ val body=group.targets.mapNotNull{target->
+  (actualText[target.osisRef] ?: referencePreviewText(target,""))
+   .takeIf{it.isNotBlank()}?.let{"${target.verseNumber} $it"}
+ }.joinToString("\n")
+ return "${group.label} · $translation" + if(body.isNotEmpty()) "\n$body" else ""
+}
+internal fun referenceSourceLabel(value:String)=value.split(" · ").filter { it.isNotBlank() && !Regex("(?:legacy_|[A-Za-z0-9]+_)[A-Za-z0-9_.-]*").matches(it) }.joinToString(" · ")
 internal data class ReferenceDisplayTexts(val compact:String,val list:String,val normal:String,val detail:String,val count:String,val copy:String,val copied:String)
 internal fun referenceDisplayTexts(language:String)=when(language){
- "ru"->ReferenceDisplayTexts("Значок с числом ссылок","Ссылки под стихом","Источники при чтении","Источники изучения","Связанные места","Копировать отрывок","Отрывок скопирован")
- "de"->ReferenceDisplayTexts("Symbol mit Verweiszahl","Verweise unter dem Vers","Quellen beim Lesen","Studienquellen","Verknüpfte Stellen","Abschnitt kopieren","Abschnitt kopiert")
- "uk"->ReferenceDisplayTexts("Значок із кількістю посилань","Посилання під віршем","Джерела під час читання","Джерела вивчення","Пов’язані місця","Копіювати уривок","Уривок скопійовано")
- else->ReferenceDisplayTexts("Icon with reference count","References below verses","Reading sources","Study sources","Linked passages","Copy passage","Passage copied")
+ "ru"->ReferenceDisplayTexts("Только текст стиха","Ссылки под стихом","Источники при чтении","Источники изучения","Связанные места","Копировать отрывок","Отрывок скопирован")
+ "de"->ReferenceDisplayTexts("Nur Verstext","Verweise unter dem Vers","Quellen beim Lesen","Studienquellen","Verknüpfte Stellen","Abschnitt kopieren","Abschnitt kopiert")
+ "uk"->ReferenceDisplayTexts("Лише текст вірша","Посилання під віршем","Джерела під час читання","Джерела вивчення","Пов’язані місця","Копіювати уривок","Уривок скопійовано")
+ else->ReferenceDisplayTexts("Verse text only","References below verses","Reading sources","Study sources","Linked passages","Copy passage","Passage copied")
 }

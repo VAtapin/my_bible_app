@@ -32,7 +32,7 @@ internal fun ReaderSettingsDialog(language: String, value: ReaderPreferences, on
             ReaderSwitch(text("separateVerses"),value.separateVerses) {onChange(value.copy(separateVerses=it))}
             ReaderSwitch(text("headings"),value.headings) {onChange(value.copy(headings=it))}
             ReaderSwitch(text("crossReferences"),value.crossReferences) {onChange(value.copy(crossReferences=it))}
-            TextButton(onClick={referenceStore.save(referenceSettings.copy(list=!referenceSettings.list))}) {Text(if(referenceSettings.list)referenceText.list else referenceText.compact)}
+            ReaderSwitch(referenceText.list,referenceSettings.list) {referenceStore.save(referenceSettings.copy(list=it))}
             ReaderSwitch(text("commentaryLinks"),value.commentaryLinks) {onChange(value.copy(commentaryLinks=it))}
             ReaderSwitch(text("footnotes"),value.footnotes) {onChange(value.copy(footnotes=it))}
             ReaderSwitch(text("strongNumbers"),value.strongNumbers) {onChange(value.copy(strongNumbers=it))}

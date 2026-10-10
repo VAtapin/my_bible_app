@@ -50,7 +50,6 @@ internal fun TemporaryStudyPassage(language: String, code: String, targets: List
         Surface(Modifier.fillMaxSize().padding(8.dp), shape = MaterialTheme.shapes.large) {
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().padding(12.dp)) { Text(labels.temporary, Modifier.weight(1f)); TextButton(onClick = onClose) { Text(labels.back) } }
-                ReferenceNumbering(language,targets)
                 if(assign!=null) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
                     FilterChip(selected=targetWindow == -1,onClick={targetWindow = -1},label={Text(windowLabels.separate)})
                     (0..1).forEach{id->FilterChip(selected=targetWindow == id,onClick={targetWindow=id},label={Text("${windowLabels.window} ${id+1}")})}

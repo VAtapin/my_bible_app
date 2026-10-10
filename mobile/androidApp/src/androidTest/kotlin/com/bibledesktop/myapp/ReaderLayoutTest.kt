@@ -76,16 +76,18 @@ class ReaderLayoutTest {
 
     @Test fun singleActionButtonKeepsShortVerseCompactAndAllActionsWork() {
         val short = chapter().copy(verses = listOf(BibleVerse(1, 1, "Gen.18.1", "Текст", "Текст")))
-        var bookmarks = 0; var shares = 0; var notes = 0
+        var bookmarks = 0; var shares = 0; var notes = 0; var study = 0
         compose.setContent { BibleDesktopTheme {
-            VerseRow("ru", short, short.verses.first(), 19f, false, { bookmarks++ }, { shares++ }, { notes++ })
+            VerseRow("ru", short, short.verses.first(), 19f, false, { bookmarks++ }, { shares++ }, { notes++ }, onStudy = { study++ })
         } }
         assertTrue(compose.onNodeWithTag("verse-1").getUnclippedBoundsInRoot().height < 80.dp)
-        listOf("Добавить закладку", "Поделиться стихом", "Заметка к стиху").forEach { title ->
+        compose.onAllNodes(hasText("↗", substring = true)).assertCountEquals(0)
+        compose.onAllNodes(hasText("▤", substring = true)).assertCountEquals(0)
+        listOf("Добавить закладку", "Поделиться стихом", "Заметка к стиху", "Изучить стих").forEach { title ->
             compose.onNodeWithContentDescription("Действия со стихом 1").performClick()
             compose.onNodeWithText(title).performClick()
         }
-        compose.runOnIdle { assertEquals(1, bookmarks); assertEquals(1, shares); assertEquals(1, notes) }
+        compose.runOnIdle { assertEquals(1, bookmarks); assertEquals(1, shares); assertEquals(1, notes); assertEquals(1, study) }
     }
 
     @Test fun bookmarkedVerseCanBeRemoved() {

@@ -64,11 +64,11 @@ class ReaderToolbarTest {
         open();screenshot("reader-toolbar-open.png")
         compose.onNodeWithTag("reader-tool-back").assertDoesNotExist()
         compose.onNodeWithTag("reader-tool-forward").assertDoesNotExist()
-        val ids=listOf("compare","downloads","search","commentary","settings","night","source","favorites","history")
+        val ids=listOf("compare","downloads","place","search","commentary","settings","night","source","favorites","history")
         ids.forEach{compose.onNodeWithTag("reader-tool-$it").assertIsDisplayed()}
         assertEquals(bounds,compose.onNodeWithTag("continuous-reader").getUnclippedBoundsInRoot());assertEquals(before,place)
         compose.onNodeWithTag("reader-tool-close").performClick();compose.onNodeWithTag("reader-tools-popup").assertDoesNotExist()
-        ids.filterNot{it=="commentary"}.forEach{id->open();compose.onNodeWithTag("reader-tool-$id").performClick();compose.onNodeWithTag("reader-tools-popup").assertDoesNotExist();assertEquals(id,actions.last())}
+        ids.filterNot{it=="commentary"}.forEach{id->open();compose.onNodeWithTag("reader-tool-$id").performClick();compose.onNodeWithTag("reader-tools-popup").assertDoesNotExist();assertEquals(if(id=="place")"chapter"else id,actions.last())}
         open();compose.onNodeWithTag("reader-tool-commentary").performClick();compose.onNodeWithTag("reader-tools-popup").assertDoesNotExist()
         compose.waitUntil(10000){commentaryRequests>0}
     }

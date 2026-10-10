@@ -21,7 +21,6 @@ import java.net.URI
  var passage by remember{mutableStateOf<ResolvedStudyReference?>(null)};var failed by remember{mutableStateOf(false)}
  Column{
   if(annotations.links.isNotEmpty())Text(labels[0],style=MaterialTheme.typography.titleSmall)
-  if(annotations.links.any{it.kind=="bible"})Text(labels[3])
   annotations.links.forEach{link->
    val target=if(link.kind=="bible"&&link.bookSlug!=null&&(link.chapter?:0)>0&&(link.verse?:0)>0)DictionaryReference(requireNotNull(link.bookSlug),link.chapter,link.verse,link.verse)else null
    val external=if(link.kind=="external")runCatching{URI(link.href).takeIf{it.scheme.equals("https",true)&&!it.host.isNullOrBlank()&&it.userInfo==null}}.getOrNull()else null

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bibledesktop.myapp.ui.bible.*
 import com.bibledesktop.myapp.ui.daily.PrayersScreen
@@ -71,7 +72,11 @@ class PassageNavigationTest {
             }
         }
         awaitTag("reader-choose-chapter")
-        compose.onNodeWithTag("reader-choose-book").assertTextEquals("Выбрать книгу")
+        compose.onNodeWithTag("reader-choose-book").assertTextEquals("Бытие")
+        val bookBounds=compose.onNodeWithTag("reader-choose-book").getUnclippedBoundsInRoot()
+        val chapterBounds=compose.onNodeWithTag("reader-choose-chapter").getUnclippedBoundsInRoot()
+        assertEquals("Book and chapter belong to the same compact header",bookBounds.top.value+bookBounds.height.value/2,chapterBounds.top.value+chapterBounds.height.value/2,3f)
+        compose.onNodeWithText("Выбрать книгу").assertDoesNotExist()
     }
     private fun awaitTag(tag: String) = compose.waitUntil(10_000) {
         compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
@@ -107,6 +112,31 @@ class PassageNavigationTest {
         capture("native-direct-reader")
         assertEquals("john", preferences.getString("lastBookSlug", null))
         assertEquals(3, preferences.getInt("lastChapter", 0))
+    }
+    @Test fun toolbarPlaceActionUsesExistingGridAndDigitalPickerAndNavigatesActualVerse() {
+        reader()
+        compose.onNodeWithTag("reader-tool-open").performClick()
+        compose.onNodeWithTag("reader-tool-place").performClick()
+        compose.onNodeWithTag("reader-tools-popup").assertDoesNotExist()
+        awaitTag("choose-chapter-18")
+        compose.onNodeWithTag("choose-chapter-18").performClick()
+        awaitTag("verse-grid")
+        compose.onNodeWithText("Глава:стих").performClick()
+        awaitTag("picker-digital-position")
+        compose.onNodeWithTag("picker-digital-position").performTextReplacement("19:1")
+        compose.onNodeWithTag("picker-digital-go").performClick()
+        compose.waitUntil(10_000){compose.onAllNodes(hasTestTag("reader-choose-chapter") and hasText("Глава 19",substring=true)).fetchSemanticsNodes().isNotEmpty()}
+        compose.onNode(hasTestTag("verse-1") and isSelected()).assertIsDisplayed()
+        compose.onNodeWithTag("reader-tool-open").performClick()
+        compose.onNodeWithTag("reader-tool-place").performClick()
+        awaitTag("choose-chapter-20")
+        compose.onNodeWithTag("choose-chapter-20").performClick()
+        awaitTag("picker-digital-position")
+        compose.onNodeWithText("Сетка").performClick()
+        awaitTag("verse-grid")
+        compose.onNodeWithTag("choose-verse-1").performClick()
+        compose.waitUntil(10_000){compose.onAllNodes(hasTestTag("reader-choose-chapter") and hasText("Глава 20",substring=true)).fetchSemanticsNodes().isNotEmpty()}
+        assertEquals(20,preferences.getInt("lastChapter",0))
     }
     @Test fun dismissKeepsPassageAndBookCanChangeFromChapterGrid() {
         reader()

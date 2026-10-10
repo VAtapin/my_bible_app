@@ -40,7 +40,6 @@ import com.bibledesktop.shared.api.PersonalStudy
 import com.bibledesktop.shared.api.explicitSourceStrongTokens
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.delay
-import com.bibledesktop.myapp.ui.study.InlineVerseCommentaries
 import com.bibledesktop.myapp.ui.study.InlineVerseReferences
 
 @Composable
@@ -128,7 +127,7 @@ internal fun VerseRow(
     }
     val rangeBookmarks = personal.bookmarks.filter { it.passage.contains(chapter, verse) }
     val rangeSelected = selection?.contains(chapter, verse) == true
-    Row(Modifier.fillMaxWidth().padding(vertical = if(display.separateVerses)6.dp else 0.dp).testTag("verse-${verse.number}")
+    Row(Modifier.fillMaxWidth().padding(vertical = if(display.separateVerses)2.dp else 0.dp).testTag("verse-${verse.number}")
         .semantics { selected = highlighted || rangeSelected }
         .background(if (highlighted || rangeSelected) LightBlue else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(8.dp))
         .then(if (onPersonal != null) Modifier.combinedClickable(onClick = {}, onLongClick = onPersonal) else Modifier),
@@ -141,8 +140,7 @@ internal fun VerseRow(
             CompositionLocalProvider(LocalSourceAnnotationLanguage provides language){SourceVerseText(verse,if(body.isBlank()) androidx.compose.ui.text.AnnotatedString(localized(R.string.catalog_verse_missing,language))else markedBody,display,
                 androidx.compose.ui.text.TextStyle(color=MaterialTheme.colorScheme.onSurface,fontFamily=readingFont(chapter.translation.language.code),fontSize=fontSize.sp,lineHeight=(fontSize*display.lineHeight).sp),wordNotes=personal.marks.filter{it.matches(chapter.translation.code,verse)},onWordNote={wordNote=it},onStrong={number->if(onStrong!=null)onStrong(number)else onStudy?.invoke()})}
         }
-        if(display.commentaryLinks&&onStudy!=null)InlineVerseCommentaries(language,chapter,verse,onStudy)
-        if(display.crossReferences&&onStudy!=null)InlineVerseReferences(language,chapter,verse,onStudy)
+        if(display.crossReferences && onStudy!=null)InlineVerseReferences(language,chapter,verse,onStudy)
         }
         if(!display.clean)Box {
             IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {

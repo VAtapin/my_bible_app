@@ -2,6 +2,7 @@ package com.bibledesktop.myapp.ui.reading
 
 import android.text.Html
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -14,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bibledesktop.myapp.R
@@ -27,14 +30,18 @@ internal fun readingText(html: String): String =
 
 @Composable
 internal fun ReadingHeader(title: String, language: String, onBack: () -> Unit, onHome: () -> Unit,
-    titleFont: androidx.compose.ui.text.font.FontFamily = ReadingSerif, actions: @Composable () -> Unit = {}) {
+    titleFont: androidx.compose.ui.text.font.FontFamily = ReadingSerif,
+    titleAction: (() -> Unit)? = null, titleModifier: Modifier = Modifier,
+    actions: @Composable () -> Unit = {}) {
     Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, localized(R.string.action_back, language), tint = Navy)
         }
-        Text(title, Modifier.weight(1f).padding(horizontal = 4.dp), color = Ink,
-            fontFamily = titleFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(title, Modifier.weight(1f).padding(horizontal = 4.dp).then(titleModifier)
+            .then(if(titleAction!=null)Modifier.clickable(role=Role.Button,onClickLabel=localized(R.string.bible_choose_book,language),onClick=titleAction)else Modifier), color = Ink,
+            fontFamily = titleFont, fontSize = if(titleAction!=null)16.sp else 20.sp, fontWeight = FontWeight.Bold,
+            maxLines=if(titleAction!=null)1 else Int.MAX_VALUE,overflow=TextOverflow.Ellipsis)
         actions()
         IconButton(onClick = onHome) {
             Icon(Icons.Outlined.Home, localized(R.string.reader_home, language), tint = Navy)

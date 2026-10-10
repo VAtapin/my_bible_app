@@ -124,7 +124,6 @@ internal fun ComparisonPane(language: String, primary: BibleChapter, catalog: Li
             FilterChip(enabled=!previewActive,selected = panes, onClick = {rowSource=rowCurrent;rowVerse=currentVerse;rowOffset=currentOffset; panes = true; preferences.edit().putBoolean("comparePanes", true).apply() },
                 label = { Text(localized(R.string.compare_panes, language)) }, modifier = Modifier.weight(1f).testTag("compare-panes"))
         }
-        Text(localized(R.string.compare_numbering, language), Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall)
         if (panes) ReaderWindows(language, rowSource, code, catalog, source, fontSize, rowVerse, Modifier.weight(1f),
             bookmarks, onBookmark, onShare, onNote, onStudy, ::observed, {paneCommands=it},
             onPair = { chapter, otherCode, verse -> activeId=windowPreferences.getInt("active",0).coerceIn(0,1);rowSource = chapter; rowCode = otherCode; rowVerse = verse;rowOffset=currentOffset },

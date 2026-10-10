@@ -88,30 +88,17 @@ internal fun VerseStudy(language: String, chapter: BibleChapter, verse: BibleVer
         if (referenceError) StudyError(language) { retry++ }
         else if (references == null) CircularProgressIndicator(Modifier.size(24.dp))
         else if (references!!.references.isEmpty()) Text(localized(R.string.study_no_references, language))
-        val sources = references?.references?.mapNotNull { it.source }?.distinct().orEmpty()
+        val sources = references?.references?.mapNotNull { it.source }?.distinct().orEmpty().filter { referenceSourceLabel(it).isNotBlank() }
         Text(referenceText.detail)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(selected = referenceSettings.detailSources == null, onClick = { referenceStore.save(referenceSettings.copy(detailSources=null)) }, label = { Text(labels.all) })
-            sources.forEach { source -> FilterChip(selected = referenceSettings.detailSources==null||source in referenceSettings.detailSources, onClick = { referenceStore.save(referenceSettings.copy(detailSources=toggledReferenceSources(referenceSettings.detailSources,source,sources))) }, label = { Text(source) }) }
+            sources.forEach { source -> FilterChip(selected = referenceSettings.detailSources==null||source in referenceSettings.detailSources, onClick = { referenceStore.save(referenceSettings.copy(detailSources=toggledReferenceSources(referenceSettings.detailSources,source,sources))) }, label = { Text(referenceSourceLabel(source)) }) }
             FilterChip(selected = referenceSettings.bySource, onClick = { referenceStore.save(referenceSettings.copy(bySource=!referenceSettings.bySource)) }, label = { Text(labels.sources) })
         }
         val groups = displayReferenceGroups(references?.references.orEmpty(),referenceSettings.detailSources, books.mapNotNull { it.canonicalBook?.osisCode?.let { code -> code to it.order } }.toMap())
             .let { if (referenceSettings.bySource) it.sortedBy(ReferenceGroup::source) else it }
-        if(references!=null)Text("${referenceText.count}: ${groups.size}")
-        groups.forEach { group ->
-            Card {
-                Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(group.label, style = MaterialTheme.typography.titleMedium)
-                    ReferenceNumbering(language,group.targets)
-                    if (group.source.isNotBlank()) Text("${group.source} · ${group.type}", style = MaterialTheme.typography.labelSmall)
-                    Text(chapter.translation.name,style=MaterialTheme.typography.labelSmall)
-                    group.targets.forEach { target -> SelectionContainer { Text("${target.verseNumber} ${referencePreviewText(target,localized(R.string.study_missing_text, language))}", fontFamily = readingFont(chapter.translation.language.code), fontSize = 18.sp, lineHeight = 27.sp) } }
-                    TextButton(onClick = { if (onTemporary != null) onTemporary(group) else onOpen(group.targets.first()) }, modifier = Modifier.testTag("reference-${group.targets.first().osisRef}")) {
-                        Text(localized(R.string.bookmark_open, language))
-                    }
-                    TextButton(onClick={(context.getSystemService(Context.CLIPBOARD_SERVICE)as ClipboardManager).setPrimaryClip(ClipData.newPlainText(group.label,referenceCopyText(group,chapter.translation.name)))}) {Text(referenceText.copy)}
-                }
-            }
+        ReferencePassageCards(language, chapter, groups, client) { group ->
+            if (onTemporary != null) onTemporary(group) else onOpen(group.targets.first())
         }
         Text(localized(R.string.study_strong, language), style = MaterialTheme.typography.titleMedium)
         if(selectedStrong!=null)StrongArticle(language,chapter,verse.id,client,selectedStrong!!)

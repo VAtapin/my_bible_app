@@ -526,6 +526,7 @@ internal fun ChapterScreen(
         val tools=listOf(
             ReaderToolAction("compare",text(if(comparing)R.string.compare_close else R.string.compare_open,language),Icons.Outlined.ViewColumn,onCompare),
             ReaderToolAction("downloads",text(R.string.bible_library_title,language),Icons.Outlined.Download,onDownloads),
+            ReaderToolAction("place",readerControlText(language,"digital")+" / "+readerControlText(language,"visual"),Icons.Outlined.GridOn,onChooseChapter),
             ReaderToolAction("search",text(R.string.verse_search_title,language),Icons.Outlined.Search,onSearch),
             ReaderToolAction("commentary",text(R.string.study_commentaries,language),Icons.Outlined.MenuBook,{showingCommentaries=!showingCommentaries}),
             ReaderToolAction("settings",readerControlText(language,"settings"),Icons.Outlined.Tune,onSettings),
@@ -534,16 +535,17 @@ internal fun ChapterScreen(
             ReaderToolAction("favorites",readerControlText(language,"favorites"),Icons.Outlined.FavoriteBorder,onTranslations),
             ReaderToolAction("history",readerControlText(language,"history"),Icons.Outlined.History,onHistory),
         )
-        ReadingHeader(title, language, onBack, onHome, com.bibledesktop.myapp.ui.theme.readingFont(textLanguage)) {
+        val headerSource=comparisonSource ?: (state as? LoadState.Ready)?.value
+        val headerVerse=if(comparisonSource!=null)comparisonVerse else visibleFirst
+        ReadingHeader(headerSource?.book?.name ?: title, language, onBack, onHome,
+            com.bibledesktop.myapp.ui.theme.readingFont(textLanguage),titleAction=onChooseBook,
+            titleModifier=Modifier.testTag("reader-choose-book")) {
+            androidx.compose.material3.TextButton(onClick=onChooseChapter,
+                modifier=Modifier.testTag("reader-choose-chapter"),
+                contentPadding=androidx.compose.foundation.layout.PaddingValues(horizontal=4.dp)) {
+                Text(text(R.string.bible_chapter, language, chapterNumber)+(if(headerVerse>0)":$headerVerse"else "")+" ▾",fontSize=14.sp,maxLines=1)
+            }
             ReaderToolbar(toolbarOpen,{toolbarOpen=it},tools,text(R.string.nav_more,language),readerControlText(language,"close"))
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            androidx.compose.material3.OutlinedButton(onClick = onChooseBook, modifier = Modifier.weight(1f).testTag("reader-choose-book")) {
-                Text(text(R.string.bible_choose_book, language))
-            }
-            androidx.compose.material3.OutlinedButton(onClick = onChooseChapter, modifier = Modifier.testTag("reader-choose-chapter")) {
-                Text(text(R.string.bible_chapter, language, chapterNumber) + " ▾")
-            }
         }
 
         when (state) {

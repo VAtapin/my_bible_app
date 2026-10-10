@@ -23,7 +23,7 @@
   Первый веб-выпуск c029ee6 опубликован SSH-чатом: build/HTTP/SW и реальное открытие Деяния 6:13 прошли.
 
 
-- Android 0.1.7/code 8: область чтения использует всю доступную ширину с
+- Android 0.1.8/code 9: область чтения использует всю доступную ширину с
   полями 8–10 dp; Библия, молитвы и статьи без прежнего ограничения 840 dp.
   Настройки — компактные строки «галочка + подпись», пустые поля источника
   скрыты. Убраны только кнопки истории назад/вперёд из панели инструментов.
@@ -34,9 +34,7 @@
   выбранного дня; Close/Back сохраняет дату и прокрутку. Сохраняются все
   нормализованные части отрывков и фактические главы перевода; неизвестные
   координаты не угадываются. Значок поста следует опубликованным цветам API.
-  Android 0.1.7 — предыдущая проверенная сборка; последующие уточнения о
-  компактных ссылках/удалении диагностики и кнопке сетки входят в готовящийся
-  выпуск 0.1.8, который ещё не считается собранным.
+  Android 0.1.8: одна компактная шапка с выбором книги/главы/стиха, Back/Home и инструментами; отдельная полоса выбора убрана. Сетка и цифровой переход используют существующий picker. Отдельные счётчики убраны; optional ссылки 12sp с промежутками 2/8dp. Карточки показывают реальный текст выбранной редакции по точному OSIS/ID независимо от наличия данных сопоставления; недоступные скрыты. Технических подписей нет. 39/39 Android tests, lintDebug/lintRelease, подписи/APK/AAB/ZIP/ELF LOAD прошли; 65 shared host tests переиспользованы Gradle для неизменённого модуля. APK установлен поверх 0.1.7, cold start API37 x86_64 успешен, crash buffer пуст. APK/AAB и SHA256 в mobile/README.md; физический ARM64/16KB/Play не проверены.
 
 - Веб-читалка: панель инструментов скрыта по умолчанию; кнопка с иконкой в
   заголовке или однопальцевый свайп вниз из верхних 24 px приложения открывает
@@ -346,15 +344,6 @@
 
 ## Последний связанный commit
 
-- Последний завершённый большой блок: 087cb6f — Complete reader and offline study tools for web and Android.
-- Последняя отдельная правка молитв: fc86cda — Resolve prayer fonts from verified edition metadata.
-- Офлайн-комплекты: 27708d1 — Add unified offline study bundles for web and Android.
-- Веб-панель: 0b317be — Hide reader tools behind an icon panel and top-edge pull.
-- Android-панель: 3e78060 — Hide Android reader actions behind a gesture and icon panel.
-- Фоновый поиск: 43ed6d9 — Build Bible search indexes in background installation workers.
-- Очередь индекса: d4b2d66 — Preserve index jobs across installation and concurrent repair.
-- Календарный клиент: 8f83190 — Select calendar text editions automatically in web and Android.
-- Предыдущий выпуск: c67cbfc — Prepare Android 0.1.5 with reader and calendar improvements.
-- Молитвенный каталог: 860e441 — Adopt reviewed prayer catalog in web and Android.
-- Android 0.1.7: cd7beda — Release Android 0.1.7 with reader and calendar fixes.
-- Текущий веб-выпуск: Complete full-width web reading and calendar dialogs (hash в Git).
+- Веб-читалка: c029ee6 — Complete full-width web reading and calendar dialogs (production проверен SSH).
+- Компактная веб-шапка: a32b563 — Compact the reader header and align selected study context (отправлен SSH для публикации).
+- Android 0.1.8: Release Android 0.1.8 with compact reader and real reference text (hash в Git).
