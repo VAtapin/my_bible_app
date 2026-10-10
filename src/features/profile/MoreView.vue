@@ -28,9 +28,9 @@ const items = [
     <h1 class="compact-page-title">{{ text.appearance.settingsTitle }}</h1>
     <div class="module-list">
       <RouterLink to="/help" class="module-card available"><span class="module-icon"><img src="/app-icons/setup.png" alt="" /></span><strong>{{readerHelpMessages[language].title}}</strong></RouterLink>
-      <RouterLink to="/atlas" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{geographyMessages[language].title}}</strong></RouterLink>
+      <RouterLink to="/atlas" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{dictionaryMessages[language].maps}}</strong></RouterLink>
       <RouterLink to="/study-downloads" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ studyPackagesMessages[language].title }}</strong></RouterLink>
-      <RouterLink to="/dictionaries" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ dictionaryMessages[language].title }}</strong></RouterLink>
+      <RouterLink to="/dictionaries" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ dictionaryMessages[language].dictionaries }}</strong></RouterLink>
       <RouterLink to="/storage?tab=study" class="module-card available"><span class="module-icon"><img src="/app-icons/bookmarks.png" alt="" /></span><strong>{{ personalStudyMessages[language].library }}</strong></RouterLink>
       <RouterLink to="/search" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ text.readerActions.search }}</strong></RouterLink>
       <RouterLink to="/books" class="module-card available"><span class="module-icon"><img src="/app-icons/library.png" alt="" /></span><strong>{{ studyMessages[language].books }}</strong></RouterLink>

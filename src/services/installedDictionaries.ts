@@ -2,16 +2,17 @@ import type { DictionaryArticle, DictionaryModule, DictionaryPage } from '@/api/
 import { installedStudyPackages, studyPackageFile, packageTable } from './studyPackages'
 import { installedStudyPackage, studyPackageRows, studyPackageArticle } from './studyPackageLookup'
 const numericId = (value:unknown) => { if(typeof value!=='number'||!Number.isSafeInteger(value)||value<=0)throw new Error('Package API alias unavailable');return value }
+const revision = (pack: Awaited<ReturnType<typeof installedStudyPackage>>) => pack && (typeof pack.metadata.content_version==='string' ? pack.metadata.content_version : typeof pack.metadata.source_archive_sha256==='string' ? pack.metadata.source_archive_sha256 : pack.manifest.version)
 export async function installedDictionaryModules():Promise<DictionaryModule[]> {
- return (await installedStudyPackages()).filter(p=>p.manifest.kind==='dictionary').map(p=>({code:p.manifest.id,name:String(p.metadata.name??p.manifest.id),language_code:typeof p.metadata.language_code==='string'?p.metadata.language_code:null,kind:Number(p.metadata.media_count)>0?'atlas':Number(p.metadata.entries_count)===0?'word_forms':'articles',content_version:typeof p.metadata.source_archive_sha256==='string'?p.metadata.source_archive_sha256:p.manifest.version,entries_count:Number(p.metadata.entries_count??0),media_count:Number(p.metadata.media_count??0),word_forms_count:Number(p.metadata.word_forms_count??0)}))
+ return (await installedStudyPackages()).filter(p=>p.manifest.kind==='dictionary').map(p=>({code:p.manifest.id,name:String(p.metadata.name??p.manifest.id),language_code:typeof p.metadata.language_code==='string'?p.metadata.language_code:null,kind:Number(p.metadata.media_count)>0?'atlas':Number(p.metadata.entries_count)===0?'word_forms':'articles',content_version:revision(p)??p.manifest.version,entries_count:Number(p.metadata.entries_count??0),media_count:Number(p.metadata.media_count??0),word_forms_count:Number(p.metadata.word_forms_count??0)}))
 }
 export async function installedDictionaryEntries(code:string,q:string,offset:number):Promise<DictionaryPage|undefined> {
  const pack=await installedStudyPackage(code);if(pack?.manifest.kind!=='dictionary')return undefined
  const page=await studyPackageRows(pack,'entries.jsonl',{query:q,offset,limit:30})
  return{total:page.total,data:page.rows.map(row=>({id:numericId(row.api_id),key:String(row.id),topic:String(row.topic)}))}
 }
-export async function installedDictionaryArticle(code:string,key:string):Promise<DictionaryArticle|undefined> {
- const pack=await installedStudyPackage(code);if(pack?.manifest.kind!=='dictionary')return undefined
+export async function installedDictionaryArticle(code:string,key:string,expectedVersion?:string|null):Promise<DictionaryArticle|undefined> {
+ const pack=await installedStudyPackage(code);if(pack?.manifest.kind!=='dictionary'||expectedVersion&&revision(pack)!==expectedVersion)return undefined
  const data=await studyPackageArticle(pack,key);if(!data)throw new Error('Installed article unavailable')
  const mediaLinks=await studyPackageRows(pack,'media_links.jsonl',{entry:key,limit:Number.MAX_SAFE_INTEGER}),media:DictionaryArticle['media']=[]
  for(const link of mediaLinks.rows){const row=(await studyPackageRows(pack,'media.jsonl',{id:String(link.media_id),limit:1})).rows[0];if(row){const id=numericId(row.api_id);media.push({id,fragment_id:String(row.fragment_id),url:`/api/dictionaries/${encodeURIComponent(code)}/media/${id}`})}}
@@ -19,8 +20,8 @@ export async function installedDictionaryArticle(code:string,key:string):Promise
  for(const link of data.links){const target=(await studyPackageRows(pack,'entries.jsonl',{id:String(link.target_id),limit:1})).rows[0];if(target)links.push({label:String(link.label??''),key:String(target.id),topic:String(target.topic)})}
  return{id:numericId(data.article.api_id),key:String(data.article.id),topic:String(data.article.topic),body:String(data.article.body),media,links,references:data.references.map(r=>({book_slug:String(r.book_slug),book_osis:typeof r.book_osis === 'string'?r.book_osis:null,chapter_number:r.chapter===null?null:Number(r.chapter),verse_from:r.verse_from===null?null:Number(r.verse_from),verse_to:r.verse_to===null?null:Number(r.verse_to)}))}
 }
-export async function installedDictionaryImage(code:string,apiId:number) {
- const pack=await installedStudyPackage(code);if(pack?.manifest.kind!=='dictionary')return undefined
+export async function installedDictionaryImage(code:string,apiId:number,expectedVersion?:string|null) {
+ const pack=await installedStudyPackage(code);if(pack?.manifest.kind!=='dictionary'||expectedVersion&&revision(pack)!==expectedVersion)return undefined
  for await(const row of await packageTable(pack,'media.jsonl'))if(row.api_id===apiId&&typeof row.path==='string'){const file=await studyPackageFile(pack,row.path);return file?new Blob([file],{type:String(row.mime_type)}):undefined}
  return undefined
 }

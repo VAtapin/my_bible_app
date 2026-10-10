@@ -76,6 +76,7 @@ fun MoreScreen(
     onOpenBooks: () -> Unit = {},
     onSearch: () -> Unit = {},
     onDictionaries: () -> Unit = {},
+    onAtlases: () -> Unit = onDictionaries,
     onPersonalStudy: () -> Unit = {},
     onStudyDownloads: () -> Unit = {},
 ) {
@@ -83,8 +84,6 @@ fun MoreScreen(
     var showingAbout by rememberSaveable { mutableStateOf(false) }
     var showingHelp by rememberSaveable {mutableStateOf(false)}
     if(showingHelp){ReaderHelpScreen(language,{showingHelp=false});return}
-    var showingAtlas by rememberSaveable{mutableStateOf(false)}
-    if(showingAtlas){com.bibledesktop.myapp.ui.study.GeoAtlasScreen(language,{showingAtlas=false});return}
     if (showingAbout) {
         AboutScreen(language, onBack = { showingAbout = false }, onHome = onBack)
         return
@@ -124,7 +123,7 @@ fun MoreScreen(
                 SettingsCard(language, onSettings)
             }
             item { androidx.compose.material3.OutlinedButton(onClick={showingHelp=true},modifier=Modifier.fillMaxWidth()){Text(readerHelpTitle(language))} }
-            item { androidx.compose.material3.OutlinedButton(onClick={showingAtlas=true},modifier=Modifier.fillMaxWidth()){Text(com.bibledesktop.myapp.ui.study.geoTexts(language).title)} }
+            item { androidx.compose.material3.OutlinedButton(onClick=onAtlases,modifier=Modifier.fillMaxWidth()){Text(com.bibledesktop.myapp.ui.study.dictionaryTexts(language).maps)} }
             item { androidx.compose.material3.OutlinedButton(onClick = { showingAbout = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(localText(R.string.about_title, language))
             } }

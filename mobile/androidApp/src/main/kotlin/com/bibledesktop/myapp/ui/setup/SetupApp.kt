@@ -181,6 +181,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             },
         )
     }
+    var atlasMode by rememberSaveable { mutableStateOf(false) }
     var libraryReturn by rememberSaveable { mutableStateOf(Route.Home) }
     var installedTranslations by remember { mutableStateOf<List<TranslationSummary>>(emptyList()) }
     var chooseBiblePassage by rememberSaveable { mutableStateOf(false) }
@@ -342,7 +343,8 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             language = language,
             onOpenBooks = { route = Route.Books },
             onSearch = { route = Route.Search },
-            onDictionaries = { route = Route.Dictionaries },
+            onDictionaries = { atlasMode=false; route = Route.Dictionaries },
+            onAtlases = { atlasMode=true; route = Route.Dictionaries },
             onPersonalStudy = { route = Route.PersonalStudy },
             onStudyDownloads = { route = Route.StudyDownloads },
             onBack = { route = Route.Home },
@@ -371,7 +373,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
                 route = Route.Bible
             })
         Route.Books -> com.bibledesktop.myapp.ui.study.BooksScreen(language, client, onBack = { route = Route.More })
-        Route.Dictionaries -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More })
+        Route.Dictionaries -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More }, atlasOnly=atlasMode)
         Route.StudyDownloads -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More }, downloads = true)
         Route.PersonalStudy -> com.bibledesktop.myapp.ui.bible.PersonalStudyLibrary(language, onBack = { route = Route.More }, onOpen = { passage ->
             preferences.edit().putString("lastTranslation", passage.translationCode).putString("lastBookSlug", passage.bookSlug)

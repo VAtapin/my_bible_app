@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 /** Scripture links use the canonical catalogue, never an edition-specific guessed slug. */
 @Composable internal fun DictionaryLibrary(language: String, client: BibleContentSource, savedCode: String,
-    onBack: () -> Unit, initialModule: String? = null, initialEntry: String? = null, downloads: Boolean = false, initialQuery: String = "") {
+    onBack: () -> Unit, initialModule: String? = null, initialEntry: String? = null, downloads: Boolean = false, initialQuery: String = "",atlasOnly:Boolean=false) {
     val scope = rememberCoroutineScope()
     var targets by remember { mutableStateOf<List<ReferenceTarget>?>(null) }
     var code by remember { mutableStateOf(savedCode) }
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
         } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { failed = true } }
     }
     if (downloads) StudyDownloadsScreen(language, onBack, onReference = openReference)
-    else DictionariesScreen(language, onBack, initialModule, initialEntry, onReference = openReference, initialQuery = initialQuery)
+    else DictionariesScreen(language, onBack, initialModule, initialEntry, onReference = openReference, initialQuery = initialQuery,atlasOnly=atlasOnly)
     targets?.let { TemporaryStudyPassage(language, code, it, client) { targets = null } }
     if (failed) AlertDialog(onDismissRequest = { failed = false }, text = { Text(studyTexts(language).missing) },
         confirmButton = { TextButton(onClick = { failed = false }) { Text(localized(R.string.study_close, language)) } })

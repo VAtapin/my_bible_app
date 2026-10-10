@@ -12,4 +12,8 @@ describe('dictionary contract', () => {
     expect(dictionaryMediaUrl('https://bible-desktop.com/api', 'BMaps', 2, '/api/dictionaries/BMaps/media/2')).toBe('https://bible-desktop.com/api/dictionaries/BMaps/media/2')
     for (const url of ['https://evil.test/api/dictionaries/BMaps/media/2', '/api/dictionaries/Other/media/2', '/api/dictionaries/BMaps/media/2?token=secret', 'javascript:alert(1)']) expect(() => dictionaryMediaUrl('https://bible-desktop.com/api', 'BMaps', 2, url)).toThrow()
   })
+  it('separates restored images in HTTP caches without accepting untrusted URL parameters',()=>{
+    expect(dictionaryMediaUrl('https://bible-desktop.com/api','BMaps',2,'/api/dictionaries/BMaps/media/2','hash-media-v2')).toBe('https://bible-desktop.com/api/dictionaries/BMaps/media/2?v=hash-media-v2')
+    expect(()=>dictionaryMediaUrl('https://bible-desktop.com/api','BMaps',2,'/api/dictionaries/BMaps/media/2?token=secret','hash-media-v2')).toThrow()
+  })
 })

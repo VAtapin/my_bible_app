@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.9` (build 10).
+`0.1.10` (build 11).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -316,7 +316,24 @@ activity/Back, пустая глава, настоящее enqueue/cancel/re-enq
 
 ## Подготовка первой публикации Android
 
-Подготовлены версия **0.1.9 / versionCode 10**, пакет `com.bibledesktop.myapp`.
+Актуальный выпуск 0.1.10/code11 объединяет встроенный атлас и опубликованные
+источники в «Атласы». Изображения открываются нажатием на весь экран;
+pan/zoom ограничены областью карты. Пустые связанные кнопки скрыты,
+старые офлайн-пакеты не перекрывают восстановленную content_version.
+Загрузка HTTP-карт разделена по опубликованной версии после проверки адреса.
+Проверки:4/4 встроенного атласа +4/4 настоящего JPEG/UI/revision +1/1 через
+настоящий опубликованный API, lintDebug/lintRelease, подписанные APK/AAB,
+non-debuggable/ZIP/ELF LOAD PASS. Неизменённые65 shared host tests — Gradle cache.
+Подписанный APK установлен поверх0.1.9, cold start API37x86_64 успешен,
+crash buffer пуст. Физический ARM64/16KB и Play не проверены;
+прежнее предупреждение ELF RELRO сохраняется.
+Восстановление остальных серверных карт и офлайн-ZIP выполняет SSH-чат.
+
+Файлы: `androidApp/build/outputs/verified/0.1.10/`:
+APK SHA256 `D8A11673851D64AC423B4DFA8E57D42E3E0F1A240E547330BA4D62D9F015869E`;
+AAB SHA256 `6F84D1A9B9A47E3F7A8FA61E85148238941E9577E8731B2C194BAA11B28667D8`.
+
+Подготовлены версия **0.1.10 / versionCode 11**, пакет `com.bibledesktop.myapp`.
 Это новый Play-пакет, а не обновление прежней установки с другим сертификатом.
 Нельзя удалять прежнее приложение ради установки без отдельного решения о его данных.
 
@@ -332,7 +349,7 @@ Git или вместе с материалами магазина. При Play 
 Из корня проекта, в этом Windows-профиле:
 
 ```powershell
-./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 10 -VersionName '0.1.9'
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 11 -VersionName '0.1.10'
 ```
 
 Скрипт запускает shared host tests, release lint, AAB/APK build и проверки подписи,

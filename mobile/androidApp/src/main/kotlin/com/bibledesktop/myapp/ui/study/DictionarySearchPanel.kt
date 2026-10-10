@@ -12,11 +12,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.bibledesktop.myapp.data.DictionaryRepository
+import com.bibledesktop.myapp.data.DictionaryReadingSource
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 
-@Composable internal fun DictionarySearchPanel(language:String,initialQuery:String,repository:DictionaryRepository,onOpen:(String,String)->Unit) {
+@Composable internal fun DictionarySearchPanel(language:String,initialQuery:String,repository:DictionaryReadingSource,onOpen:(String,String)->Unit) {
  val text=dictionaryTexts(language)
  val heading=when(language){"de"->"In installierten Wörterbüchern suchen";"uk"->"Пошук у встановлених словниках";"en"->"Search installed dictionaries";else->"Поиск по установленным словарям"}
  var modules by remember { mutableStateOf(emptyList<DictionaryModule>()) };var chosen by rememberSaveable { mutableStateOf(emptyList<String>()) }

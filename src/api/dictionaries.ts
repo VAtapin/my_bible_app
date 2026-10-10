@@ -12,10 +12,11 @@ export const isDictionaryArticle = (v: unknown): v is DictionaryArticle => isDic
   && Array.isArray(v.links) && v.links.every(l => record(l) && typeof l.label === 'string' && typeof l.topic === 'string' && typeof l.key === 'string' && /^[a-f0-9]{40}$/.test(l.key))
   && Array.isArray(v.references) && v.references.every(r => record(r) && typeof r.book_slug === 'string' && [r.chapter_number, r.verse_from, r.verse_to].every(n => n === null || count(n)))
 const page = (v: unknown): v is DictionaryPage => record(v) && count(v.total) && Array.isArray(v.data) && v.data.every(isDictionaryTopic)
-export function dictionaryMediaUrl(base: string, code: string, id: number, url: string): string {
+export function dictionaryMediaUrl(base: string, code: string, id: number, url: string, version?: string | null): string {
   const expected = `/api/dictionaries/${encodeURIComponent(code)}/media/${id}`
   const resolved = new URL(url, base), origin = new URL(base)
   if (resolved.origin !== origin.origin || resolved.pathname !== expected || resolved.search || resolved.hash) throw new Error('Invalid dictionary image')
+  if (version) resolved.searchParams.set('v',version)
   return resolved.href
 }
 export function createDictionaryApi(options: ApiClientOptions) {

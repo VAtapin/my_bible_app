@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.bibledesktop.myapp.data.DictionaryRepository
+import com.bibledesktop.myapp.data.DictionaryReadingSource
+import androidx.compose.ui.platform.testTag
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -22,23 +24,25 @@ import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 
-@Composable internal fun DictionariesScreen(language: String, onBack: () -> Unit, initialModule: String? = null, initialEntry: String? = null, initialQuery:String="", onReference: ((DictionaryReference) -> Unit)? = null) {
+@Composable internal fun DictionariesScreen(language: String, onBack: () -> Unit, initialModule: String? = null, initialEntry: String? = null, initialQuery:String="", onReference: ((DictionaryReference) -> Unit)? = null, atlasOnly:Boolean=false, repositoryOverride:DictionaryReadingSource?=null) {
     val context = LocalContext.current; val text = dictionaryTexts(language)
     val preferences = remember { context.getSharedPreferences("dictionary-reading", Context.MODE_PRIVATE) }
-    val repository = remember { DictionaryRepository(context) }
+    val repository = remember(repositoryOverride) { repositoryOverride ?: DictionaryRepository(context) }
     DisposableEffect(repository) { onDispose { repository.close() } }
-    var code by rememberSaveable { mutableStateOf(initialModule ?: preferences.getString("module", "") ?: "") }
-    var key by rememberSaveable { mutableStateOf(initialEntry ?: preferences.getString("entry", "") ?: "") }
+    var code by rememberSaveable { mutableStateOf(initialModule ?: if(atlasOnly)"" else preferences.getString("module", "") ?: "") }
+    var key by rememberSaveable { mutableStateOf(initialEntry ?: if(atlasOnly)"" else preferences.getString("entry", "") ?: "") }
     var query by rememberSaveable { mutableStateOf(initialQuery) }; var submitted by rememberSaveable { mutableStateOf(initialQuery) }
-    var offset by rememberSaveable { mutableIntStateOf(0) }; var maps by rememberSaveable { mutableStateOf(false) }
+    var offset by rememberSaveable { mutableIntStateOf(0) }; var maps by rememberSaveable { mutableStateOf(atlasOnly) }
+    var builtin by rememberSaveable { mutableStateOf(false) }
     var articleHistory by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var modules by remember { mutableStateOf(emptyList<DictionaryModule>()) }; var page by remember { mutableStateOf<DictionaryPage?>(null) }; var article by remember { mutableStateOf<DictionaryArticle?>(null) }
     var forms by remember { mutableStateOf(emptyList<DictionaryWordForm>()) }; var images by remember { mutableStateOf(emptyMap<Long, File>()) }
+    var imageFailures by remember { mutableStateOf(emptySet<Long>()) }; var imageRetry by remember { mutableIntStateOf(0) }
     var busy by remember { mutableStateOf(false) }; var failed by remember { mutableStateOf(false) }; var retry by remember { mutableIntStateOf(0) }
     val listState = rememberLazyListState()
     fun positionKey() = "$code:${modules.firstOrNull { it.code == code }?.version}:$key:$submitted:$offset"
     fun openArticle(target: String) { if(key.isNotEmpty()) articleHistory = articleHistory + key; key = target }
-    fun back() { when { articleHistory.isNotEmpty() -> { key = articleHistory.last(); articleHistory = articleHistory.dropLast(1) }; key.isNotEmpty() -> key = ""; code.isNotEmpty() -> { code = ""; offset = 0 }; else -> onBack() } }
+    fun back() { when { articleHistory.isNotEmpty() -> { key = articleHistory.last(); articleHistory = articleHistory.dropLast(1) }; key.isNotEmpty() -> key = ""; code.isNotEmpty() -> { code = ""; offset = 0 }; maps&&!atlasOnly -> maps=false; else -> onBack() } }
     BackHandler { back() }
     LaunchedEffect(code, key, offset, submitted, retry) {
         busy = true; failed = false; article = null; page = null; images = emptyMap(); forms = emptyList()
@@ -51,26 +55,43 @@ import kotlinx.serialization.json.jsonObject
             }
         } catch (e: CancellationException) { throw e } catch (_: Exception) { failed = true } finally { busy = false }
     }
-    LaunchedEffect(article) { article?.media?.forEach { media -> try { images = images + (media.id to repository.image(code, media, modules.firstOrNull { it.code == code }?.version)) } catch (e: CancellationException) { throw e } catch (_: Exception) { /* Text remains available when its image cannot load. */ } } }
+    LaunchedEffect(article,imageRetry) {
+        imageFailures=emptySet()
+        article?.media?.forEach { media -> try {
+            images=images+(media.id to repository.image(code,media,modules.firstOrNull{it.code==code}?.version))
+        } catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){imageFailures=imageFailures+media.id} }
+    }
+    if(builtin){GeoAtlasScreen(language,{builtin=false});return}
+
+    LaunchedEffect(maps){if(code.isEmpty())listState.scrollToItem(0)}
     LaunchedEffect(article, page) { if(article != null || page != null) listState.scrollToItem(preferences.getInt("row:${positionKey()}", 0).coerceAtLeast(0), preferences.getInt("scroll:${positionKey()}", 0).coerceAtLeast(0)) }
     LaunchedEffect(code, key, submitted, offset, modules) { snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }.collectLatest { (row, scroll) -> delay(180); if(!busy) preferences.edit().putInt("row:${positionKey()}", row).putInt("scroll:${positionKey()}", scroll).apply() } }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), state = listState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item { Row { TextButton(onClick = { back() }) { Text(text.back) }; Text(text.title, style = MaterialTheme.typography.titleLarge) } }
+        item { Row { TextButton(onClick = { back() }) { Text(text.back) }; Text(if(maps)text.maps else text.title, style = MaterialTheme.typography.titleLarge) } }
         if(busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         if(failed) item { Text(text.error); Button(onClick = { retry++ }) { Text(text.retry) } }
         if(code.isEmpty()) {
-            item { DictionarySearchPanel(language, initialQuery, repository) { module, entry -> code=module;key=entry;offset=0 } }
-            item { FilterChip(selected = maps, onClick = { maps = !maps }, label = { Text(if(maps) text.maps else text.all) }) }
-            items(modules.filter { !maps || it.media > 0 }, key = { it.code }) { module -> OutlinedButton(onClick = { code = module.code; key = ""; offset = 0; submitted = query }, modifier = Modifier.fillMaxWidth()) { Text("${studySourceName(module.name)} · ${module.entries}") } }
+            if(!maps)item { DictionarySearchPanel(language, initialQuery, repository) { module, entry -> code=module;key=entry;offset=0 } }
+            if(!atlasOnly)item { FilterChip(selected=maps,onClick={maps=!maps},label={Text(text.maps)}) }
+            if(maps)item { OutlinedButton(onClick={builtin=true},modifier=Modifier.fillMaxWidth().testTag("atlas-builtin")){Text(geoTexts(language).title)} }
+
+            items(modules.filter { (it.kind=="atlas")==maps }, key = { it.code }) { module -> OutlinedButton(onClick = { code = module.code; key = ""; offset = 0; submitted = query }, modifier = Modifier.fillMaxWidth().testTag("dictionary-module-${module.code}")) { Text("${studySourceName(module.name)} · ${module.entries}") } }
         } else {
             item { Text(studySourceName(modules.firstOrNull { it.code == code }?.name.orEmpty()), style = MaterialTheme.typography.titleMedium) }
             modules.firstOrNull { it.code == code }?.let { module -> item { ModuleSourceCard(language,Json.encodeToJsonElement(DictionaryModule.serializer(),module).jsonObject,module.version) } }
             if(article != null) {
                 val body = article!!
-                item { Text(studySourceName(body.topic), style = MaterialTheme.typography.titleLarge); Text(studyReadingText(body.body)) }
-                items(body.media, key = { it.id }) { media -> images[media.id]?.let { AtlasImage(it, body.topic, language) } }
-                if(body.links.isNotEmpty()) item { Text(text.links) }
-                itemsIndexed(body.links, key = { index, link -> "${link.key}:$index" }) { _, link -> TextButton(onClick = { openArticle(link.key) }) { Text(link.label.ifBlank { link.topic }) } }
+                item { Text(studySourceName(body.topic), style=MaterialTheme.typography.titleLarge);studyReadingText(body.body).takeIf{it.isNotBlank()}?.let{Text(it)} }
+                if(modules.firstOrNull{it.code==code}?.kind=="atlas"&&body.media.isEmpty()&&studyReadingText(body.body).isBlank())item { Text(text.error);TextButton(onClick={retry++}){Text(text.retry)} }
+
+                items(body.media,key={it.id}){media->
+                    val file=images[media.id]
+                    if(file!=null)AtlasImage(file,studySourceName(body.topic),language,onRetry={images=images-media.id;imageRetry++})
+                    else if(media.id in imageFailures)Column{Text(text.error);TextButton(onClick={imageRetry++},modifier=Modifier.testTag("atlas-download-retry-${media.id}")){Text(text.retry)}}
+                    else LinearProgressIndicator(Modifier.fillMaxWidth())
+                }
+                if(readableDictionaryLinks(body.links).isNotEmpty()) item { Text(text.links) }
+                itemsIndexed(readableDictionaryLinks(body.links), key = { index, link -> "${link.key}:$index" }) { _, link -> TextButton(onClick = { openArticle(link.key) }) { Text(studySourceName(link.label).ifBlank { studySourceName(link.topic) }) } }
                 items(body.references) { ref ->
                     val label = "${ref.book} ${ref.chapter ?: ""}${ref.first?.let { ":$it${ref.last?.takeIf { n -> n != ref.first }?.let { n -> "–$n" } ?: ""}" } ?: ""}"
                     if(onReference != null) TextButton(onClick = { onReference(ref) }) { Text(label) } else Text(label)
@@ -78,10 +99,12 @@ import kotlinx.serialization.json.jsonObject
             } else {
                 item { OutlinedTextField(query, { query = it.take(120) }, label = { Text(text.search) }); Button(onClick = { submitted = query; offset = 0; retry++ }) { Text(text.search) } }
                 items(forms) { form -> TextButton(onClick={query=form.standard;submitted=form.standard;offset=0;retry++}) { Text(form.standard) } }
-                items(page?.data.orEmpty(), key = { it.key }) { topic -> OutlinedButton(onClick = { openArticle(topic.key) }, modifier = Modifier.fillMaxWidth()) { Text(studySourceName(topic.topic)) } }
+                items(page?.data.orEmpty(), key = { it.key }) { topic -> OutlinedButton(onClick = { openArticle(topic.key) }, modifier = Modifier.fillMaxWidth().testTag("dictionary-entry-${topic.key}")) { Text(studySourceName(topic.topic)) } }
                 item { Row { TextButton(onClick = { offset = (offset - 30).coerceAtLeast(0) }, enabled = offset > 0) { Text(text.back) }; Text("${offset + (page?.data?.size ?: 0)} / ${page?.total ?: 0}"); TextButton(onClick = { offset += page?.data?.size ?: 0 }, enabled = page?.let { offset + it.data.size < it.total } == true) { Text(text.next) } } }
             }
         }
         item { Text(text.offline, style = MaterialTheme.typography.bodySmall) }
     }
 }
+
+internal fun readableDictionaryLinks(links:List<DictionaryLink>)=links.filter { Regex("[a-f0-9]{40}").matches(it.key) && (studySourceName(it.label).isNotBlank() || studySourceName(it.topic).isNotBlank()) }

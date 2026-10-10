@@ -1,0 +1,7 @@
+Captured public source fixture, 2026-10-10:
+https://bible-desktop.com/api/dictionaries/MB_DICT_9E9E6475510E/entries/cdd7620cb1d4632b7b679252e8a3fb96e54517d0
+https://bible-desktop.com/api/dictionaries/MB_DICT_9E9E6475510E/media/578
+JPEG: HTTP200 image/jpeg, 278115 bytes,1202x818.
+SHA256:4dfdf0fc6bcc2a1acbc0575194cdf9e7ae5a89d7f36ea404c79982b1d7d67204
+The fixture is used only to verify decoding and the existing native atlas reader.
+Catalog metadata in the test is bounded fixture metadata; it does not claim public module totals.
