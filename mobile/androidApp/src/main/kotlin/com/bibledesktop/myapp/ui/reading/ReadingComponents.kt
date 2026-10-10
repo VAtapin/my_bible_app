@@ -51,13 +51,14 @@ internal fun ReadingViewport(modifier: Modifier = Modifier, content: @Composable
 }
 
 @Composable
-internal fun PrayerReadingContent(prayer: PrayerDetail, fontSize: Float) {
+internal fun PrayerReadingContent(prayer: PrayerDetail, fontSize: Float, interfaceLanguage:String="ru") {
     val intro = remember(prayer.intro) { prayer.intro?.let(::readingText)?.takeIf(String::isNotBlank) }
-    val body = remember(prayer.body) { readingText(prayer.body) }
+    val body = remember(prayer.body,prayer.plainText) { prayer.plainText ?: readingText(prayer.body) }
     SelectionContainer {
         Column(Modifier.padding(horizontal = 22.dp, vertical = 18.dp)) {
             intro?.let {
-                Text(it, color = PrimaryBlue, fontFamily = ReadingSerif, fontSize = 16.sp, lineHeight = 24.sp)
+                if(prayer.canonicalSlug!=null)Text(com.bibledesktop.myapp.ui.daily.prayerCatalogTexts(interfaceLanguage).description,color=PrimaryBlue,fontWeight=FontWeight.Bold)
+                Text(it, Modifier.testTag("prayer-description"), color = PrimaryBlue, fontFamily = ReadingSerif, fontSize = 16.sp, lineHeight = 24.sp)
                 Spacer(Modifier.height(16.dp))
             }
             Text(body, Modifier.testTag("prayer-body"), color = Ink, fontFamily = readingFont(prayer.languageCode),

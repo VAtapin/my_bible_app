@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { BibleApi } from '@/api/client'
+import {ApiError} from '@/api/client'
 import type { CalendarDay, PrayerDetail } from '@/api/contracts'
 import type { DailyContentRepository, StoredCalendarDay, StoredPrayer } from '@/offline/dailyContentRepository'
 import { createDailyContentService } from './dailyContentService'
@@ -47,7 +48,7 @@ describe('daily content service', () => {
     expect(online.data.language_code).toBe('ru')
     expect(online.data.body).toBe(prayer.body)
     const offlineApi = api()
-    vi.mocked(offlineApi.getPrayer).mockRejectedValue(new Error('offline'))
+    vi.mocked(offlineApi.getPrayer).mockRejectedValue(new ApiError('offline','offline'))
     expect((await createDailyContentService(offlineApi, storage).openPrayer(1)).data.text_edition).toEqual(online.data.text_edition)
   })
   it('keeps declared language and readable prayer when catalogue lookup fails', async () => {
@@ -82,7 +83,7 @@ describe('daily content service', () => {
     const storage = repository()
     await storage.putPrayer({ key: '1', savedAt: '2026-09-18', data: prayer })
     const offlineApi = api()
-    vi.mocked(offlineApi.getPrayer).mockRejectedValue(new Error('offline'))
+    vi.mocked(offlineApi.getPrayer).mockRejectedValue(new ApiError('offline','offline'))
 
     const result = await createDailyContentService(offlineApi, storage).openPrayer(1)
 

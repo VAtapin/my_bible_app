@@ -10,6 +10,7 @@ import type {
   LiturgicalWorkSummary,
   LiturgicalWorkVersion,
   PrayerDetail,
+  PrayerCatalog,
   PrayerSummary,
   TranslationSummary,
   VerseSearchResponse,
@@ -18,6 +19,7 @@ import { isCalendarMonth, normalizeCalendarAssets, normalizeCalendarMonthAssets,
 import { readCalendarState } from '@/offline/calendarMedia'
 import {isAutomaticCalendarPlan,automaticCalendarPolicy,type AutomaticCalendarPlan} from './automaticCalendar'
 import { createVerseLocationApi, type VerseLocation } from './verseLocations'
+import { isPrayerCatalog, isPrayerMetadata } from './prayerCatalog'
 
 export type ApiErrorKind = 'offline' | 'timeout' | 'http' | 'invalid-response'
 
@@ -40,7 +42,9 @@ export interface BibleApi {
   getVerseLocations?(translationCode:string,osis:string[]):Promise<VerseLocation[]>
   getChapter(translationCode: string, bookSlug: string, chapter: number): Promise<BibleChapter>
   getPrayers(language?: string): Promise<PrayerSummary[]>
-  getPrayer(id: number): Promise<PrayerDetail>
+  getPrayerCatalog?(language?: string): Promise<PrayerCatalog>
+  getPrayer(id: number, language?: string): Promise<PrayerDetail>
+  getLiturgicalWork?(slug: string): Promise<LiturgicalWorkSummary>
   getLiturgicalWorks(collection: string): Promise<LiturgicalWorkSummary[]>
   getLiturgicalVersion(slug: string, language: string, edition?: string): Promise<LiturgicalWorkVersion>
   getCalendarDay(date: string, language?: string, profile?: 'typikon-strict' | 'parish'): Promise<CalendarDay>
@@ -107,6 +111,10 @@ export function createBibleApi(options: ApiClientOptions): BibleApi {
   const transport = createApiRequest(options)
   const request = async <T>(path: string, validate: (data: unknown) => data is T): Promise<T> =>
     (await transport<ApiEnvelope<T>>(path, (payload): payload is ApiEnvelope<T> => isEnvelope(payload) && validate(payload.data))).data
+  const getLiturgicalWork = (slug: string) => request<LiturgicalWorkSummary>(
+    `/liturgical/works/${encodeURIComponent(slug)}`,
+    (value): value is LiturgicalWorkSummary => isLiturgicalWork(value) && (value.slug === slug || value.legacy_slugs?.includes(slug) === true),
+  )
   return {
     getLanguages() {
       return request<LanguageSummary[]>('/languages', isLanguageList)
@@ -129,23 +137,38 @@ export function createBibleApi(options: ApiClientOptions): BibleApi {
       )
     },
     getVerseLocations: createVerseLocationApi(options),
-    getPrayers(language = 'ru') {
-      return request<PrayerSummary[]>(`/prayers?language=${encodeURIComponent(language)}`, isPrayerList)
+    async getPrayers(language = 'ru') {
+      return (await transport<PrayerCatalog>(`/prayers?language=${encodeURIComponent(language)}`,
+        (payload): payload is PrayerCatalog => isPrayerCatalog(payload, isPrayerSummary))).data
     },
-    getPrayer(id) {
-      return request<PrayerDetail>(`/prayers/${id}`, isPrayerDetail)
+    getPrayerCatalog(language = 'ru') {
+      return transport<PrayerCatalog>(`/prayers?language=${encodeURIComponent(language)}`,
+        (payload): payload is PrayerCatalog => isPrayerCatalog(payload, isPrayerSummary))
     },
+    async getPrayer(id, language) {
+      const payload = await transport<ApiEnvelope<PrayerDetail>>(`/prayers/${id}${language ? `?language=${encodeURIComponent(language)}` : ''}`,
+        (payload): payload is ApiEnvelope<PrayerDetail> => isEnvelope(payload) && isPrayerDetail(payload.data)
+          && isRecord(payload.data) && isRecord(payload) && (payload.catalog_version === undefined || payload.catalog_version === 2 && isPrayerMetadata(payload.data, true))
+          && payload.data.id === id
+          && (!language || payload.data.language_code === language))
+      return payload.data
+    },
+    getLiturgicalWork,
     getLiturgicalWorks(collection) {
       return request<LiturgicalWorkSummary[]>(
         `/liturgical/works?collection=${encodeURIComponent(collection)}`,
         isLiturgicalWorkList,
       )
     },
-    getLiturgicalVersion(slug, language, edition) {
-      return request<LiturgicalWorkVersion>(
+    async getLiturgicalVersion(slug, language, edition) {
+      const version = await request<LiturgicalWorkVersion>(
         `/liturgical/works/${encodeURIComponent(slug)}/versions/${encodeURIComponent(language)}${edition ? `?edition=${encodeURIComponent(edition)}` : ''}`,
-        isLiturgicalWorkVersion,
+        (value): value is LiturgicalWorkVersion => isLiturgicalWorkVersion(value) && value.language === language && (!edition || value.edition === edition),
       )
+      if (version.slug !== slug && version.slug !== (await getLiturgicalWork(slug)).slug) {
+        throw new ApiError('invalid-response', 'API вернуло редакцию другого произведения.')
+      }
+      return version
     },
     async getCalendarDay(date, language = 'ru', profile = 'typikon-strict') {
       const query = new URLSearchParams({ date, lang: language, profile })
@@ -288,11 +311,7 @@ function isNullableString(value: unknown): value is string | null {
   return typeof value === 'string' || value === null
 }
 
-function isPrayerList(value: unknown): value is PrayerSummary[] {
-  return Array.isArray(value) && value.every(isPrayerSummary)
-}
-
-function isPrayerSummary(value: unknown): value is PrayerSummary {
+export function isPrayerSummary(value: unknown): value is PrayerSummary {
   return isRecord(value)
     && typeof value.id === 'number'
     && typeof value.language_code === 'string'
@@ -301,10 +320,11 @@ function isPrayerSummary(value: unknown): value is PrayerSummary {
     && typeof value.title === 'string'
     && isNullableString(value.short_title)
     && isNullableString(value.intro)
-    && typeof value.excerpt === 'string'
+    && isNullableString(value.excerpt)
+    && isPrayerMetadata(value)
 }
 
-function isPrayerDetail(value: unknown): value is PrayerDetail {
+export function isPrayerDetail(value: unknown): value is PrayerDetail {
   return isRecord(value)
     && typeof value.id === 'number'
     && typeof value.language_code === 'string'
@@ -316,10 +336,21 @@ function isPrayerDetail(value: unknown): value is PrayerDetail {
     && typeof value.body === 'string'
     && isNullableString(value.source_url)
     && Array.isArray(value.sections)
+    && (value.plain_text === undefined || isNullableString(value.plain_text))
+    && isPrayerMetadata(value)
+    && (value.canonical_slug === undefined || Boolean(value.body.trim()) && typeof value.plain_text === 'string' && Boolean(value.plain_text.trim()))
+}
+
+export function isReviewedPrayerDetail(value: unknown): value is PrayerDetail {
+  return isPrayerDetail(value) && isRecord(value) && isPrayerMetadata(value, true)
 }
 
 function isLiturgicalWorkList(value: unknown): value is LiturgicalWorkSummary[] {
-  return Array.isArray(value) && value.every((item) => isRecord(item)
+  return Array.isArray(value) && value.every(isLiturgicalWork)
+}
+
+export function isLiturgicalWork(item: unknown): item is LiturgicalWorkSummary {
+  return isRecord(item)
     && typeof item.id === 'number'
     && typeof item.slug === 'string'
     && typeof item.title === 'string'
@@ -328,10 +359,19 @@ function isLiturgicalWorkList(value: unknown): value is LiturgicalWorkSummary[] 
     && Array.isArray(item.available_languages)
     && item.available_languages.every((language) => typeof language === 'string')
     && Array.isArray(item.editions)
-    && (item.source_url === null || typeof item.source_url === 'string'))
+    && (item.source_url === null || typeof item.source_url === 'string')
+    && (item.legacy_slugs === undefined || Array.isArray(item.legacy_slugs) && item.legacy_slugs.every(slug => typeof slug === 'string'))
+    && (item.prayer_groups === undefined || Array.isArray(item.prayer_groups) && item.prayer_groups.every(group => typeof group === 'string'))
+    && (item.usage_titles === undefined || Array.isArray(item.usage_titles) && item.usage_titles.every(title => typeof title === 'string'))
+    && (item.intro === undefined || isNullableString(item.intro))
+    && (item.content_revision === undefined || isNullableString(item.content_revision))
+    && (item.prayer_group == null || typeof item.prayer_group === 'string'
+      && ['short', 'rules', 'occasions', 'initial'].includes(item.prayer_group)
+      && Array.isArray(item.prayer_groups) && item.prayer_groups.includes(item.prayer_group)
+      && item.completeness === 'complete' && typeof item.content_revision === 'string' && Boolean(item.content_revision.trim()))
 }
 
-function isLiturgicalWorkVersion(value: unknown): value is LiturgicalWorkVersion {
+export function isLiturgicalWorkVersion(value: unknown): value is LiturgicalWorkVersion {
   return isRecord(value)
     && typeof value.slug === 'string'
     && typeof value.title === 'string'
@@ -349,6 +389,15 @@ function isLiturgicalWorkVersion(value: unknown): value is LiturgicalWorkVersion
     && typeof value.source_url === 'string'
     && typeof value.content_hash === 'string'
     && typeof value.review_status === 'string'
+    && (value.completeness !== 'complete' || value.review_status === 'prayer-reviewed'
+      && /^[a-f0-9]{64}$/u.test(value.content_hash) && value.blocks.some(block => isRecord(block) && typeof block.text === 'string' && Boolean(block.text.trim()))
+      && (value.language !== 'cu' || value.orthography === 'traditional')
+      && (value.language !== 'cu-civil' || ['civil', 'civil-accented'].includes(value.orthography)))
+}
+
+export function isReviewedLiturgicalVersion(value: unknown, language?: string, edition?: string): value is LiturgicalWorkVersion {
+  return isLiturgicalWorkVersion(value) && value.completeness === 'complete'
+    && (!language || value.language === language) && (!edition || value.edition === edition)
 }
 
 function isCalendarDay(value: unknown): value is CalendarDay {

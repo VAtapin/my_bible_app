@@ -185,8 +185,11 @@ internal class OfflineContentRepository(
             StrongEntry(explicit,field("word"),field("transliteration"),field("content"),StrongLexicon(lexicon["name"]?.jsonPrimitive?.contentOrNull?:error("Missing source name"),lexicon["language"]?.jsonPrimitive?.contentOrNull.orEmpty(),code),field("pronunciation"))
         }.sortedWith(compareBy({if(it.lexicon.language==strongLanguage)0 else 1},{it.lexicon.code.orEmpty()}))
     }
-    override suspend fun getPrayers(language: String) = content("prayers:$language", ListSerializer(PrayerSummary.serializer())) { remote.getPrayers(language) }
-    override suspend fun getPrayer(id: Long) = content("prayer:$id", PrayerDetail.serializer()) { remote.getPrayer(id) }
+    private val prayerCache = NativePrayerCache(remote, store, canRefresh)
+    override suspend fun getPrayerCatalog(language: String) = prayerCache.catalog(language)
+    override suspend fun getPrayers(language: String) = getPrayerCatalog(language).data
+    override suspend fun getPrayer(id: Long) = prayerCache.detail(id)
+    override suspend fun getPrayer(id: Long, language: String) = prayerCache.detail(id, language)
     override suspend fun getCalendarDay(date: String, language: String, profile: String) = content("day:$date:${calendarContentLanguage(language)}:$profile", CalendarDay.serializer()) { remote.getCalendarDay(date, language, profile) }
     override suspend fun getCalendarMonth(year: Int, month: Int, language: String) = content("month:$year:$month:${calendarContentLanguage(language)}", ListSerializer(CalendarGridDay.serializer())) { remote.getCalendarMonth(year, month, language) }
     override suspend fun getCalendarService(date: String, language: String) = content("service:$date:${calendarContentLanguage(language)}", CalendarServicePlan.serializer()) { remote.getCalendarService(date, language) }

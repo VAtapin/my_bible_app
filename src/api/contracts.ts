@@ -72,13 +72,38 @@ export interface PrayerSummary {
   title: string
   short_title: string | null
   intro: string | null
-  excerpt: string
+  excerpt: string | null
+  canonical_slug?: string
+  liturgical_work_id?: number
+  group?: string
+  groups?: string[]
+  available_languages?: string[]
+  completeness?: 'complete'
+  review_status?: string
+  content_revision?: string
+  catalog_visible?: boolean
 }
 
 export interface PrayerDetail extends Omit<PrayerSummary, 'excerpt'> {
+  plain_text?: string | null
   body: string
   source_url: string | null
   sections: Array<{ id: number; title: string | null; sort_order: number }>
+}
+
+export interface PrayerExternalSource {
+  language: string
+  title: string
+  url: string
+  availability: 'external-only'
+  offline_available: false
+}
+
+export interface PrayerCatalog {
+  data: PrayerSummary[]
+  catalog_version?: 2
+  groups?: Record<string, string>
+  external_sources?: PrayerExternalSource[]
 }
 
 export interface LiturgicalEditionSummary {
@@ -97,6 +122,13 @@ export interface LiturgicalWorkSummary {
   available_languages: string[]
   editions: LiturgicalEditionSummary[]
   source_url: string | null
+  prayer_group?: string | null
+  prayer_groups?: string[]
+  intro?: string | null
+  usage_titles?: string[]
+  completeness?: 'complete' | null
+  content_revision?: string | null
+  legacy_slugs?: string[]
 }
 
 export interface LiturgicalBlock {
@@ -106,6 +138,7 @@ export interface LiturgicalBlock {
 }
 
 export interface LiturgicalWorkVersion {
+  completeness?: 'complete' | null
   slug: string
   title: string
   language: string

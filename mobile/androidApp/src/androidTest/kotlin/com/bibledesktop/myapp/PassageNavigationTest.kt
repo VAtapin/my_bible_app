@@ -36,6 +36,7 @@ class PassageNavigationTest {
         override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int) = BibleChapter(
             translation, books.first { it.slug == bookSlug }, ChapterSummary(chapterNumber, 1),
             listOf(BibleVerse(chapterNumber.toLong(), 1, "${if(bookSlug=="genesis")"Gen"else"John"}.$chapterNumber.1", "", "Текст $bookSlug $chapterNumber")))
+        override suspend fun getPrayerCatalog(language: String) = PrayerCatalog(getPrayers(language))
         override suspend fun getPrayers(language: String) = if (language == "cu") listOf(
             PrayerSummary(2, "cu", "common", title = "Отче наш", excerpt = "")) else emptyList()
     }

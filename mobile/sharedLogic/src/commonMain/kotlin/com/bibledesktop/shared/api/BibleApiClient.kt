@@ -9,6 +9,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 private const val DefaultApiBaseUrl = "https://bible-desktop.com/api"
 
@@ -134,16 +135,47 @@ class BibleApiClient internal constructor(
     }
 
     override suspend fun getPrayers(language: String): List<PrayerSummary> {
+        val catalog = getPrayerCatalog(language)
+        return if (catalog.catalogVersion == 2) catalog.data else catalog.data.filter { it.languageCode == language }
+    }
+
+    override suspend fun getPrayerCatalog(language: String): PrayerCatalog {
         val response = client.get("$baseUrl/prayers") {
             parameter("language", language)
         }
-        return response.body<ApiEnvelope<List<PrayerSummary>>>().data
-            .filter { it.languageCode == language }
+        val payload = response.body<JsonObject>()
+        val catalog = Json { ignoreUnknownKeys = true; explicitNulls = false }
+            .decodeFromJsonElement(PrayerCatalog.serializer(), payload).validatePrayerCatalog()
+        if (catalog.catalogVersion == 2) require("groups" in payload && "external_sources" in payload)
+        return catalog
     }
 
     override suspend fun getPrayer(id: Long): PrayerDetail {
         val response = client.get("$baseUrl/prayers/$id")
-        return response.body<ApiEnvelope<PrayerDetail>>().data
+        val payload = response.body<PrayerDetailEnvelope>()
+        return payload.data.validatePrayerDetail(payload.catalogVersion).also { require(it.id == id) }
+    }
+
+    override suspend fun getPrayer(id: Long, language: String): PrayerDetail {
+        val payload = client.get("$baseUrl/prayers/$id") { parameter("language", language) }.body<PrayerDetailEnvelope>()
+        return payload.data.validatePrayerDetail(payload.catalogVersion).also { require(it.id == id && it.languageCode == language) }
+    }
+
+    override suspend fun getLiturgicalWork(slug: String): LiturgicalWorkSummary {
+        require(slug.isNotBlank() && slug !in listOf(".", "..") && !Regex("[/\\\\?#%]").containsMatchIn(slug))
+        val work = client.get("$baseUrl/liturgical/works/$slug").body<ApiEnvelope<LiturgicalWorkSummary>>().data
+        return work.validateLiturgicalWork().also { require(it.slug == slug || slug in it.legacySlugs) }
+    }
+
+    override suspend fun getLiturgicalVersion(slug: String, language: String, edition: String?): LiturgicalWorkVersion {
+        require(slug.isNotBlank() && slug !in listOf(".", "..") && !Regex("[/\\\\?#%]").containsMatchIn(slug))
+        require(language.matches(Regex("[a-z]{2,3}(?:-[a-zA-Z0-9]{2,8})*")))
+        val version = client.get("$baseUrl/liturgical/works/$slug/versions/$language") {
+            edition?.let { parameter("edition", it) }
+        }.body<ApiEnvelope<LiturgicalWorkVersion>>().data
+        version.validateLiturgicalVersion(language, edition)
+        if (version.slug != slug) require(version.slug == getLiturgicalWork(slug).slug)
+        return version
     }
 
     override suspend fun getCalendarDay(

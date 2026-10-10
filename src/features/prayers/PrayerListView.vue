@@ -1,121 +1,67 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed,onMounted,ref } from 'vue'
 import { bibleApi } from '@/api'
-import type { LiturgicalWorkSummary, PrayerSummary } from '@/api/contracts'
+import type { LiturgicalWorkSummary,PrayerCatalog,PrayerSummary } from '@/api/contracts'
 import MobileShell from '@/components/MobileShell.vue'
 import { useI18n } from '@/i18n'
-import { createIndexedDbDailyContentRepository } from '@/offline/indexedDbDailyContentRepository'
-import { useProfileStore } from '@/stores/profileStore'
-import { prayerEdition, prayerLanguageLabel } from '@/services/prayerEditions'
-import { prayerExcerpt } from '@/services/prayerContent'
+import {createIndexedDbDailyContentRepository} from '@/offline/indexedDbDailyContentRepository'
+import {createDailyContentService} from '@/services/dailyContentService'
+import {useProfileStore} from '@/stores/profileStore'
+import {prayerEdition,prayerLanguageLabel} from '@/services/prayerEditions'
+import {prayerExcerpt} from '@/services/prayerContent'
+import {prayerLanguages,prayerInGroup,prayerCardTarget,uniqueWorkCards} from '@/services/prayerCatalog'
+import {prayerCatalogMessages} from '@/i18n/prayerCatalog'
 
-interface WorkCard extends LiturgicalWorkSummary {
-  language: string
-  collection: 'akathists' | 'canons' | 'horologion' | 'prayers'
-  edition: string
+const service=createDailyContentService(bibleApi,createIndexedDbDailyContentRepository())
+const profile=useProfileStore(),{language,messages:text}=useI18n()
+const labels=computed(()=>prayerCatalogMessages[language.value])
+const catalog=ref<PrayerCatalog>(),works=ref<LiturgicalWorkSummary[]>([]),message=ref('')
+const selectedLanguage=ref(''),selectedGroup=ref(''),query=ref('')
+const availableLanguages=computed(()=>[...new Set([...(catalog.value?.data.flatMap(prayerLanguages)??[]),...works.value.flatMap(work=>work.available_languages)])])
+const languageChoices=computed(()=>[...new Set([...availableLanguages.value,...(catalog.value?.external_sources?.map(source=>source.language)??[]),...(selectedLanguage.value?[selectedLanguage.value]:[])])])
+const groups=computed(()=>Object.entries(catalog.value?.groups??{}))
+const externalSources=computed(()=>catalog.value?.external_sources?.filter(source=>!selectedLanguage.value||source.language===selectedLanguage.value)??[])
+const displayPrayers=computed(()=>catalog.value?.data.filter(item=>
+  (!selectedLanguage.value||prayerLanguages(item).includes(selectedLanguage.value))&&prayerInGroup(item,selectedGroup.value)&&matchesSettings(item)&&
+  `${item.title} ${item.short_title??''}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase()))??[])
+const displayWorks=computed(()=>works.value.filter(work=>(!selectedLanguage.value||work.available_languages.includes(selectedLanguage.value))&&
+  `${work.title} ${work.usage_titles?.join(' ')??''}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase())))
+function matchesSettings(item:PrayerSummary){
+  const settings=profile.configuration?.prayers
+  if(!settings||settings.prayerBook)return true
+  return settings.morning&&item.category==='morning'||settings.evening&&['evening','evening_rule'].includes(item.category)
 }
-
-const repository = createIndexedDbDailyContentRepository()
-const profile = useProfileStore()
-const { language, messages: text } = useI18n()
-const prayers = ref<PrayerSummary[]>([])
-const works = ref<WorkCard[]>([])
-const message = ref('')
-const displayPrayers = computed(() => [...prayers.value].sort((left, right) => rulePriority(left) - rulePriority(right)))
-
-onMounted(async () => {
-  const configuration = profile.load()
-  const settings = configuration?.prayers
-  const languages = settings?.languageCodes ?? [configuration?.interfaceLanguage ?? language.value]
-  message.value = text.value.prayers.loading
-
-  try {
-    const prayerResults = await Promise.all(languages.map((language) => bibleApi.getPrayers(language)))
-    prayers.value = prayerResults.flat()
-      .filter((prayer) => languages.includes(prayer.language_code))
-      .filter(matchesPrayerSettings)
-
-    const collections = [
-      settings?.prayerBook || settings?.morning || settings?.evening ? 'prayers' : null,
-      settings?.akathists ? 'akathists' : null,
-      settings?.canons ? 'canons' : null,
-      settings?.horologion ? 'horologion' : null,
-    ].filter((value): value is WorkCard['collection'] => value !== null)
-    const workResults = await Promise.all(collections.map(async (collection) => ({
-      collection,
-      items: await bibleApi.getLiturgicalWorks(collection),
-    })))
-    works.value = workResults.flatMap(({ collection, items }) => items.flatMap((work) => {
-      if (collection === 'prayers' && !settings?.prayerBook && !((settings?.morning && /утрен|morgen/i.test(work.title)) || (settings?.evening && /сон грядущим|вечер|abend|nacht/i.test(work.title)))) return []
-      return languages.flatMap((candidate) => {
-        const edition = prayerEdition(work, candidate)
-        if (!edition || (collection === 'prayers' && prayers.value.some((prayer) => prayer.title === work.title && prayer.language_code === candidate))) return []
-        return [{ ...work, language: edition.language, collection, edition: edition.code }]
-      })
-    }))
-    message.value = prayers.value.length || works.value.length ? '' : text.value.prayers.empty
-  } catch (error) {
-    const saved = await repository.listPrayers()
-    prayers.value = saved
-      .map(({ data }) => ({ ...data, excerpt: prayerExcerpt(data.intro ?? data.body) }))
-      .filter((prayer) => languages.includes(prayer.language_code))
-      .filter(matchesPrayerSettings)
-    message.value = saved.length
-      ? text.value.prayers.offline
-      : error instanceof Error ? error.message : text.value.prayers.unavailable
-  }
+function groupLabel(key:string,fallback:string){return labels.value.groups[key as keyof typeof labels.value.groups]??fallback}
+function workLanguage(work:LiturgicalWorkSummary){return selectedLanguage.value||work.available_languages[0]||''}
+function workTarget(work:LiturgicalWorkSummary){const actual=workLanguage(work),edition=prayerEdition(work,actual);return{path:`/liturgical/${work.slug}/${actual}`,query:edition?{edition:edition.code}:undefined}}
+onMounted(async()=>{
+  const settings=profile.load()?.prayers
+  const preferred=settings?.languageCodes??[language.value]
+  // The legacy RU request is a compatibility catalogue, not a promise of translated RU editions.
+  selectedLanguage.value=preferred.length===1&&preferred[0]!=='ru'?preferred[0]!:''
+  message.value=text.value.prayers.loading
+  try{
+    const result=await service.openPrayerCatalog();catalog.value=result.data
+    message.value=result.offline?text.value.prayers.offline:''
+    const collections=[result.data.catalog_version!==2&&(settings?.prayerBook||settings?.morning||settings?.evening)?'prayers':null,settings?.akathists?'akathists':null,settings?.canons?'canons':null,settings?.horologion?'horologion':null].filter((value):value is string=>value!==null)
+    works.value=uniqueWorkCards((await Promise.all(collections.map(collection=>bibleApi.getLiturgicalWorks(collection)))).flat()).filter(work=>
+      !work.collections.includes('prayers')||settings?.prayerBook||(settings?.morning&&/утрен|morgen/i.test(work.title))||(settings?.evening&&/сон грядущим|вечер|abend|nacht/i.test(work.title)))
+  }catch{message.value=text.value.prayers.unavailable}
 })
-
-function matchesPrayerSettings(prayer: PrayerSummary): boolean {
-  const settings = profile.configuration?.prayers
-  if (!settings || settings.prayerBook) return true
-  return (settings.morning && isMorning(prayer)) || (settings.evening && isEvening(prayer))
-}
-
-function rulePriority(prayer: PrayerSummary): number {
-  const settings = profile.configuration?.prayers
-  if (settings?.morning && isMorning(prayer)) return 0
-  if (settings?.evening && isEvening(prayer)) return 1
-  return 2
-}
-
-function ruleLabel(prayer: PrayerSummary): string | undefined {
-  const priority = rulePriority(prayer)
-  return priority === 0 ? text.value.prayers.morning : priority === 1 ? text.value.prayers.evening : undefined
-}
-
-function collectionLabel(collection: WorkCard['collection']): string {
-  return collection === 'prayers' ? text.value.prayers.prayerBook : text.value.prayers[collection]
-}
-
-function isMorning(prayer: PrayerSummary): boolean {
-  return prayer.category === 'morning' || /утрен|morgen/i.test(prayer.title)
-}
-
-function isEvening(prayer: PrayerSummary): boolean {
-  return prayer.category === 'evening' || /(сон грядущим|вечер|abend|nacht)/i.test(prayer.title)
-}
-
 </script>
-
 <template>
   <MobileShell>
-    <section class="reader-heading">
-      <span class="card-icon"><img src="/app-icons/prayers.png" alt="" /></span>
-      <span><p class="eyebrow dark-eyebrow">{{ text.prayers.eyebrow }}</p><h1>{{ text.prayers.title }}</h1></span>
-    </section>
-    <p v-if="message" class="status" role="status">{{ message }}</p>
-    <section v-if="prayers.length || works.length" class="content-catalog">
-      <RouterLink v-for="prayer in displayPrayers" :key="`prayer-${prayer.id}`" class="content-card" :to="`/prayers/${prayer.id}`">
-        <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span>
-        <span><em>{{ ruleLabel(prayer) ?? text.prayers.prayerBook }} · {{ prayer.language_code.toUpperCase() }}</em><strong>{{ prayer.title }}</strong><small>{{ prayerExcerpt(prayer.excerpt) }}</small></span>
-        <span aria-hidden="true">→</span>
+    <section class="reader-heading"><span class="card-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><p class="eyebrow dark-eyebrow">{{text.prayers.eyebrow}}</p><h1>{{text.prayers.title}}</h1></span></section>
+    <div class="prayer-filters"><label>{{labels.language}}<select v-model="selectedLanguage"><option value="">{{labels.all}}</option><option v-for="code in languageChoices" :key="code" :value="code">{{prayerLanguageLabel(code,text.setup)}}</option></select></label><label v-if="groups.length">{{labels.group}}<select v-model="selectedGroup"><option value="">{{labels.all}}</option><option v-for="[key,title] in groups" :key="key" :value="key">{{groupLabel(key,title)}}</option></select></label><label>{{labels.search}}<input v-model="query" type="search" /></label></div>
+    <p v-if="message" class="status" role="status">{{message}}</p>
+    <p v-if="catalog&&!displayPrayers.length&&!displayWorks.length" class="status">{{text.prayers.empty}}</p>
+    <section class="content-catalog">
+      <RouterLink v-for="prayer in displayPrayers" :key="prayer.canonical_slug??`prayer-${prayer.id}`" class="content-card" :to="prayerCardTarget(prayer,selectedLanguage)">
+        <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><em>{{prayer.group?groupLabel(prayer.group,catalog?.groups?.[prayer.group]??prayer.group):text.prayers.prayerBook}}</em><strong>{{prayer.title}}</strong><small>{{prayerLanguages(prayer).map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small><small v-if="prayer.excerpt">{{prayerExcerpt(prayer.excerpt)}}</small></span><span aria-hidden="true">→</span>
       </RouterLink>
-      <RouterLink v-for="work in works" :key="`${work.collection}-${work.slug}-${work.edition}`" class="content-card" :to="{ path: `/liturgical/${work.slug}/${work.language}`, query: { edition: work.edition } }">
-        <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span>
-        <span><em>{{ collectionLabel(work.collection) }}</em><strong>{{ work.title }}</strong><small>{{ prayerLanguageLabel(work.language, text.setup) }}</small></span>
-        <span aria-hidden="true">→</span>
-      </RouterLink>
+      <RouterLink v-for="work in displayWorks" :key="work.slug" class="content-card" :to="workTarget(work)"><span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><strong>{{work.title}}</strong><small>{{work.available_languages.map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small></span><span aria-hidden="true">→</span></RouterLink>
     </section>
+    <section v-if="externalSources.length" class="prayer-external"><h2>{{labels.external}}</h2><p>{{labels.externalOnly}}</p><p v-for="source in externalSources" :key="source.url"><a :href="source.url" target="_blank" rel="noopener noreferrer">{{source.title}}</a></p></section>
   </MobileShell>
 </template>
+<style scoped>.prayer-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}.prayer-filters label{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}.prayer-filters select,.prayer-filters input{min-height:42px}.prayer-external{padding:16px;border:1px solid var(--line);border-radius:12px;margin-top:20px}</style>

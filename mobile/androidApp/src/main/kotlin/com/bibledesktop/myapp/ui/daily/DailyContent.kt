@@ -73,6 +73,11 @@ import com.bibledesktop.myapp.ui.theme.WarmBorder
 import com.bibledesktop.shared.api.BibleContentSource
 import com.bibledesktop.shared.api.PrayerDetail
 import com.bibledesktop.shared.api.PrayerSummary
+import com.bibledesktop.shared.api.PrayerCatalog
+import com.bibledesktop.shared.api.validatePrayerCatalog
+import com.bibledesktop.shared.api.validatePrayerDetail
+import androidx.compose.ui.platform.LocalUriHandler
+import kotlinx.coroutines.CancellationException
 import java.util.Locale
 
 private sealed interface LoadState<out T> {
@@ -88,86 +93,90 @@ fun PrayersScreen(
     onBack: () -> Unit,
 ) {
     var selectedPrayer by rememberSaveable { mutableStateOf<Long?>(null) }
-    var textLanguage by rememberSaveable { mutableStateOf(language) }
-    var listState by remember { mutableStateOf<LoadState<List<PrayerSummary>>>(LoadState.Loading) }
+    var selectedEdition by rememberSaveable { mutableStateOf<String?>(null) }
+    var textLanguage by rememberSaveable { mutableStateOf("all") }
+    var group by rememberSaveable { mutableStateOf("all") }
+    var listState by remember { mutableStateOf<LoadState<PrayerCatalog>>(LoadState.Loading) }
     var detailState by remember { mutableStateOf<LoadState<PrayerDetail>>(LoadState.Loading) }
     var retry by remember { mutableIntStateOf(0) }
+    var reviewedCatalog by remember { mutableStateOf<PrayerCatalog?>(null) }
+    var loadedRetry by remember { mutableIntStateOf(-1) }
+    val labels=prayerCatalogTexts(language)
+    val uriHandler=LocalUriHandler.current
 
     LaunchedEffect(textLanguage, retry) {
-        listState = LoadState.Loading
-        listState = runCatching { client.getPrayers(textLanguage) }
-            .fold(
-                onSuccess = { LoadState.Ready(it) },
-                onFailure = { LoadState.Error },
-            )
+        if(reviewedCatalog!=null&&loadedRetry==retry){listState=LoadState.Ready(reviewedCatalog!!);return@LaunchedEffect}
+        listState=LoadState.Loading
+        try {
+            // UI languages are not automatically source editions. The compatible query
+            // discovers the reviewed catalogue without sending unsupported UK/EN requests.
+            val catalog=client.getPrayerCatalog("ru").validatePrayerCatalog()
+            if(catalog.catalogVersion==2){reviewedCatalog=catalog;loadedRetry=retry}
+            listState=LoadState.Ready(if(catalog.catalogVersion==2)catalog else {
+                val legacyLanguage=if(textLanguage=="all")language else textLanguage
+                if(legacyLanguage=="ru")catalog else client.getPrayerCatalog(legacyLanguage).validatePrayerCatalog()
+            })
+        } catch(cancelled:CancellationException){throw cancelled}
+        catch(_:Exception){listState=LoadState.Error}
     }
-
-    LaunchedEffect(selectedPrayer, retry) {
-        val id = selectedPrayer ?: return@LaunchedEffect
-        detailState = LoadState.Loading
-        detailState = runCatching { client.getPrayer(id) }
-            .fold(
-                onSuccess = { LoadState.Ready(it) },
-                onFailure = { LoadState.Error },
-            )
+    LaunchedEffect(selectedPrayer, selectedEdition, retry) {
+        val id=selectedPrayer?:return@LaunchedEffect
+        detailState=LoadState.Loading
+        try {
+            val detail=(selectedEdition?.let{client.getPrayer(id,it)}?:client.getPrayer(id)).validatePrayerDetail()
+            require(selectedEdition==null||detail.languageCode==selectedEdition)
+            detailState=LoadState.Ready(detail)
+        } catch(cancelled:CancellationException){throw cancelled}
+        catch(_:Exception){detailState=LoadState.Error}
     }
-
-    BackHandler {
-        if (selectedPrayer != null) selectedPrayer = null else onBack()
-    }
-
-    if (selectedPrayer == null) {
-        ContentListPage(title = localText(R.string.prayers_title, language), language = language, onBack = onBack) {
+    BackHandler {if(selectedPrayer!=null)selectedPrayer=null else onBack()}
+    if(selectedPrayer==null){
+        ContentListPage(localText(R.string.prayers_title,language),language,onBack){
+            val catalog=(listState as? LoadState.Ready)?.value
+            val reviewed=catalog?.catalogVersion==2
             item {
-                Text(localText(R.string.prayer_text_language, language), color = Ink, fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val editions = com.bibledesktop.shared.presentation.interfaceLanguages + linkedMapOf(
-                        "cu" to localText(R.string.prayer_cu, language),
-                        "cu-civil" to localText(R.string.prayer_cu_civil, language),
-                    )
-                    editions.forEach { (code, label) ->
-                        FilterChip(selected = textLanguage == code, modifier = Modifier.testTag("prayer-edition-$code"),
-                            onClick = { textLanguage = code }, label = { Text(label) })
+                Text(localText(R.string.prayer_text_language,language),color=Ink,fontWeight=FontWeight.Bold)
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                    val languages=if(reviewed) linkedSetOf("all").apply {
+                        catalog!!.data.forEach{addAll(it.availableLanguages)}
+                        catalog.externalSources.forEach{add(it.language)}
+                    } else linkedSetOf("all").apply{addAll(com.bibledesktop.shared.presentation.interfaceLanguages.keys);add("cu");add("cu-civil")}
+                    languages.forEach{code->
+                        val label=when(code){"all"->labels.all;"cu"->localText(R.string.prayer_cu,language);"cu-civil"->localText(R.string.prayer_cu_civil,language);else->com.bibledesktop.shared.presentation.interfaceLanguages[code]?:code}
+                        FilterChip(textLanguage==code,onClick={textLanguage=code},modifier=Modifier.testTag("prayer-edition-$code"),label={Text(label)})
                     }
                 }
-            }
-            if (textLanguage in setOf("cu", "cu-civil") && listState is LoadState.Ready) item {
-                Text(localText(R.string.prayer_source_count, language, (listState as LoadState.Ready).value.size),
-                    Modifier.testTag("prayer-source-count").padding(vertical = 8.dp), color = PrimaryBlue)
-            }
-            when (val current = listState) {
-                LoadState.Loading -> item { LoadingBox() }
-                LoadState.Error -> item {
-                    ErrorBox(
-                        message = localText(R.string.prayers_error, language),
-                        retryTitle = localText(R.string.retry, language),
-                        onRetry = { retry += 1 },
-                    )
+                if(reviewed)FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                    (listOf("all")+catalog!!.groups.keys).forEach{key->FilterChip(group==key,onClick={group=key},modifier=Modifier.testTag("prayer-group-$key"),label={Text(if(key=="all")labels.all else labels.groups[key]?:catalog.groups.getValue(key))})}
                 }
-                is LoadState.Ready -> if (current.value.isEmpty()) {
-                    item { EmptyBox(localText(R.string.prayers_empty_language, language)) }
-                } else {
-                    items(current.value, key = PrayerSummary::id) { prayer ->
-                        PrayerCard(prayer) { selectedPrayer = prayer.id }
+            }
+            when(val current=listState){
+                LoadState.Loading->item{LoadingBox()}
+                LoadState.Error->item{ErrorBox(localText(R.string.prayers_error,language),localText(R.string.retry,language),{retry+=1})}
+                is LoadState.Ready->{
+                    val value=current.value
+                    val entries=if(value.catalogVersion==2)value.data.filter{it.catalogVisible==true&&(group=="all"||group in it.groups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)}.distinctBy{it.canonicalSlug} else value.data
+                    item {Text(localText(R.string.prayer_source_count,language,entries.size),Modifier.testTag("prayer-source-count").padding(vertical=8.dp),color=PrimaryBlue)}
+                    if(entries.isEmpty())item{EmptyBox(localText(R.string.prayers_empty_language,language))}
+                    items(entries,key={it.canonicalSlug?:it.id.toString()}){prayer->
+                        val edition=if(value.catalogVersion==2&&textLanguage!="all")textLanguage else prayer.languageCode
+                        PrayerCard(prayer,edition){selectedEdition=if(value.catalogVersion==2)edition else null;selectedPrayer=prayer.id}
+                    }
+                    val external=value.externalSources.filter{textLanguage=="all"||it.language==textLanguage}
+                    if(external.isNotEmpty()){
+                        item{Text(labels.external,color=Ink,fontWeight=FontWeight.Bold);Text(labels.externalOnly,Modifier.testTag("prayer-external-only"),color=PrimaryBlue)}
+                        items(external,key={it.url}){source->Button(onClick={uriHandler.openUri(source.url)},modifier=Modifier.fillMaxWidth()){Text(source.title)}}
                     }
                 }
             }
         }
-    } else {
-        PrayerReader(
-            language = language,
-            state = detailState,
-            onBack = { selectedPrayer = null },
-            onHome = onBack,
-            onRetry = { retry += 1 },
-        )
-    }
+    }else PrayerReader(language,detailState,{selectedPrayer=null},onBack,{retry+=1})
 }
 
 @Composable
-private fun PrayerCard(prayer: PrayerSummary, onClick: () -> Unit) {
+private fun PrayerCard(prayer: PrayerSummary, edition:String=prayer.languageCode, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().testTag("prayer-card-${prayer.canonicalSlug?:prayer.id}").padding(bottom = 10.dp).clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = CardDefaults.outlinedCardBorder(),
         shape = RoundedCornerShape(18.dp),
@@ -186,13 +195,13 @@ private fun PrayerCard(prayer: PrayerSummary, onClick: () -> Unit) {
                 Text(prayer.title, color = Ink, fontFamily = com.bibledesktop.myapp.ui.theme.readingFont(prayer.languageCode),
                     fontSize = 18.sp, lineHeight = 27.sp)
                 Text(
-                    prayer.excerpt,
+                    prayer.excerpt.orEmpty(),
                     color = PrimaryBlue,
                     fontSize = 12.sp,
                     maxLines = 2,
                 )
             }
-            Text(prayer.languageCode.uppercase(), color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text(edition.uppercase(), color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, tint = PrimaryBlue)
         }
     }
@@ -224,7 +233,7 @@ private fun PrayerReader(
             )
             is LoadState.Ready -> ReadingViewport(Modifier.weight(1f)) {
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    PrayerReadingContent(current.value, fontSize)
+                    PrayerReadingContent(current.value, fontSize, language)
                 }
             }
         }
@@ -242,7 +251,7 @@ private fun PrayerReader(
                 IconButton(
                     onClick = {
                         val prayer = (state as? LoadState.Ready)?.value ?: return@IconButton
-                        share(context, "${prayer.title}\n\n${readingText(prayer.body)}")
+                        share(context, "${prayer.title}\n\n${prayer.plainText ?: readingText(prayer.body)}")
                     },
                     enabled = state is LoadState.Ready,
                 ) {
@@ -282,7 +291,7 @@ private fun ContentListPage(
     ) {
         ReadingHeader(title, language, onBack, onBack)
         LazyColumn(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).testTag("daily-content-list"),
             contentPadding = PaddingValues(20.dp),
             content = content,
         )

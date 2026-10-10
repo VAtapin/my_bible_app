@@ -89,7 +89,16 @@ data class PrayerSummary(
     val title: String,
     @SerialName("short_title") val shortTitle: String? = null,
     val intro: String? = null,
-    val excerpt: String,
+    val excerpt: String?,
+    @SerialName("canonical_slug") val canonicalSlug: String? = null,
+    @SerialName("liturgical_work_id") val liturgicalWorkId: Long? = null,
+    val group: String? = null,
+    val groups: List<String> = emptyList(),
+    @SerialName("available_languages") val availableLanguages: List<String> = emptyList(),
+    val completeness: String? = null,
+    @SerialName("review_status") val reviewStatus: String? = null,
+    @SerialName("content_revision") val contentRevision: String? = null,
+    @SerialName("catalog_visible") val catalogVisible: Boolean? = null,
 )
 
 @Serializable
@@ -111,6 +120,16 @@ data class PrayerDetail(
     val body: String,
     @SerialName("source_url") val sourceUrl: String? = null,
     val sections: List<PrayerSection> = emptyList(),
+    @SerialName("plain_text") val plainText: String? = null,
+    @SerialName("canonical_slug") val canonicalSlug: String? = null,
+    @SerialName("liturgical_work_id") val liturgicalWorkId: Long? = null,
+    val group: String? = null,
+    val groups: List<String> = emptyList(),
+    @SerialName("available_languages") val availableLanguages: List<String> = emptyList(),
+    val completeness: String? = null,
+    @SerialName("review_status") val reviewStatus: String? = null,
+    @SerialName("content_revision") val contentRevision: String? = null,
+    @SerialName("catalog_visible") val catalogVisible: Boolean? = null,
 )
 
 @Serializable
