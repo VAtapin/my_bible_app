@@ -40,6 +40,8 @@ import { apiBaseUrl } from '@/config/api'
 import { resolvedVerseChapter } from '@/services/verseLocations'
 import type { ReferenceGroup } from '@/services/verseStudy'
 import type { SavedPassage } from '@/services/personalStudy'
+import ReaderToolbar from './ReaderToolbar.vue'
+import { sourceInfoMessages } from '@/i18n/sourceInfo'
 
 const chapterRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
@@ -51,6 +53,35 @@ const readerPreferences = useReaderPreferences(); readerPreferences.initialize()
 const display = computed(() => effectiveReaderPreferences(readerPreferences.preferences.value))
 const controlText = computed(() => readerControlMessages[language.value])
 const settingsOpen = ref(false), historyOpen = ref(false), versePickerOpen = ref(false), translationsOpen = ref(false)
+const sourceOpen = ref(false)
+const toolbarActions = computed(() => [
+  {id:'compare',icon:'compare',label:comparing.value?text.value.parallel.close:text.value.parallel.open,pressed:comparing.value},
+  {id:'bibles',icon:'bible',label:catalogText.value.catalog_add,to:'/bibles?tab=catalog'},
+  {id:'search',icon:'search',label:text.value.readerActions.search,to:'/search'},
+  {id:'commentary',icon:'commentary',label:studyMessages[language.value].commentaries,pressed:studying.value},
+  {id:'settings',icon:'settings',label:controlText.value.settings},
+  {id:'night',icon:display.value.night?'day':'night',label:display.value.night?controlText.value.day:controlText.value.night,pressed:display.value.night},
+  {id:'source',icon:'info',label:sourceInfoMessages[language.value].title,pressed:sourceOpen.value},
+  {id:'favorites',icon:'favorite',label:controlText.value.favorites},
+  {id:'back',icon:'back',label:controlText.value.back},
+  {id:'forward',icon:'forward',label:controlText.value.forward},
+  {id:'history',icon:'history',label:controlText.value.history},
+  {id:'place',icon:'place',label:`${controlText.value.digital} / ${controlText.value.visual}`},
+])
+function toolbarAction(id:string) {
+  switch(id){
+    case 'compare': toggleComparison(); break
+    case 'commentary': studying.value=!studying.value; break
+    case 'settings': settingsOpen.value=true; break
+    case 'night': readerPreferences.setPreferences({...readerPreferences.preferences.value,night:!display.value.night}); break
+    case 'source': sourceOpen.value=!sourceOpen.value; break
+    case 'favorites': translationsOpen.value=!translationsOpen.value; break
+    case 'back': historyBack(); break
+    case 'forward': historyForward(); break
+    case 'history': if(comparing.value)comparisonView.value?.showHistory();else historyOpen.value=true; break
+    case 'place': if(comparing.value)comparisonView.value?.choosePlace();else versePickerOpen.value=!versePickerOpen.value; break
+  }
+}
 const history = reactive(new ReaderNavigationHistory(localStorage,'bible-desktop:reader-history:main'))
 let historyRestoring = false, initialOpening = true
 async function restoreHistory(place?: ReaderHistoryPlace) {
@@ -319,7 +350,7 @@ function formatDate(value: string): string {
 
 <template>
   <MobileShell back-to="/today">
-    <RouterLink class="storage-link" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink>
+    <RouterLink v-if="!chapter" class="storage-link" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink>
     <section v-if="!chapter" class="reader-heading">
       <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
       <span><p class="eyebrow dark-eyebrow">{{ text.reader.eyebrow }}</p><h1>{{ text.reader.title }}</h1></span>
@@ -363,20 +394,13 @@ function formatDate(value: string): string {
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
         <span><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
         <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
+        <ReaderToolbar :label="controlText.settings" :close-label="controlText.close" :actions="toolbarActions" @action="toolbarAction" />
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) >= (visibleChapter ?? chapter).book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
       </header>
-      <button type="button" class="parallel-toggle" :aria-pressed="comparing" @click="toggleComparison">{{ comparing ? text.parallel.close : text.parallel.open }}</button>
-      <button type="button" class="parallel-toggle" :aria-expanded="studying" @click="studying = !studying">{{ studyMessages[language].commentaries }}</button>
-      <button class="parallel-toggle" @click="settingsOpen=true">{{controlText.settings}}</button>
-      <button class="parallel-toggle" :aria-pressed="display.night" @click="readerPreferences.setPreferences({...readerPreferences.preferences.value,night:!display.night})">{{display.night?'☀':'☾'}} {{display.night?controlText.day:controlText.night}}</button>
-      <button class="parallel-toggle" @click="historyBack">{{controlText.back}}</button><button class="parallel-toggle" @click="historyForward">{{controlText.forward}}</button>
-      <button class="parallel-toggle" @click="comparing ? comparisonView?.showHistory() : historyOpen=true">{{controlText.history}}</button>
-      <button class="parallel-toggle" @click="comparing ? comparisonView?.choosePlace() : versePickerOpen=!versePickerOpen">{{controlText.digital}} / {{controlText.visual}}</button>
-      <button class="parallel-toggle" @click="translationsOpen=!translationsOpen">{{controlText.favorites}}</button>
       <FavoriteTranslationSelect v-if="translationsOpen" :translations="translations" :selected="visibleChapter?.translation.code??translationCode" @select="code=>{if(comparing)comparisonView?.changeTranslation(code);else{translationCode=code;changeTranslation()}translationsOpen=false}" />
       <VerseNavigation v-if="versePickerOpen&&selectedBook&&!comparing" :code="translationCode" :book="selectedBook" :chapter="visibleChapter?.chapter.number??chapterNumber" :service="chapterService" @select="(number,verse)=>{chapterNumber=number;openChapter(String(verse));versePickerOpen=false}" @close="versePickerOpen=false" />
       <ReaderSettings v-if="settingsOpen" @close="settingsOpen=false" />
-      <SourceCard v-if="visibleChapter??chapter" :metadata="comparisonCatalog.find(item=>item.code===(comparisonView?.source()??visibleChapter??chapter)?.translation.code)??(comparisonView?.source()??visibleChapter??chapter)!.translation"/>
+      <SourceCard v-if="sourceOpen&&(visibleChapter??chapter)" expanded :metadata="comparisonCatalog.find(item=>item.code===(comparisonView?.source()??visibleChapter??chapter)?.translation.code)??(comparisonView?.source()??visibleChapter??chapter)!.translation"/>
       <ReaderHistoryPanel v-if="historyOpen" :state="history.state" :can-back="history.canBack" :can-forward="history.canForward" @back="historyBack" @forward="historyForward" @select="index=>restoreHistory(history.select(index))" @close="historyOpen=false" />
       <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
       <ContinuousReading v-else @chapter="moveChapter" @book="moveBook" :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
@@ -408,6 +432,7 @@ function formatDate(value: string): string {
 .reader-study-layout.studying { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px }
 .studying .reading-card { min-width:0; margin-top:0 }.study-pane { max-height:calc(100dvh - 220px); overflow:auto; min-width:0; margin-top:0 }
 @media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr) } .studying :deep(.continuous-scroll) { height:35dvh } .study-pane { max-height:35dvh } }
-.parallel-toggle { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--white, white); color: var(--ink); font: inherit; cursor: pointer; }
+.reading-header:has(.reader-toolbar){grid-template-columns:36px minmax(0,1fr) 36px 44px 36px}
+.reading-header:has(.reader-toolbar):not(:has(.reader-size-button)){grid-template-columns:36px minmax(0,1fr) 44px 36px}
 .reader-night{--white:#17212d;--ink:#e2eaf4;--line:#415061;--light-blue:#2d4157;background:#101821;color:#e2eaf4}.reader-night :deep(.verse-text){color:#e2eaf4}.reader-night :deep(.chapter-heading){background:#17212d;color:#e2eaf4}
 </style>
