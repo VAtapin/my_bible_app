@@ -23,6 +23,9 @@ import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.TextDecrease
 import androidx.compose.material.icons.outlined.TextIncrease
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -69,7 +72,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 
-private sealed interface LoadState<out T> {
+internal sealed interface LoadState<out T> {
     data object Loading : LoadState<Nothing>
     data class Ready<T>(val value: T) : LoadState<T>
     data object Error : LoadState<Nothing>
@@ -465,7 +468,7 @@ private fun BooksScreen(
 }
 
 @Composable
-private fun ChapterScreen(
+internal fun ChapterScreen(
     language: String,
     studyClient: BibleContentSource,
     state: LoadState<BibleChapter>,
@@ -508,22 +511,34 @@ private fun ChapterScreen(
     comparisonVerse: Int = 0,
     comparisonLast: Int = comparisonVerse,
 ) {
+    var toolbarOpen by rememberSaveable { mutableStateOf(false) }
     var showingCommentaries by rememberSaveable { mutableStateOf(false) }
     var visibleFirst by remember(state) { mutableIntStateOf(initialVerse) }
     var visibleLast by remember(state) { mutableIntStateOf(initialVerse) }
     var visibleChapter by remember(state) { mutableStateOf<BibleChapter?>(null) }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(androidx.compose.material3.MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-    ) {
+    Box(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background).statusBarsPadding().navigationBarsPadding()) {
+    Column(Modifier.fillMaxSize().testTag("reader-screen-viewport").readerToolbarTopEdge{toolbarOpen=true}) {
         val title = (comparisonSource ?: (state as? LoadState.Ready)?.value)?.let {
             val verse = if (comparisonSource != null) comparisonVerse else visibleFirst
             "${it.book.name} · ${text(R.string.bible_chapter, language, chapterNumber)}${if (verse > 0) ":$verse" else ""}"
         } ?: text(R.string.bible_chapter, language, chapterNumber)
-        ReadingHeader(title, language, onBack, onHome, com.bibledesktop.myapp.ui.theme.readingFont(textLanguage))
+        val night=LocalReaderPreferences.current.night
+        val tools=listOf(
+            ReaderToolAction("compare",text(if(comparing)R.string.compare_close else R.string.compare_open,language),Icons.Outlined.ViewColumn,onCompare),
+            ReaderToolAction("downloads",text(R.string.bible_library_title,language),Icons.Outlined.Download,onDownloads),
+            ReaderToolAction("search",text(R.string.verse_search_title,language),Icons.Outlined.Search,onSearch),
+            ReaderToolAction("commentary",text(R.string.study_commentaries,language),Icons.Outlined.MenuBook,{showingCommentaries=!showingCommentaries}),
+            ReaderToolAction("settings",readerControlText(language,"settings"),Icons.Outlined.Tune,onSettings),
+            ReaderToolAction("night",readerControlText(language,if(night)"day"else"night"),if(night)Icons.Outlined.LightMode else Icons.Outlined.DarkMode,onToggleNight),
+            ReaderToolAction("source",com.bibledesktop.myapp.ui.study.moduleSourceTitle(language),Icons.Outlined.Info,onSourceInfo),
+            ReaderToolAction("favorites",readerControlText(language,"favorites"),Icons.Outlined.FavoriteBorder,onTranslations),
+            ReaderToolAction("back",readerControlText(language,"back"),Icons.AutoMirrored.Outlined.ArrowBack,onHistoryBack),
+            ReaderToolAction("forward",readerControlText(language,"forward"),Icons.AutoMirrored.Outlined.ArrowForward,onHistoryForward),
+            ReaderToolAction("history",readerControlText(language,"history"),Icons.Outlined.History,onHistory),
+        )
+        ReadingHeader(title, language, onBack, onHome, com.bibledesktop.myapp.ui.theme.readingFont(textLanguage)) {
+            ReaderToolbar(toolbarOpen,{toolbarOpen=it},tools,text(R.string.nav_more,language),readerControlText(language,"close"))
+        }
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             androidx.compose.material3.OutlinedButton(onClick = onChooseBook, modifier = Modifier.weight(1f).testTag("reader-choose-book")) {
                 Text(text(R.string.bible_choose_book, language))
@@ -531,19 +546,6 @@ private fun ChapterScreen(
             androidx.compose.material3.OutlinedButton(onClick = onChooseChapter, modifier = Modifier.testTag("reader-choose-chapter")) {
                 Text(text(R.string.bible_chapter, language, chapterNumber) + " ▾")
             }
-        }
-        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 12.dp)) {
-            androidx.compose.material3.TextButton(onClick = onCompare) { Text(text(if (comparing) R.string.compare_close else R.string.compare_open, language)) }
-            androidx.compose.material3.TextButton(onClick = onDownloads) { Text(text(R.string.bible_library_title, language)) }
-            androidx.compose.material3.TextButton(onClick = onSearch) { Text(text(R.string.verse_search_title, language)) }
-            androidx.compose.material3.TextButton(onClick = { showingCommentaries = !showingCommentaries }) { Text(text(R.string.study_commentaries, language)) }
-            androidx.compose.material3.TextButton(onClick=onSettings) {Text(readerControlText(language,"settings"))}
-            androidx.compose.material3.TextButton(onClick=onToggleNight) {val night=LocalReaderPreferences.current.night;Text("${if(night) "☀" else "☾"} ${readerControlText(language,if(night) "day" else "night")}")}
-            androidx.compose.material3.TextButton(onClick=onSourceInfo) {Text(com.bibledesktop.myapp.ui.study.moduleSourceTitle(language))}
-            androidx.compose.material3.TextButton(onClick=onTranslations) {Text(readerControlText(language,"favorites"))}
-            androidx.compose.material3.TextButton(onClick=onHistoryBack) {Text(readerControlText(language,"back"))}
-            androidx.compose.material3.TextButton(onClick=onHistoryForward) {Text(readerControlText(language,"forward"))}
-            androidx.compose.material3.TextButton(onClick=onHistory) {Text(readerControlText(language,"history"))}
         }
 
         when (state) {
@@ -608,6 +610,7 @@ private fun ChapterScreen(
                 }
             }
         }
+    }
     }
 }
 

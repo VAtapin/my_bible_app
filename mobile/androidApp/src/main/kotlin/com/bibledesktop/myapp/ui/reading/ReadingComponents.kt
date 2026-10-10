@@ -27,7 +27,7 @@ internal fun readingText(html: String): String =
 
 @Composable
 internal fun ReadingHeader(title: String, language: String, onBack: () -> Unit, onHome: () -> Unit,
-    titleFont: androidx.compose.ui.text.font.FontFamily = ReadingSerif) {
+    titleFont: androidx.compose.ui.text.font.FontFamily = ReadingSerif, actions: @Composable () -> Unit = {}) {
     Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
@@ -35,6 +35,7 @@ internal fun ReadingHeader(title: String, language: String, onBack: () -> Unit, 
         }
         Text(title, Modifier.weight(1f).padding(horizontal = 4.dp), color = Ink,
             fontFamily = titleFont, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        actions()
         IconButton(onClick = onHome) {
             Icon(Icons.Outlined.Home, localized(R.string.reader_home, language), tint = Navy)
         }
