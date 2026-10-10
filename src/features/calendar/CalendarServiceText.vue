@@ -15,3 +15,7 @@ const {language,messages}=useI18n()
        :lang="item.language?.startsWith('cu')?'cu':item.language??undefined">{{normalizePrayerText(item.text)}}</p>
   </template>
 </template>
+
+<style scoped>
+.slavonic-unicode{font-family:Ponomar,serif}.slavonic-civil{font-family:'Monomakh Unicode',serif;font-synthesis:none}
+</style>

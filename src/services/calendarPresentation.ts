@@ -1,6 +1,14 @@
 import type { CalendarEvent, CalendarReading } from '@/api/contracts'
 import type { CalendarLevel } from '@/profile/configuration'
 import { readerTarget } from './bibleReferences'
+import type {CalendarGridDay} from '@/api/calendar'
+
+// Actual calendar-engine FASTING_COLORS, not translated meal-title heuristics.
+const mealColors=new Set(['#dcebc9','#cce9f3','#f7e5b5','#ecdac7','#e3d5ed','#bfd9de','#f4cfaa','#c9c4d6','#fff3bf','#dedee5'])
+export function calendarMealMark(day:Pick<CalendarGridDay,'foodLabel'|'fastingColor'>|undefined){
+ const color=day?.fastingColor.toLowerCase(),label=day?.foodLabel.trim()
+ return color&&mealColors.has(color)&&label?{color,label}:undefined
+}
 
 export function calendarEvents(events: CalendarEvent[], level: CalendarLevel, otherEvents: { id: string }[] = []): CalendarEvent[] {
   // The compatible BibleDesktop day retains old events and adds a separate rules list.

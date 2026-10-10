@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
 import { calendarContentLanguage } from '@/services/calendarContent'
 import OfflineImage from './OfflineImage.vue'
+import {calendarMealMark} from '@/services/calendarPresentation'
 
 const props = withDefaults(defineProps<{ date: string; calendarLanguage: string; mode?: CalendarViewMode; compact?: boolean }>(), { mode: 'month', compact: false })
 const emit = defineEmits<{ select: [date: string] }>()
@@ -64,15 +65,16 @@ function label(date: string): string {
       <span v-for="blank in offset" :key="`blank-${blank}`"></span>
       <button v-for="item in dates" :key="item" type="button" :title="label(item)" :aria-label="label(item)"
         :aria-current="item === calendarDateInTimeZone() ? 'date' : undefined" :aria-pressed="item === date"
-        :class="{ selected: item === date, today: item === calendarDateInTimeZone(), 'calendar-red': ['pascha', 'great-feast', 'sunday'].includes(lookup.get(item)?.dayStyle.rank ?? ''), 'calendar-gold': lookup.get(item)?.dayStyle.rank === 'monastery-feast', 'calendar-has-fast': lookup.get(item)?.foodLabel && lookup.get(item)?.foodLabel !== 'поста нет' }"
+        :class="{ selected: item === date, today: item === calendarDateInTimeZone(), 'calendar-red': ['pascha', 'great-feast', 'sunday'].includes(lookup.get(item)?.dayStyle.rank ?? ''), 'calendar-gold': lookup.get(item)?.dayStyle.rank === 'monastery-feast' }"
         @click="emit('select', item)">
         <span class="grid-date-number">{{ Number(item.slice(-2)) }}</span>
+        <svg v-if="calendarMealMark(lookup.get(item))" class="calendar-meal-mark" viewBox="0 0 24 24" role="img" :aria-label="calendarMealMark(lookup.get(item))!.label"><title>{{calendarMealMark(lookup.get(item))!.label}}</title><path d="M20 4C10 3 3 8 5 15c2 5 11 4 14-5l1-6ZM6 18l10-9"/></svg>
         <OfflineImage v-if="mark(item)?.url" class="typikon-grid-mark" :src="mark(item)!.url!" :alt="mark(item)!.label" />
         <small v-if="!compact && lookup.get(item)" class="grid-old-style">{{ Number(lookup.get(item)!.oldStyleDate.slice(-2)) }}</small>
         <span v-if="mode === 'week' && !compact" class="week-day-summary"><strong>{{ weekdays[(new Date(`${item}T12:00:00Z`).getUTCDay() + 6) % 7] }} · {{ lookup.get(item)?.foodLabel }}</strong><span>{{ lookup.get(item)?.events.slice(0, 2).map((event) => event.title).join(' · ') }}</span></span>
       </button>
     </div>
     <small v-if="busy || failed" class="calendar-grid-status" role="status">{{ busy ? text.calendar.loading : text.calendar.failed }}</small>
-    <div v-else-if="!compact && mode !== 'day'" class="calendar-legend"><span class="calendar-red">{{ text.calendar.redDays }}</span><span>• {{ text.calendar.fasting }}</span><span>{{ text.calendar.typikonSigns }}</span></div>
   </section>
 </template>
+<style scoped>.calendar-meal-mark{position:absolute;left:3px;bottom:3px;width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.calendar-week-list .calendar-meal-mark{position:static;grid-column:2;grid-row:2;flex-shrink:0;width:16px;height:16px}</style>

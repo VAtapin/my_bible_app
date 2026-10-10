@@ -1,17 +1,15 @@
 <script setup lang="ts">
+import InlineVerseReferences from '@/features/study/InlineVerseReferences.vue'
+import {useReferencePreferences} from '@/profile/referencePreferences'
 import {computed,nextTick,onMounted,onUnmounted,ref,watch} from 'vue'
 import SourceVerseText from './SourceVerseText.vue'
 import{createPersonalStudyRepository}from'@/offline/personalStudy'
 import{emptyPersonalStudy,type SavedPassage,comparePoints}from'@/services/personalStudy'
-import{inlineSourceStrongTokens}from'@/services/sourceVerseDisplay'
-import{sourceStrongNumbers}from'@/services/strongMarkup'
 import type {BibleChapter,BibleVerse} from '@/api/contracts'
 import type {ChapterService} from '@/services/chapterService'
 import {comparisonFrameRows,type ComparisonFrame} from '@/services/bibleComparison'
 import {loadPairedContinuation} from '@/services/continuousReading'
 import {bibleApi}from'@/api'
-import InlineVerseCommentaries from '@/features/study/InlineVerseCommentaries.vue'
-import InlineVerseReferences from '@/features/study/InlineVerseReferences.vue'
 import {useI18n} from '@/i18n'
 import {continuousReadingMessages} from '@/i18n/continuousReading'
 import {useReaderPreferences,effectiveReaderPreferences} from '@/profile/readerPreferences'
@@ -25,6 +23,7 @@ async function refreshPersonal(){try{personal.value=await repository.read()}catc
 onMounted(()=>{void refreshPersonal();window.addEventListener('personal-study-changed',refreshPersonal)})
 onUnmounted(()=>window.removeEventListener('personal-study-changed',refreshPersonal))
 function inPassage(source:BibleChapter|undefined,verse:BibleVerse|undefined){const p=props.selection;return !!(source&&verse&&p&&p.translationCode===source.translation.code&&p.bookSlug===source.book.slug&&comparePoints(p.start,{chapter:source.chapter.number,verse:verse.number})<=0&&comparePoints(p.end,{chapter:source.chapter.number,verse:verse.number})>=0)}
+const {settings:referenceSettings}=useReferencePreferences()
 const display=computed(()=>effectiveReaderPreferences(preferences.value))
 type Frame=ComparisonFrame
 const frames=ref<Frame[]>([{primary:props.primary,secondary:props.secondary,secondaryChapters:props.secondaryChapters}]),root=ref<HTMLElement>(),loading=ref(false),failed=ref<number>(),selected=ref('')
@@ -64,11 +63,9 @@ onUnmounted(()=>{stopped=true;clearTimeout(timer);dispose?.()})
   <div v-for="(value,index) in [row.primary,row.secondary]" :key="index" class="parallel-verse" :style="{fontFamily:font(index===0?row.frame.primary:row.secondaryChapter??secondary)}">
    <small v-if="!display.clean">{{(index===0?row.frame.primary:row.secondaryChapter??secondary).translation.name}} · {{row.reference}}</small>
    <button v-if="value" class="verse-text" @click="selected=row.reference;emit('select',value.number,index===0?row.frame.primary:row.secondaryChapter!)" @contextmenu.prevent="emit('actions',index===0?row.frame.primary:row.secondaryChapter!,value,$event)"><span v-if="display.verseNumbers" class="verse-number">{{value.number}}</span><SourceVerseText :verse="value" :code="(index===0?row.frame.primary:row.secondaryChapter!).translation.code" :marks="personal.marks" :preferences="display" :palette="personal.palette" @strong="number=>emit('strong',number,index===0?row.frame.primary:row.secondaryChapter!,value)"/></button>
-   <span v-if="value&&display.strongNumbers" class="source-strong"><button v-for="number in sourceStrongNumbers(value.text,value.has_strong_markup).filter(number=>!inlineSourceStrongTokens(value).some(token=>token.strong_number===number))" :key="number" @click="emit('strong',number,index===0?row.frame.primary:row.secondaryChapter!,value)">{{number}}</button></span>
+   <InlineVerseReferences v-if="value&amp;&amp;display.crossReferences&amp;&amp;referenceSettings.inlineMode==='list'" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :verse="value"/>
    <p v-if="!value">{{text.parallel.missing}}</p>
-   <InlineVerseCommentaries v-if="value&&display.commentaryLinks" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :verse="value" @study="(source,item)=>emit('study',source,item)"/>
-   <InlineVerseReferences v-if="value&&display.crossReferences" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :verse="value" @study="(source,item)=>emit('study',source,item)"/>
   </div>
  </div><p v-if="loading" role="status">{{text.loading}}</p><p v-if="failed===1" role="alert">{{labels.unavailable}} <button @click="load(1)">{{labels.retry}}</button></p>
 </div></template>
-<style scoped>.interleaved{height:65dvh;overflow:auto;overflow-anchor:none;overscroll-behavior:contain}.parallel-row.study-range{border-left:4px solid #3883c0}.source-strong{display:flex;flex-wrap:wrap;gap:4px}.source-strong button{font-size:12px;min-height:32px}.parallel-row{border-bottom:1px solid var(--line)}.parallel-verse{padding:10px 12px;font-size:var(--reading-size,19px);line-height:var(--reader-line-height,1.55);overflow-wrap:anywhere}.parallel-verse p{margin:0}.parallel-verse small{display:block;font:12px sans-serif;margin-bottom:5px}.reader-night{background:#101821;color:#e2eaf4}.reader-night .verse-text{color:#e2eaf4}</style>
+<style scoped>.interleaved{height:65dvh;overflow:auto;overflow-anchor:none;overscroll-behavior:contain}.parallel-row.study-range{border-left:4px solid #3883c0}.parallel-row{border-bottom:1px solid var(--line)}.parallel-verse{padding:10px 12px;font-size:var(--reading-size,19px);line-height:var(--reader-line-height,1.55);overflow-wrap:anywhere}.parallel-verse p{margin:0}.parallel-verse small{display:block;font:12px sans-serif;margin-bottom:5px}.reader-night{background:#101821;color:#e2eaf4}.reader-night .verse-text{color:#e2eaf4}</style>

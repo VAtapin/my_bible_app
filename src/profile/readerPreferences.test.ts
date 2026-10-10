@@ -2,6 +2,11 @@ import { describe,it,expect } from 'vitest'
 import { defaultReaderPreferences,effectiveReaderPreferences,normalizeReaderPreferences,loadReaderPreferences } from './readerPreferences'
 import {loadFavoriteTranslations} from './favoriteTranslations'
 describe('reader preferences',()=>{
+  it('shows actual positioned Strong markers by default and preserves explicit hiding',()=>{
+    expect(normalizeReaderPreferences({}).strongNumbers).toBe(true)
+    expect(normalizeReaderPreferences({strongNumbers:false}).strongNumbers).toBe(false)
+    expect(effectiveReaderPreferences({...defaultReaderPreferences,clean:true}).strongNumbers).toBe(false)
+  })
   it('clean mode restores the actual prior settings without overwriting them',()=>{
     const p={...defaultReaderPreferences,verseNumbers:false,strongNumbers:true,clean:true}
     expect(effectiveReaderPreferences(p).strongNumbers).toBe(false)

@@ -44,7 +44,7 @@ watch([()=>route.params.slug,()=>route.params.language,()=>route.query.edition],
 </script>
 
 <template>
-  <MobileShell back-to="/prayers">
+  <MobileShell back-to="/prayers" reading>
     <article v-if="work" class="prayer-reading liturgical-reading" :class="{ 'traditional-prayer': work.orthography === 'traditional' && work.language === 'cu', 'civil-prayer': work.language.startsWith('cu') && ['civil', 'civil-accented'].includes(work.orthography) }" :lang="work.language.startsWith('cu') ? 'cu' : work.language">
       <p class="eyebrow dark-eyebrow">{{ prayerLanguageLabel(work.language, text.setup) }}</p>
       <h1>{{ work.title }}</h1>

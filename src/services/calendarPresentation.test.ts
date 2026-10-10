@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, CalendarReading } from '@/api/contracts'
-import { calendarEvents, calendarReadingLink, fastingNote } from './calendarPresentation'
+import { calendarEvents, calendarReadingLink, fastingNote,calendarMealMark } from './calendarPresentation'
 
 describe('shared calendar presentation', () => {
+  it('uses published meal colors rather than Russian words to identify multilingual food-rule indicators',()=>{
+    expect(calendarMealMark({foodLabel:'Kein Fasten',fastingColor:'#ffffff'})).toBeUndefined()
+    expect(calendarMealMark({foodLabel:'Fisch erlaubt',fastingColor:'#CCE9F3'})).toEqual({label:'Fisch erlaubt',color:'#cce9f3'})
+    expect(calendarMealMark({foodLabel:'поста нет',fastingColor:'#cce9f3'})?.label).toBe('поста нет')
+    expect(calendarMealMark({foodLabel:' ',fastingColor:'#cce9f3'})).toBeUndefined()
+    expect(calendarMealMark({foodLabel:'Unknown rule',fastingColor:'#123456'})).toBeUndefined()
+  })
   it('does not repeat BibleDesktop rules in the separate commemoration list', () => {
     const event: CalendarEvent = { id: 'memory', name: 'Memory', is_icon_commemoration: false, is_fasting: false }
     const rule = { ...event, id: 'rule', name: 'Rule', type_code: null }

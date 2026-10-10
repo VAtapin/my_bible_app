@@ -63,8 +63,6 @@ const toolbarActions = computed(() => [
   {id:'night',icon:display.value.night?'day':'night',label:display.value.night?controlText.value.day:controlText.value.night,pressed:display.value.night},
   {id:'source',icon:'info',label:sourceInfoMessages[language.value].title,pressed:sourceOpen.value},
   {id:'favorites',icon:'favorite',label:controlText.value.favorites},
-  {id:'back',icon:'back',label:controlText.value.back},
-  {id:'forward',icon:'forward',label:controlText.value.forward},
   {id:'history',icon:'history',label:controlText.value.history},
   {id:'place',icon:'place',label:`${controlText.value.digital} / ${controlText.value.visual}`},
 ])
@@ -349,7 +347,7 @@ function formatDate(value: string): string {
 </script>
 
 <template>
-  <MobileShell back-to="/today">
+  <MobileShell back-to="/today" :reading="!!chapter" :reading-viewport="!!chapter">
     <RouterLink v-if="!chapter" class="storage-link" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink>
     <section v-if="!chapter" class="reader-heading">
       <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
@@ -407,7 +405,7 @@ function formatDate(value: string): string {
     </article>
     <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false;studySource=undefined;studyVerse=undefined">{{ studyMessages[language].close }}</button><CommentaryPanel v-if="contextualChapter" :chapter="contextualChapter" :canon="comparisonCatalog.find(item=>item.code===contextualChapter?.translation.code)?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /><VerseStudyPanel v-if="studySource??contextualChapter" ref="studyPanel" :chapter="(studySource??contextualChapter)!" :verse="studyVerse??visibleFirst" @open="temporary=$event"/><DictionaryContext v-if="contextualChapter" :book="canonicalSlug" :osis="contextualChapter.verses[0]?.osis_ref.split('.')[0]" :verse-numbers="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>Number(v.osis_ref.split('.')[2]))" :verse-chapters="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>Number(v.osis_ref.split('.')[1]))" :chapter="contextualChapter.chapter.number" :verse-ids="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>v.id)"/></aside>
     </div>
-    <VerseActions :service="chapterService" @selection="selection=$event" ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
+    <VerseActions @study="openStudy" :service="chapterService" @selection="selection=$event" ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
     <TemporaryPassage v-if="temporary" :group="temporary" :code="(studySource??contextualChapter)!.translation.code" :service="chapterService" :windows-available="!!comparisonView" @assign="(source,verse,id)=>{comparisonView?.preview(source,verse,id);temporary=undefined;studying=false}" @close="temporary=undefined"/>
     <template #footer>
       <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">
@@ -429,9 +427,13 @@ function formatDate(value: string): string {
 </template>
 
 <style scoped>
-.reader-study-layout.studying { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px }
-.studying .reading-card { min-width:0; margin-top:0 }.study-pane { max-height:calc(100dvh - 220px); overflow:auto; min-width:0; margin-top:0 }
-@media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr) } .studying :deep(.continuous-scroll) { height:35dvh } .study-pane { max-height:35dvh } }
+.reader-study-layout{display:flex;flex:1;min-height:0}
+.reader-study-layout .reading-card{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;width:100%;max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none}
+.reader-study-layout :deep(.continuous-scroll){flex:1;height:auto;min-height:0}
+.reader-study-layout .reading-header{flex-shrink:0;padding:4px 0 8px}
+.reader-study-layout.studying { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:12px }
+.study-pane { overflow:auto; min-height:0;min-width:0; margin:0 }
+@media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) } }
 .reading-header:has(.reader-toolbar){grid-template-columns:36px minmax(0,1fr) 36px 44px 36px}
 .reading-header:has(.reader-toolbar):not(:has(.reader-size-button)){grid-template-columns:36px minmax(0,1fr) 44px 36px}
 .reader-night{--white:#17212d;--ink:#e2eaf4;--line:#415061;--light-blue:#2d4157;background:#101821;color:#e2eaf4}.reader-night :deep(.verse-text){color:#e2eaf4}.reader-night :deep(.chapter-heading){background:#17212d;color:#e2eaf4}

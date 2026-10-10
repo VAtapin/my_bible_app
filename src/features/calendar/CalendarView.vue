@@ -12,7 +12,10 @@ import CalendarGrid from '@/components/CalendarGrid.vue'
 import FastingSummary from '@/components/FastingSummary.vue'
 import CalendarServiceTexts from './CalendarServiceTexts.vue'
 import { createCalendarContentService } from '@/services/calendarContent'
-import { calendarEvents, calendarReadingLink as readingLink } from '@/services/calendarPresentation'
+import { calendarEvents } from '@/services/calendarPresentation'
+import type {CalendarReading} from '@/api/contracts'
+import CalendarTextReader from './CalendarTextReader.vue'
+import {synodalCode} from '@/services/webBibleLibrary'
 import { useProfileStore } from '@/stores/profileStore'
 import { useI18n, formatMessage } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
@@ -36,6 +39,7 @@ const horizonController = ref<AbortController>()
 const horizonMessage = ref('')
 const savedHorizon = ref<CalendarHorizon>()
 const downloading = computed(() => Boolean(horizonController.value))
+const selectedReading=ref<CalendarReading>()
 
 const events = computed(() => calendarEvents(day.value?.events ?? [], 'all', day.value?.other_events))
 const icons = computed(() => day.value ? rankedCalendarIcons(day.value) : [])
@@ -75,6 +79,7 @@ async function openDay(): Promise<void> {
 }
 
 async function selectDate(value: string): Promise<void> {
+  selectedReading.value=undefined
   date.value = value
   void router.replace({ query: { ...route.query, date: value } })
   await openDay()
@@ -150,7 +155,7 @@ function stopHorizonDownload(): void {
         <div class="calendar-list">
           <article v-for="reading in day.readings" :key="reading.id" class="reading-link-card">
             <span><strong>{{ reading.display_ref || reading.title }}</strong></span>
-            <RouterLink v-if="readingLink(reading)" :to="readingLink(reading)!">{{ text.calendar.open }}</RouterLink>
+            <button type="button" @click="selectedReading=reading">{{ text.calendar.open }}</button>
           </article>
         </div>
       </section>
@@ -167,5 +172,6 @@ function stopHorizonDownload(): void {
       </section>
     </section>
     </div>
+    <CalendarTextReader v-if="selectedReading" :reading="selectedReading" :code="profile.configuration?.bible.translationCode??synodalCode" @close="selectedReading=undefined"/>
   </MobileShell>
 </template>

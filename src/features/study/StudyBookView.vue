@@ -41,7 +41,7 @@ async function move(delta: number) {
 }
 </script>
 <template>
-  <MobileShell :back-to="sectionId ? `/books/${bookId}?offset=${offset}` : '/books'">
+  <MobileShell :back-to="sectionId ? `/books/${bookId}?offset=${offset}` : '/books'" :reading="!!article" :reading-viewport="!!article">
     <p v-if="busy" role="status">{{ messages.loading }}</p>
     <p v-if="error" role="alert">{{ text.error }} <button @click="retry++">{{ text.retry }}</button></p>
     <template v-if="contents">
@@ -61,4 +61,4 @@ async function move(delta: number) {
     <p class="status">{{ text.offline }}</p>
   </MobileShell>
 </template>
-<style scoped>.study-reading { max-height:65dvh; overflow:auto; font-size:19px; line-height:1.65; white-space:pre-wrap } nav { display:flex; justify-content:space-between; gap:12px; margin:16px 0 } h2 { font-size:20px }</style>
+<style scoped>.study-reading { flex:1;min-height:0;overflow:auto; font-size:19px; line-height:1.65; white-space:pre-wrap } nav { display:flex; justify-content:space-between; gap:12px; margin:8px 0 } h2 { font-size:20px }</style>

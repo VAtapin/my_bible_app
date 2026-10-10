@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import{computed,nextTick,onMounted,onUnmounted,ref,watch,reactive}from'vue'
+import{computed,onMounted,onUnmounted,ref,watch,reactive}from'vue'
 import{snapshotWindows,type WindowSnapshot}from'@/services/temporaryWindow'
 import{temporaryWindowMessages}from'@/i18n/temporaryWindow'
 import type{BibleChapter,BibleVerse,TranslationSummary}from'@/api/contracts'
@@ -26,7 +26,7 @@ const state=ref<ReaderWindows>(saved?mergeWindowLocation(saved,initial):{places:
 const mode=ref(localStorage.getItem('bible-desktop:compare-mode')==='panes'?'panes':'interleaved')
 const previewSources=ref<[BibleChapter?,BibleChapter?]>([]),previewSnapshot=ref<WindowSnapshot>(),temporaryLabels=computed(()=>temporaryWindowMessages[language.value])
 const anchors=ref<[BibleChapter?,BibleChapter?]>([]),current=ref<[BibleChapter?,BibleChapter?]>([]),errors=ref<[string?,string?]>([]),follow=ref<[number?,number?]>([])
-const paired=ref<BibleChapter[]>(),pairError=ref(false),root=ref<HTMLElement>(),windows=ref<InstanceType<typeof ReadingWindow>[]>([]),pairPicker=ref<InstanceType<typeof ReadingWindow>>(),height=ref(380)
+const paired=ref<BibleChapter[]>(),pairError=ref(false),root=ref<HTMLElement>(),windows=ref<InstanceType<typeof ReadingWindow>[]>([]),pairPicker=ref<InstanceType<typeof ReadingWindow>>()
 const request=ref([0,0]),followRequests=ref([0,0]),epoch=ref(0),emptyBookmarks=new Set<string>()
 let stopped=false,lastSync='',pairRequest=0
 const activeSource=computed(()=>current.value[state.value.active]??anchors.value[state.value.active])
@@ -90,10 +90,8 @@ function close(id:0|1){if(!state.value.open[other()]&&id===state.value.active)re
 async function reopen(id:0|1){state.value.open[id]=true;await loadPlace(id,state.value.places[id]);lastSync='';const source=activeSource.value,verse=source?.verses.find(v=>v.number===state.value.places[state.value.active].verse);if(source&&verse)void synchronize(source,verse)}
 function resize(event:PointerEvent){const element=root.value?.querySelector('.panes');if(!element)return;const bounds=element.getBoundingClientRect();state.value.ratio=windowRatio((event.clientY-bounds.top)/bounds.height)}
 function drag(event:PointerEvent){(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);resize(event)}
-function fit(){const top=root.value?.querySelector('.panes')?.getBoundingClientRect().top??260;height.value=Math.max(360,window.innerHeight-top-84)}
-watch([mode,()=>state.value.open.join()],async()=>{await nextTick();fit();root.value?.querySelector('.panes')?.scrollIntoView({block:'nearest'})})
-onMounted(async()=>{fit();window.addEventListener('resize',fit);if(!state.value.open[state.value.active])state.value.active=other();let missingDefault=false;if(!saved&&code!==initial.code){try{const value=await loadComparison(props.primary,code,bibleApi,props.service);state.value.places[1]=point(value)}catch{errors.value[1]=labels.value.missing;missingDefault=true}}await Promise.all(([0,1]as const).filter(id=>state.value.open[id]&&!(id===1&&missingDefault)).map(id=>loadPlace(id,state.value.places[id])));await pair();await nextTick();root.value?.querySelector('.panes')?.scrollIntoView({block:'nearest'})})
-onUnmounted(()=>{stopped=true;window.removeEventListener('resize',fit)})
+onMounted(async()=>{if(!state.value.open[state.value.active])state.value.active=other();let missingDefault=false;if(!saved&&code!==initial.code){try{const value=await loadComparison(props.primary,code,bibleApi,props.service);state.value.places[1]=point(value)}catch{errors.value[1]=labels.value.missing;missingDefault=true}}await Promise.all(([0,1]as const).filter(id=>state.value.open[id]&&!(id===1&&missingDefault)).map(id=>loadPlace(id,state.value.places[id])));await pair()})
+onUnmounted(()=>{stopped=true})
 async function preview(source:BibleChapter,verse:number,id:0|1){
  if(!source.verses.some(v=>v.number===verse&&v.plain_text.trim()))throw Error('Exact verse absent');
  if(!previewSnapshot.value){previewSnapshot.value=snapshotWindows(state.value,mode.value);previewSources.value=[current.value[0],current.value[1]];}
@@ -109,7 +107,7 @@ defineExpose({source:()=>activeSource.value,preview,returnFromPreview,move,chang
     <button v-if="mode==='panes'" :aria-pressed="state.sync" @click="toggleSync">{{state.sync?labels.sync:labels.independent}}</button>
     <button v-for="id in ([0,1]as const).filter(id=>!state.open[id])" :key="`${epoch}:${id}`" @click="reopen(id)">{{labels.reopen}} {{id+1}}</button>
   </div><p class="parallel-hint">{{text.parallel.numbering}} {{mode==='panes'?labels.hint:''}}</p>
-  <div v-if="mode==='panes'" class="panes" :style="{height:`${height}px`,gridTemplateRows:shape}">
+  <div v-if="mode==='panes'" class="panes" :style="{gridTemplateRows:shape}">
     <template v-for="id in ([0,1]as const)" :key="`${epoch}:${id}`">
       <div v-if="id===1&&state.open.every(Boolean)" class="window-divider" role="separator" tabindex="0" aria-orientation="horizontal" :aria-label="labels.divider" :aria-valuenow="Math.round(state.ratio*100)" aria-valuemin="20" aria-valuemax="80" @pointerdown="drag" @pointermove="($event.currentTarget as HTMLElement).hasPointerCapture($event.pointerId)&&resize($event)" @keydown.up.prevent="state.ratio=windowRatio(state.ratio-.05)" @keydown.down.prevent="state.ratio=windowRatio(state.ratio+.05)">⋯</div>
       <ReadingWindow v-if="state.open[id]" :selection="selection" @strong="(number,chapter,verse)=>emit('strong',number,chapter,verse)" @study="(chapter,verse)=>emit('study',chapter,verse)" ref="windows" :id="id" :source="anchors[id]" :place="state.places[id]" :catalog="catalog" :service="service" :active="state.active===id" :follow-verse="follow[id]" :follow-request="followRequests[id]" :bookmarks="bookmarks??emptyBookmarks" :error="errors[id]" @activate="activate(id)" @navigate="navigate(id,$event)" @close="close(id)" @visible="(source,first,last,offset)=>visible(id,source,first,last,offset)" @select="(number,source)=>emit('select',number,source)" @bookmark="(source,verse)=>emit('bookmark',source,verse)" @actions="(source,verse,event)=>emit('actions',source,verse,event)" />
@@ -120,4 +118,5 @@ defineExpose({source:()=>activeSource.value,preview,returnFromPreview,move,chang
     <ComparisonRows v-else :selection="selection" @strong="(number,chapter,verse)=>emit('strong',number,chapter,verse)" @study="(chapter,verse)=>emit('study',chapter,verse)" :key="`${epoch}:${state.active}:${anchors[state.active]?.book.slug}:${anchors[state.active]?.chapter.number}:${paired[0]!.translation.code}`" :primary="anchors[state.active]!" :secondary="paired[0]!" :secondary-chapters="paired" :service="service" :initial-offset="state.places[state.active].offset" :initial-verse="state.places[state.active].verse" :selected-verse="selectedVerse" @chapter="move" @book="moveBook" @visible="(source,first,last,offset)=>visible(state.active,source,first,last,offset)" @select="(number,source)=>emit('select',number,source)" @actions="(source,verse,event)=>emit('actions',source,verse,event)" />
   </template>
 </section></template>
+<style scoped>.parallel-reading{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}.parallel-reading>.panes{flex:1;min-height:0}.parallel-reading :deep(.interleaved){flex:1;height:auto;min-height:0}</style>
 <style scoped>.parallel-controls{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;font-size:14px;align-items:center}.parallel-controls label{flex:1;min-width:110px}.parallel-controls button{font-size:13px;padding:6px;min-height:36px}.parallel-controls select{font-size:13px;padding:6px}.parallel-controls select{max-width:100%}.parallel-hint{font-size:12px;padding:0}.panes{display:grid;min-height:230px;gap:0}.window-divider{display:grid;place-items:center;cursor:row-resize;touch-action:none;background:var(--light-blue,#e8f2fa);border-radius:6px;user-select:none}.window-divider:focus{outline:2px solid #3883c0}</style>

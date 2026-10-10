@@ -41,7 +41,7 @@ watch([()=>route.params.id,()=>route.query.language],async(_,__,cleanup) => {
 </script>
 
 <template>
-  <MobileShell back-to="/prayers">
+  <MobileShell back-to="/prayers" reading>
     <article v-if="prayer && presentation" class="prayer-reading" :class="{ 'traditional-prayer': presentation.traditional, 'civil-prayer': presentation.civil }" :lang="presentation.language.startsWith('cu') ? 'cu' : presentation.language">
       <h1>{{ prayer.title }}</h1>
       <p>{{prayerLanguageLabel(presentation.language,text.setup)}}<template v-if="prayer.completeness==='complete'"> · {{labels.complete}}</template></p>

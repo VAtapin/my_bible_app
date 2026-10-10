@@ -6,7 +6,7 @@ export interface ReaderPreferences {
   paragraphs: boolean; addedWords: boolean; clean: boolean; night: boolean
   fontSize: number; lineHeight: number; tapPaging: boolean; swipeChapters: boolean; swipeBooks: boolean
 }
-export const defaultReaderPreferences: ReaderPreferences = { chapterLabels: true, verseNumbers: true, separateVerses: true, headings: true, crossReferences: true, commentaryLinks: true, footnotes: true, strongNumbers: false, paragraphs: true, addedWords: true, clean: false, night: false, fontSize: 19, lineHeight: 1.55, tapPaging: false, swipeChapters: false, swipeBooks: false }
+export const defaultReaderPreferences: ReaderPreferences = { chapterLabels: true, verseNumbers: true, separateVerses: true, headings: true, crossReferences: true, commentaryLinks: true, footnotes: true, strongNumbers: true, paragraphs: true, addedWords: true, clean: false, night: false, fontSize: 19, lineHeight: 1.55, tapPaging: false, swipeChapters: false, swipeBooks: false }
 const key = 'bible-desktop:reader-preferences:v1'
 export function normalizeReaderPreferences(value: unknown): ReaderPreferences {
   const result = { ...defaultReaderPreferences }

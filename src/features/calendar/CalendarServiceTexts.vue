@@ -3,21 +3,23 @@ import { onUnmounted, ref, watch } from 'vue'
 import { bibleApi } from '@/api'
 import type { AutomaticCalendarPlan } from '@/api/automaticCalendar'
 import { useI18n } from '@/i18n'
-import { normalizePrayerText } from '@/services/prayerContent'
 import {createCalendarContentService} from '@/services/calendarContent'
 import {createIndexedDbDailyContentRepository} from '@/offline/indexedDbDailyContentRepository'
 import {calendarTextPriorityMessages} from '@/i18n/calendarTextPriority'
 import CalendarServiceText from './CalendarServiceText.vue'
+import CalendarTextReader from './CalendarTextReader.vue'
 const props = defineProps<{ date: string; calendarLanguage: string }>()
 const { messages: text,language } = useI18n()
 const service=createCalendarContentService(bibleApi,createIndexedDbDailyContentRepository())
 const plan = ref<AutomaticCalendarPlan>()
 const failed = ref(false)
 const loading = ref(false)
+const selectedText=ref<AutomaticCalendarPlan['assignments'][number]|AutomaticCalendarPlan['expansions'][number]>()
 let generation = 0
 watch(() => [props.date, props.calendarLanguage], async () => {
   const current = ++generation
   plan.value = undefined
+  selectedText.value=undefined
   failed.value = false
   loading.value = true
   try {
@@ -41,14 +43,14 @@ onUnmounted(() => { generation++ })
         <details v-for="(item, index) in plan.assignments" :key="`${item.textId}-${index}`">
           <summary>{{ item.title }} <small>{{ item.slot === 'troparion-of-day' ? text.calendar.troparion : item.slot === 'kontakion-of-day' ? text.calendar.kontakion : '' }}</small></summary>
           <small v-if="item.insert === false">{{ text.calendar.referenceText }}</small>
-          <p v-if="item.rubric">{{ normalizePrayerText(item.rubric) }}</p>
-          <CalendarServiceText :item="item"/>
+          <CalendarServiceText v-if="item.selection==='missing'" :item="item"/><button v-else type="button" @click="selectedText=item">{{text.calendar.open}}</button>
         </details>
         <details v-for="item in plan.expansions" :key="item.id">
           <summary>{{ item.title }}</summary>
-          <CalendarServiceText :item="item"/>
+          <CalendarServiceText v-if="item.selection==='missing'" :item="item"/><button v-else type="button" @click="selectedText=item">{{text.calendar.open}}</button>
         </details>
       </div>
     </template>
+    <CalendarTextReader v-if="selectedText" :item="selectedText" @close="selectedText=undefined"/>
   </section>
 </template>

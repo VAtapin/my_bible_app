@@ -11,11 +11,12 @@ import { bibleApi } from '@/api'
 import { createChapterService, type ChapterService } from '@/services/chapterService'
 import { createIndexedDbChapterRepository } from '@/offline/indexedDbChapterRepository'
 import type { SavedPassage } from '@/services/personalStudy'
+import {verseStudyMessages} from '@/i18n/verseStudy'
 import { dictionaryMessages } from '@/i18n/dictionaries'
 import { dictionaryLookupLink } from '@/services/dictionaryLookup'
 
 const props = defineProps<{ chapter?: BibleChapter; selectedVerse?: number; service?: ChapterService }>()
-const emit = defineEmits<{ message: [value: string]; selection: [passage: SavedPassage] }>()
+const emit = defineEmits<{ message: [value: string]; selection: [passage: SavedPassage]; study:[chapter:BibleChapter,verse:BibleChapter['verses'][number]] }>()
 const router = useRouter()
 const { messages: text, language } = useI18n()
 const studyText = computed(() => personalStudyMessages[language.value])
@@ -94,6 +95,7 @@ defineExpose({ open })
       <button type="button" class="verse-menu-action" :disabled="!chapter" @click="search">{{ text.readerActions.search }}</button>
       <RouterLink v-if="dictionaryLink" class="verse-menu-action" :to="dictionaryLink" @click="dialog?.close()">{{dictionaryText.title}} · {{snippet}}</RouterLink>
       <button type="button" class="verse-menu-action" :disabled="!verse" @click="open('note', snippet)">{{ text.readerActions.addNote }}</button>
+      <button type="button" class="verse-menu-action" :disabled="!verse" @click="chapter &amp;&amp; verse &amp;&amp; emit('study',chapter,verse);dialog?.close()">{{verseStudyMessages[language].title}}</button>
       <button type="button" class="verse-menu-action" :disabled="!verse" @click="mode = 'study'">{{ studyText.title }}</button>
       <RouterLink class="verse-menu-action" to="/storage?tab=study" @click="dialog?.close()">{{ studyText.library }}</RouterLink>
       <small v-if="!verse">{{ text.readerActions.selectVerse }}</small>

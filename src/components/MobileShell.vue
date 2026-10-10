@@ -10,6 +10,8 @@ withDefaults(defineProps<{
   showNavigation?: boolean
   showHeader?: boolean
   backTo?: string
+  reading?: boolean
+  readingViewport?: boolean
 }>(), {
   showNavigation: true,
   showHeader: true,
@@ -40,7 +42,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mobile-app" :class="{ 'without-header': !showHeader, 'without-navigation': !showNavigation }" :data-theme="appearance.theme.value">
+  <div class="mobile-app" :class="{ 'without-header': !showHeader, 'without-navigation': !showNavigation, 'reading-screen':reading, 'reading-viewport':readingViewport }" :data-theme="appearance.theme.value">
     <header v-if="showHeader" class="app-header">
       <RouterLink v-if="backTo" :to="backTo" class="back-link" :aria-label="text.navigation.back">
         <span aria-hidden="true">←</span>
@@ -86,3 +88,10 @@ onUnmounted(() => {
     </slot>
   </div>
 </template>
+<style scoped>
+.mobile-app.reading-screen{max-width:none;box-shadow:none}
+.reading-screen>.app-content{padding:8px max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left))}
+.reading-screen :deep(.prayer-reading){width:100%;max-width:none;margin:0;padding:0 0 8px}
+.reading-viewport>.app-content{display:flex;flex-direction:column;overflow:hidden}
+.reading-viewport>.app-content>:deep(*){flex-shrink:0}
+</style>
