@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.4` (build 5).
+`0.1.5` (build 6).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -307,7 +307,7 @@ activity/Back, пустая глава, настоящее enqueue/cancel/re-enq
 
 ## Подготовка первой публикации Android
 
-Подготовлены версия **0.1.4 / versionCode 5**, пакет `com.bibledesktop.myapp`.
+Подготовлены версия **0.1.5 / versionCode 6**, пакет `com.bibledesktop.myapp`.
 Это новый Play-пакет, а не обновление прежней установки с другим сертификатом.
 Нельзя удалять прежнее приложение ради установки без отдельного решения о его данных.
 
@@ -323,7 +323,7 @@ Git или вместе с материалами магазина. При Play 
 Из корня проекта, в этом Windows-профиле:
 
 ```powershell
-./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 5 -VersionName '0.1.4'
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 6 -VersionName '0.1.5'
 ```
 
 Скрипт запускает shared host tests, release lint, AAB/APK build и проверки подписи,
@@ -340,6 +340,15 @@ Git или вместе с материалами магазина. При Play 
 
 Каждая следующая загрузка в Play требует большего `VersionCode`, даже если это
 другая тестовая сборка той же версии. Build не отправляет файлы в Console.
+
+0.1.5/code 6 включает скрываемую панель, фоновую индексацию при установке
+Библии и автоматический язык каждого календарного молитвенного текста.
+59 host tests, целевые Android проверки, lintDebug/lintRelease, подписи
+APK/AAB и ZIP/ELF LOAD проверки прошли. Release обновлён поверх 0.1.4 на
+API 37 x86_64, PAGE_SIZE 4096; MainActivity запускается, crash процесса нет.
+Сохранены отдельные артефакты `androidApp/build/outputs/verified/0.1.5/`.
+Для календаря требуется серверный API b94a2de. Новая версия на физических
+ARM64, 16-КБ устройстве и через Play не проверялась.
 
 0.1.4/code 5 включает единые офлайн-комплекты и долговечное продолжение обновления
 Библии. 56 host-тестов, 32 целевых инструментальных теста, lintDebug/lintRelease,

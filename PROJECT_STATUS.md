@@ -165,13 +165,20 @@
 
 ## Проверки
 
+- Android 0.1.5/code 6: подписанные APK/AAB, lintRelease, signature,
+  non-debuggable, ZIP/ELF LOAD 16-КБ PASS. Снимок артефактов сохранён в
+  mobile/androidApp/build/outputs/verified/0.1.5/. APK установлен поверх
+  0.1.4 на API 37 x86_64, PAGE_SIZE 4096; MainActivity и процесс проверены,
+  crash отсутствует. RELRO warning прежний; физический ARM64, новый 16-КБ
+  startup и Play не проверялись. Сервер и Play этим выпуском не обновлялись.
+
 - Календарь: npm run check — 434 теста/93 файла, vue-tsc, обе production
   сборки PASS. SSR проверяет фактические тела/шрифты и отсутствие подмены
   недоступного текста. Shared Android — 59 host tests PASS; целевой Android
   набор 22/22 PASS (календарный экран/кеш/30 дней/хранилище/поиск), lintDebug
   PASS на API 37 x86_64. API — 17 tests/429 assertions, PHP syntax и diffcheck
   PASS на PHP 8.4 с изолированной SQLite. Production и физический телефон
-  этим набором не проверялись; release APK ещё не обновлён.
+  этим набором не проверялись; код включён в release 0.1.5.
 
 - Фоновый поиск Android: 7 инструментальных тестов подготовки, продолжения,
   отмены/ошибки обновления, отсутствия построения при поиске, реальной очереди
@@ -181,14 +188,14 @@
   прошли; lintDebug прошёл. Финальный набор календаря/хранилища/поиска: 22/22;
   ранее набор изменённых классов: 9/9 после исправлений;
   первый расширенный набор: 29/30, единственная ошибка outside-теста панели
-  исправлена и перепроверена. Новый release APK ещё не собран.
+  исправлена и перепроверена. Код включён в release 0.1.5.
 
 - Нативная панель: все 3 инструментальных теста настоящего ChapterScreen
   прошли на API 37 x86_64, включая реальные жесты, закрытие снаружи через
   оконные события, подсказки и сохранение положения текста. Связанные
   ReaderControls/Paging/Layout и BundledBible проверки прошли в первом
   наборе; ошибка синтетического outside-нажатия исправлена и перепроверена.
-  lintDebug прошёл. Новый release APK ещё не собран.
+  lintDebug прошёл. Код включён в release 0.1.5.
 
 - Панель веб-читалки: тесты жеста проверяют верхний край, обычную прокрутку,
   короткий/горизонтальный жест, несколько пальцев, отмену и выделение текста.
@@ -256,4 +263,5 @@
 - Android-панель: 3e78060 — Hide Android reader actions behind a gesture and icon panel.
 - Фоновый поиск: 43ed6d9 — Build Bible search indexes in background installation workers.
 - Очередь индекса: d4b2d66 — Preserve index jobs across installation and concurrent repair.
-- Текущий блок: Select calendar text editions automatically in web and Android (hash в Git).
+- Календарный клиент: 8f83190 — Select calendar text editions automatically in web and Android.
+- Текущий блок: Prepare Android 0.1.5 with reader and calendar improvements (hash в Git).

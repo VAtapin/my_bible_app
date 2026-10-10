@@ -14,10 +14,10 @@ val requestedVersionCode = providers.gradleProperty("bibleVersionCode").orNull
 val requestedVersionName = providers.gradleProperty("bibleVersionName").orNull
 val releaseVersionCode = requestedVersionCode?.let {
     it.toIntOrNull()?.takeIf { code -> code in 1..2_100_000_000 } ?: error("bibleVersionCode must be a positive Play version code")
-} ?: 5
+} ?: 6
 val releaseVersionName = requestedVersionName?.also {
     require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(?:[-.][A-Za-z0-9.-]+)?").matches(it)) { "bibleVersionName must be a semantic version" }
-} ?: "0.1.4"
+} ?: "0.1.5"
 
 kotlin {
     compilerOptions {
