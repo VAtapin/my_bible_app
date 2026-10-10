@@ -101,7 +101,7 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
                 Text(localized(R.string.reader_continuation_error, language), Modifier.weight(1f))
                 TextButton(onClick = { failed = false; retry++ }) { Text(localized(R.string.retry, language)) }
             }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(listTag).onGloballyPositioned{lineMeasurements.viewport=it}.readerGestures(display,{selection!=null||textToolbar.status==androidx.compose.ui.platform.TextToolbarStatus.Shown},::page,actions.chapter,actions.book,lineMeasurements::ordinaryTextAt), state = state, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(listTag).onGloballyPositioned{lineMeasurements.viewport=it}.readerGestures(display,{selection!=null||textToolbar.status==androidx.compose.ui.platform.TextToolbarStatus.Shown},::page,actions.chapter,actions.book,lineMeasurements::ordinaryTextAt), state = state, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)) {
                 items(rows, key = StreamRow::key) { row ->
                     if (row.verse == null) {
                         if (row.empty) Text(localized(R.string.bible_chapter_unavailable, language))

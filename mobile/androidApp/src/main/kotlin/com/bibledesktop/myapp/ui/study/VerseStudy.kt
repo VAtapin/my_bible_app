@@ -18,6 +18,11 @@ import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.myapp.ui.theme.*
 import com.bibledesktop.shared.api.*
 import com.bibledesktop.myapp.ui.bible.BibleSearchScreen
+import com.bibledesktop.myapp.ui.bible.SourceVerseText
+import com.bibledesktop.myapp.ui.bible.LocalReaderPreferences
+import com.bibledesktop.myapp.ui.bible.LocalSourceAnnotationLanguage
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import com.bibledesktop.myapp.data.OfflineContentRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -56,8 +61,7 @@ internal fun VerseStudy(language: String, chapter: BibleChapter, verse: BibleVer
     var dictionary by remember { mutableStateOf<Pair<String, String>?>(null) }
     var references by remember(verse.id, chapter.translation.code) { mutableStateOf<CrossReferences?>(null) }
     var referenceError by remember(verse.id, chapter.translation.code) { mutableStateOf(false) }
-    var tokens by remember(verse.id, chapter.translation.code) { mutableStateOf<StrongTokens?>(null) }
-    var tokenError by remember(verse.id, chapter.translation.code) { mutableStateOf(false) }
+    var selectedStrong by remember(verse.id,chapter.translation.code,initialStrong){mutableStateOf(initialStrong?.let{explicitStrongNumber(it,null)})}
     var retry by remember { mutableIntStateOf(0) }
     val sourceTokens = remember(verse) { verse.sourceStudyStrongTokens() }
     val hasStrong = chapter.translation.hasStrong || verse.hasStrongMarkup || sourceTokens.isNotEmpty() || initialStrong != null
@@ -73,15 +77,10 @@ internal fun VerseStudy(language: String, chapter: BibleChapter, verse: BibleVer
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { referenceError = true }
     }
-    LaunchedEffect(verse.id, chapter.translation.code, retry, hasStrong) {
-        tokens = null; tokenError = false
-        if (sourceTokens.isNotEmpty()) tokens = StrongTokens(StudyVerse(verse.id, verse.osisRef), sourceTokens)
-        else if (hasStrong) try { tokens = client.getStrongTokens(verse.id, chapter.translation.code) }
-        catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { tokenError = true }
-    }
     Column(Modifier.fillMaxWidth().testTag("verse-study"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SelectionContainer { Text(verse.plainText, fontFamily = readingFont(chapter.translation.language.code), fontSize = 19.sp, lineHeight = 29.sp) }
+        SelectionContainer { CompositionLocalProvider(LocalSourceAnnotationLanguage provides language){
+            SourceVerseText(verse,AnnotatedString(verse.plainText),LocalReaderPreferences.current.effective(),TextStyle(fontFamily=readingFont(chapter.translation.language.code),fontSize=19.sp,lineHeight=29.sp),onStrong={selectedStrong=it})
+        } }
         Text(chapter.translation.name, color = PrimaryBlue)
         CommentaryPanel(language, chapter, verse, client)
         DictionaryContext(language, canonicalBook.orEmpty(), verse.osisRef.split('.')[1].toInt(), listOf(verse.id), verseNumbers = listOf(verse.osisRef.split('.')[2].toInt()), verseChapters = listOf(verse.osisRef.split('.')[1].toInt()), osis = verse.osisRef.substringBefore('.')) { module, key -> dictionary = module to key }
@@ -115,12 +114,9 @@ internal fun VerseStudy(language: String, chapter: BibleChapter, verse: BibleVer
             }
         }
         Text(localized(R.string.study_strong, language), style = MaterialTheme.typography.titleMedium)
-        if (!hasStrong) Text(localized(R.string.study_no_strong, language))
-        else if (tokenError && initialStrong == null) StudyError(language) { retry++ }
-        else if (initialStrong != null) StrongWords(language, chapter, verse.id, tokens?.tokens.orEmpty(), null, client, initialStrong)
-        else if (tokens == null) CircularProgressIndicator(Modifier.size(24.dp))
-        else if (tokens!!.tokens.isEmpty()) Text(localized(R.string.study_no_strong, language))
-        else StrongWords(language, chapter, verse.id, tokens!!.tokens, books.firstOrNull { it.slug == chapter.book.slug }?.canonicalBook?.testament, client, initialStrong)
+        if(selectedStrong!=null)StrongArticle(language,chapter,verse.id,client,selectedStrong!!)
+        else if(!hasStrong)Text(localized(R.string.study_no_strong,language))
+        else Text(strongInlineInstruction(language,verse.explicitSourceStrongTokens().isNotEmpty()))
         Text(localized(R.string.study_offline_hint, language), color = PrimaryBlue, style = MaterialTheme.typography.bodySmall)
     }
     dictionary?.let { article -> Dialog(onDismissRequest = { dictionary = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -129,10 +125,8 @@ internal fun VerseStudy(language: String, chapter: BibleChapter, verse: BibleVer
 }
 
 @Composable
-private fun StrongWords(language: String, chapter: BibleChapter, verseId: Long, tokens: List<StrongToken>, testament: String?, client: BibleContentSource, initialStrong: String?) {
-    val labels = studyTexts(language)
-    val numbers = tokens.mapNotNull { explicitStrongNumber(it.number, testament) }.distinct()
-    var number by remember(verseId) { mutableStateOf(initialStrong) }
+internal fun StrongArticle(language:String,chapter:BibleChapter,verseId:Long,client:BibleContentSource,number:String){
+    val labels=studyTexts(language)
     var occurrences by remember { mutableStateOf<String?>(null) }
     var entry by remember(verseId, number) { mutableStateOf<StrongEntry?>(null) }
     var error by remember(verseId, number) { mutableStateOf(false) }
@@ -140,17 +134,13 @@ private fun StrongWords(language: String, chapter: BibleChapter, verseId: Long, 
     var installedSources by remember(verseId,number) {mutableStateOf(emptyList<StrongEntry>())}
     LaunchedEffect(verseId, number, retry) {
         entry = null; error = false
-        val selected = number ?: return@LaunchedEffect
+        val selected = number
         try { installedSources=(client as? OfflineContentRepository)?.installedStrongEntries(selected).orEmpty(); entry=installedSources.firstOrNull()?:client.getStrongEntry(selected, verseId) }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { error = true }
     }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        numbers.forEach { value -> FilterChip(selected = value == number, onClick = { number = value }, label = { Text(value) }) }
-    }
-    if (numbers.isEmpty() && tokens.isNotEmpty()) Text(labels.unknownStrong)
     if(installedSources.size>1)FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp)){installedSources.forEach{source->FilterChip(selected=source.lexicon.code==entry?.lexicon?.code,onClick={entry=source},label={Text(source.lexicon.name+" · "+source.lexicon.language.uppercase())})}}
-    if (number != null) {
+    run {
         if (error) StudyError(language) { retry++ }
         else if (entry == null) CircularProgressIndicator(Modifier.size(24.dp))
         else Card {
@@ -190,4 +180,11 @@ private fun StrongOccurrences(language: String, code: String, number: String, cl
 internal fun StudyError(language: String, retry: () -> Unit) {
     Text(localized(R.string.study_error, language))
     TextButton(onClick = retry) { Text(localized(R.string.retry, language)) }
+}
+
+private fun strongInlineInstruction(language:String,positioned:Boolean):String = when(language){
+    "de"->if(positioned)"Tippen Sie auf eine Strong-Nummer direkt im Vers."else"Die Quelle enthält keine überprüfbare Wortposition für Strong-Nummern."
+    "uk"->if(positioned)"Натисніть номер Strong безпосередньо у вірші."else"Джерело не містить перевіреної позиції слова для номерів Strong."
+    "en"->if(positioned)"Tap a Strong number directly in the verse."else"The source does not preserve a verifiable word position for Strong numbers."
+    else->if(positioned)"Нажмите номер Strong непосредственно в стихе."else"Источник не содержит проверяемой позиции слова для номеров Strong."
 }

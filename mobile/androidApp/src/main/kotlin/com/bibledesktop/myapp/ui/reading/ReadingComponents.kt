@@ -42,11 +42,11 @@ internal fun ReadingHeader(title: String, language: String, onBack: () -> Unit, 
     }
 }
 
-/** Phone uses the available width; wide windows keep a comfortable reading measure. */
+/** Reading follows the available viewport width on phones and wide windows. */
 @Composable
 internal fun ReadingViewport(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-        Box(Modifier.widthIn(max = 840.dp).fillMaxWidth().testTag("reading-measure")) { content() }
+        Box(Modifier.fillMaxWidth().testTag("reading-measure")) { content() }
     }
 }
 
@@ -55,7 +55,7 @@ internal fun PrayerReadingContent(prayer: PrayerDetail, fontSize: Float, interfa
     val intro = remember(prayer.intro) { prayer.intro?.let(::readingText)?.takeIf(String::isNotBlank) }
     val body = remember(prayer.body,prayer.plainText) { prayer.plainText ?: readingText(prayer.body) }
     SelectionContainer {
-        Column(Modifier.padding(horizontal = 22.dp, vertical = 18.dp)) {
+        Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             intro?.let {
                 if(prayer.canonicalSlug!=null)Text(com.bibledesktop.myapp.ui.daily.prayerCatalogTexts(interfaceLanguage).description,color=PrimaryBlue,fontWeight=FontWeight.Bold)
                 Text(it, Modifier.testTag("prayer-description"), color = PrimaryBlue, fontFamily = ReadingSerif, fontSize = 16.sp, lineHeight = 24.sp)

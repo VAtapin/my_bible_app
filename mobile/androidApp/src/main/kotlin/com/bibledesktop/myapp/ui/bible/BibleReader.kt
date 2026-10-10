@@ -532,8 +532,6 @@ internal fun ChapterScreen(
             ReaderToolAction("night",readerControlText(language,if(night)"day"else"night"),if(night)Icons.Outlined.LightMode else Icons.Outlined.DarkMode,onToggleNight),
             ReaderToolAction("source",com.bibledesktop.myapp.ui.study.moduleSourceTitle(language),Icons.Outlined.Info,onSourceInfo),
             ReaderToolAction("favorites",readerControlText(language,"favorites"),Icons.Outlined.FavoriteBorder,onTranslations),
-            ReaderToolAction("back",readerControlText(language,"back"),Icons.AutoMirrored.Outlined.ArrowBack,onHistoryBack),
-            ReaderToolAction("forward",readerControlText(language,"forward"),Icons.AutoMirrored.Outlined.ArrowForward,onHistoryForward),
             ReaderToolAction("history",readerControlText(language,"history"),Icons.Outlined.History,onHistory),
         )
         ReadingHeader(title, language, onBack, onHome, com.bibledesktop.myapp.ui.theme.readingFont(textLanguage)) {

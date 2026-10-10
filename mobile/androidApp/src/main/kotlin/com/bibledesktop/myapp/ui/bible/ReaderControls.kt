@@ -10,7 +10,7 @@ import org.json.JSONObject
 internal data class ReaderPreferences(
     val chapterLabels: Boolean = true, val verseNumbers: Boolean = true, val separateVerses: Boolean = true,
     val headings: Boolean = true, val crossReferences: Boolean = true, val commentaryLinks: Boolean = true,
-    val footnotes: Boolean = true, val strongNumbers: Boolean = false, val paragraphs: Boolean = true,
+    val footnotes: Boolean = true, val strongNumbers: Boolean = true, val paragraphs: Boolean = true,
     val addedWords: Boolean = true, val clean: Boolean = false, val night: Boolean = false,
     val fontSize: Float = 19f, val lineHeight: Float = 1.55f,
     val tapPaging: Boolean = false, val swipeChapters: Boolean = false, val swipeBooks: Boolean = false,
@@ -29,7 +29,7 @@ internal class ReaderPreferencesStore(context: Context) {
         chapterLabels=prefs.getBoolean("chapterLabels",true), verseNumbers=prefs.getBoolean("verseNumbers",true),
         separateVerses=prefs.getBoolean("separateVerses",true), headings=prefs.getBoolean("headings",true),
         crossReferences=prefs.getBoolean("crossReferences",true), commentaryLinks=prefs.getBoolean("commentaryLinks",true),
-        footnotes=prefs.getBoolean("footnotes",true), strongNumbers=prefs.getBoolean("strongNumbers",false),
+        footnotes=prefs.getBoolean("footnotes",true), strongNumbers=prefs.getBoolean("strongNumbers",true),
         paragraphs=prefs.getBoolean("paragraphs",true), addedWords=prefs.getBoolean("addedWords",true),
         clean=prefs.getBoolean("clean",false), night=prefs.getBoolean("night",false),
         fontSize=prefs.getFloat("fontSize",legacyFont).takeIf(Float::isFinite)?.coerceIn(14f,36f) ?: 19f,

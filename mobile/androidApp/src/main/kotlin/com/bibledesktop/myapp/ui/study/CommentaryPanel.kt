@@ -132,7 +132,7 @@ internal fun CommentaryPanel(language: String, chapter: BibleChapter, verse: Bib
         val filtered = if (mode < 2 || mode == 3 || canonicalLoaded) entries else entries.filter { valid && commentaryOverlaps(it, canonicalChapter, start!!, end!!) }
         if (valid && !loading && !failed && sources.isNotEmpty() && filtered.isEmpty() && entries.size >= (page?.total ?: 0)) Text(localized(R.string.study_material_empty, language))
         filtered.forEach { entry -> Card(Modifier.fillMaxWidth().testTag("commentary-${entry.id}")) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(studySourceName(entry.title ?: localized(R.string.study_section, language)), style = MaterialTheme.typography.titleMedium)
                 Text(studySourceName(listOfNotNull(entry.author, entry.moduleName).joinToString(" · ")), color = PrimaryBlue)
                 if (entry.chapterFrom > 0) Text("${chapter.book.name} ${entry.chapterFrom}" + (if (entry.verseFrom > 0) ":${entry.verseFrom}" else "") +

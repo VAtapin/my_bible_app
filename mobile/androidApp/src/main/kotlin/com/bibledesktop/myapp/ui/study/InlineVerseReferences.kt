@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.bibledesktop.shared.api.*
 import com.bibledesktop.myapp.R
@@ -23,23 +24,36 @@ import kotlinx.coroutines.CancellationException
 internal val LocalVerseStudyClient=staticCompositionLocalOf<BibleContentSource?>{null}
 @Composable internal fun InlineVerseReferences(language:String,chapter:BibleChapter,verse:BibleVerse,onStudy:()->Unit){
  val client=LocalVerseStudyClient.current?:return
+ val loader=LocalInlineReferenceLoader.current;val view=LocalView.current
  val context=LocalContext.current;val labels=studyTexts(language);val text=referenceDisplayTexts(language)
  val store=remember(context){ReferenceDisplayStore(context)};val revision by ReferenceDisplayStore.changes.collectAsState();val settings=remember(revision){store.load()}
- var visible by remember(verse.id,chapter.translation.code){mutableStateOf(false)}
- var data by remember(verse.id,chapter.translation.code){mutableStateOf<CrossReferences?>(null)}
- var error by remember{mutableStateOf(false)};var retry by remember{mutableIntStateOf(0)};var showing by remember{mutableStateOf(false)}
- var books by remember(chapter.translation.code){mutableStateOf(emptyList<BibleBook>())};var temporary by remember{mutableStateOf<List<ReferenceTarget>?>(null)}
- LaunchedEffect(visible,verse.id,chapter.translation.code,retry){if(!visible)return@LaunchedEffect;data=null;error=false
-  try{data=((client as? OfflineContentRepository)?.getCrossReferencesAt(verse.id,chapter.translation.code,verse.osisRef)?:client.getCrossReferences(verse.id,chapter.translation.code)).also{require(it.verse.osisRef==verse.osisRef&&it.translationCode==chapter.translation.code)};books=client.getBooks(chapter.translation.code)}
-  catch(cancelled:CancellationException){throw cancelled}catch(_:Exception){error=true}
+ var visible by remember(client,verse.id,verse.osisRef,chapter.translation.code){mutableStateOf(false)}
+ var data by remember(client,verse.id,verse.osisRef,chapter.translation.code){mutableStateOf<CrossReferences?>(null)}
+ var showing by remember(client,verse.id,verse.osisRef,chapter.translation.code){mutableStateOf(false)}
+ var books by remember(client,chapter.translation.code){mutableStateOf(emptyList<BibleBook>())};var temporary by remember{mutableStateOf<List<ReferenceTarget>?>(null)}
+ LaunchedEffect(client,loader,visible,verse.id,verse.osisRef,chapter.translation.code){
+  if(!visible||data!=null)return@LaunchedEffect
+  data=loader.load(attempt={
+   ((client as? OfflineContentRepository)?.getCrossReferencesAt(verse.id,chapter.translation.code,verse.osisRef)?:client.getCrossReferences(verse.id,chapter.translation.code))
+    .also{require(it.verse.osisRef==verse.osisRef&&it.translationCode==chapter.translation.code)}
+  })
+
+ }
+
+ LaunchedEffect(showing,client,chapter.translation.code){
+  if(!showing||books.isNotEmpty())return@LaunchedEffect
+  // Catalogue metadata is needed only in the explicitly opened study popup.
+  books=try{client.getBooks(chapter.translation.code)}catch(cancelled:CancellationException){throw cancelled}catch(_:Exception){emptyList()}
  }
  val groups=displayReferenceGroups(data?.references.orEmpty(),settings.inlineSources,books.mapNotNull{b->b.canonicalBook?.osisCode?.let{it to b.order}}.toMap())
  val sources=data?.references?.map{it.source.orEmpty()}?.distinct().orEmpty()
- Column(Modifier.fillMaxWidth().onGloballyPositioned{if(it.boundsInWindow().height>0)visible=true}){
-  if(error)TextButton(onClick={retry++}){Text("↗ ${localized(R.string.retry,language)}")}
-  else if(visible&&data==null)LinearProgressIndicator(Modifier.width(40.dp))
-  else if(data!=null){TextButton(onClick={showing=true}){Text("↗ ${groups.size}")};if(settings.list)FlowRow{groups.forEach{group->TextButton(onClick={temporary=group.targets}){Text(group.label)}}}}
+ Column(Modifier.fillMaxWidth().heightIn(min=1.dp).onGloballyPositioned{
+  val bounds=it.boundsInWindow()
+  visible=bounds.height>0&&bounds.bottom>0&&bounds.top<view.height
+ }){
+  if(groups.isNotEmpty()){TextButton(onClick={showing=true}){Text("↗ ${groups.size}")};if(settings.list)FlowRow{groups.forEach{group->TextButton(onClick={temporary=group.targets}){Text(group.label)}}}}
  }
+
  if(showing)AlertDialog(onDismissRequest={showing=false},title={Text("${chapter.book.name} ${chapter.chapter.number}:${verse.number} · ${chapter.translation.name}")},
   confirmButton={TextButton(onClick={showing=false}){Text(localized(R.string.study_close,language))}},text={Column(Modifier.heightIn(max=430.dp).verticalScroll(rememberScrollState())){
    Text("${text.count}: ${groups.size}");Text(text.normal)

@@ -5,6 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -46,8 +49,9 @@ internal fun ReaderSettingsDialog(language: String, value: ReaderPreferences, on
 }
 @Composable
 private fun ReaderSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
-        Text(label,Modifier.weight(1f)); Switch(checked,onChange)
+    Row(Modifier.fillMaxWidth().heightIn(min=48.dp).toggleable(checked,role=Role.Checkbox,onValueChange=onChange), verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+        Checkbox(checked,onCheckedChange=null,modifier=Modifier.size(24.dp))
+        Text(label,Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis)
     }
 }
 @Composable

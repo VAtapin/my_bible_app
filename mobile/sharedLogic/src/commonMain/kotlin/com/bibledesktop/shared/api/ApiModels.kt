@@ -156,7 +156,15 @@ data class CalendarReading(
     val title: String,
     @SerialName("display_ref") val displayRef: String,
     @SerialName("passage_ref") val passageRef: String,
+    val reading: CalendarNormalizedReading? = null,
 )
+
+@Serializable
+data class CalendarReadingPoint(val chapter:Int,val verse:Int?=null)
+@Serializable
+data class CalendarReadingPassage(val book:String,val start:CalendarReadingPoint,val end:CalendarReadingPoint)
+@Serializable
+data class CalendarNormalizedReading(val schemaVersion:Int,val parseStatus:String,val passages:List<CalendarReadingPassage> = emptyList())
 
 @Serializable
 data class CalendarDay(

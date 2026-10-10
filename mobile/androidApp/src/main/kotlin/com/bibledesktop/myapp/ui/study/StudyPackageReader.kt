@@ -72,7 +72,7 @@ private fun JsonObject.sourceTitle()=(get("source_verse") as? JsonObject)?.strin
         } catch(cancelled:CancellationException){throw cancelled}catch(_:Exception){failed=true}finally{busy=false}
     }
     val bodyChunks by produceState<List<String>?>(null,article) { value=null;value=article?.let{prepareStudyBody(it.string("body").ifBlank{it.string("content")})} }
-    LazyColumn(Modifier.fillMaxSize(),state=if(entryId.isBlank())catalogState else articleState,contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(),state=if(entryId.isBlank())catalogState else articleState,contentPadding=if(entryId.isBlank())PaddingValues(16.dp)else PaddingValues(horizontal=10.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         item { Row(Modifier.fillMaxWidth()){TextButton(onClick=::back){Text(text.back)};Text(metadata?.string("name").orEmpty().ifBlank{pack.id},style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))};Text(pack.kind+" · "+pack.version.take(8)) }
         metadata?.let{source->item{ModuleSourceCard(language,source,pack.version,capabilities)}}
         if(busy)item{LinearProgressIndicator(Modifier.fillMaxWidth())}

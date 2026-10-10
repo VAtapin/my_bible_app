@@ -11,11 +11,21 @@ private val sourceLabels=mapOf("ru" to listOf("Об источнике","Пол�
 internal fun moduleSourceTitle(language:String)=(sourceLabels[language]?:sourceLabels.getValue("en"))[0]
 internal fun publishedSourceFields(metadata:JsonObject,version:String?=null):List<String?>{
  fun value(vararg names:String)=names.mapNotNull{(metadata[it] as? JsonPrimitive)?.takeIf{value->value.isString}?.contentOrNull?.takeIf{value->value.isNotBlank()}}.firstOrNull()?.let(::studySourceName)?.takeIf{it.isNotBlank()}
+ fun clean(value:String?)=value?.let(::studySourceName)?.takeIf{it.isNotBlank()}
  val language=metadata["language"] as? JsonObject
- return listOf(value("name","title"),value("short_name"),value("language_code","language")?:(language?.get("name") as? JsonPrimitive)?.contentOrNull?:(language?.get("code") as? JsonPrimitive)?.contentOrNull,value("author","translator","compiler"),value("edition"),value("source_url","source","electronic_source"),version?:value("content_version","version"),value("updated_at","updated"))
+ return listOf(value("name","title"),value("short_name"),value("language_code","language")?:clean((language?.get("name") as? JsonPrimitive)?.contentOrNull)?:clean((language?.get("code") as? JsonPrimitive)?.contentOrNull),value("author","translator","compiler"),value("edition"),value("source_url","source","electronic_source"),clean(version)?:value("content_version","version"),value("updated_at","updated"))
 }
 @Composable internal fun ModuleSourceCard(language:String,metadata:JsonObject,version:String?=null,capabilities:List<String> = emptyList()){
  val labels=sourceLabels[language]?:sourceLabels.getValue("en")
- var expanded by remember{mutableStateOf(false)}
- Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){TextButton(onClick={expanded=!expanded}){Text(labels[0])};if(expanded){publishedSourceFields(metadata,version).forEachIndexed{index,value->Text(labels[index+1],style=MaterialTheme.typography.labelMedium);Text(value?:labels[10])};Text(labels[9],style=MaterialTheme.typography.labelMedium);Text(capabilities.joinToString(" · ").ifBlank{labels[10]})}}}
+ val fields=publishedSourceFields(metadata,version)
+ val content=capabilities.map(::studySourceName).filter{it.isNotBlank()}.joinToString(" · ")
+ if(fields.all{it==null}&&content.isBlank())return
+ var expanded by remember(metadata,version){mutableStateOf(false)}
+ Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
+  TextButton(onClick={expanded=!expanded}){Text(labels[0])}
+  if(expanded){
+   fields.forEachIndexed{index,value->if(value!=null){Text(labels[index+1],style=MaterialTheme.typography.labelMedium);Text(value)}}
+   if(content.isNotBlank()){Text(labels[9],style=MaterialTheme.typography.labelMedium);Text(content)}
+  }
+ }}
 }

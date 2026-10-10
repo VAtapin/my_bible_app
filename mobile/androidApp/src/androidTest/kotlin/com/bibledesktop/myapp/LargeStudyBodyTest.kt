@@ -72,4 +72,9 @@ class LargeStudyBodyTest {
   val text="𐍈👋".repeat(100_000);val parts=splitStudyText(text,2049)
   assertEquals(text,parts.joinToString(""));assertTrue(parts.all{it.length<=2049&&!it.last().isHighSurrogate()&&!it.first().isLowSurrogate()})
  }
+ @Test fun calendarPlainTextKeepsLiteralMarkupAndSupplementaryCharacters()=runBlocking {
+  val text="<Источник> & молитва 𐍈 👋 ".repeat(150)
+  assertEquals(text,prepareStudyBody(text,plainText=true).joinToString(""))
+  assertTrue(prepareStudyBody(text,plainText=true).all{it.length<=2048&&!it.last().isHighSurrogate()})
+ }
 }

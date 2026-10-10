@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,6 +39,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
     var monthIso by rememberSaveable { mutableStateOf(selected.take(7)) }
     var days by remember { mutableStateOf<List<CalendarGridDay>?>(null) }
     var day by remember { mutableStateOf<CalendarDay?>(null) }
+    var reading by remember(selected){mutableStateOf<CalendarReading?>(null)}
     var monthError by remember { mutableStateOf(false) }
     var dayError by remember { mutableStateOf(false) }
     var retry by remember { mutableIntStateOf(0) }
@@ -131,6 +133,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
                                         if (asset != null) CalendarImage(asset, mark.label, language, Modifier.size(18.dp))
                                         else Text(mark.label, fontSize = 10.sp)
                                     }
+                                    if(info!=null&&calendarHasFast(info.fastingColor))Icon(Icons.Outlined.Eco,info.foodLabel.ifBlank{localized(R.string.calendar_fasting,language)},Modifier.size(16.dp).testTag("calendar-fast-$date"),tint=Color(0xff426b43))
                                     info?.oldStyleDate?.takeLast(2)?.toIntOrNull()?.let { Text(it.toString(), color = PrimaryBlue, fontSize = 10.sp) }
                                 }
                             }
@@ -176,7 +179,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
                 value.fastingEvents.forEach { Text(it.name) }
                 value.otherEvents.forEach { Text(it.name); it.description?.let { description -> Text(description) } }
                 if (value.readings.isNotEmpty()) Text(localized(R.string.calendar_readings, language), fontWeight = FontWeight.Bold)
-                value.readings.forEach { Text(it.displayRef.ifBlank { it.title }) }
+                value.readings.forEach { item->TextButton(onClick={reading=item},modifier=Modifier.testTag("calendar-reading-open-${item.id}")){Text(item.displayRef.ifBlank{item.title})} }
                 CalendarService(selected, language, client)
             }
         }
@@ -186,6 +189,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
             TextButton(onClick = { retry++ }) { Text(localized(R.string.retry, language)) }
         }
     }
+    reading?.let{value->CalendarPassageDialog(language,value,client){reading=null}}
     if (choosingMonth) CalendarMonthPicker(language, month, onSelect = { value ->
         selected = value.atDay(1).toString(); monthIso = value.toString(); choosingMonth = false; week = false
     }, onClose = { choosingMonth = false })

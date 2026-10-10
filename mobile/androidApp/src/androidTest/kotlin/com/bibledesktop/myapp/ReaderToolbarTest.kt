@@ -62,7 +62,9 @@ class ReaderToolbarTest {
         screenshot("reader-toolbar-closed.png")
         val before=place;val bounds=compose.onNodeWithTag("continuous-reader").getUnclippedBoundsInRoot()
         open();screenshot("reader-toolbar-open.png")
-        val ids=listOf("compare","downloads","search","commentary","settings","night","source","favorites","back","forward","history")
+        compose.onNodeWithTag("reader-tool-back").assertDoesNotExist()
+        compose.onNodeWithTag("reader-tool-forward").assertDoesNotExist()
+        val ids=listOf("compare","downloads","search","commentary","settings","night","source","favorites","history")
         ids.forEach{compose.onNodeWithTag("reader-tool-$it").assertIsDisplayed()}
         assertEquals(bounds,compose.onNodeWithTag("continuous-reader").getUnclippedBoundsInRoot());assertEquals(before,place)
         compose.onNodeWithTag("reader-tool-close").performClick();compose.onNodeWithTag("reader-tools-popup").assertDoesNotExist()

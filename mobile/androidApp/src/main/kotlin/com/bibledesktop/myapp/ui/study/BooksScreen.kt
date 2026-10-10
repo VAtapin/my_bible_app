@@ -123,7 +123,7 @@ internal fun BooksScreen(language: String, client: BibleContentSource, onBack: (
                 key(bookId, section.id) {
                     if(section.body.orEmpty().length>=largeStudyBodyThreshold){
                         ReadingViewport(Modifier.weight(1f)){
-                            LargeStudyBody(section.body.orEmpty(),Modifier.fillMaxSize().padding(18.dp).testTag("study-book-body"),
+                            LargeStudyBody(section.body.orEmpty(),Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=8.dp).testTag("study-book-body"),
                                 preferences=preferences,positionKey="position:$bookId:${section.id}",
                                 style=TextStyle(color=Ink,fontSize=19.sp,lineHeight=29.sp,fontFamily=ReadingSerif),
                                 leading={Text(section.title?:localized(R.string.study_section,language),style=MaterialTheme.typography.titleLarge);section.author?.let{Text(it,color=PrimaryBlue)}},
@@ -132,7 +132,7 @@ internal fun BooksScreen(language: String, client: BibleContentSource, onBack: (
                     }else{
                     val scroll = rememberScrollState(preferences.getInt("position:$bookId:${section.id}", 0))
                     LaunchedEffect(scroll.value) { preferences.edit().putInt("position:$bookId:${section.id}", scroll.value).apply() }
-                    ReadingViewport(Modifier.weight(1f)) { SelectionContainer { Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(18.dp)) {
+                    ReadingViewport(Modifier.weight(1f)) { SelectionContainer { Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal=10.dp,vertical=8.dp)) {
                         Text(section.title ?: localized(R.string.study_section, language), style = MaterialTheme.typography.titleLarge)
                         section.author?.let { Text(it, color = PrimaryBlue) }
                         Text(studyReadingText(section.body.orEmpty()), Modifier.testTag("study-book-body"), color = Ink, fontSize = 19.sp, lineHeight = 29.sp, fontFamily = ReadingSerif)

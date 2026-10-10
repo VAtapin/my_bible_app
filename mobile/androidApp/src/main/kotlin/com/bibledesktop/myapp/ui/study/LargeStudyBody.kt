@@ -26,13 +26,13 @@ internal fun splitStudyText(text:String,maximum:Int=2048):List<String>{
   };result+=text.substring(start,end);start=end
  };return result
 }
-internal suspend fun prepareStudyBody(body:String)=withContext(Dispatchers.Default){splitStudyText(studyReadingText(body))}
+internal suspend fun prepareStudyBody(body:String,plainText:Boolean=false)=withContext(Dispatchers.Default){splitStudyText(if(plainText)body else studyReadingText(body))}
 
 /** A bounded, virtualized body; callers must supply a finite viewport. */
 @Composable internal fun LargeStudyBody(body:String,modifier:Modifier=Modifier,expanded:Boolean=true,
  preferences:SharedPreferences?=null,positionKey:String?=null,style:TextStyle=MaterialTheme.typography.bodyLarge,
- leading:@Composable ()->Unit={},trailing:@Composable ()->Unit={}){
- val chunks by produceState<List<String>?>(null,body){value=null;value=prepareStudyBody(body)}
+ leading:@Composable ()->Unit={},trailing:@Composable ()->Unit={},plainText:Boolean=false){
+ val chunks by produceState<List<String>?>(null,body,plainText){value=null;value=prepareStudyBody(body,plainText)}
  val parts=chunks
  if(parts==null){Box(modifier){LinearProgressIndicator(Modifier.fillMaxWidth())};return}
  if(!expanded){SelectionContainer{Text(parts.firstOrNull().orEmpty().take(220)+"…",style=style)};return}

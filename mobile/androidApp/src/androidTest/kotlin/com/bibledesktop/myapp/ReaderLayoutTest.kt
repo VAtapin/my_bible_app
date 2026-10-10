@@ -40,7 +40,7 @@ class ReaderLayoutTest {
     )
 
     @Test fun phoneReaderUsesAvailableWidth() = layout("phone", 390, 844)
-    @Test fun portraitTabletHasComfortableMeasure() = layout("portrait", 960, 1280)
+    @Test fun portraitTabletUsesFullReadingWidth() = layout("portrait", 960, 1280)
     @Test fun landscapeReaderHasCompactParagraphs() = layout("landscape", 1280, 800)
 
     private fun layout(name: String, width: Int, height: Int) {
@@ -55,7 +55,7 @@ class ReaderLayoutTest {
             }
         }
         val measure = compose.onNodeWithTag("reading-measure").getUnclippedBoundsInRoot()
-        assertEquals(minOf(width, 840).toFloat(), measure.width.value, 2f)
+        assertEquals(width.toFloat(), measure.width.value, 2f)
         val row = compose.onNodeWithTag("verse-1").getUnclippedBoundsInRoot()
         assertTrue("Rows should follow their text, not three action buttons", row.height.value < if (width == 390) 145f else 110f)
         compose.onNodeWithTag("verse-4").assertIsDisplayed()

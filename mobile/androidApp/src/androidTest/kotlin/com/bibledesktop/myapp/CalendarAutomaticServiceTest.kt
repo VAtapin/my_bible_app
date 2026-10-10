@@ -42,12 +42,14 @@ class CalendarAutomaticServiceTest{
             compose.onNodeWithTag("calendar-service-open").performClick()
             compose.waitUntil(10_000){compose.onAllNodesWithTag("calendar-service-assignment-A").fetchSemanticsNodes().isNotEmpty()}
             assertEquals(listOf("2026-10-08" to "ru"),calls)
-            compose.onNodeWithText("Материал A").performScrollTo().performClick()
-            compose.onNodeWithText("Материал B").performScrollTo().performClick()
             for((id,language) in listOf("A" to "cu","B" to "cu-civil")){
+                compose.onNodeWithText("Материал $id").performScrollTo().performClick()
+                compose.onNodeWithTag("calendar-text-dialog").assertIsDisplayed()
                 val layout=mutableListOf<TextLayoutResult>()
                 compose.onNodeWithTag("calendar-service-body-assignment-$id").performScrollTo().performSemanticsAction(SemanticsActions.GetTextLayoutResult){action->assertTrue(action(layout))}
                 assertEquals(readingFont(language),layout.single().layoutInput.style.fontFamily)
+                compose.onNodeWithTag("calendar-text-close").performClick()
+                compose.onNodeWithTag("calendar-text-dialog").assertDoesNotExist()
             }
             compose.onNodeWithTag("calendar-service-missing-assignment-C").performScrollTo().assertIsDisplayed()
             compose.onNodeWithTag("calendar-service-body-assignment-C").assertDoesNotExist()

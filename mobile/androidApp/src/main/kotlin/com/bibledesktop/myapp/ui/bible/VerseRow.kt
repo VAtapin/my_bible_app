@@ -38,7 +38,6 @@ import com.bibledesktop.shared.api.SavedPassage
 import com.bibledesktop.shared.api.WordMark
 import com.bibledesktop.shared.api.PersonalStudy
 import com.bibledesktop.shared.api.explicitSourceStrongTokens
-import com.bibledesktop.shared.api.sourceStrongNumbers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.delay
 import com.bibledesktop.myapp.ui.study.InlineVerseCommentaries
@@ -78,7 +77,7 @@ internal fun ChapterReadingContent(
                     if (first != null && last != null) onVisibleRange?.invoke(first, last)
                 }
             }
-            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)) {
+            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)) {
                 items(chapter.verses, key = BibleVerse::osisRef) { verse ->
                     VerseRow(language, chapter, verse, fontSize,
                         "${chapter.translation.code}:${verse.osisRef}" in bookmarkedKeys,
@@ -141,9 +140,6 @@ internal fun VerseRow(
         SelectionContainer(Modifier.padding(horizontal = 6.dp, vertical = 3.dp)) {
             CompositionLocalProvider(LocalSourceAnnotationLanguage provides language){SourceVerseText(verse,if(body.isBlank()) androidx.compose.ui.text.AnnotatedString(localized(R.string.catalog_verse_missing,language))else markedBody,display,
                 androidx.compose.ui.text.TextStyle(color=MaterialTheme.colorScheme.onSurface,fontFamily=readingFont(chapter.translation.language.code),fontSize=fontSize.sp,lineHeight=(fontSize*display.lineHeight).sp),wordNotes=personal.marks.filter{it.matches(chapter.translation.code,verse)},onWordNote={wordNote=it},onStrong={number->if(onStrong!=null)onStrong(number)else onStudy?.invoke()})}
-        }
-        if(display.strongNumbers && verse.hasStrongMarkup) {
-            FlowRow(horizontalArrangement=Arrangement.spacedBy(2.dp)) { sourceStrongNumbers(verse.text,verse.hasStrongMarkup).filter{number->body!=verse.plainText||verse.explicitSourceStrongTokens().none{it.number==number}}.forEach { number -> TextButton(onClick={if(onStrong!=null)onStrong(number)else onStudy?.invoke()},modifier=Modifier.height(32.dp),contentPadding=PaddingValues(horizontal=4.dp)) {Text(number,style=MaterialTheme.typography.labelSmall)} } }
         }
         if(display.commentaryLinks&&onStudy!=null)InlineVerseCommentaries(language,chapter,verse,onStudy)
         if(display.crossReferences&&onStudy!=null)InlineVerseReferences(language,chapter,verse,onStudy)
