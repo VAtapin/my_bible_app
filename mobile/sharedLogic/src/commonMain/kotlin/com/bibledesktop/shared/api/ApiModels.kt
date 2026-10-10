@@ -27,6 +27,8 @@ data class TranslationSummary(
     @SerialName("has_apocrypha") val hasApocrypha: Boolean = false,
     @SerialName("has_strong") val hasStrong: Boolean = false,
     @SerialName("is_default") val isDefault: Boolean = false,
+    @SerialName("offline_size_estimate_bytes") val offlineSizeEstimateBytes: Long? = null,
+    @SerialName("content_revision") val contentRevision: String? = null,
 )
 
 @Serializable

@@ -12,10 +12,15 @@ import { savedVerseLink } from '@/services/readerActions'
 import { formatMessage, useI18n } from '@/i18n'
 import { interfaceLocales } from '@/i18n/locale'
 import PersonalStudyLibrary from './PersonalStudyLibrary.vue'
+import OfflineBundles from '@/features/study/OfflineBundles.vue'
+import {offlineBundlesMessages} from '@/i18n/offlineBundles'
+import {createOfflinePackageService} from '@/services/offlinePackageService'
+import {bibleApi} from '@/api'
 import { personalStudyMessages } from '@/i18n/personalStudy'
 
 const chaptersRepository = createIndexedDbChapterRepository()
 const libraryRepository = createIndexedDbLibraryRepository()
+const biblePackages=createOfflinePackageService(bibleApi,chaptersRepository,libraryRepository)
 const notesRepository = createVerseNoteRepository()
 const route = useRoute()
 const { language, messages: text } = useI18n()
@@ -38,6 +43,7 @@ const draft = ref('')
 const loaded = ref(false)
 const message = ref('')
 const busy = ref(false)
+const bundleBusy=ref(false)
 const approximateBytes = computed(() => chapters.value.reduce(
   (total, chapter) => total + new Blob([JSON.stringify(chapter.data)]).size,
   0,
@@ -54,6 +60,7 @@ async function load(): Promise<void> {
       libraryRepository.listBookmarks(),
       notesRepository.list(),
     ])
+    for(let i=0;i<packages.value.length;i++)packages.value[i]=(await biblePackages.auditStored(packages.value[i]!.translationCode)).stored??packages.value[i]!
     loaded.value = true
   } catch {
     message.value = text.value.storage.loadFailed
@@ -135,18 +142,19 @@ function formatDate(value: string): string {
         <div><strong>{{ formatBytes(approximateBytes) }}</strong><small>{{ text.storage.approximateSize }}</small></div>
         <div><strong>{{ bookmarks.length }}</strong><small>{{ text.storage.bookmarks }}</small></div>
       </section>
+      <OfflineBundles v-if="tab === 'all'" :disabled="busy" @busy-change="bundleBusy=$event" @changed="load" />
       <p v-if="message" class="status" role="status">{{ message }}</p>
       <button v-if="!loaded && !busy" class="text-action" type="button" @click="load">{{ text.storage.retry }}</button>
 
       <section v-if="tab === 'all' && loaded" class="storage-section">
         <div class="section-heading-row">
           <span><small>{{ text.storage.content }}</small><h2>{{ text.storage.packages }}</h2></span>
-          <button class="text-action danger-text" type="button" :disabled="busy || !chapters.length" @click="clearContent">{{ text.storage.deleteAll }}</button>
+          <button class="text-action danger-text" type="button" :disabled="busy || bundleBusy || !chapters.length" @click="clearContent">{{ text.storage.deleteAll }}</button>
         </div>
         <div v-if="packages.length" class="storage-list">
           <div v-for="item in packages" :key="item.translationCode" class="storage-item">
             <span><strong>{{ item.translationName }}</strong><small>{{ item.chapterCount }} {{ text.reader.chapters }} · {{ formatBytes(item.approximateBytes) }} · {{ formatDate(item.downloadedAt) }}</small></span>
-            <span class="complete-badge">{{ text.storage.ready }}</span>
+            <span class="complete-badge">{{ item.complete===true&&!item.refreshing ? offlineBundlesMessages[language].ready : offlineBundlesMessages[language].partial }}<small v-if="item.unavailable?.length || item.missingVerses?.length">{{item.unavailable?.length??0}} / {{item.missingVerses?.length??0}}</small></span>
           </div>
         </div>
         <p v-else class="empty-state">{{ text.storage.noPackages }}</p>
@@ -157,7 +165,7 @@ function formatDate(value: string): string {
         <div v-if="chapters.length" class="storage-list">
           <div v-for="item in chapters" :key="item.key" class="storage-item">
             <span><strong>{{ item.data.book.name }}, {{ item.data.chapter.number }}</strong><small>{{ item.data.translation.name }} · {{ formatDate(item.savedAt) }}</small></span>
-            <button type="button" :aria-label="text.storage.deleteChapter" @click="removeChapter(item)">{{ text.storage.delete }}</button>
+            <button type="button" :disabled="bundleBusy" :aria-label="text.storage.deleteChapter" @click="removeChapter(item)">{{ text.storage.delete }}</button>
           </div>
         </div>
         <p v-else class="empty-state">{{ text.storage.noChapters }}</p>

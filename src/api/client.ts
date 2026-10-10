@@ -242,6 +242,8 @@ function isTranslationSummary(value: unknown): value is TranslationSummary {
     && typeof value.has_apocrypha === 'boolean'
     && typeof value.has_strong === 'boolean'
     && typeof value.is_default === 'boolean'
+    && (value.offline_size_estimate_bytes == null || Number.isSafeInteger(value.offline_size_estimate_bytes) && Number(value.offline_size_estimate_bytes) > 0)
+    && (value.content_revision == null || typeof value.content_revision === 'string' && Boolean(value.content_revision.trim()) && value.content_revision.length <= 128)
 }
 
 function isBibleBook(value: unknown): value is BibleBook {

@@ -15,6 +15,9 @@ export interface TranslationSummary {
   has_apocrypha: boolean
   has_strong: boolean
   is_default: boolean
+  /** Published estimate, never an exact transfer-size promise. Missing on older servers. */
+  offline_size_estimate_bytes?: number | null
+  content_revision?: string | null
 }
 
 export interface BibleBook {

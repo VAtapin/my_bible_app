@@ -36,6 +36,22 @@ export interface OfflinePackage {
   complete?: boolean
   unavailable?: string[]
   missingVerses?: string[]
+  /** Old readable data remains available while a chapter-by-chapter refresh is incomplete. */
+  refreshing?: boolean
+  refresh?: BibleRefreshCheckpoint
+}
+
+export interface BibleRefreshCheckpoint {
+  catalogVersion: string
+  /** Target metadata is fixed for this refresh pass; optional for older checkpoints. */
+  translation?: TranslationSummary
+  contentRevision?: string | null
+  startedAt: string
+  books: BibleBook[]
+  totalChapters: number
+  pending: string[]
+  unavailable: string[]
+  missingVerses: string[]
 }
 
 export function isInstalledPackage(value: OfflinePackage): boolean {

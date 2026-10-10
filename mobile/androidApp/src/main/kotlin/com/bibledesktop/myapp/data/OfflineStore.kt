@@ -95,6 +95,18 @@ internal class OfflineStore(private val root: File) {
         return target
     }
 
+    /** Deletes only this Bible's known durable content; personal study uses separate records/stores. */
+    suspend fun removeBible(code: String) {
+        val pack=read(biblePackageKey(code),com.bibledesktop.shared.api.BiblePackage.serializer()) ?: return
+        require(pack.translation.code==code)
+        val previous=read(bibleRefreshKey(code),BibleRefreshPass.serializer())?.previousBooks.orEmpty()
+        withContext(Dispatchers.IO) { lock.withLock {
+            val keys=(pack.books+previous).distinctBy{it.slug to it.chaptersCount}.flatMap { book -> (1..book.chaptersCount).map { chapterKey(code,book.slug,it) } }+listOf(biblePackageKey(code),"books:$code",bibleRefreshKey(code))
+            keys.forEach { key -> val target=file(key,".json");require(target.canonicalFile.parentFile==root.canonicalFile);AtomicFile(target).delete() }
+            packageCodes[root.absolutePath]?.let { packageCodes[root.absolutePath]=it-code }
+        } }
+    }
+
     suspend fun image(url: String): File? = withContext(Dispatchers.IO) {
         lock.withLock { file(url, ".image").takeIf { it.isFile && it.length() in 1..(384 * 1024L) } }
     }

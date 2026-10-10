@@ -42,7 +42,7 @@ internal object StudyPackageDownloads {
     fun enqueue(context: Context, pack: StudyOfflinePackage, wifiOnly: Boolean) {
         val request = OneTimeWorkRequestBuilder<StudyPackageWorker>().setInputData(workDataOf("package" to Json.encodeToString(pack)))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED).build())
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS).addTag(Tag).addTag(name(pack.id)).build()
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS).addTag(Tag).addTag(name(pack.id)).addTag("enqueued-at:${System.currentTimeMillis()}").build()
         WorkManager.getInstance(context).enqueueUniqueWork(name(pack.id), ExistingWorkPolicy.KEEP, request)
     }
     fun cancel(context: Context, code: String) = WorkManager.getInstance(context).cancelUniqueWork(name(code))

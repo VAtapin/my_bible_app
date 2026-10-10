@@ -21,7 +21,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.3` (build 4).
+`0.1.4` (build 5).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -294,7 +294,7 @@ activity/Back, пустая глава, настоящее enqueue/cancel/re-enq
 
 ## Подготовка первой публикации Android
 
-Подготовлены версия **0.1.3 / versionCode 4**, пакет `com.bibledesktop.myapp`.
+Подготовлены версия **0.1.4 / versionCode 5**, пакет `com.bibledesktop.myapp`.
 Это новый Play-пакет, а не обновление прежней установки с другим сертификатом.
 Нельзя удалять прежнее приложение ради установки без отдельного решения о его данных.
 
@@ -310,7 +310,7 @@ Git или вместе с материалами магазина. При Play 
 Из корня проекта, в этом Windows-профиле:
 
 ```powershell
-./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 4 -VersionName '0.1.3'
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 5 -VersionName '0.1.4'
 ```
 
 Скрипт запускает shared host tests, release lint, AAB/APK build и проверки подписи,
@@ -327,6 +327,12 @@ Git или вместе с материалами магазина. При Play 
 
 Каждая следующая загрузка в Play требует большего `VersionCode`, даже если это
 другая тестовая сборка той же версии. Build не отправляет файлы в Console.
+
+0.1.4/code 5 включает единые офлайн-комплекты и долговечное продолжение обновления
+Библии. 56 host-тестов, 32 целевых инструментальных теста, lintDebug/lintRelease,
+подписи APK/AAB и ZIP/ELF LOAD проверки прошли. Подписанный APK установлен поверх
+прежнего на x86_64 API 37, PAGE_SIZE 4096; запуск успешен, crash процесса отсутствует.
+Новая версия на 16-КБ/ARM64/Play не запускалась; следующий абзац описывает 0.1.3.
 
 16-КБ проверка версии 0.1.3: подписанный APK установлен и запущен на отдельных x86_64
 API 37 эмуляторах с PAGE_SIZE 4096 и 16384; `pageSizeCompat=0`, без сбоев приложения.

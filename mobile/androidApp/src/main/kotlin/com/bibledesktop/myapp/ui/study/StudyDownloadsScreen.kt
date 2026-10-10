@@ -31,6 +31,7 @@ internal fun studyDownloadsTitle(language: String) = (packageText[language] ?: p
     val context = LocalContext.current; val scope = rememberCoroutineScope(); val text = packageText[language] ?: packageText.getValue("en")
     val store = remember { StudyPackageStore(context) }; val manager = remember { WorkManager.getInstance(context) }
     val jobs by manager.getWorkInfosByTagFlow(StudyPackageDownloads.Tag).collectAsState(initial = emptyList())
+    val bibleJobs by manager.getWorkInfosByTagFlow(BibleDownloads.name).collectAsState(initial=emptyList())
     var available by remember { mutableStateOf<List<StudyOfflinePackage>>(emptyList()) }; var installed by remember { mutableStateOf<List<StudyOfflinePackage>>(emptyList()) }
     var busy by remember { mutableStateOf(false) }; var error by remember { mutableStateOf(false) }; var query by rememberSaveable { mutableStateOf("") }; var wifi by rememberSaveable { mutableStateOf(true) }
     var reading by remember { mutableStateOf<StudyOfflinePackage?>(null) }
@@ -53,6 +54,7 @@ internal fun studyDownloadsTitle(language: String) = (packageText[language] ?: p
         FlowRow{Button(onClick={toDownload.forEach{StudyPackageDownloads.enqueue(context,it,wifi)}},enabled=toDownload.isNotEmpty()){Text(actions[8])};TextButton(onClick={selected=emptyList()}){Text(actions[9])}}
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth()); if (error) Text(text[11], color = MaterialTheme.colorScheme.error)
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { OfflineBundleSection(language,available,jobs+bibleJobs,wifi) }
             items((available + installed.filter { old -> available.none { it.id == old.id } }).filter { it.id.contains(query, true) }, key = { it.id }) { pack ->
                 val saved = installed.firstOrNull { it.id == pack.id }; val job = jobs.filter { StudyPackageDownloads.name(pack.id) in it.tags }.maxByOrNull { if (it.state.isFinished) 0 else 1 }
                 val downloading = job?.state in listOf(WorkInfo.State.RUNNING, WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED)

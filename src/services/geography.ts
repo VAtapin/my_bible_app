@@ -34,5 +34,5 @@ export function geoRoutePoints(data:GeoData,route:GeoRoute,variants:Record<strin
 }
 let loading:Promise<GeoData>|undefined
 export function loadGeography():Promise<GeoData>{
- return loading??=fetch(`${import.meta.env.BASE_URL}data/bible-geo.json`).then(async response=>{if(!response.ok)throw Error(`Geographic dataset: ${response.status}`);const data=await response.json() as GeoData;if(data.schema!==1||!Array.isArray(data.places)||!Array.isArray(data.land)||!Array.isArray(data.sources))throw Error('Unsupported geographic dataset');data.places.forEach(place=>place.locations.forEach(loc=>projectGeo(loc.lon,loc.lat)));return data}).catch(error=>{loading=undefined;throw error})
+ return loading??=(async()=>{const cached=typeof caches!=='undefined'?await(await import('./bundleAtlas')).cachedBundleAtlas():undefined;return cached??await fetch(`${import.meta.env.BASE_URL}data/bible-geo.json`)})().then(async response=>{if(!response.ok)throw Error(`Geographic dataset: ${response.status}`);const data=await response.json() as GeoData;if(data.schema!==1||!Array.isArray(data.places)||!Array.isArray(data.land)||!Array.isArray(data.sources))throw Error('Unsupported geographic dataset');data.places.forEach(place=>place.locations.forEach(loc=>projectGeo(loc.lon,loc.lat)));return data}).catch(error=>{loading=undefined;throw error})
 }

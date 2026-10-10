@@ -58,7 +58,12 @@ class BibleApiClient internal constructor(
             language?.takeIf(String::isNotBlank)?.let { parameter("language", it) }
         }
 
-        return response.body<ApiEnvelope<List<TranslationSummary>>>().data
+        return response.body<ApiEnvelope<List<TranslationSummary>>>().data.also { editions ->
+            require(editions.all { edition ->
+                (edition.offlineSizeEstimateBytes == null || edition.offlineSizeEstimateBytes in 1..9_007_199_254_740_991L) &&
+                (edition.contentRevision == null || edition.contentRevision.isNotBlank() && edition.contentRevision.length <= 128)
+            }) { "Invalid offline Bible metadata" }
+        }
     }
 
     override suspend fun getBooks(translationCode: String): List<BibleBook> {

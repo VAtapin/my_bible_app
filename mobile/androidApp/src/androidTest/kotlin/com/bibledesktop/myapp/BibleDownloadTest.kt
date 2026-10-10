@@ -29,14 +29,17 @@ class BibleDownloadTest {
         var wrong = false
         var empty = false
         var blankVerse = false
-        override suspend fun getTranslations(language: String?) = translations
+        var generation = "text"
+        var revision:String? = null
+        var catalogCalls=0
+        override suspend fun getTranslations(language: String?):List<TranslationSummary> {catalogCalls++;return translations.map{it.copy(contentRevision=revision)}}
         override suspend fun getBooks(translationCode: String) = books
         override suspend fun getChapter(translationCode: String, bookSlug: String, chapterNumber: Int): BibleChapter {
             calls++
             if (calls == failAt) throw IOException("fixture interruption")
             val book = books.first { it.slug == bookSlug }
             if (empty && chapterNumber == 2) return BibleChapter(translations.single(), book, ChapterSummary(chapterNumber, 0), emptyList())
-            val verses = listOf(BibleVerse(1, 1, "${book.canonicalBook!!.osisCode}.$chapterNumber.1", "text", "text")) +
+            val verses = listOf(BibleVerse(1, 1, "${book.canonicalBook!!.osisCode}.$chapterNumber.1", generation, generation)) +
                 if (blankVerse) listOf(BibleVerse(2, 2, "${book.canonicalBook!!.osisCode}.$chapterNumber.2", "", "")) else emptyList()
             return BibleChapter(translations.single().copy(code = if (wrong) "OTHER" else translationCode), book,
                 ChapterSummary(chapterNumber, verses.size), verses)
@@ -157,5 +160,63 @@ class BibleDownloadTest {
             }
             assertEquals(pack.done, read)
         } finally { source.close() }
+    }
+    @Test fun explicitRefreshYieldsAndResumesOnlyUnfinishedChaptersKeepingOldReading() = runBlocking {
+        val source=Fixture();val store=OfflineStore(root)
+        try {
+            BibleDownloadEngine(source,store,pause={}).download("TEST"){}
+            source.calls=0;source.generation="new source";source.revision="fresh revision"
+            assertFalse(BibleDownloadEngine(source,store,pause={},shouldYield={source.calls>=1}).download("TEST",refreshToken="first-pass"){})
+            assertEquals(1,source.calls);assertFalse(store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!.complete)
+            assertEquals("text",store.read(chapterKey("TEST","two",1),BibleChapter.serializer())!!.verses.first().plainText)
+            val checkpoint=store.read(bibleRefreshKey("TEST"),BibleRefreshPass.serializer())!!
+            assertEquals(1,checkpoint.completed.size);assertEquals(source.books,checkpoint.books);assertEquals("fresh revision",checkpoint.translation!!.contentRevision)
+            assertNull(store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!.translation.contentRevision)
+            BibleDownloadEngine(source,store,pause={}).download("TEST",refreshToken="first-pass"){}
+            assertEquals(3,source.calls);assertEquals(2,source.catalogCalls);assertTrue(store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!.complete)
+            assertEquals("fresh revision",store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!.translation.contentRevision)
+            assertTrue(store.read(bibleRefreshKey("TEST"),BibleRefreshPass.serializer())!!.finished)
+            source.generation="latest source"
+            BibleDownloadEngine(source,store,pause={}).download("TEST",refreshToken="new-pass"){}
+            assertEquals(6,source.calls);assertEquals("latest source",store.read(chapterKey("TEST","one",1),BibleChapter.serializer())!!.verses.first().plainText)
+        } finally {source.close()}
+        Unit
+    }
+    @Test fun refreshSourceEmptyPreservesOldTextButCannotCountItAsFresh()=runBlocking {
+        val source=Fixture();val store=OfflineStore(root)
+        try{
+            source.revision="old revision";BibleDownloadEngine(source,store,pause={}).download("TEST"){}
+            source.calls=0;source.revision="new revision";source.empty=true
+            BibleDownloadEngine(source,store,pause={}).download("TEST",refreshToken="empty-pass"){}
+            var pack=store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!
+            assertFalse(pack.complete);assertEquals(2,pack.done);assertEquals("old revision",pack.translation.contentRevision)
+            assertEquals("text",store.read(chapterKey("TEST","one",2),BibleChapter.serializer())!!.verses.first().plainText)
+            val partial=store.read(bibleRefreshKey("TEST"),BibleRefreshPass.serializer())!!
+            assertFalse(partial.finished);assertTrue(partial.attempted);assertEquals(listOf(chapterKey("TEST","one",2)),partial.sourceEmptyKeys)
+            BibleDownloadEngine(source,store,pause={}).download("TEST"){}
+            pack=store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!;assertFalse(pack.complete);assertEquals(2,pack.done);assertEquals(4,source.calls)
+            source.empty=false;source.generation="fresh restored text";BibleDownloadEngine(source,store,pause={}).download("TEST"){}
+            pack=store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!;assertTrue(pack.complete);assertEquals("new revision",pack.translation.contentRevision);assertEquals(5,source.calls)
+        }finally{source.close()}
+        Unit
+    }
+    @Test fun refreshMixedBlankChapterKeepsInstalledTextAndRetriesPendingReplacement()=runBlocking {
+        val source=Fixture();val store=OfflineStore(root)
+        try{
+            source.revision="installed";BibleDownloadEngine(source,store,pause={}).download("TEST"){}
+            val original=store.read(chapterKey("TEST","one",1),BibleChapter.serializer())!!
+            source.generation="fresh partial";source.revision="published";source.blankVerse=true
+            BibleDownloadEngine(source,store,pause={}).download("TEST",refreshToken="mixed-pass"){}
+            assertEquals(original,store.read(chapterKey("TEST","one",1),BibleChapter.serializer()))
+            val partial=store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!
+            assertFalse(partial.complete);assertEquals(0,partial.done);assertEquals("installed",partial.translation.contentRevision)
+            assertEquals(3,partial.missingVerses.size);assertEquals(3,store.read(bibleRefreshKey("TEST"),BibleRefreshPass.serializer())!!.sourceEmptyKeys.size)
+            source.blankVerse=false;source.generation="complete replacement"
+            BibleDownloadEngine(source,store,pause={}).download("TEST"){}
+            assertEquals("complete replacement",store.read(chapterKey("TEST","one",1),BibleChapter.serializer())!!.verses.first().plainText)
+            val completed=store.read(biblePackageKey("TEST"),BiblePackage.serializer())!!
+            assertTrue(completed.complete);assertEquals("published",completed.translation.contentRevision)
+        }finally{source.close()}
+        Unit
     }
 }
