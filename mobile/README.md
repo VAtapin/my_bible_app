@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.8` (build 9).
+`0.1.9` (build 10).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -316,7 +316,7 @@ activity/Back, пустая глава, настоящее enqueue/cancel/re-enq
 
 ## Подготовка первой публикации Android
 
-Подготовлены версия **0.1.8 / versionCode 9**, пакет `com.bibledesktop.myapp`.
+Подготовлены версия **0.1.9 / versionCode 10**, пакет `com.bibledesktop.myapp`.
 Это новый Play-пакет, а не обновление прежней установки с другим сертификатом.
 Нельзя удалять прежнее приложение ради установки без отдельного решения о его данных.
 
@@ -332,7 +332,7 @@ Git или вместе с материалами магазина. При Play 
 Из корня проекта, в этом Windows-профиле:
 
 ```powershell
-./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 9 -VersionName '0.1.8'
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 10 -VersionName '0.1.9'
 ```
 
 Скрипт запускает shared host tests, release lint, AAB/APK build и проверки подписи,
@@ -350,6 +350,21 @@ Git или вместе с материалами магазина. При Play 
 Каждая следующая загрузка в Play требует большего `VersionCode`, даже если это
 другая тестовая сборка той же версии. Build не отправляет файлы в Console.
 
+0.1.9/code 10 исправляет отрисовку атласа: общий Canvas обычной и полноэкранной
+карты ограничен своим прямоугольником, поэтому увеличенная/перетаскиваемая
+география не попадает поверх элементов управления и списка мест.
+Регрессия воспроизведена на прежнем коде (395900 пикселей суши за границами
+карты), после исправления — 0. Проверены начальная карта, zoom/pan,
+наведение без нажатия кнопок мыши и возврат из полного экрана: 4/4 atlas tests.
+LintDebug/lintRelease, APK/AAB build, подписи, non-debuggable, ZIP/ELF LOAD
+прошли; неизменённые 65 shared host tests переиспользованы Gradle.
+APK установлен поверх 0.1.8 без удаления данных; холодный запуск успешен,
+crash buffer пуст (API 37 x86_64, PAGE_SIZE 4096). Физическое устройство
+и новая публикация в Play не проверялись. Предупреждение graphics-path RELRO
+сохраняется. Серверный deployment не требуется: обновляется APK.
+Файлы: `androidApp/build/outputs/verified/0.1.9/`:
+APK SHA256 `AAAB02A16D73207F0268E54768FE0C4645CCB1BFFF6737FCB2DFCDDF9C8CF109`;
+AAB SHA256 `6C03A072ED206D3A7EE8EF66D8CD1D5DF5394A8145DFCD3D788C7FFE40020E74`.
 0.1.8/code 9: одна компактная шапка чтения с выбором книги, главы/стиха,
 инструментами, «Назад» и «Домой». Отдельная полоса выбора убрана.
 Иконка «Глава:стих / Сетка» использует существующий выбор места.

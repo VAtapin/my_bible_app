@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
@@ -59,8 +61,8 @@ import kotlinx.coroutines.withContext
  val route=remember(data,variants){data.routes.firstOrNull()?.stops?.mapNotNull{stop->data.places.find{it.id==stop.placeId&&stop.osis in it.verses}?.let{place->(place.locations.find{it.id==variants[place.id]}?:place.locations.firstOrNull())?.let{projectGeo(it.lon,it.lat)}}}.orEmpty()}
  LaunchedEffect(places){if(pins.isNotEmpty()){val left=pins.minOf{it.third.x};val right=pins.maxOf{it.third.x};val top=pins.minOf{it.third.y};val bottom=pins.maxOf{it.third.y};pan=Offset(500f-(left+right)/2,250f-(top+bottom)/2);zoom=minOf(32f,maxOf(1f,minOf(800f/maxOf(25f,right-left),400f/maxOf(12.5f,bottom-top))))}else{pan=Offset.Zero;zoom=1f}}
  LaunchedEffect(selected?.id,variants[selected?.id]){selected?.let{place->(place.locations.find{it.id==variants[place.id]}?:place.locations.firstOrNull())?.let{zoom=maxOf(zoom,8f);pan=Offset(500f,250f)-projectGeo(it.lon,it.lat)}}}
- @Composable fun map(area:Modifier){
-  Canvas(area.pointerInput(Unit){detectTransformGestures{_,delta,factor,_->pan+=delta/(minOf(size.width/1000f,size.height/500f)*zoom);zoom=(zoom*factor).coerceIn(1f,64f)}}.pointerInput(pins,zoom,pan){detectTapGestures{point->val base=minOf(size.width/1000f,size.height/500f);val origin=Offset(size.width/2f,size.height/2f);val selectedPin=pins.minByOrNull{(_,_,p)->((p+pan-Offset(500f,250f))*base*zoom+origin-point).getDistance()};selectedPin?.let{(place,loc,p)->if(((p+pan-Offset(500f,250f))*base*zoom+origin-point).getDistance()<24f)onSelect(place,loc)}}}){
+ @Composable fun map(area:Modifier,tag:String){
+  Canvas(area.clipToBounds().testTag(tag).pointerInput(Unit){detectTransformGestures{_,delta,factor,_->pan+=delta/(minOf(size.width/1000f,size.height/500f)*zoom);zoom=(zoom*factor).coerceIn(1f,64f)}}.pointerInput(pins,zoom,pan){detectTapGestures{point->val base=minOf(size.width/1000f,size.height/500f);val origin=Offset(size.width/2f,size.height/2f);val selectedPin=pins.minByOrNull{(_,_,p)->((p+pan-Offset(500f,250f))*base*zoom+origin-point).getDistance()};selectedPin?.let{(place,loc,p)->if(((p+pan-Offset(500f,250f))*base*zoom+origin-point).getDistance()<24f)onSelect(place,loc)}}}){
    drawRect(Color(0xffc3dbe6));val base=minOf(size.width/1000f,size.height/500f);val factor=base*zoom
    withTransform({translate(size.width/2,size.height/2);scale(factor,factor,pivot=Offset.Zero);translate(pan.x-500,pan.y-250)}){
     paths.forEach{drawPath(it,Color(0xffdde1c6));drawPath(it,Color(0xff6a806c),style=Stroke(.5f/zoom))}
@@ -69,6 +71,6 @@ import kotlinx.coroutines.withContext
    }
   }
  }
- Column(modifier){Row{TextButton(onClick={zoom=(zoom*1.5f).coerceAtMost(64f)}){Text("＋")};TextButton(onClick={zoom=(zoom/1.5f).coerceAtLeast(1f)}){Text("−")};TextButton(onClick={zoom=1f;pan=Offset.Zero}){Text(text.reset)};TextButton(onClick={fullscreen=true}){Text(text.fullscreen)}};map(Modifier.fillMaxWidth().weight(1f))}
- if(fullscreen)Dialog(onDismissRequest={fullscreen=false},properties=DialogProperties(usePlatformDefaultWidth=false)){Surface(Modifier.fillMaxSize()){Column{Row{TextButton(onClick={fullscreen=false}){Text(text.back)};TextButton(onClick={zoom=(zoom*1.5f).coerceAtMost(64f)},modifier=Modifier.semantics{contentDescription=geoZoomDescription(language,true)}){Text("＋")};TextButton(onClick={zoom=(zoom/1.5f).coerceAtLeast(1f)},modifier=Modifier.semantics{contentDescription=geoZoomDescription(language,false)}){Text("−")};TextButton(onClick={zoom=1f;pan=Offset.Zero}){Text(text.reset)}};map(Modifier.fillMaxWidth().weight(1f))}}}
+ Column(modifier){Row{TextButton(onClick={zoom=(zoom*1.5f).coerceAtMost(64f)},modifier=Modifier.semantics{contentDescription=geoZoomDescription(language,true)}){Text("＋")};TextButton(onClick={zoom=(zoom/1.5f).coerceAtLeast(1f)},modifier=Modifier.semantics{contentDescription=geoZoomDescription(language,false)}){Text("−")};TextButton(onClick={zoom=1f;pan=Offset.Zero}){Text(text.reset)};TextButton(onClick={fullscreen=true}){Text(text.fullscreen)}};map(Modifier.fillMaxWidth().weight(1f),"geo-map")}
+ if(fullscreen)Dialog(onDismissRequest={fullscreen=false},properties=DialogProperties(usePlatformDefaultWidth=false)){Surface(Modifier.fillMaxSize().testTag("geo-atlas-fullscreen")){Column{Row{TextButton(onClick={fullscreen=false}){Text(text.back)};TextButton(onClick={zoom=(zoom*1.5f).coerceAtMost(64f)},modifier=Modifier.semantics{contentDescription=geoZoomDescription(language,true)}){Text("＋")};TextButton(onClick={zoom=(zoom/1.5f).coerceAtLeast(1f)},modifier=Modifier.semantics{contentDescription=geoZoomDescription(language,false)}){Text("−")};TextButton(onClick={zoom=1f;pan=Offset.Zero}){Text(text.reset)}};map(Modifier.fillMaxWidth().weight(1f),"geo-map-fullscreen")}}}
 }

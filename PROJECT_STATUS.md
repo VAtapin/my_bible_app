@@ -2,6 +2,8 @@
 
 ## Реализовано и текущее состояние
 
+- Android 0.1.9/code 10: отрисовка атласа ограничена областью Canvas в обычном и полноэкранном режиме; после увеличения/перетаскивания карта не перекрывает список и кнопки. Прежняя ошибка воспроизведена тестом; после исправления 4/4 проверок атласа прошли (начальная карта, zoom/pan, hover, возврат из полного экрана). LintDebug/lintRelease, подписанные APK/AAB и проверки ZIP/ELF LOAD прошли. Установка поверх 0.1.8 и холодный запуск API37 x86_64 успешны, crash buffer пуст. Артефакты и SHA256 — mobile/README.md. Физический телефон/Play не проверены; прежнее предупреждение RELRO сохраняется. Deployment не требуется: это обновление Android APK.
+
 - Уточнение веб-читалки: одна компактная шапка с домиком на /today и выбором главы рядом с Aa/настройками; глобальная полоса логотипа/Online и отдельный закрытый выбор главы при чтении скрыты. Существующий цифровой/сеточный выбор открывается поверх текста. При выборе стиха толкования/словари используют его главу и диапазон, а не прежнюю видимую главу. Strong в read-only отрывке остаётся надстрочным и соблюдает выключение. npm run check: 488/107, типы и обе сборки прошли. Последний связанный веб-коммит: Compact the reader header and align selected study context (hash в Git).
 
 - Веб-выпуск читалки: рамка/ограничение ширины убраны, поля чтения 10 px,
@@ -346,4 +348,5 @@
 
 - Веб-читалка: c029ee6 — Complete full-width web reading and calendar dialogs (production проверен SSH).
 - Компактная веб-шапка: a32b563 — Compact the reader header and align selected study context (отправлен SSH для публикации).
-- Android 0.1.8: Release Android 0.1.8 with compact reader and real reference text (hash в Git).
+- Android 0.1.8: cd39497 — Release Android 0.1.8 with compact reader and real reference text.
+- Android 0.1.9: Keep Android atlas drawing inside its viewport (hash в Git).
