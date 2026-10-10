@@ -184,6 +184,17 @@ class BibleApiClient internal constructor(
         }
         return response.body<ApiEnvelope<CalendarServicePlan>>().data.also { require(it.date == date) }
     }
+    override suspend fun getAutomaticCalendarService(date: String, calendarLanguage: String): AutomaticCalendarServicePlan {
+        require(calendarLanguage.matches(Regex("[a-z]{2,3}(?:-[a-zA-Z0-9]{2,8})*")))
+        return client.get("$baseUrl/calendar/service") {
+            parameter("date", date)
+            parameter("calendar_lang", calendarLanguage)
+            parameter("text_policy", AutomaticCalendarPolicy)
+            parameter("office", "sixth-hour")
+            parameter("expansion", "full")
+            parameter("profile", "typikon-strict")
+        }.body<ApiEnvelope<AutomaticCalendarServicePlan>>().data.validateAutomaticCalendar(date, calendarLanguage)
+    }
 }
 
 /** English UI must not pretend that the calendar corpus has been translated. */
@@ -193,6 +204,18 @@ fun calendarContentLanguage(language: String): String = if (language == "en") "r
 fun isRetryableBibleFailure(error: Throwable): Boolean =
     error is io.ktor.client.plugins.ResponseException &&
         (error.response.status.value == 429 || error.response.status.value in 500..599)
+
+/** A saved automatic calendar response may replace only an interrupted transport. */
+fun isCalendarTransportFailure(error: Throwable): Boolean = when (error) {
+    is kotlinx.coroutines.CancellationException,
+    is io.ktor.client.plugins.ResponseException,
+    is kotlinx.serialization.SerializationException -> false
+    is io.ktor.utils.io.errors.IOException,
+    is io.ktor.client.plugins.HttpRequestTimeoutException,
+    is io.ktor.client.network.sockets.ConnectTimeoutException,
+    is io.ktor.client.network.sockets.SocketTimeoutException -> true
+    else -> false
+}
 
 fun bibleRetryDelayMillis(error: Throwable): Long {
     val seconds = (error as? io.ktor.client.plugins.ResponseException)?.response?.headers

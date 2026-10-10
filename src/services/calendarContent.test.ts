@@ -3,7 +3,8 @@ import { IDBFactory } from 'fake-indexeddb'
 import { ApiError, type BibleApi } from '@/api/client'
 import type { CalendarDay } from '@/api/contracts'
 import type { DailyContentRepository } from '@/offline/dailyContentRepository'
-import { createCalendarContentService, waitForCalendarRequest } from './calendarContent'
+import { createCalendarContentService, waitForCalendarRequest,horizonKey } from './calendarContent'
+import {automaticCalendarPolicy,type AutomaticCalendarPlan} from '@/api/automaticCalendar'
 import { addCalendarDays } from './calendarDates'
 import { readCalendarState } from '@/offline/calendarMedia'
 beforeEach(() => vi.stubGlobal('indexedDB', new IDBFactory()))
@@ -41,7 +42,7 @@ describe('explicit full calendar download', () => {
   const makeDay = (date: string): CalendarDay => ({ date, old_style_date: date, source: 'bible-desktop-calendar-engine', events: [], readings: [], fasting_events: [], icons: [{ id: 1, title: 'Icon', image_url: 'https://example.test/preview', images: [{ url: 'https://example.test/album-original' }] }] }) as CalendarDay
   function fixture() {
     const saved = new Map<string, { data: CalendarDay }>()
-    const primary = { getCalendarDay: vi.fn(async (date: string) => makeDay(date)), getCalendarService: vi.fn(async () => ({ date: '2026-10-08', textLanguage: 'cu-civil', assignments: [], expansions: [] })) }
+    const primary = { getCalendarDay: vi.fn(async (date: string) => makeDay(date)), getCalendarService: vi.fn(async () => ({ date: '2026-10-08', textLanguage: 'cu-civil', assignments: [], expansions: [] })),getAutomaticCalendarService:vi.fn(async(date:string,calendarLanguage:string):Promise<AutomaticCalendarPlan>=>({date,calendarLanguage,schemaVersion:2,textPolicy:automaticCalendarPolicy,textLanguage:'mixed',assignments:[],expansions:[]})) }
     const storage = { getCalendarDay: vi.fn(async (key: string) => saved.get(key)), putCalendarDay: vi.fn(async (value: { key: string; data: CalendarDay }) => { saved.set(value.key, value) }) } as unknown as DailyContentRepository
     const media = { save: vi.fn(async () => undefined), read: vi.fn() }
     const wait = vi.fn(async () => undefined)
@@ -54,6 +55,9 @@ describe('explicit full calendar download', () => {
     expect(result).toMatchObject({ daysSaved: 30, from: '2026-10-08', to: '2026-11-06', missingAssets: 0, missingServices: 0 })
     expect(progress).toHaveBeenLastCalledWith(30, 30)
     expect(storage.putCalendarDay).toHaveBeenCalledTimes(30)
+    expect(primary.getAutomaticCalendarService).toHaveBeenCalledTimes(30)
+    expect(primary.getAutomaticCalendarService).toHaveBeenLastCalledWith('2026-11-06','uk')
+    expect(primary.getCalendarService).not.toHaveBeenCalled()
     expect(media.save).toHaveBeenCalledExactlyOnceWith('https://example.test/preview', true, undefined)
     expect(await service.getSavedHorizon('uk')).toEqual(result)
     primary.getCalendarDay.mockRejectedValue(new ApiError('offline', 'offline'))
@@ -84,7 +88,7 @@ describe('explicit full calendar download', () => {
     expect(media.save).toHaveBeenCalledWith(sign.svgSource, false, undefined)
     expect(media.save.mock.calls.filter(([url]) => url === sign.svgSource)).toHaveLength(1)
     expect(await readCalendarState('bible-calendar-month:ru:2026-10')).toEqual(month)
-    expect(await readCalendarState('bible-calendar-horizon:ru')).toMatchObject({ daysSaved: 1, missingAssets: 0 })
+    expect(await readCalendarState(horizonKey('ru'))).toMatchObject({ daysSaved: 1, missingAssets: 0 })
   })
   it('keeps committed days and progress on a later failure, never reports 30/30 early', async () => {
     const { service, primary, storage } = fixture()

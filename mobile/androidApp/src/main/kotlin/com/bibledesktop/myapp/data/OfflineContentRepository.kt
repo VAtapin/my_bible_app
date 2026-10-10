@@ -190,6 +190,27 @@ internal class OfflineContentRepository(
     override suspend fun getCalendarDay(date: String, language: String, profile: String) = content("day:$date:${calendarContentLanguage(language)}:$profile", CalendarDay.serializer()) { remote.getCalendarDay(date, language, profile) }
     override suspend fun getCalendarMonth(year: Int, month: Int, language: String) = content("month:$year:$month:${calendarContentLanguage(language)}", ListSerializer(CalendarGridDay.serializer())) { remote.getCalendarMonth(year, month, language) }
     override suspend fun getCalendarService(date: String, language: String) = content("service:$date:${calendarContentLanguage(language)}", CalendarServicePlan.serializer()) { remote.getCalendarService(date, language) }
+    override suspend fun getAutomaticCalendarService(date: String, calendarLanguage: String): AutomaticCalendarServicePlan {
+        val key = automaticCalendarServiceKey(date, calendarLanguage)
+        val saved = try {
+            store.read(key, AutomaticCalendarServicePlan.serializer())?.validateAutomaticCalendar(date, calendarLanguage)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: IllegalArgumentException) {
+            null // A corrupt or obsolete contract cannot render, but must not prevent online repair.
+        }
+        if (!canRefresh() && saved != null) return saved
+        val value = try {
+            remote.getAutomaticCalendarService(date, calendarLanguage).validateAutomaticCalendar(date, calendarLanguage)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            if (!isCalendarTransportFailure(error)) throw error
+            return saved ?: throw error
+        }
+        store.write(key, AutomaticCalendarServicePlan.serializer(), value)
+        return value
+    }
 
     suspend fun refreshMonth(year: Int, month: Int, language: String) {
         val value = remote.getCalendarMonth(year, month, language)
@@ -204,6 +225,11 @@ internal class OfflineContentRepository(
     suspend fun refreshService(date: String, language: String) {
         val plan = remote.getCalendarService(date, language)
         store.write("service:$date:${calendarContentLanguage(language)}", CalendarServicePlan.serializer(), plan)
+    }
+    suspend fun refreshAutomaticService(date: String, calendarLanguage: String): AutomaticCalendarServicePlan {
+        val plan = remote.getAutomaticCalendarService(date, calendarLanguage).validateAutomaticCalendar(date, calendarLanguage)
+        store.write(automaticCalendarServiceKey(date, calendarLanguage), AutomaticCalendarServicePlan.serializer(), plan)
+        return plan
     }
     override fun close() { refreshScope.cancel(); remote.close() }
 }

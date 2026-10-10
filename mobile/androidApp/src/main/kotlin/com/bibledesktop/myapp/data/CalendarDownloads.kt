@@ -4,6 +4,11 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.work.*
 import com.bibledesktop.shared.api.CalendarIcon
+import com.bibledesktop.shared.api.CalendarDay
+import com.bibledesktop.shared.api.AutomaticCalendarServicePlan
+import com.bibledesktop.shared.api.AutomaticCalendarPolicy
+import com.bibledesktop.shared.api.calendarContentLanguage
+import com.bibledesktop.shared.api.validateAutomaticCalendar
 import com.bibledesktop.shared.api.isRetryableBibleFailure
 import com.bibledesktop.shared.api.bibleRetryDelayMillis
 import kotlinx.coroutines.CancellationException
@@ -51,6 +56,50 @@ internal object CalendarDownloads {
     }
 }
 
+internal fun calendarWindowCheckpoint(pack:String,start:String,language:String)="pack:auto:$AutomaticCalendarPolicy:$pack:$start:$language"
+internal data class CalendarWindowResult(val done:Int,val missingServices:List<String>)
+
+/** Interactive service and this background snapshot share the original calendar-language policy. */
+internal class CalendarDownloadEngine(
+    private val repository:OfflineContentRepository,
+    private val pause:suspend()->Unit={delay(2_500)},
+    private val savePreview:suspend(OfflineStore,CalendarIcon)->Unit=::saveIconPreview,
+){
+    suspend fun download(start:String,language:String,pack:String,progress:suspend(Int,String)->Unit):CalendarWindowResult{
+        val date=LocalDate.parse(start)
+        require(date.year in 1900..2100&&date.plusDays(29).year<=2100&&language in setOf("ru","de","uk","en"))
+        val checkpoint=calendarWindowCheckpoint(pack,start,language)
+        val serializer=ListSerializer(String.serializer())
+        val completed=repository.store.read(checkpoint,serializer).orEmpty().filter{iso->
+            val offset=runCatching{java.time.temporal.ChronoUnit.DAYS.between(date,LocalDate.parse(iso))}.getOrDefault(-1)
+            if(offset !in 0L..29L)return@filter false
+            val day=repository.store.read("day:$iso:${calendarContentLanguage(language)}:typikon-strict",CalendarDay.serializer())
+            val service=runCatching{repository.store.read(com.bibledesktop.shared.api.automaticCalendarServiceKey(iso,language),AutomaticCalendarServicePlan.serializer())?.validateAutomaticCalendar(iso,language)}.getOrNull()
+            day?.date==iso&&service!=null&&(service.assignments+service.expansions).none{it.selection=="missing"}&&
+                day.icons.filter{it.localCachingAllowed}.all{icon->CalendarMedia.url(icon.imagePreviewUrl)?.let{repository.store.image(it)}!=null}
+        }.toMutableSet()
+        val missingServices=mutableListOf<String>()
+        progress(completed.size,start)
+        (0..29).map{YearMonth.from(date.plusDays(it.toLong()))}.distinct().forEach{
+            pause();repository.refreshMonth(it.year,it.monthValue,language)
+        }
+        for(offset in 0..29){
+            currentCoroutineContext().ensureActive()
+            val iso=date.plusDays(offset.toLong()).toString()
+            if(iso in completed)continue
+            progress(completed.size,iso)
+            pause();val day=repository.refreshDay(iso,language)
+            pause();val service=repository.refreshAutomaticService(iso,language)
+            for(icon in day.icons){currentCoroutineContext().ensureActive();if(icon.localCachingAllowed)savePreview(repository.store,icon)}
+            if((service.assignments+service.expansions).any{it.selection=="missing"})missingServices+=iso
+            else completed+=iso
+            repository.store.write(checkpoint,serializer,completed.toList())
+            progress(completed.size,iso)
+        }
+        return CalendarWindowResult(completed.size,missingServices)
+    }
+}
+
 /** Checkpoints and all resources are durable before a day is counted as complete. */
 class CalendarDownloadWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {
     override suspend fun doWork(): Result {
@@ -62,32 +111,10 @@ class CalendarDownloadWorker(context: Context, parameters: WorkerParameters) : C
         try {
             val retryAt = repository.store.read("calendar-api-retry-at", Long.serializer()) ?: 0L
             if (System.currentTimeMillis() < retryAt) return Result.retry()
-            val date = LocalDate.parse(start)
-            require(date.year in 1900..2100 && date.plusDays(29).year <= 2100 && language in setOf("ru", "de", "uk", "en"))
-            val checkpoint = "pack:$pack:$start:$language"
-            val completed = repository.store.read(checkpoint, ListSerializer(String.serializer())).orEmpty().toMutableSet()
-            setProgress(workDataOf("done" to completed.size, "total" to 30))
-            (0..29).map { YearMonth.from(date.plusDays(it.toLong())) }.distinct().forEach {
-                delay(2_500) // BibleDesktop's public calendar limit is 30 requests/minute; leave room for interactive reads.
-                repository.refreshMonth(it.year, it.monthValue, language)
+            val window=CalendarDownloadEngine(repository).download(start,language,pack){done,iso->
+                currentDate=iso;setProgress(workDataOf("done" to done,"total" to 30))
             }
-            for (offset in 0..29) {
-                currentCoroutineContext().ensureActive()
-                val iso = date.plusDays(offset.toLong()).toString()
-                currentDate = iso
-                if (iso in completed) continue
-                delay(2_500)
-                val day = repository.refreshDay(iso, language)
-                delay(2_500)
-                repository.refreshService(iso, "cu-civil")
-                for (icon in day.icons) {
-                    currentCoroutineContext().ensureActive()
-                    if (icon.localCachingAllowed) saveIconPreview(repository.store, icon)
-                }
-                completed += iso
-                repository.store.write(checkpoint, ListSerializer(String.serializer()), completed.toList())
-                setProgress(workDataOf("done" to completed.size, "total" to 30))
-            }
+            if(window.missingServices.isNotEmpty())return Result.failure(workDataOf("error" to "missing-service-text","missingServices" to window.missingServices.size,"done" to window.done,"total" to 30,"date" to window.missingServices.first()))
             return Result.success(workDataOf("done" to 30, "total" to 30, "start" to start, "language" to language))
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: IOException) { return if (runAttemptCount < 5) Result.retry() else Result.failure(workDataOf("error" to "network")) }

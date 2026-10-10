@@ -98,59 +98,48 @@ class OfflineStoreTest {
         assertTrue(runCatching { reopened.getChapter("EN", "john", 3) }.isFailure)
     }
 
-    @Test fun realCalendarWorkerCompletesAndCanResumeFromDurableCheckpoint() = runBlocking {
-        val context = object : ContextWrapper(target) {
-            override fun getNoBackupFilesDir(): File = root
-            override fun getApplicationContext(): android.content.Context = this
-        }
-        val data = workDataOf("start" to "2026-09-09", "language" to "ru", "pack" to "test")
-        val store = OfflineStore(context)
-        // A prior attempt already committed 29 complete days. The last day must use the real API.
-        val dates = (0..28).map { java.time.LocalDate.parse("2026-09-09").plusDays(it.toLong()).toString() }
-        store.write("pack:test:2026-09-09:ru", ListSerializer(String.serializer()), dates)
-        val worker = TestListenableWorkerBuilder<CalendarDownloadWorker>(context).setInputData(data).build()
-        val result = worker.doWork()
-        assertEquals(androidx.work.ListenableWorker.Result.success(workDataOf("done" to 30, "total" to 30, "start" to "2026-09-09", "language" to "ru")), result)
-        assertEquals(30, store.read("pack:test:2026-09-09:ru", ListSerializer(String.serializer()))!!.size)
-        val repository = OfflineContentRepository(FixtureSource().apply { offline = true }, store)
-        val day = repository.getCalendarDay("2026-10-08", "ru")
-        assertEquals("2026-10-08", day.date)
-        assertTrue(repository.getCalendarService(day.date, "cu-civil").assignments.isNotEmpty())
-        val allowed = day.icons.filter { it.localCachingAllowed }
-        assertTrue(allowed.isNotEmpty())
-        allowed.forEach { assertNotNull(store.image(it.imagePreviewUrl!!)) }
+    @Test fun calendarWorkerEngineCompletesAndResumesOnlyAuditedAutomaticSnapshots() = runBlocking {
+        val store=OfflineStore(root);val source=AutomaticCalendarFixtureSource()
+        val repository=OfflineContentRepository(source,store,{false})
+        try{
+            val engine=CalendarDownloadEngine(repository,pause={},savePreview=::saveCalendarFixturePreview)
+            val stopped=runCatching{engine.download("2026-09-09","ru","test"){done,_->if(done==29)throw kotlinx.coroutines.CancellationException("Interrupted")}}.exceptionOrNull()
+            assertTrue(stopped is kotlinx.coroutines.CancellationException)
+            assertEquals(29,store.read(calendarWindowCheckpoint("test","2026-09-09","ru"),ListSerializer(String.serializer()))!!.size)
+            source.serviceCalls.clear()
+            assertEquals(30,CalendarDownloadEngine(repository,pause={},savePreview=::saveCalendarFixturePreview).download("2026-09-09","ru","test"){_,_->}.done)
+            assertEquals(listOf("2026-10-08" to "ru"),source.serviceCalls)
+            source.offline=true
+            val day=repository.getCalendarDay("2026-10-08","ru")
+            val plan=repository.getAutomaticCalendarService(day.date,"ru")
+            assertEquals("2026-10-08",plan.date);assertEquals(AutomaticCalendarPolicy,plan.textPolicy)
+            assertTrue(plan.assignments.isNotEmpty());assertTrue(plan.assignments.none{it.selection=="missing"})
+            day.icons.filter{it.localCachingAllowed}.forEach{assertNotNull(store.image(it.imagePreviewUrl!!))}
+        }finally{repository.close()}
     }
 
-    @Test fun realThirtyDayPackIsFullyReadableAfterRepositoryRestartWithNoNetwork() = runBlocking {
-        val context = object : ContextWrapper(target) {
-            override fun getNoBackupFilesDir(): File = root
-            override fun getApplicationContext(): android.content.Context = this
-        }
-        val worker = TestListenableWorkerBuilder<CalendarDownloadWorker>(context)
-            .setInputData(workDataOf("start" to "2026-10-08", "language" to "ru", "pack" to "full-test")).build()
-        var result = worker.doWork()
-        // Real public API rate limits are respected, not disabled for the integration test.
-        if (result == androidx.work.ListenableWorker.Result.retry()) {
-            kotlinx.coroutines.delay(65_000)
-            result = TestListenableWorkerBuilder<CalendarDownloadWorker>(context)
-                .setInputData(workDataOf("start" to "2026-10-08", "language" to "ru", "pack" to "full-test")).build().doWork()
-        }
-        assertEquals(androidx.work.ListenableWorker.Result.success(workDataOf("done" to 30, "total" to 30, "start" to "2026-10-08", "language" to "ru")), result)
-        val store = OfflineStore(context)
-        val repository = OfflineContentRepository(FixtureSource().apply { offline = true }, store)
+    @Test fun thirtyDayAutomaticSnapshotIsFullyReadableAfterRepositoryRestartWithNoNetwork() = runBlocking {
+        val store=OfflineStore(root);val source=AutomaticCalendarFixtureSource()
+        val online=OfflineContentRepository(source,store,{false})
+        val result=CalendarDownloadEngine(online,pause={},savePreview=::saveCalendarFixturePreview).download("2026-10-08","ru","full-test"){_,_->}
+        assertEquals(30,result.done);assertTrue(result.missingServices.isEmpty())
+        source.offline=true
+        val repository=OfflineContentRepository(source,OfflineStore(root),{false})
         for (offset in 0..29) {
             val iso = java.time.LocalDate.parse("2026-10-08").plusDays(offset.toLong()).toString()
             val day = repository.getCalendarDay(iso, "ru")
             assertEquals(iso, day.date)
-            assertEquals(iso, repository.getCalendarService(iso, "cu-civil").date)
+            val service=repository.getAutomaticCalendarService(iso,"ru")
+            assertEquals(iso,service.date);assertEquals("ru",service.calendarLanguage);assertEquals(AutomaticCalendarPolicy,service.textPolicy)
             day.icons.filter { it.localCachingAllowed }.forEach { assertNotNull(store.image(it.imagePreviewUrl!!)) }
         }
         assertEquals(31, repository.getCalendarMonth(2026, 10, "ru").size)
         assertEquals(30, repository.getCalendarMonth(2026, 11, "ru").size)
+        repository.close();online.close()
     }
 }
 
-/** Isolated storage tests only; the worker test above uses the real production GET API. */
+/** Isolated content/cache fixtures; no production calendar service requests. */
 private class FixtureSource : BibleContentSource {
     var calls = 0
     var offline = false

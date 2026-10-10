@@ -5,12 +5,14 @@ import type { DailyContentRepository } from '@/offline/dailyContentRepository'
 import { addCalendarDays } from './calendarDates'
 import { createCalendarMediaCache, readCalendarState, writeCalendarState, type CalendarMediaCache } from '@/offline/calendarMedia'
 import type { CalendarGridDay } from '@/api/calendar'
+import {automaticCalendarPolicy,isAutomaticCalendarPlan,type AutomaticCalendarPlan} from '@/api/automaticCalendar'
 
 // BibleDesktop currently publishes RU/DE/UK/CU calendar text, not EN.
 export const calendarContentLanguage = (language: string): string => language === 'en' ? 'ru' : language
-export interface CalendarHorizon { from: string; to: string; daysSaved: number; missingAssets: number; missingServices: number }
-export const horizonKey = (language: string) => `bible-calendar-horizon:${calendarContentLanguage(language)}`
+export interface CalendarHorizon { from: string; to: string; daysSaved: number; missingAssets: number; missingServices: number;textPolicy?:string;calendarLanguage?:string }
+export const horizonKey = (language: string) => `bible-calendar-horizon:auto:v1:${language}`
 export const calendarServiceKey = (date: string, language: string) => `calendar-service:${language}:${date}`
+export const automaticCalendarServiceKey=(date:string,language:string)=>`calendar-service:auto:${automaticCalendarPolicy}:${language}:${date}`
 
 async function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
   if (!signal) return promise
@@ -33,8 +35,22 @@ export function waitForCalendarRequest(ms: number, signal?: AbortSignal): Promis
 }
 
 /** BibleDesktop is the ONLY data API, including calendar days and months. */
-export function createCalendarContentService(api: Pick<BibleApi, 'getCalendarDay' | 'getCalendarService'> & { getCalendarMonth?: (date: string, language: string) => Promise<CalendarGridDay[]> }, repository: DailyContentRepository, media: CalendarMediaCache = createCalendarMediaCache(), wait = waitForCalendarRequest) {
+export function createCalendarContentService(api: Pick<BibleApi, 'getCalendarDay' | 'getCalendarService'|'getAutomaticCalendarService'> & { getCalendarMonth?: (date: string, language: string) => Promise<CalendarGridDay[]> }, repository: DailyContentRepository, media: CalendarMediaCache = createCalendarMediaCache(), wait = waitForCalendarRequest) {
   return {
+    async openAutomaticService(date:string,language:string):Promise<{data:AutomaticCalendarPlan;offline:boolean}>{
+      try{
+        if(!api.getAutomaticCalendarService)throw new ApiError('invalid-response','Automatic calendar text policy unsupported')
+        const data=await api.getAutomaticCalendarService(date,language)
+        if(!isAutomaticCalendarPlan(data,date,language))throw new ApiError('invalid-response','Automatic calendar text contract invalid')
+        await writeCalendarState(automaticCalendarServiceKey(date,language),data)
+        return{data,offline:false}
+      }catch(error){
+        if(!(error instanceof ApiError)||!['offline','timeout'].includes(error.kind))throw error
+        const saved=await readCalendarState(automaticCalendarServiceKey(date,language))
+        if(!isAutomaticCalendarPlan(saved,date,language))throw error
+        return{data:saved,offline:true}
+      }
+    },
     async openCalendarDay(date: string, language = 'ru'): Promise<{ data: CalendarDay; offline: boolean }> {
       language = calendarContentLanguage(language)
       try { return { data: await api.getCalendarDay(date, language), offline: false } }
@@ -47,8 +63,9 @@ export function createCalendarContentService(api: Pick<BibleApi, 'getCalendarDay
       }
     },
     async downloadCalendarHorizon(startDate: string, days: number, onProgress: (current: number, total: number) => void, signal?: AbortSignal, language = 'ru'): Promise<CalendarHorizon> {
+      const requestedLanguage=language
       language = calendarContentLanguage(language)
-      const result: CalendarHorizon = { from: startDate, to: startDate, daysSaved: 0, missingAssets: 0, missingServices: 0 }
+      const result: CalendarHorizon = { from: startDate, to: startDate, daysSaved: 0, missingAssets: 0, missingServices: 0,textPolicy:automaticCalendarPolicy,calendarLanguage:requestedLanguage }
       const attempted = new Map<string, Promise<boolean>>()
       const previews = new Map<string, string>()
       const savedMonths = new Set<string>()
@@ -107,9 +124,11 @@ export function createCalendarContentService(api: Pick<BibleApi, 'getCalendarDay
         for (const marker of data.memorial_markers ?? []) assets.set(marker.image_url, false)
         await saveAssets(assets)
         try {
-          const serviceLanguage = language === 'cu' ? 'cu' : 'cu-civil'
-          const plan = await downloadRequest(() => api.getCalendarService(date, serviceLanguage))
-          await writeCalendarState(calendarServiceKey(date, serviceLanguage), plan)
+          if(!api.getAutomaticCalendarService)throw new ApiError('invalid-response','Automatic calendar text policy unsupported')
+          const plan=await downloadRequest(()=>api.getAutomaticCalendarService!(date,requestedLanguage))
+          if(!isAutomaticCalendarPlan(plan,date,requestedLanguage))throw new ApiError('invalid-response','Automatic calendar text contract invalid')
+          await writeCalendarState(automaticCalendarServiceKey(date,requestedLanguage),plan)
+          if([...plan.assignments,...plan.expansions].some(text=>text.selection==='missing'))result.missingServices++
         } catch (error) {
           if (signal?.aborted || (error instanceof DOMException && error.name === 'QuotaExceededError')) throw error
           result.missingServices++
@@ -117,11 +136,11 @@ export function createCalendarContentService(api: Pick<BibleApi, 'getCalendarDay
         if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
         await repository.putCalendarDay({ key: `${language}:${date}`, savedAt: new Date().toISOString(), data })
         result.to = date; result.daysSaved = index + 1
-        await writeCalendarState(horizonKey(language), { ...result })
+        await writeCalendarState(horizonKey(requestedLanguage), { ...result })
         onProgress(index + 1, days)
       }
       return result
     },
-    getSavedHorizon: (language: string) => readCalendarState<CalendarHorizon>(horizonKey(language)),
+    async getSavedHorizon(language:string){const value=await readCalendarState<CalendarHorizon>(horizonKey(language));return value?.textPolicy===automaticCalendarPolicy&&value.calendarLanguage===language?value:undefined},
   }
 }

@@ -21,5 +21,6 @@ interface BibleContentSource {
     suspend fun getCalendarDay(date: String, language: String, profile: String = "typikon-strict"): CalendarDay
     suspend fun getCalendarMonth(year: Int, month: Int, language: String): List<CalendarGridDay>
     suspend fun getCalendarService(date: String, language: String): CalendarServicePlan
+    suspend fun getAutomaticCalendarService(date: String, calendarLanguage: String): AutomaticCalendarServicePlan = error("Automatic calendar text policy unavailable")
     fun close()
 }

@@ -16,6 +16,7 @@ import type {
 } from './contracts'
 import { isCalendarMonth, normalizeCalendarAssets, normalizeCalendarMonthAssets, type CalendarGridDay } from './calendar'
 import { readCalendarState } from '@/offline/calendarMedia'
+import {isAutomaticCalendarPlan,automaticCalendarPolicy,type AutomaticCalendarPlan} from './automaticCalendar'
 import { createVerseLocationApi, type VerseLocation } from './verseLocations'
 
 export type ApiErrorKind = 'offline' | 'timeout' | 'http' | 'invalid-response'
@@ -46,6 +47,7 @@ export interface BibleApi {
   getCalendarMonth(date: string, language?: string): Promise<CalendarGridDay[]>
   getCalendarIcon(id: number): Promise<CalendarIconDetail>
   getCalendarService(date: string, language: string): Promise<CalendarServicePlan>
+  getAutomaticCalendarService?(date:string,calendarLanguage:string):Promise<AutomaticCalendarPlan>
   searchVerses(query: string, translation: string, options?: { match?: 'exact_word' | 'forms' | 'partial' | 'phrase' | 'all_words' | 'strong'; scope?: 'all' | 'old' | 'new' | 'psalms'; offset?: number; limit?: number; book?: string }): Promise<VerseSearchResponse>
 }
 
@@ -172,6 +174,10 @@ export function createBibleApi(options: ApiClientOptions): BibleApi {
         && value.date === date && typeof value.textLanguage === 'string'
         && Array.isArray(value.assignments) && value.assignments.every((item) => isRecord(item) && typeof item.title === 'string' && typeof item.text === 'string' && typeof item.slot === 'string')
         && Array.isArray(value.expansions) && value.expansions.every((item) => isRecord(item) && typeof item.id === 'string' && typeof item.title === 'string' && typeof item.text === 'string'))
+    },
+    getAutomaticCalendarService(date,calendarLanguage){
+      const params=new URLSearchParams({date,calendar_lang:calendarLanguage,text_policy:automaticCalendarPolicy,office:'sixth-hour',expansion:'full',profile:'typikon-strict'})
+      return request(`/calendar/service?${params}`,(value):value is AutomaticCalendarPlan=>isAutomaticCalendarPlan(value,date,calendarLanguage))
     },
     searchVerses(query, translation, options = {}) {
       const params = new URLSearchParams({ q: query, translation, limit: String(options.limit ?? 30) })
