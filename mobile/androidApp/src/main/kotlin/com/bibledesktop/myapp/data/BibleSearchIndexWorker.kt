@@ -17,7 +17,7 @@ internal object BibleSearchIndexes {
     fun file(context:Context)=File(context.noBackupFilesDir,"verse-search-v1.sqlite")
     suspend fun enqueue(context:Context,code:String)=withContext(Dispatchers.IO){
         require(code.isNotBlank()&&code.length<=128)
-        WorkManager.getInstance(context).enqueueUniqueWork("$name:$code",ExistingWorkPolicy.KEEP,
+        WorkManager.getInstance(context).enqueueUniqueWork("$name:$code",ExistingWorkPolicy.APPEND_OR_REPLACE,
             OneTimeWorkRequestBuilder<BibleSearchIndexWorker>().setInputData(workDataOf("code" to code))
                 .addTag(name).addTag("search-code:$code").setBackoffCriteria(BackoffPolicy.LINEAR,30,TimeUnit.SECONDS).build()).result.get()
     }
@@ -40,19 +40,20 @@ class BibleSearchIndexWorker(context:Context,parameters:WorkerParameters):Corout
     override suspend fun doWork():Result{
         val code=inputData.getString("code")?.takeIf{it.isNotBlank()}?:return Result.failure()
         return try{
+            var repaired=false
             val finished=BibleDownloads.downloadLock.withLock {
                 val deadline=android.os.SystemClock.elapsedRealtime()+5*60_000
-                LocalBibleSearch(OfflineStore(applicationContext),BibleSearchIndexes.file(applicationContext)).prepare(code,
-                    shouldYield={android.os.SystemClock.elapsedRealtime()>=deadline})
+                val index=LocalBibleSearch(OfflineStore(applicationContext),BibleSearchIndexes.file(applicationContext))
+                try{index.prepare(code,shouldYield={android.os.SystemClock.elapsedRealtime()>=deadline})}
+                catch(_:SQLiteDatabaseCorruptException){
+                    // Keep the installation/build lock until deletion: a late corrupt catch must
+                    // never discard a fresh shared DB prepared by the next edition's worker.
+                    index.discardCorruptIndex();repaired=true;false
+                }
             }
+            if(repaired)BibleSearchIndexes.enqueueInstalled(applicationContext)
             if(finished)Result.success()else Result.retry()
         }catch(cancelled:CancellationException){throw cancelled}
-        catch(_:SQLiteDatabaseCorruptException){
-            // This is only the derived search DB, never installed content or personal records.
-            LocalBibleSearch(OfflineStore(applicationContext),BibleSearchIndexes.file(applicationContext)).discardCorruptIndex()
-            BibleSearchIndexes.enqueueInstalled(applicationContext)
-            Result.retry()
-        }
         catch(_:Exception){if(runAttemptCount<3)Result.retry()else Result.failure()}
     }
 }

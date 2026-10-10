@@ -3,6 +3,10 @@ package com.bibledesktop.myapp
 import android.content.ContextWrapper
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkManager
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import java.util.concurrent.TimeUnit
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.workDataOf
 import com.bibledesktop.myapp.data.*
@@ -101,8 +105,13 @@ class SearchIndexBackgroundTest {
         val database=BibleSearchIndexes.file(wrapped)
         database.writeText("not a SQLite database")
         try{
-            val repair=TestListenableWorkerBuilder<BibleSearchIndexWorker>(wrapped).setInputData(workDataOf("code" to code)).build()
-            assertEquals(androidx.work.ListenableWorker.Result.retry(),repair.doWork())
+            // Two real workers compete for one corrupt shared DB. Exactly the first repairs;
+            // the following worker must see its fresh replacement, not capture stale corruption.
+            val outcomes=coroutineScope {listOf(code,otherCode).map { selected->async(Dispatchers.Default){
+                TestListenableWorkerBuilder<BibleSearchIndexWorker>(wrapped).setInputData(workDataOf("code" to selected)).build().doWork()
+            }}.awaitAll()}
+            assertEquals(1,outcomes.count{it==androidx.work.ListenableWorker.Result.retry()})
+            assertEquals(1,outcomes.count{it==androidx.work.ListenableWorker.Result.success()})
             for(selected in listOf(code,otherCode)){
                 assertTrue(WorkManager.getInstance(context).getWorkInfosForUniqueWork("native-bible-search-index:$selected").get().isNotEmpty())
                 val rebuild=TestListenableWorkerBuilder<BibleSearchIndexWorker>(wrapped).setInputData(workDataOf("code" to selected)).build()
@@ -129,5 +138,19 @@ class SearchIndexBackgroundTest {
             assertEquals(androidx.work.ListenableWorker.Result.success(),worker.doWork())
             assertEquals(2,LocalBibleSearch(target,BibleSearchIndexes.file(wrapped)).search(setOf(code),"Фоновый",VerseSearchMatch.EXACT,VerseSearchScope.ALL).total)
         }finally{WorkManager.getInstance(context).cancelUniqueWork("native-bible-search-index:$code").result.get();api.close()}
+    }
+    @Test fun installationTriggerIsDurablyAppendedBehindAnUnfinishedIndexJob()=runBlocking {
+        val manager=WorkManager.getInstance(context);val unique="native-bible-search-index:$code"
+        val old=OneTimeWorkRequestBuilder<BibleSearchIndexWorker>()
+            .setInputData(workDataOf("code" to code)).setInitialDelay(1,TimeUnit.DAYS).build()
+        try{
+            manager.enqueueUniqueWork(unique,ExistingWorkPolicy.KEEP,old).result.get()
+            BibleSearchIndexes.enqueue(context,code)
+            val queued=manager.getWorkInfosForUniqueWork(unique).get()
+            assertEquals(2,queued.size)
+            assertEquals(WorkInfo.State.ENQUEUED,queued.single{it.id==old.id}.state)
+            assertEquals(WorkInfo.State.BLOCKED,queued.single{it.id!=old.id}.state)
+        }finally{manager.cancelUniqueWork(unique).result.get()}
+        Unit
     }
 }
