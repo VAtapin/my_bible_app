@@ -18,6 +18,7 @@ import ParallelReading from './ParallelReading.vue'
 import ContinuousReading from './ContinuousReading.vue'
 import CommentaryPanel from '@/features/study/CommentaryPanel.vue'
 import { studyMessages } from '@/i18n/study'
+import { studyContext } from '@/services/studyContext'
 import { loadBibleCatalog } from '@/services/bibleCatalog'
 import { enabledWebBibles, readWebChapter, synodalCode, webBibleBooks } from '@/services/webBibleLibrary'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
@@ -69,7 +70,7 @@ const toolbarActions = computed(() => [
 function toolbarAction(id:string) {
   switch(id){
     case 'compare': toggleComparison(); break
-    case 'commentary': studying.value=!studying.value; break
+    case 'commentary': studySource.value=undefined;studyVerse.value=undefined;studying.value=!studying.value; break
     case 'settings': settingsOpen.value=true; break
     case 'night': readerPreferences.setPreferences({...readerPreferences.preferences.value,night:!display.value.night}); break
     case 'source': sourceOpen.value=!sourceOpen.value; break
@@ -130,7 +131,9 @@ const chapterNumber = ref(1)
 const chapter = ref<BibleChapter>()
 const visibleChapter = ref<BibleChapter>()
 const actionChapter = ref<BibleChapter>()
-const contextualChapter = computed(()=>visibleChapter.value??chapter.value)
+const studyPosition = computed(()=>studyContext(studySource.value,studyVerse.value,visibleChapter.value,chapter.value,visibleFirst.value,visibleLast.value))
+const contextualChapter = computed(()=>studyPosition.value.chapter)
+const studyFirst = computed(()=>studyPosition.value.first), studyLast = computed(()=>studyPosition.value.last)
 watch(contextualChapter,async(source,_,cleanup)=>{let stale=false;cleanup(()=>stale=true);canonicalSlug.value='';if(!source)return;try{const edition=translations.value.find(t=>t.code===source.translation.code);if(!edition?.canon_code)return;const slug=await studyService.canonicalSlug(edition.canon_code,source.verses[0]?.osis_ref.split('.')[0]??'');if(!stale)canonicalSlug.value=slug}catch{/* No canonical match is shown as unavailable rather than guessed. */}})
 const openOffset = ref(0)
 let restoreOffset = 0
@@ -347,7 +350,7 @@ function formatDate(value: string): string {
 </script>
 
 <template>
-  <MobileShell back-to="/today" :reading="!!chapter" :reading-viewport="!!chapter">
+  <MobileShell back-to="/today" :show-header="!chapter" :reading="!!chapter" :reading-viewport="!!chapter">
     <RouterLink v-if="!chapter" class="storage-link" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink>
     <section v-if="!chapter" class="reader-heading">
       <span class="card-icon"><img src="/app-icons/library.png" alt="" /></span>
@@ -356,8 +359,8 @@ function formatDate(value: string): string {
 
     <p v-if="busy && !translations.length" class="status" role="status">{{ text.loading }}</p>
     <div v-else-if="!translations.length" class="status"><p>{{ message || catalogText.catalog_empty }}</p><RouterLink class="primary-action" to="/bibles?tab=catalog">{{ catalogText.catalog_add }}</RouterLink></div>
-    <button v-if="comparing" class="primary-action" @click="comparisonView?.choosePlace()">{{ text.reader.chooseChapter }}</button>
-    <details v-else-if="translations.length && selectedTranslation" class="chapter-card chapter-picker" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
+    <button v-if="comparing&amp;&amp;!chapter" class="primary-action" @click="comparisonView?.choosePlace()">{{ text.reader.chooseChapter }}</button>
+    <details v-else-if="translations.length && selectedTranslation && (!chapter || pickerOpen)" class="chapter-card chapter-picker" :class="{'reader-picker-overlay':!!chapter}" :open="pickerOpen" @toggle="pickerOpen = ($event.currentTarget as HTMLDetailsElement).open">
       <summary>{{ text.reader.chooseChapter }} <span aria-hidden="true">⌄</span></summary>
       <h2 id="chapter-form-title" class="visually-hidden">{{ text.reader.chooseChapter }}</h2>
       <div class="fields">
@@ -389,8 +392,10 @@ function formatDate(value: string): string {
     <div v-if="chapter" class="reader-study-layout" :class="{ studying }">
     <article ref="readingElement" class="reading-card" :class="{'reader-night':display.night}" :style="{ '--reading-size': `${fontSize}px`, '--reader-line-height':String(display.lineHeight) }">
       <header class="reading-header">
+        <RouterLink class="reader-home" to="/today" :aria-label="text.navigation.today" :title="text.navigation.today"><AppIcon name="home" /></RouterLink>
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
-        <span><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
+        <span class="reader-title" role="button" tabindex="0" :aria-label="text.reader.chooseChapter" @click="pickerOpen=!pickerOpen" @keydown.enter="pickerOpen=!pickerOpen"><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
+        <button class="reader-chapter-button" type="button" :aria-label="text.reader.chooseChapter" :title="text.reader.chooseChapter" @click="comparing?comparisonView?.choosePlace():versePickerOpen=!versePickerOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18" /></svg></button>
         <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
         <ReaderToolbar :label="controlText.settings" :close-label="controlText.close" :actions="toolbarActions" @action="toolbarAction" />
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) >= (visibleChapter ?? chapter).book.chapters_count" :aria-label="text.reader.next" @click="moveChapter(1)">→</button>
@@ -403,7 +408,7 @@ function formatDate(value: string): string {
       <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
       <ContinuousReading v-else @chapter="moveChapter" @book="moveBook" :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
     </article>
-    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false;studySource=undefined;studyVerse=undefined">{{ studyMessages[language].close }}</button><CommentaryPanel v-if="contextualChapter" :chapter="contextualChapter" :canon="comparisonCatalog.find(item=>item.code===contextualChapter?.translation.code)?.canon_code" :visible-first="visibleFirst" :visible-last="visibleLast" /><VerseStudyPanel v-if="studySource??contextualChapter" ref="studyPanel" :chapter="(studySource??contextualChapter)!" :verse="studyVerse??visibleFirst" @open="temporary=$event"/><DictionaryContext v-if="contextualChapter" :book="canonicalSlug" :osis="contextualChapter.verses[0]?.osis_ref.split('.')[0]" :verse-numbers="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>Number(v.osis_ref.split('.')[2]))" :verse-chapters="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>Number(v.osis_ref.split('.')[1]))" :chapter="contextualChapter.chapter.number" :verse-ids="contextualChapter.verses.filter(v=>v.number>=(visibleFirst??1)&&v.number<=(visibleLast??visibleFirst??1)).map(v=>v.id)"/></aside>
+    <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false;studySource=undefined;studyVerse=undefined">{{ studyMessages[language].close }}</button><CommentaryPanel v-if="contextualChapter" :chapter="contextualChapter" :canon="comparisonCatalog.find(item=>item.code===contextualChapter?.translation.code)?.canon_code" :verse="studyVerse" :visible-first="studyFirst" :visible-last="studyLast" /><VerseStudyPanel v-if="studySource??contextualChapter" ref="studyPanel" :chapter="(studySource??contextualChapter)!" :verse="studyVerse??visibleFirst" @open="temporary=$event"/><DictionaryContext v-if="contextualChapter" :book="canonicalSlug" :osis="contextualChapter.verses[0]?.osis_ref.split('.')[0]" :verse-numbers="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>Number(v.osis_ref.split('.')[2]))" :verse-chapters="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>Number(v.osis_ref.split('.')[1]))" :chapter="contextualChapter.chapter.number" :verse-ids="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>v.id)"/></aside>
     </div>
     <VerseActions @study="openStudy" :service="chapterService" @selection="selection=$event" ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
     <TemporaryPassage v-if="temporary" :group="temporary" :code="(studySource??contextualChapter)!.translation.code" :service="chapterService" :windows-available="!!comparisonView" @assign="(source,verse,id)=>{comparisonView?.preview(source,verse,id);temporary=undefined;studying=false}" @close="temporary=undefined"/>
@@ -427,14 +432,14 @@ function formatDate(value: string): string {
 </template>
 
 <style scoped>
-.reader-study-layout{display:flex;flex:1;min-height:0}
+.reader-study-layout{display:flex;flex:1;min-height:0;margin:0}
 .reader-study-layout .reading-card{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;width:100%;max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none}
 .reader-study-layout :deep(.continuous-scroll){flex:1;height:auto;min-height:0}
-.reader-study-layout .reading-header{flex-shrink:0;padding:4px 0 8px}
+.reader-study-layout .reading-header{flex-shrink:0;padding:2px 0 4px;margin:0;gap:4px}.reader-title{cursor:pointer;min-width:0}.reader-title p{font-size:8px;margin:0}.reader-title h2{font-size:18px;line-height:1.15}.reader-title h2 small{font-size:12px;margin-top:1px}.reading-header button,.reader-home{min-width:28px;min-height:32px;height:32px;padding:4px;display:flex;align-items:center;justify-content:center}.reader-home svg,.reader-chapter-button svg{width:18px;height:18px}.reader-picker-overlay{position:fixed;z-index:40;top:52px;left:10px;right:10px;margin:0;max-height:calc(100dvh - 120px);overflow:auto}.reading-card{position:relative}.reading-card>:deep(.verse-navigation){position:absolute;z-index:35;top:52px;left:0;right:0;background:var(--white);border:1px solid var(--line);padding:10px;max-height:calc(100dvh - 120px);overflow:auto}
 .reader-study-layout.studying { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:12px }
 .study-pane { overflow:auto; min-height:0;min-width:0; margin:0 }
 @media(max-width:700px) { .reader-study-layout.studying { grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) } }
-.reading-header:has(.reader-toolbar){grid-template-columns:36px minmax(0,1fr) 36px 44px 36px}
-.reading-header:has(.reader-toolbar):not(:has(.reader-size-button)){grid-template-columns:36px minmax(0,1fr) 44px 36px}
+.reading-header:has(.reader-toolbar){grid-template-columns:28px 28px minmax(0,1fr) 32px 32px 36px 28px}
+.reading-header:has(.reader-toolbar):not(:has(.reader-size-button)){grid-template-columns:28px 28px minmax(0,1fr) 32px 36px 28px}
 .reader-night{--white:#17212d;--ink:#e2eaf4;--line:#415061;--light-blue:#2d4157;background:#101821;color:#e2eaf4}.reader-night :deep(.verse-text){color:#e2eaf4}.reader-night :deep(.chapter-heading){background:#17212d;color:#e2eaf4}
 </style>
