@@ -10,7 +10,11 @@
   Проверки:511/511 WEB tests115files, typecheck/обе сборки, diffcheck PASS.
   Браузер460px:4 языка в одной строке30px; RU→DE/reload сохраняет DE,
   редактирование подтверждает прежний RST-Strong и состав разделов.
-  WEB готов к публикации. Android не менялся: эти элементы там уже доступны.
+  WEB опубликован и проверен 11.10.2026: exact86950e5be4988b669e5c8dae2a4086fe4a255372.
+  Fresh private dist backup settings-20261011-160307, штатный publisher
+  Node22/umask022, typecheck/обе сборки и actual HTTPS HTML/SW/assets PASS.
+  Production browser: шестерёнка/4 языка первыми/основные настройки выше
+  каталогов PASS. Android не менялся: эти элементы там уже доступны.
   Последний связанный commit:542ad40; Expose web settings and compact language controls (hash в Git).
 
 
