@@ -39,16 +39,15 @@ class CalendarAutomaticServiceTest{
         }
         try{
             compose.setContent{BibleDesktopTheme{Column(Modifier.verticalScroll(rememberScrollState())){CalendarService("2026-10-08","ru",source)}}}
-            compose.onNodeWithTag("calendar-service-open").performClick()
             compose.waitUntil(10_000){compose.onAllNodesWithTag("calendar-service-assignment-A").fetchSemanticsNodes().isNotEmpty()}
             assertEquals(listOf("2026-10-08" to "ru"),calls)
+            compose.onNodeWithTag("calendar-service-open").assertDoesNotExist()
+            compose.onNodeWithText("Редакция выбирается отдельно для каждого текста по языку календаря.").assertDoesNotExist()
+            compose.onNodeWithText("edition-A",substring=true).assertDoesNotExist()
             for((id,language) in listOf("A" to "cu","B" to "cu-civil")){
-                compose.onNodeWithText("Материал $id").performScrollTo().performClick()
-                compose.onNodeWithTag("calendar-text-dialog").assertIsDisplayed()
                 val layout=mutableListOf<TextLayoutResult>()
                 compose.onNodeWithTag("calendar-service-body-assignment-$id").performScrollTo().performSemanticsAction(SemanticsActions.GetTextLayoutResult){action->assertTrue(action(layout))}
                 assertEquals(readingFont(language),layout.single().layoutInput.style.fontFamily)
-                compose.onNodeWithTag("calendar-text-close").performClick()
                 compose.onNodeWithTag("calendar-text-dialog").assertDoesNotExist()
             }
             compose.onNodeWithTag("calendar-service-missing-assignment-C").performScrollTo().assertIsDisplayed()
@@ -65,7 +64,6 @@ class CalendarAutomaticServiceTest{
         }
         try{
             compose.setContent{BibleDesktopTheme{Column{CalendarService("2026-10-08","en",source)}}}
-            compose.onNodeWithTag("calendar-service-open").performClick()
             compose.waitUntil(10_000){compose.onAllNodesWithTag("calendar-service-error").fetchSemanticsNodes().isNotEmpty()}
             assertEquals(listOf("en"),calls)
             compose.onNodeWithTag("calendar-service-assignment-A").assertDoesNotExist()

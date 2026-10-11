@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.10` (build 11).
+`0.1.11` (build 12).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -517,3 +517,25 @@ Apple Developer Team для target `iosApp`; сертификаты и signing s
 Клиенты фильтруют ответ по фактическому `language_code`, поэтому русские молитвы
 не выдаются за немецкие. Немецкий корпус должен быть импортирован на стороне
 основного Bible Desktop API.
+## Исправленный календарь — Android 0.1.11/code12
+
+Богослужебные тексты дня загружаются автоматически и читаются прямо в
+календаре, без открытия диалога. Служебные пояснения о выборе редакции,
+порядке службы и внутренние edition ID не выводятся. Шрифт выбирается
+по фактическому языку каждого текста; отсутствие редакции обозначается явно.
+
+CalendarAutomaticServiceTest2/2 на API37 x86_64, lintDebug/lintRelease,
+shared host tests, release APK/AAB и подписи/ZIP/ELF LOAD PASS. Обновление
+поверх0.1.10 и холодный запуск прошли; crash buffer пуст. Физический телефон
+и Play не проверены; прежнее предупреждение ELF RELRO остаётся.
+
+- APK: `androidApp/build/outputs/verified/0.1.11/BibleDesktop-0.1.11.apk`
+- SHA256: `334B546A8AA6A4DD31A395A5AA0842C5780ED7805280FCA4D84015DEA7C73278`
+- AAB: `androidApp/build/outputs/verified/0.1.11/BibleDesktop-0.1.11.aab`
+- SHA256: `51C80CF2302E4308BE669911EDBCEE2C1FAA50201FA930995833F19185EB7B42`
+
+Воспроизводимая сборка существующим ключом:
+
+```powershell
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 12 -VersionName '0.1.11'
+```
