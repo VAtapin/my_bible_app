@@ -17,7 +17,13 @@
   SourceDisplayTest3/3 PASS. Signed APK/AAB/ZIP/ELF LOAD PASS; обновление
   поверх0.1.12, cold start API37 x86_64, crash buffer пуст. Физический
   ARM64/16KB/Play не проверены; прежний graphics.path RELRO warning остаётся.
-  Артефакты/SHA256 — mobile/README.md. Следующий шаг: публикация веб-выпуска.
+  Артефакты/SHA256 — mobile/README.md. WEB опубликован 11.10.2026:
+  exact1d638b88d85ab83488cfb68361c460d81088029a, fresh dist backup
+  reader-20261011-145955, штатный deploy-production.sh/Node22/umask022.
+  Actual HTTPS HTML/SW/все entry assets PASS; browser Today→John20:11–18
+  ровно8 выделенных стихов/обе границы/зач64 PASS. Source-чат независимо
+  подтвердил production Mark1:38 и загруженную главу при StrongOFF без HG
+  номеров, обычный reader без старого выделения. Backend не изменялся.
   Последний связанный commit:7d190f3; Highlight daily lection passages across reader chapters (hash в Git).
 
 
@@ -28,7 +34,7 @@
   обычные числовые значения и переводы без has_strong_markup не очищаются.
   Проверки:14/14 целевых WEB, typecheck/обе production-сборки;68/68 shared
   host, lintDebug/assembleDebug и SourceDisplayTest3/3 API37 PASS.
-  Включено в Android0.1.13/code14 вместе с выделением зачал; веб готов к публикации.
+  Включено в Android0.1.13/code14 вместе с выделением зачал; веб опубликован и проверен на exact1d638b8.
   Последний implementation commit:7d190f3492ec005efe6948dd808ba8a543d7a3aa — Fix attached Strong markers in reader text.
 
 
