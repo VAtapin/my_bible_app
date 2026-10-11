@@ -2,6 +2,21 @@
 
 ## Реализовано и текущее состояние
 
+- Номера зачал WEB/Android: CalendarReading сохраняет reading.lectionary;
+  номер опубликованного точного соответствия показан рядом с чтением дня
+  и в заголовке отрывка. На веб-главной он также виден в календарном блоке.
+  Повторные варианты одного зачала объединяются; отсутствующие, неоднозначные
+  и некорректные номера скрыты. Технических статусов в интерфейсе нет.
+  Реальный API11.10.2026 и браузер: Ин.20:11–18/64,2Кор.11:31–12:9/194,
+  Лк.6:31–36/26; Псалтирь без номера. Открытие/Close сохраняют календарь.
+  Проверки:15/15 целевых веб-тестов, typecheck/обе сборки;67/67 shared host,
+  Android lintDebug/assembleDebug PASS. Сбой Kotlin incremental cache обойдён
+  отключением incremental только в команде проверки, настройки не менялись.
+  Новый подписанный APK не собран: в дереве есть чужой незавершённый0.1.11
+  и изменения богослужебных текстов, они не входят в этот коммит.
+  Выпуск: Show lection numbers in daily calendar readings (hash в Git).
+  Предыдущий связанный commit:fdd06e617bc615334dfd0b736b6b7d7aa5c6d141.
+
 - Календарные «Богослужебные тексты дня» WEB/Android 0.1.11/code12:
   все опубликованные тропари/кондаки и остальные тексты сразу показаны под
   заголовками. Убраны «Открыть», сворачиваемые карточки, диалог текстов,
@@ -15,8 +30,11 @@
   host tests, подписанные APK/AAB, подписи/ZIP/ELF LOAD PASS. Обновление
   поверх0.1.10 и cold start PASS, crash buffer пуст. Физический телефон/Play
   не проверены. Артефакты/SHA — mobile/README.md. Веб требует checked deployment.
-  Последний связанный commit: Show calendar service texts directly on web and Android
-  (commit, содержащий этот раздел), main→origin/main.
+  Exact snapshot a96f04c повторно прошёл npm check497/110 и release build;
+  APK/AAB в mobile/README.md соответствуют этому commit. Production не изменён:
+  запуск deployment отклонён automatic approval review, нужна прямая команда владельца.
+  Последний implementation commit:a96f04cf482a634f95af90880c8ab995b7a03a1d
+  — Show calendar service texts directly on web and Android, main→origin/main.
 
 - Атласы WEB/Android 0.1.10/code11: существующий каталог объединяет встроенную
   интерактивную карту и опубликованные kind=atlas источники в разделе «Атласы»;

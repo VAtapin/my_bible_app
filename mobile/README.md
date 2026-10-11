@@ -530,9 +530,12 @@ shared host tests, release APK/AAB и подписи/ZIP/ELF LOAD PASS. Обно
 и Play не проверены; прежнее предупреждение ELF RELRO остаётся.
 
 - APK: `androidApp/build/outputs/verified/0.1.11/BibleDesktop-0.1.11.apk`
-- SHA256: `334B546A8AA6A4DD31A395A5AA0842C5780ED7805280FCA4D84015DEA7C73278`
+- SHA256: `49D9D16D8B83CCBE597479128D027F2769C99E2864F533F8E24406D7949C9291`
 - AAB: `androidApp/build/outputs/verified/0.1.11/BibleDesktop-0.1.11.aab`
-- SHA256: `51C80CF2302E4308BE669911EDBCEE2C1FAA50201FA930995833F19185EB7B42`
+- SHA256: `B835245E452A48F7EE3880FFFC029376DC26B092BBF8062269AC42E8EB98C1C9`
+
+Артефакты этого выпуска собраны из точного commit
+96f04cf482a634f95af90880c8ab995b7a03a1d, без параллельных WIP изменений.
 
 Воспроизводимая сборка существующим ключом:
 
