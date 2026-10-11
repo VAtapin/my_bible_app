@@ -17,4 +17,6 @@ it('shows all interface languages and main settings before the study catalogue',
  expect(html.indexOf('class="settings-language"')).toBeLessThan(html.indexOf('href="/setup/manual?edit=1"'))
  expect(html.indexOf('href="/setup/manual?edit=1"')).toBeLessThan(html.indexOf('href="/help"'))
  expect(html.indexOf('class="appearance-options"')).toBeLessThan(html.indexOf('href="/help"'))
+ expect(html).toMatch(/<details class="settings-licenses"[^>]*><summary[^>]*>Лицензии<\/summary><a href="\/licenses\/Snowball-JS-BSD\.txt"[^>]*>Snowball · BSD<\/a><\/details>/)
+ expect(html).not.toMatch(/<details class="settings-licenses"[^>]*\bopen\b/)
 })

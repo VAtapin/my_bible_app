@@ -9,7 +9,7 @@ import { dictionaryMessages } from '@/i18n/dictionaries'
 import { personalStudyMessages } from '@/i18n/personalStudy'
 import { studyPackagesMessages } from '@/i18n/studyPackages'
 import {readerHelpMessages} from '@/i18n/readerHelp'
-import {geographyMessages} from '@/i18n/geography'
+import {licenseMessages} from '@/i18n/licenses'
 import { useAppearance, type AppearanceTheme } from '@/profile/appearance'
 import {interfaceLanguageIds,interfaceLanguageNames,type InterfaceLanguage}from '@/i18n/locale'
 import {useProfileStore}from '@/stores/profileStore'
@@ -67,9 +67,13 @@ const items = [
 
     </div>
 
-    <a href="/licenses/Snowball-JS-BSD.txt" target="_blank" rel="noopener">Snowball · BSD</a>
+    <details class="settings-licenses">
+      <summary>{{ licenseMessages[language].title }}</summary>
+      <a href="/licenses/Snowball-JS-BSD.txt" target="_blank" rel="noopener">Snowball · BSD</a>
+    </details>
   </MobileShell>
 </template>
 <style scoped>
+.settings-licenses{margin-top:16px;border-top:1px solid var(--border-color,#dbe4ec);padding-top:12px;font-size:12px;color:var(--brand-blue)}.settings-licenses summary{cursor:pointer;width:fit-content;padding:6px 0;font-weight:600}.settings-licenses a{display:inline-block;margin:4px 0 0 14px;padding:6px 0;color:inherit;text-underline-offset:3px}.settings-licenses summary:focus-visible,.settings-licenses a:focus-visible{outline:2px solid var(--brand-blue);outline-offset:3px;border-radius:3px}
 .settings-language{margin:12px 0 16px;padding:0;border:0}.settings-language legend{margin-bottom:8px;font-weight:600;font-size:14px}.settings-language .language-selector{display:flex;flex-wrap:wrap;gap:8px}.settings-language .language-selector button{min-height:30px;padding:5px 12px;border-radius:6px;font-size:12px}.settings-primary .module-card{min-height:54px;padding:8px 12px}.settings-primary{margin-bottom:14px}
 </style>
