@@ -41,6 +41,12 @@ class CalendarReadingDialogTest {
   val rows=loadCalendarReading(source,translation,reading,pause={})
   assertEquals(listOf("John.3.2","John.3.3","John.4.1","Luke.1.1","Luke.1.2"),rows.map{it.verse.osisRef})
   assertEquals(listOf(1,2,2,1,1),rows.map{it.chapter.chapter.number})
+  assertEquals(listOf(0,0,0,1,1),rows.map{it.part})
+  val selections=calendarReadingSelections(rows)
+  assertEquals(2,selections.size)
+  assertTrue(rows.all{selections[it.part]!!.contains(it.chapter,it.verse)})
+  assertEquals(listOf("John.3.2","John.3.3","John.4.1"),selections[0]!!.verses.map{it.osis})
+  assertFalse(selections[0]!!.contains(chapters[0],chapters[0].verses[0]))
   Unit
  }
  @Test fun wholeCanonicalChapterSpanningModuleChaptersIncludesBothAndUnparsedSourceFailsClosed()=runBlocking {
@@ -64,7 +70,12 @@ class CalendarReadingDialogTest {
   compose.waitUntil(10_000){compose.onAllNodesWithTag("calendar-reading-rows").fetchSemanticsNodes().isNotEmpty()}
   assertEquals(compose.activity.window.decorView.width.toFloat(),compose.onNodeWithTag("calendar-reading-dialog").fetchSemanticsNode().boundsInRoot.width,2f)
   compose.onNodeWithTag("calendar-reading-rows").performScrollToNode(hasTestTag("calendar-reading-Luke.1.2"))
-  compose.onNodeWithTag("calendar-reading-Luke.1.2").assertIsDisplayed()
+  compose.onNodeWithTag("calendar-reading-Luke.1.2").assertIsDisplayed().assertIsSelected()
+  compose.onNodeWithTag("calendar-reading-rows").performScrollToNode(hasTestTag("calendar-reading-end-1"))
+  compose.onNodeWithTag("calendar-reading-end-1").assertTextEquals("Конец чтения")
+  compose.onNodeWithTag("calendar-reading-rows").performScrollToNode(hasTestTag("calendar-reading-start-0"))
+  compose.onNodeWithTag("calendar-reading-start-0").assertTextEquals("Начало чтения")
+  compose.onNodeWithTag("calendar-reading-John.3.2").assertIsSelected()
   compose.onNodeWithTag("calendar-reading-close").performClick()
   compose.onNodeWithTag("calendar-reading-dialog").assertDoesNotExist()
   assertEquals(date,selectedDateText());assertEquals(offset,scroll!!.value)

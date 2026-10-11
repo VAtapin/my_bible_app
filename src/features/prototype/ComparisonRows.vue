@@ -3,6 +3,8 @@ import InlineVerseReferences from '@/features/study/InlineVerseReferences.vue'
 import {useReferencePreferences} from '@/profile/referencePreferences'
 import {computed,nextTick,onMounted,onUnmounted,ref,watch} from 'vue'
 import SourceVerseText from './SourceVerseText.vue'
+import {calendarVerseFocused,calendarVerseBoundary,type CalendarReadingFocus}from '@/services/calendarReadingFocus'
+import {calendarReadingFocusMessages}from '@/i18n/calendarReadingFocus'
 import{createPersonalStudyRepository}from'@/offline/personalStudy'
 import{emptyPersonalStudy,type SavedPassage,comparePoints}from'@/services/personalStudy'
 import type {BibleChapter,BibleVerse} from '@/api/contracts'
@@ -14,7 +16,7 @@ import {useI18n} from '@/i18n'
 import {continuousReadingMessages} from '@/i18n/continuousReading'
 import {useReaderPreferences,effectiveReaderPreferences} from '@/profile/readerPreferences'
 import {attachReaderGestures,pageReader} from '@/services/readerGestures'
-const props=defineProps<{primary:BibleChapter;secondary:BibleChapter;secondaryChapters?:BibleChapter[];selection?:SavedPassage;selectedVerse?:number;initialVerse?:number;service?:ChapterService;initialOffset?:number}>()
+const props=defineProps<{primary:BibleChapter;secondary:BibleChapter;secondaryChapters?:BibleChapter[];readingFocus?:CalendarReadingFocus;selection?:SavedPassage;selectedVerse?:number;initialVerse?:number;service?:ChapterService;initialOffset?:number}>()
 const emit=defineEmits<{strong:[number:string,source:BibleChapter,verse:BibleVerse];study:[source:BibleChapter,verse:BibleVerse];select:[number:number,chapter:BibleChapter];visible:[chapter:BibleChapter,first:BibleVerse,last:BibleVerse,offset:number];chapter:[number];book:[number];actions:[source:BibleChapter,verse:BibleVerse,event?:MouseEvent]}>()
 const {language,messages:text}=useI18n(),labels=computed(()=>continuousReadingMessages[language.value])
 const {preferences,initialize}=useReaderPreferences();initialize()
@@ -59,13 +61,17 @@ onUnmounted(()=>{stopped=true;clearTimeout(timer);dispose?.()})
 </script>
 <template><div ref="root" class="interleaved" :class="{'reader-night':display.night}" :style="{'--reading-size':`${display.fontSize}px`,'--reader-line-height':String(display.lineHeight)}" @scroll="probe">
  <p v-if="failed===-1" role="alert">{{labels.unavailable}} <button @click="load(-1)">{{labels.retry}}</button></p>
- <div v-for="row in rows" :key="row.reference" class="parallel-row" :data-pair-ref="row.reference" :class="{'study-range':inPassage(row.frame.primary,row.primary)||inPassage(row.secondaryChapter,row.secondary),'selected-verse':selected?row.reference===selected:row.frame.primary.chapter.number===primary.chapter.number&&row.primary?.number===selectedVerse}">
+ <div v-for="row in rows" :key="row.reference" class="parallel-row" :data-pair-ref="row.reference" :class="{'reading-focus':calendarVerseFocused(readingFocus,row.primary??row.secondary!), 'study-range':inPassage(row.frame.primary,row.primary)||inPassage(row.secondaryChapter,row.secondary),'selected-verse':selected?row.reference===selected:row.frame.primary.chapter.number===primary.chapter.number&&row.primary?.number===selectedVerse}">
+  <small v-if="calendarVerseBoundary(readingFocus,row.frame.primary,row.primary??row.secondary!,frames.map(f=>f.primary)).start" class="reading-boundary">{{calendarReadingFocusMessages[language].start}}</small>
   <div v-for="(value,index) in [row.primary,row.secondary]" :key="index" class="parallel-verse" :style="{fontFamily:font(index===0?row.frame.primary:row.secondaryChapter??secondary)}">
    <small v-if="!display.clean">{{(index===0?row.frame.primary:row.secondaryChapter??secondary).translation.name}} · {{row.reference}}</small>
    <button v-if="value" class="verse-text" @click="selected=row.reference;emit('select',value.number,index===0?row.frame.primary:row.secondaryChapter!)" @contextmenu.prevent="emit('actions',index===0?row.frame.primary:row.secondaryChapter!,value,$event)"><span v-if="display.verseNumbers" class="verse-number">{{value.number}}</span><SourceVerseText :verse="value" :code="(index===0?row.frame.primary:row.secondaryChapter!).translation.code" :marks="personal.marks" :preferences="display" :palette="personal.palette" @strong="number=>emit('strong',number,index===0?row.frame.primary:row.secondaryChapter!,value)"/></button>
    <InlineVerseReferences v-if="value&amp;&amp;display.crossReferences&amp;&amp;referenceSettings.inlineMode==='list'" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :verse="value"/>
    <p v-if="!value">{{text.parallel.missing}}</p>
   </div>
+  <small v-if="calendarVerseBoundary(readingFocus,row.frame.primary,row.primary??row.secondary!,frames.map(f=>f.primary)).end" class="reading-boundary">{{calendarReadingFocusMessages[language].end}}</small>
  </div><p v-if="loading" role="status">{{text.loading}}</p><p v-if="failed===1" role="alert">{{labels.unavailable}} <button @click="load(1)">{{labels.retry}}</button></p>
 </div></template>
 <style scoped>.interleaved{height:65dvh;overflow:auto;overflow-anchor:none;overscroll-behavior:contain}.parallel-row.study-range{border-left:4px solid #3883c0}.parallel-row{border-bottom:1px solid var(--line)}.parallel-verse{padding:10px 12px;font-size:var(--reading-size,19px);line-height:var(--reader-line-height,1.55);overflow-wrap:anywhere}.parallel-verse p{margin:0}.parallel-verse small{display:block;font:12px sans-serif;margin-bottom:5px}.reader-night{background:#101821;color:#e2eaf4}.reader-night .verse-text{color:#e2eaf4}</style>
+
+<style scoped>.reading-focus{background:#fff3c4;box-shadow:inset 3px 0 #bd8b20}.reading-focus .verse-text{background:transparent}.reading-boundary{display:block;font:600 12px/1.5 sans-serif;padding:4px 5px}.reader-night .reading-focus{background:#42391e}</style>

@@ -2,6 +2,25 @@
 
 ## Реализовано и текущее состояние
 
+- Чтения дня WEB/Android0.1.13/code14: при переходе с главной в бесконечную
+  веб-читалку выделены все канонические OSIS диапазоны зачала. Компактная
+  подпись в существующей шапке, начало/конец у границ; соседние стихи обычные.
+  Сравнение/параллельные окна используют тот же диапазон; direct reader без
+  calendarReading не сохраняет старое выделение. Android календарное окно
+  выделяет реальные строки каждой части и показывает обе границы.
+  Браузер/realAPI11.10.2026: ровно John20:11–18 и 2Cor11:31–12:9 PASS;
+  Mark1:38 и все загруженные стихи при StrongOFF без HG номеров PASS.
+  npm run check:510/510 tests114files, typecheck/обе сборки PASS.
+  Старый test fixture parseStatus=ok заменён реальным published parsed;
+  production parser не допускает неизвестные статусы чтения.
+  Native:68 host, lintDebug/lintRelease, CalendarReadingDialogTest4/4 и
+  SourceDisplayTest3/3 PASS. Signed APK/AAB/ZIP/ELF LOAD PASS; обновление
+  поверх0.1.12, cold start API37 x86_64, crash buffer пуст. Физический
+  ARM64/16KB/Play не проверены; прежний graphics.path RELRO warning остаётся.
+  Артефакты/SHA256 — mobile/README.md. Следующий шаг: публикация веб-выпуска.
+  Последний связанный commit:7d190f3; Highlight daily lection passages across reader chapters (hash в Git).
+
+
 - Strong WEB/Android: реальные оставшиеся маркеры, слитые со словом
   (Mark.1.38 G2532Он, Luke.1.21 G3588Между), больше не выводятся как
   часть обычного текста. При выключении/clean скрыты, при включении
@@ -9,8 +28,8 @@
   обычные числовые значения и переводы без has_strong_markup не очищаются.
   Проверки:14/14 целевых WEB, typecheck/обе production-сборки;68/68 shared
   host, lintDebug/assembleDebug и SourceDisplayTest3/3 API37 PASS.
-  Следующий шаг: выпуск APK вместе с выделением зачал и публикация веба.
-  Последний связанный commit:11c88e0; implementation Fix attached Strong markers in reader text (hash в Git).
+  Включено в Android0.1.13/code14 вместе с выделением зачал; веб готов к публикации.
+  Последний implementation commit:7d190f3492ec005efe6948dd808ba8a543d7a3aa — Fix attached Strong markers in reader text.
 
 
 - Чтения календаря WEB открываются нажатием на сам текст названия/зачала:

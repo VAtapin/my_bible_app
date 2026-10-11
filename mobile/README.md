@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.12` (build 13).
+`0.1.13` (build 14).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -554,3 +554,21 @@ shared host tests, release APK/AAB и подписи/ZIP/ELF LOAD PASS. Обно
 ```powershell
 ./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 12 -VersionName '0.1.11'
 ```
+
+## Android 0.1.13 / code 14 — границы чтений дня и Стронг
+
+Все части зачала выделены в календарном окне; начало и конец подписаны,
+включая разные книги и главы. Возврат сохраняет день/прокрутку календаря.
+Остаточные G2532Он/G3588На в plain_text скрываются при выключении Strong
+и показываются отдельными маркерами при включении; позиции пометок сохранены.
+
+Проверки: 68 shared host, lintDebug/lintRelease, CalendarReadingDialogTest4/4
+и SourceDisplayTest3/3 на API37 x86_64 PASS. Signed APK/AAB, подписи,
+non-debuggable/ZIP/ELF LOAD PASS. APK обновлён поверх0.1.12 с сохранением
+данных; cold launch успешен, crash buffer пуст. Физический ARM64/16KB и
+Play не проверены; прежнее предупреждение graphics.path RELRO остаётся.
+
+Файлы: `androidApp/build/outputs/verified/0.1.13/`:
+
+- `BibleDesktop-0.1.13.apk`: SHA256 `AA907F074B09F8DDE12978DDD556DF32E1CDA16FB10E021B5C68F388A6709C18`.
+- `BibleDesktop-0.1.13.aab`: SHA256 `BC1F5650775F6529EA30E05ACEC96DCA1D009BAC23DB23626FFD558411937ACF`.

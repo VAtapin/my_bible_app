@@ -2,6 +2,7 @@ import type { CalendarEvent, CalendarReading } from '@/api/contracts'
 import type { CalendarLevel } from '@/profile/configuration'
 import { readerTarget } from './bibleReferences'
 import type {CalendarGridDay} from '@/api/calendar'
+import {calendarFocus} from './calendarReadingFocus'
 
 // Actual calendar-engine FASTING_COLORS, not translated meal-title heuristics.
 const mealColors=new Set(['#dcebc9','#cce9f3','#f7e5b5','#ecdac7','#e3d5ed','#bfd9de','#f4cfaa','#c9c4d6','#fff3bf','#dedee5'])
@@ -24,8 +25,9 @@ export function fastingNote(event: CalendarEvent): string {
   return metadata && !Array.isArray(metadata) && typeof metadata.meal_note === 'string' ? metadata.meal_note : event.name
 }
 
-export function calendarReadingLink(reading: CalendarReading) {
-  const passage = reading.reading?.passages[0]
+export function calendarReadingLink(reading: CalendarReading,title?:string) {
+  const focus=calendarFocus(reading,title)
+  const passage = focus?.passages[0]
   const target = passage && readerTarget(passage.book, passage.start.chapter)
-  return target ? { path: '/reader', query: { ...target, ...(passage?.start.verse ? { verse: String(passage.start.verse) } : {}) } } : undefined
+  return target ? { path: '/reader', query: { ...target, ...(passage?.start.verse ? { verse: String(passage.start.verse) } : {}),calendarReading:JSON.stringify(focus) } } : undefined
 }

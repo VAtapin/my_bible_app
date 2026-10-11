@@ -29,7 +29,7 @@ const readings = computed(() => home.value.compact ? props.day?.readings.slice(0
       </div>
       <div v-if="home.readings && readings.length" class="day-readings">
         <template v-for="reading in readings" :key="reading.id">
-          <RouterLink v-if="calendarReadingLink(reading)" :to="calendarReadingLink(reading)!">{{ calendarReadingTitle(reading,language) }} →</RouterLink>
+          <RouterLink v-if="calendarReadingLink(reading,calendarReadingTitle(reading,language))" :to="calendarReadingLink(reading,calendarReadingTitle(reading,language))!">{{ calendarReadingTitle(reading,language) }} →</RouterLink>
           <span v-else>{{ calendarReadingTitle(reading,language) }}</span>
         </template>
       </div>

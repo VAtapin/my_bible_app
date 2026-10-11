@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, CalendarReading } from '@/api/contracts'
 import { calendarEvents, calendarReadingLink, fastingNote,calendarMealMark } from './calendarPresentation'
+import {decodeCalendarFocus} from './calendarReadingFocus'
 
 describe('shared calendar presentation', () => {
   it('uses published meal colors rather than Russian words to identify multilingual food-rule indicators',()=>{
@@ -26,7 +27,9 @@ describe('shared calendar presentation', () => {
   })
   it('links parsed readings to the internal reader and leaves unknown references unlinked', () => {
     const reading: CalendarReading = { id: 'reading', type: 'gospel', title: 'Gospel', display_ref: 'Лк.4:1-15', passage_ref: '', date_rule_type: '', reading: { schemaVersion: 1, parseStatus: 'parsed', passages: [{ book: 'Luke', start: { chapter: 4, verse: 1 }, end: { chapter: 4, verse: 15 } }] } }
-    expect(calendarReadingLink(reading)).toEqual({ path: '/reader', query: { book: 'luke', chapter: '4', verse: '1' } })
+    const link=calendarReadingLink(reading)
+    expect(link).toMatchObject({ path: '/reader', query: { book: 'luke', chapter: '4', verse: '1' } })
+    expect(decodeCalendarFocus(link?.query.calendarReading)?.passages).toEqual(reading.reading!.passages)
     expect(calendarReadingLink({ ...reading, reading: undefined })).toBeUndefined()
   })
 })

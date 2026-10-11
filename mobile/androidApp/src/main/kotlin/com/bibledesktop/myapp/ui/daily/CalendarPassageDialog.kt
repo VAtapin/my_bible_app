@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -34,6 +36,7 @@ import kotlinx.coroutines.launch
  var bookmarks by remember{mutableStateOf(BookmarkStore.load(context))}
  var note by remember{mutableStateOf<BookmarkEntry?>(null)};var noteInitial by remember{mutableStateOf("")}
  var strong by remember{mutableStateOf<Triple<BibleChapter,BibleVerse,String>?>(null)}
+ val focusLabels=calendarReadingFocusLabels(language)
  LaunchedEffect(client,retry){
   try{
    translations=client.getTranslations()
@@ -61,15 +64,17 @@ import kotlinx.coroutines.launch
     }
     if(error)Column(Modifier.padding(10.dp)){Text(localized(R.string.study_missing_text,language));TextButton(onClick={retry++}){Text(localized(R.string.retry,language))}}
     else if(rows==null)LinearProgressIndicator(Modifier.fillMaxWidth())
-    rows?.let{loaded->LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(horizontal=10.dp).testTag("calendar-reading-rows")){
+    rows?.let{loaded->val selections=remember(loaded){calendarReadingSelections(loaded)};LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(horizontal=10.dp).testTag("calendar-reading-rows")){
      itemsIndexed(loaded,key={index,row->"$index:${row.chapter.translation.code}:${row.verse.osisRef}"}){index,row->
       if(index==0||loaded[index-1].chapter.book.slug!=row.chapter.book.slug||loaded[index-1].chapter.chapter.number!=row.chapter.chapter.number)Text("${row.chapter.book.name} ${row.chapter.chapter.number}",style=MaterialTheme.typography.titleMedium)
-      Box(Modifier.testTag("calendar-reading-${row.verse.osisRef}")){VerseRow(language,row.chapter,row.verse,preferences.fontSize,
+      if(index==0||loaded[index-1].part!=row.part)Text(focusLabels.first,Modifier.testTag("calendar-reading-start-${row.part}"),style=MaterialTheme.typography.labelMedium)
+      Box(Modifier.testTag("calendar-reading-${row.verse.osisRef}").semantics{selected=selections[row.part]?.contains(row.chapter,row.verse)==true}){VerseRow(language,row.chapter,row.verse,preferences.fontSize,
        bookmarks.any{it.translationCode==row.chapter.translation.code&&it.reference==row.verse.osisRef},
        onBookmark={bookmarks=BookmarkStore.toggle(context,bookmarks,row.chapter,row.verse)},
        onShare={shareBiblePassage(context,versePassage(row.chapter,row.verse))},
        onNote={val passage=versePassage(row.chapter,row.verse);scope.launch{try{noteInitial=NoteStore.read(context).firstOrNull{it.passage.translationCode==passage.translationCode&&it.passage.reference==passage.reference}?.body.orEmpty();note=passage}catch(cancelled:CancellationException){throw cancelled}catch(_:Exception){error=true}}},
-       onStrong={number->strong=Triple(row.chapter,row.verse,number)})}
+       onStrong={number->strong=Triple(row.chapter,row.verse,number)},selection=selections[row.part])}
+      if(index==loaded.lastIndex||loaded[index+1].part!=row.part)Text(focusLabels.second,Modifier.testTag("calendar-reading-end-${row.part}"),style=MaterialTheme.typography.labelMedium)
      }
     }}
    }

@@ -33,7 +33,7 @@ describe('real daily verses', () => {
     expect(await loadRandomVerse(api, 'DE', () => 0)).toBeUndefined()
   })
   it('shows the appointed Gospel verse, not a random verse labelled as a daily reading', async () => {
-    const reading = { id: 'gospel', type: 'gospel', title: '', date_rule_type: '', display_ref: 'Ин. 1:2', passage_ref: 'John.1.2', reading: { schemaVersion: 1, parseStatus: 'ok', passages: [{ book: 'John', start: { chapter: 1, verse: 2 }, end: { chapter: 1, verse: 2 } }] } }
+    const reading = { id: 'gospel', type: 'gospel', title: '', date_rule_type: '', display_ref: 'Ин. 1:2', passage_ref: 'John.1.2', reading: { schemaVersion: 1, parseStatus: 'parsed', passages: [{ book: 'John', start: { chapter: 1, verse: 2 }, end: { chapter: 1, verse: 2 } }] } }
     const local = service()
     local.readOffline = vi.fn(async () => chapter)
     expect((await loadGospelExcerpt(local, [reading], 'RST'))?.text).toBe('Текст 2')

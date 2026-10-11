@@ -3,7 +3,14 @@ package com.bibledesktop.myapp.ui.daily
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.delay
 
-internal data class CalendarReadingRow(val chapter:BibleChapter,val verse:BibleVerse)
+internal data class CalendarReadingRow(val chapter:BibleChapter,val verse:BibleVerse,val part:Int=0)
+internal fun calendarReadingSelections(rows:List<CalendarReadingRow>):Map<Int,SavedPassage> = rows.groupBy{it.part}.mapValues{(_,part)->
+    val first=part.first();val last=part.last()
+    require(part.all{it.chapter.translation.code==first.chapter.translation.code&&it.chapter.book.slug==first.chapter.book.slug})
+    SavedPassage(first.chapter.translation.code,first.chapter.translation.name,first.chapter.book.slug,first.chapter.book.name,
+        PassagePoint(first.chapter.chapter.number,first.verse.number),PassagePoint(last.chapter.chapter.number,last.verse.number),
+        part.map{PassageVerse(it.chapter.chapter.number,it.verse.number,it.verse.osisRef,it.verse.plainText)})
+}
 internal fun normalizedCalendarPassages(value:CalendarReading):List<CalendarReadingPassage>{
     val normalized=value.reading
     val parts=if(normalized!=null){
@@ -39,7 +46,7 @@ internal suspend fun loadCalendarReading(client:BibleContentSource,translation:T
             loaded[book to number]=value
         }
     }
-    return parts.flatMap{part->
+    return parts.flatMapIndexed{partIndex,part->
         val rows:List<CalendarReadingRow>
         val first=part.start.verse;val last=part.end.verse
         if(part.start.chapter==part.end.chapter&&first!=null&&last!=null){
@@ -51,14 +58,14 @@ internal suspend fun loadCalendarReading(client:BibleContentSource,translation:T
                 val location=locations.single{it.osis==ref}
                 val source=chapter(location.book,location.chapter)
                 val verse=source.verses.single{it.osisRef==ref&&it.id==location.verseId}
-                CalendarReadingRow(source,verse)
+                CalendarReadingRow(source,verse,partIndex)
             }
         }else{
             // A whole canonical chapter can span multiple module chapters. Inspect the
             // actual edition book, rather than assigning canonical numbers to its routes.
             val slug=books.singleOrNull{it.canonicalBook?.osisCode==part.book}?.slug?:client.getCanonicalSlug(requireNotNull(translation.canonCode),part.book)
             val book=books.single{it.slug==slug};require(book.chaptersCount in 1..200)
-            val candidates=(1..book.chaptersCount).flatMap{number->val source=chapter(slug,number);source.verses.map{CalendarReadingRow(source,it)}}
+            val candidates=(1..book.chaptersCount).flatMap{number->val source=chapter(slug,number);source.verses.map{CalendarReadingRow(source,it,partIndex)}}
             rows=candidates.filter{row->
                 if(row.verse.osisRef.substringBefore('.')!=part.book)false else {
                     val point=canonicalStudyPosition(row.verse.osisRef)

@@ -39,6 +39,7 @@ import { createStudyApi } from '@/api/study'
 import { createStudyService } from '@/services/studyService'
 import { apiBaseUrl } from '@/config/api'
 import { resolvedVerseChapter } from '@/services/verseLocations'
+import {decodeCalendarFocus} from '@/services/calendarReadingFocus'
 import type { ReferenceGroup } from '@/services/verseStudy'
 import type { SavedPassage } from '@/services/personalStudy'
 import ReaderToolbar from './ReaderToolbar.vue'
@@ -113,6 +114,16 @@ watch(comparing,value=>localStorage.setItem('bible-desktop:compare-open',String(
 const comparisonView = ref<InstanceType<typeof ParallelReading>>()
 const studying = ref(false)
 const selection = ref<SavedPassage>()
+const readingFocus=computed(()=>decodeCalendarFocus(route.query.calendarReading))
+async function openCalendarFocus(){
+ const part=readingFocus.value?.passages[0];if(!part)return false
+ const reference=`${part.book}.${part.start.chapter}.${part.start.verse??1}`
+ const source=await resolvedVerseChapter(translationCode.value,reference,chapterService)
+ const verse=source.verses.find(v=>v.osis_ref===reference);if(!verse)throw Error('Calendar verse unavailable')
+ if(!books.value.some(book=>book.slug===source.book.slug))await loadBooks(source.book.slug)
+ bookSlug.value=source.book.slug;chapterNumber.value=source.chapter.number;restoreOffset=0
+ await openChapter(String(verse.number));return true
+}
 const studyPanel = ref<InstanceType<typeof VerseStudyPanel>>()
 const studySource = ref<BibleChapter>()
 const studyVerse = ref<number>()
@@ -197,6 +208,7 @@ onMounted(async () => {
     const requestedChapter = Number(route.query.chapter)
     await loadBooks(requestedBook)
     if (!books.value.length) { message.value = catalogText.value.catalog_empty; return }
+    if(await openCalendarFocus())return
     chapterNumber.value = Number.isInteger(requestedChapter) && requestedChapter > 0
       ? requestedChapter
       : restoredLocation?.chapter ?? 1
@@ -283,6 +295,7 @@ watch(() => route.query, async (query) => {
   if (typeof requestedBook !== 'string' || !translationCode.value) return
   await run(async () => {
     if (typeof requestedTranslation === 'string' && requestedTranslation !== translationCode.value) { translationCode.value = requestedTranslation; await loadBooks(requestedBook) }
+    if(await openCalendarFocus())return
     if (!books.value.some((book) => book.slug === requestedBook)) return
     bookSlug.value = requestedBook
     const number = Number(query.chapter)
@@ -394,7 +407,7 @@ function formatDate(value: string): string {
       <header class="reading-header">
         <RouterLink class="reader-home" to="/today" :aria-label="text.navigation.today" :title="text.navigation.today"><AppIcon name="home" /></RouterLink>
         <button type="button" :disabled="busy || (visibleChapter?.chapter.number ?? chapterNumber) <= 1" :aria-label="text.reader.previous" @click="moveChapter(-1)">←</button>
-        <span class="reader-title" role="button" tabindex="0" :aria-label="text.reader.chooseChapter" @click="pickerOpen=!pickerOpen" @keydown.enter="pickerOpen=!pickerOpen"><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2></span>
+        <span class="reader-title" role="button" tabindex="0" :aria-label="text.reader.chooseChapter" @click="pickerOpen=!pickerOpen" @keydown.enter="pickerOpen=!pickerOpen"><p>{{ (visibleChapter ?? chapter).translation.name }}</p><h2>{{ (visibleChapter ?? chapter).book.name }}<small>{{ text.reader.chapterLabel }} {{ visibleChapter?.chapter.number ?? chapter.chapter.number }}<template v-if="visibleFirst">:{{ visibleFirst }}</template></small></h2><small v-if="readingFocus" class="calendar-reading-caption" :title="readingFocus.title">{{readingFocus.title}}</small></span>
         <button class="reader-chapter-button" type="button" :aria-label="text.reader.chooseChapter" :title="text.reader.chooseChapter" @click="comparing?comparisonView?.choosePlace():versePickerOpen=!versePickerOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18" /></svg></button>
         <button v-if="appearance.theme.value !== 'warm'" class="reader-size-button" type="button" :aria-label="text.readerActions.size" @click="changeFontSize">Aa</button>
         <ReaderToolbar :label="controlText.settings" :close-label="controlText.close" :actions="toolbarActions" @action="toolbarAction" />
@@ -405,8 +418,8 @@ function formatDate(value: string): string {
       <ReaderSettings v-if="settingsOpen" @close="settingsOpen=false" />
       <SourceCard v-if="sourceOpen&&(visibleChapter??chapter)" expanded :metadata="comparisonCatalog.find(item=>item.code===(comparisonView?.source()??visibleChapter??chapter)?.translation.code)??(comparisonView?.source()??visibleChapter??chapter)!.translation"/>
       <ReaderHistoryPanel v-if="historyOpen" :state="history.state" :can-back="history.canBack" :can-forward="history.canForward" @back="historyBack" @forward="historyForward" @select="index=>restoreHistory(history.select(index))" @close="historyOpen=false" />
-      <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
-      <ContinuousReading v-else @chapter="moveChapter" @book="moveBook" :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" :selection="selection" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
+      <ParallelReading v-if="comparing" ref="comparisonView" :primary="chapter" :primary-offset="openOffset" :catalog="comparisonCatalog" :service="chapterService" :selected-verse="selectedVerse" :bookmarks="bookmarkedVerseKeys" :selection="selection" :reading-focus="readingFocus" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="(number,source)=>{selectedVerse=number;actionChapter=source}" @bookmark="(source,verse)=>toggleBookmark(verse,source)" @actions="(source,verse,event)=>openVerseMenu(verse.number,event,source)" />
+      <ContinuousReading v-else @chapter="moveChapter" @book="moveBook" :key="`${chapter.translation.code}:${chapter.book.slug}:${chapter.chapter.number}`" :initial="chapter" :service="chapterService" :initial-verse="selectedVerse" :initial-offset="openOffset" :selected-verse="selectedVerse" :selected-chapter="actionChapter?.chapter.number ?? chapter.chapter.number" :bookmarks="bookmarkedVerseKeys" :selection="selection" :reading-focus="readingFocus" @strong="openStrong" @study="openStudy" @visible="visiblePlace" @select="selectVerse" @bookmark="(source, verse) => toggleBookmark(verse, source)" @actions="(source, verse, event) => openVerseMenu(verse.number, event, source)" />
     </article>
     <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false;studySource=undefined;studyVerse=undefined">{{ studyMessages[language].close }}</button><CommentaryPanel v-if="contextualChapter" :chapter="contextualChapter" :canon="comparisonCatalog.find(item=>item.code===contextualChapter?.translation.code)?.canon_code" :verse="studyVerse" :visible-first="studyFirst" :visible-last="studyLast" /><VerseStudyPanel v-if="studySource??contextualChapter" ref="studyPanel" :chapter="(studySource??contextualChapter)!" :verse="studyVerse??visibleFirst" @open="temporary=$event"/><DictionaryContext v-if="contextualChapter" :book="canonicalSlug" :osis="contextualChapter.verses[0]?.osis_ref.split('.')[0]" :verse-numbers="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>Number(v.osis_ref.split('.')[2]))" :verse-chapters="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>Number(v.osis_ref.split('.')[1]))" :chapter="contextualChapter.chapter.number" :verse-ids="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>v.id)"/></aside>
     </div>
@@ -442,4 +455,5 @@ function formatDate(value: string): string {
 .reading-header:has(.reader-toolbar){grid-template-columns:28px 28px minmax(0,1fr) 32px 32px 36px 28px}
 .reading-header:has(.reader-toolbar):not(:has(.reader-size-button)){grid-template-columns:28px 28px minmax(0,1fr) 32px 36px 28px}
 .reader-night{--white:#17212d;--ink:#e2eaf4;--line:#415061;--light-blue:#2d4157;background:#101821;color:#e2eaf4}.reader-night :deep(.verse-text){color:#e2eaf4}.reader-night :deep(.chapter-heading){background:#17212d;color:#e2eaf4}
+.reading-header .calendar-reading-caption{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px/1.4 sans-serif;margin-top:3px}
 </style>
