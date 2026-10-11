@@ -32,10 +32,9 @@
   Android CalendarAutomaticServiceTest2/2 API37 x86_64, lintDebug/lintRelease,
   host tests, подписанные APK/AAB, подписи/ZIP/ELF LOAD PASS. Обновление
   поверх0.1.10 и cold start PASS, crash buffer пуст. Физический телефон/Play
-  не проверены. Артефакты/SHA — mobile/README.md. Веб требует checked deployment.
+  не проверены. Артефакты/SHA — mobile/README.md. Веб опубликован и проверен 11.10.2026 вместе с зачалами.
   Exact snapshot a96f04c повторно прошёл npm check497/110 и release build;
-  APK/AAB в mobile/README.md соответствуют этому commit. Production не изменён:
-  запуск deployment отклонён automatic approval review, нужна прямая команда владельца.
+  APK/AAB в mobile/README.md соответствуют этому commit. Production обновлён по прямой команде владельца: exact066f88e0; actual HTML/SW/assets и browser inline texts/зачала PASS.
   Последний implementation commit:a96f04cf482a634f95af90880c8ab995b7a03a1d
   — Show calendar service texts directly on web and Android, main→origin/main.
 
@@ -409,3 +408,5 @@
 - Компактная веб-шапка: a32b563 — Compact the reader header and align selected study context (отправлен SSH для публикации).
 - Android 0.1.8: cd39497 — Release Android 0.1.8 with compact reader and real reference text.
 - Android 0.1.9: Keep Android atlas drawing inside its viewport (hash в Git).
+
+- Production release 11.10.2026: exact066f88e0f7f5a5aa2f5fb5cc3f11b105600e2478, fresh private dist backup calendar-20261011-141253; Plesk Node22/npm ci/typecheck/обе сборки PASS. Actual HTTPS HTML/SW/resources совпали с dist; browser тропари/кондаки сразу видимы без служебных пояснений, чтения с зачалами64/194/26. Подписанный Android0.1.12/code13 содержит обе правки; SHA APK CA792E5D6051EF9513B8782E9EF985616A63E17795A09DD51998D3DA32FE9270 проверен SSH-чатом. Google Play не опубликован. Последний связанный receipt: Record verified calendar production release.
