@@ -6,7 +6,11 @@
   по умолчанию закрытый раздел «Лицензии»; исходный текст лицензии доступен.
   Заголовок локализован RU/DE/UK/EN, остальные элементы страницы сохранены.
   Проверки: MoreView test, typecheck/обе production сборки, diffcheck PASS.
-  Публикация ожидает штатного deployment. Последний связанный commit:5cef0c4;
+  WEB опубликован и проверен 11.10.2026: exact7fad26c12c69fd308191116c507109d68813f78f.
+  Fresh dist backup licenses-20261011-161752; штатный publisher Node22/umask022,
+  typecheck/обе сборки, actual HTTPS HTML/SW/assets и полный license SHA PASS.
+  Production browser: details закрыт по умолчанию; ссылка появляется только
+  после раскрытия и скрывается при закрытии. Последний связанный commit:5cef0c4;
   Move Snowball attribution into the licenses section (hash в Git).
 
 - WEB настройки/язык: шестерёнка в существующей шапке ведёт прямо в /more;
