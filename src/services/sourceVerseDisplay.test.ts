@@ -6,6 +6,16 @@ import type{BibleVerse}from'@/api/contracts'
 const annotations:SourceAnnotations={status:'available',paragraph_before:true,paragraph_breaks:[{offset_utf16:8}],line_breaks:[],headings:[{id:'h',text:'Source title',offset_utf16:0,source:{kind:'mybible',sha256:null}}],footnotes:[{id:'f',marker:'[1]',text:null,offset_utf16:3,kind:'footnote',body_available:false,source:{kind:'mybible',sha256:null}}],added_words:[{start_utf16:4,end_utf16:7}],emphasis:[],red_letters:[],strong_tokens:[],source:{kind:'mybible',sha256:null},features:{headings:'present',footnotes:'present',added_words:'present',paragraphs:'present'}}
 const verse:BibleVerse={id:1,number:1,osis_ref:'Gen.1.1',text:'raw retained source',plain_text:'God was light.',has_strong_markup:false,markup_format:'mybible',annotations}
 describe('actual source annotations display',()=>{
+ it('hides actual attached source markers without moving word and annotation anchors',()=>{
+  const leaked={...verse,plain_text:'G2532Он говорит им: G3588На другой день 12 человек.',has_strong_markup:true,annotations:undefined}
+  for(const preferences of [{...defaultReaderPreferences,strongNumbers:false},{...defaultReaderPreferences,clean:true},defaultReaderPreferences]){
+   const pieces=sourceVerseSegments(leaked,'X',[],preferences)
+   expect(pieces.map(piece=>piece.text).join('')).toBe('Он говорит им: На другой день 12 человек.')
+   expect(pieces.find(piece=>piece.text.startsWith('Он'))?.start).toBe(5)
+   expect(pieces.flatMap(piece=>piece.strongTokens).map(token=>token.strong_number)).toEqual(preferences.strongNumbers&&!preferences.clean?['G2532','G3588']:[])
+  }
+  expect(sourceVerseSegments({...leaked,has_strong_markup:false},'X',[],defaultReaderPreferences).map(piece=>piece.text).join('')).toBe(leaked.plain_text)
+ })
  it('keeps the underlying text and saved mark offsets while adding source events',()=>{const value=sourceVerseSegments(verse,'X',[],defaultReaderPreferences);expect(value.map(piece=>piece.text).join('')).toBe(verse.plain_text);expect(value.find(piece=>piece.added)?.text).toBe('was');expect(value[0]?.headings[0]?.text).toBe('Source title');expect(value.find(piece=>piece.start===3)?.footnotes[0]?.text).toBeNull();expect(value.some(piece=>piece.paragraph)).toBe(true)})
  it('clean mode hides annotations without changing source text or saved preferences',()=>{const value=sourceVerseSegments(verse,'X',[],{...defaultReaderPreferences,clean:true});expect(value.map(piece=>piece.text).join('')).toBe(verse.plain_text);expect(value.every(piece=>!piece.added&&!piece.paragraph&&!piece.line&&!piece.headings.length&&!piece.footnotes.length)).toBe(true)})
  it('never invents annotations from legacy HTML or invalid offsets',()=>{expect(sourceVerseSegments({...verse,annotations:undefined,text:'<i>was</i>'},'X',[],defaultReaderPreferences).some(piece=>piece.added)).toBe(false);expect(isSourceAnnotations({...annotations,added_words:[{start_utf16:0,end_utf16:999}]},verse.plain_text)).toBe(false);expect(sourceVerseSegments({...verse,annotations:{...annotations,status:'not_preserved'}},'X',[],defaultReaderPreferences).every(piece=>!piece.headings.length&&!piece.footnotes.length)).toBe(true)})

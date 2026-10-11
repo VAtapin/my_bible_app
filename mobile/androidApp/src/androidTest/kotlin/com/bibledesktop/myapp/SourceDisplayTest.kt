@@ -17,6 +17,21 @@ import org.junit.Assert.*
 class SourceDisplayTest {
  @get:Rule val compose=createAndroidComposeRule<ComponentActivity>()
  private val verse=BibleVerse(1,1,"Gen.1.1","God","God")
+ @Test fun attachedStrongMarkersFollowSwitchAndKeepSavedWordStyles(){
+  val actual=verse.copy(text="G2532Он говорит G3004",plainText="G2532Он говорит 12 людям",hasStrongMarkup=true)
+  val body=AnnotatedString(actual.plainText,listOf(AnnotatedString.Range(SpanStyle(background=Color.Yellow),5,7)))
+  val enabled=mutableStateOf(false)
+  compose.setContent{BibleDesktopTheme{SourceVerseText(actual,body,ReaderPreferences(strongNumbers=enabled.value),TextStyle.Default)}}
+  compose.onNodeWithText("Он говорит 12 людям").assertIsDisplayed()
+  assertTrue(compose.onNodeWithText("Он говорит 12 людям").fetchSemanticsNode().config[SemanticsActions.CustomActions].isEmpty())
+  val hidden=annotatedSourceVerse(actual,body,ReaderPreferences(strongNumbers=false))
+  assertEquals("Он говорит 12 людям",hidden.text)
+  assertTrue(hidden.spanStyles.any{it.start==0&&it.end==2&&it.item.background==Color.Yellow})
+  assertEquals(hidden.text,annotatedSourceVerse(actual,body,ReaderPreferences(clean=true)).text)
+  compose.runOnIdle{enabled.value=true}
+  compose.onNodeWithText("G2532Он говорит 12 людям").assertIsDisplayed()
+  assertEquals(listOf("G2532"),compose.onNodeWithText("G2532Он говорит 12 людям").fetchSemanticsNode().config[SemanticsActions.CustomActions].map{it.label})
+ }
  @Test fun cleanHidesNoteIconsAndActionsWithoutRemovingSavedMarks(){
   val mark=WordMark("note","X",verse.osisRef,verse.plainText,0,3,"God",note="Saved note")
   val body=AnnotatedString("God",listOf(AnnotatedString.Range(SpanStyle(background=Color.Yellow),0,3)))

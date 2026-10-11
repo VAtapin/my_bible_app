@@ -21,9 +21,11 @@ import com.bibledesktop.shared.api.*
 
 internal fun annotatedSourceVerse(verse:BibleVerse,body:AnnotatedString,display:ReaderPreferences,wordNotes:List<WordMark> = emptyList()):AnnotatedString {
  val source=verse.annotations?.takeIf{it.status=="available"&&it.validFor(verse.plainText)&&body.text==verse.plainText}
- val strong=if(source!=null)verse.explicitSourceStrongTokens()else emptyList()
+ val remaining=if(body.text==verse.plainText)verse.remainingStrongRanges()else emptyList()
+ val published=if(source!=null)verse.explicitSourceStrongTokens()else emptyList()
+ val strong=published+remaining.filter{range->published.none{it.offset==range.start&&it.number==range.number}}.mapIndexed{index,range->SourceStrongAnnotation(range.number,index,range.start)}
  val validNotes=wordNotes.filter{!display.clean&&it.sourceText==verse.plainText&&it.start>=0&&it.end<=verse.plainText.length&&it.end>it.start&&it.note.isNotBlank()&&verse.plainText.substring(it.start,it.end)==it.quote&&body.text==verse.plainText}
- val points=(listOf(0,body.length)+source?.let{a->a.headings.map{it.offset}+a.footnotes.map{it.offset}+a.paragraphBreaks.map{it.offset}+a.lineBreaks.map{it.offset}+(a.addedWords+a.emphasis+a.quotations+a.redLetters).flatMap{listOf(it.start,it.end)}}.orEmpty()+strong.map{it.offset}+validNotes.map{it.end}).distinct().sorted()
+ val points=(listOf(0,body.length)+source?.let{a->a.headings.map{it.offset}+a.footnotes.map{it.offset}+a.paragraphBreaks.map{it.offset}+a.lineBreaks.map{it.offset}+(a.addedWords+a.emphasis+a.quotations+a.redLetters).flatMap{listOf(it.start,it.end)}}.orEmpty()+strong.map{it.offset}+remaining.flatMap{listOf(it.start,it.end)}+validNotes.map{it.end}).distinct().sorted()
  return buildAnnotatedString{
   points.forEachIndexed{index,offset->
    if(!display.clean&&source!=null){
@@ -34,7 +36,7 @@ internal fun annotatedSourceVerse(verse:BibleVerse,body:AnnotatedString,display:
    if(display.strongNumbers&&!display.clean)strong.filter{it.offset==offset}.forEach{token->pushStringAnnotation("source-strong",token.number);withStyle(SpanStyle(color=Color(0xff1e5aa8),fontWeight=FontWeight.Bold)){append(token.number)};pop()}
    validNotes.filter{it.end==offset}.forEach{note->pushStringAnnotation("word-note",note.id);withStyle(SpanStyle(fontWeight=FontWeight.Bold)){append("✎")};pop()}
    val end=points.getOrNull(index+1)?:offset
-   if(end>offset){val start=length;append((if(display.paragraphs&&!display.clean)body else AnnotatedString(body.text.replace('\n',' '),body.spanStyles,body.paragraphStyles)).subSequence(offset,end));if(!display.clean&&source!=null){if(display.addedWords&&source.addedWords.any{it.start<=offset&&it.end>=end})addStyle(SpanStyle(fontStyle=FontStyle.Italic,textDecoration=TextDecoration.Underline),start,length);if(source.redLetters.any{it.start<=offset&&it.end>=end})addStyle(SpanStyle(color=if(display.night)Color(0xfff4a1a1)else Color(0xff9c2636)),start,length);if((source.emphasis+source.quotations).any{it.start<=offset&&it.end>=end})addStyle(SpanStyle(fontStyle=FontStyle.Italic),start,length)}}
+   if(end>offset&&remaining.none{offset>=it.start&&offset<it.end}){val start=length;append((if(display.paragraphs&&!display.clean)body else AnnotatedString(body.text.replace('\n',' '),body.spanStyles,body.paragraphStyles)).subSequence(offset,end));if(!display.clean&&source!=null){if(display.addedWords&&source.addedWords.any{it.start<=offset&&it.end>=end})addStyle(SpanStyle(fontStyle=FontStyle.Italic,textDecoration=TextDecoration.Underline),start,length);if(source.redLetters.any{it.start<=offset&&it.end>=end})addStyle(SpanStyle(color=if(display.night)Color(0xfff4a1a1)else Color(0xff9c2636)),start,length);if((source.emphasis+source.quotations).any{it.start<=offset&&it.end>=end})addStyle(SpanStyle(fontStyle=FontStyle.Italic),start,length)}}
   }
  }
 }

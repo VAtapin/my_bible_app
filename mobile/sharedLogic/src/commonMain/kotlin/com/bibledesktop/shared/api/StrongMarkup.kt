@@ -1,5 +1,14 @@
 package com.bibledesktop.shared.api
 
+data class RemainingStrongRange(val start: Int, val end: Int, val number: String)
+/** Preserve original UTF-16 anchors, including markers attached to the following word. */
+fun BibleVerse.remainingStrongRanges(): List<RemainingStrongRange> {
+    if (!hasStrongMarkup) return emptyList()
+    return Regex("(?<![\\p{L}\\p{N}])([HG])(\\d{1,5})(?!\\p{N})", RegexOption.IGNORE_CASE)
+        .findAll(plainText).filter { it.groupValues[2].toInt() > 0 }
+        .map { RemainingStrongRange(it.range.first, it.range.last + 1, it.groupValues[1].uppercase() + it.groupValues[2].toInt()) }.toList()
+}
+
 /** Explicit source identifiers only; never derive a word relation from token_order. */
 fun sourceStrongNumbers(raw: String, hasMarkup: Boolean): List<String> {
     if (!hasMarkup) return emptyList()

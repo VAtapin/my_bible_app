@@ -7,10 +7,17 @@ import SourceVerseText from './SourceVerseText.vue'
 vi.mock('@/offline/personalStudy',()=>({createPersonalStudyRepository:()=>({})}))
 const verse={id:1,number:1,osis_ref:'John.1.1',text:'Word',plain_text:'Word',annotations:{status:'available',paragraph_before:false,paragraph_breaks:[],line_breaks:[],headings:[],footnotes:[],added_words:[],emphasis:[],red_letters:[],source:{kind:'mybible',sha256:null},strong_tokens:[{strong_number:'G3056',token_order:1,offset_utf16:0,grammar_code:null,surface_text:'Word'}],features:{headings:'absent',footnotes:'absent',added_words:'absent',paragraphs:'absent'}}} as BibleVerse
 afterEach(()=>vi.unstubAllGlobals())
-async function render(strongNumbers:boolean){
+async function render(strongNumbers:boolean,source: BibleVerse=verse){
  vi.stubGlobal('window',{localStorage:{getItem:()=>null,setItem:()=>{}}})
- return renderToString(createSSRApp(SourceVerseText,{verse,code:'RST',marks:[],readOnly:true,preferences:{...defaultReaderPreferences,strongNumbers}}))
+ return renderToString(createSSRApp(SourceVerseText,{verse:source,code:'RST',marks:[],readOnly:true,preferences:{...defaultReaderPreferences,strongNumbers}}))
 }
+it('renders a real leaked attached source marker only as a switchable superscript',async()=>{
+ const source={...verse,has_strong_markup:true,plain_text:'G2532Он говорит им',annotations:undefined}
+ expect(await render(false,source)).not.toContain('G2532')
+ const html=await render(true,source)
+ expect(html).toMatch(/<sup[^>]*aria-label="G2532"[^>]*>G2532<\/sup>/)
+ expect(html.match(/>G2532<\/sup>/g)).toHaveLength(1)
+})
 it('keeps Strong annotations superscript in temporary read-only passages',async()=>{
  const html=await render(true)
  expect(html).toMatch(/<sup[^>]*aria-label="G3056"[^>]*>G3056<\/sup>/)
