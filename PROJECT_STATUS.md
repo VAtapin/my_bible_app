@@ -12,10 +12,13 @@
   Проверки:15/15 целевых веб-тестов, typecheck/обе сборки;67/67 shared host,
   Android lintDebug/assembleDebug PASS. Сбой Kotlin incremental cache обойдён
   отключением incremental только в команде проверки, настройки не менялись.
-  Новый подписанный APK не собран: в дереве есть чужой незавершённый0.1.11
-  и изменения богослужебных текстов, они не входят в этот коммит.
+  Android0.1.12/code13:4/4 проверок календарного окна на эмуляторе PASS;
+  lintRelease, подписи APK/AAB, non-debuggable/ZIP/ELF LOAD PASS.
+  Подписанный APK установлен с сохранением данных, cold start API37x86_64
+  успешен, crash buffer пуст. Артефакты/SHA256 — mobile/README.md;
+  физический ARM64/16KB/Play не проверены, прежний RELRO warning остаётся.
   Выпуск: Show lection numbers in daily calendar readings (hash в Git).
-  Предыдущий связанный commit:fdd06e617bc615334dfd0b736b6b7d7aa5c6d141.
+  Предыдущий связанный commit:a96f04c — Show calendar service texts directly on web and Android.
 
 - Календарные «Богослужебные тексты дня» WEB/Android 0.1.11/code12:
   все опубликованные тропари/кондаки и остальные тексты сразу показаны под

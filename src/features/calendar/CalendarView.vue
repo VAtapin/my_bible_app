@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {calendarReadingTitle} from '@/services/calendarLectionary'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { CalendarDay } from '@/api/contracts'
 import { bibleApi } from '@/api'
@@ -154,7 +155,7 @@ function stopHorizonDownload(): void {
         <h2>{{ text.calendar.readings }}</h2>
         <div class="calendar-list">
           <article v-for="reading in day.readings" :key="reading.id" class="reading-link-card">
-            <span><strong>{{ reading.display_ref || reading.title }}</strong></span>
+            <span><strong>{{ calendarReadingTitle(reading,language) }}</strong></span>
             <button type="button" @click="selectedReading=reading">{{ text.calendar.open }}</button>
           </article>
         </div>

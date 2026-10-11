@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {calendarReadingTitle} from '@/services/calendarLectionary'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { CalendarDay } from '@/api/contracts'
@@ -9,7 +10,7 @@ import { calendarEvents, calendarReadingLink, fastingNote } from '@/services/cal
 
 defineOptions({ inheritAttrs: false })
 const props = defineProps<{ day?: CalendarDay; loading: boolean; failed: boolean; offline: boolean; settings: AppConfiguration['calendar'] }>()
-const { messages: text } = useI18n()
+const { language,messages: text } = useI18n()
 const home = computed(() => props.settings.home ?? defaultCalendarHome())
 const events = computed(() => calendarEvents(props.day?.events ?? [], props.settings.level))
 const visibleEvents = computed(() => home.value.compact ? events.value.slice(0, 3) : events.value)
@@ -28,8 +29,8 @@ const readings = computed(() => home.value.compact ? props.day?.readings.slice(0
       </div>
       <div v-if="home.readings && readings.length" class="day-readings">
         <template v-for="reading in readings" :key="reading.id">
-          <RouterLink v-if="calendarReadingLink(reading)" :to="calendarReadingLink(reading)!">{{ reading.display_ref || reading.title }} →</RouterLink>
-          <span v-else>{{ reading.display_ref || reading.title }}</span>
+          <RouterLink v-if="calendarReadingLink(reading)" :to="calendarReadingLink(reading)!">{{ calendarReadingTitle(reading,language) }} →</RouterLink>
+          <span v-else>{{ calendarReadingTitle(reading,language) }}</span>
         </template>
       </div>
     </template>

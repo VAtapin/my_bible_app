@@ -179,7 +179,7 @@ internal fun CalendarOverview(language: String, client: BibleContentSource, modi
                 value.fastingEvents.forEach { Text(it.name) }
                 value.otherEvents.forEach { Text(it.name); it.description?.let { description -> Text(description) } }
                 if (value.readings.isNotEmpty()) Text(localized(R.string.calendar_readings, language), fontWeight = FontWeight.Bold)
-                value.readings.forEach { item->TextButton(onClick={reading=item},modifier=Modifier.testTag("calendar-reading-open-${item.id}")){Text(item.displayRef.ifBlank{item.title})} }
+                value.readings.forEach { item->TextButton(onClick={reading=item},modifier=Modifier.testTag("calendar-reading-open-${item.id}")){Text(calendarReadingTitle(item,language))} }
                 CalendarService(selected, language, client)
             }
         }

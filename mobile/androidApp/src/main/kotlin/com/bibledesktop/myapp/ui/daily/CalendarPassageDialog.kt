@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
   ReaderTheme(preferences){CompositionLocalProvider(LocalVerseStudyClient provides client){
    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().testTag("calendar-reading-dialog")){
     Row(Modifier.fillMaxWidth().padding(horizontal=10.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){
-     Text(reading.displayRef.ifBlank{reading.title},Modifier.weight(1f),style=MaterialTheme.typography.titleMedium)
+     Text(calendarReadingTitle(reading,language),Modifier.weight(1f),style=MaterialTheme.typography.titleMedium)
      TextButton(onClick=onClose,modifier=Modifier.testTag("calendar-reading-close")){Text(localized(R.string.study_close,language))}
     }
     Box{TextButton(onClick={choosing=true}){Text(translations.firstOrNull{it.code==code}?.name.orEmpty())}

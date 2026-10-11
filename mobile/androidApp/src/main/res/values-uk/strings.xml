@@ -147,4 +147,5 @@
     <string name="windows_go">Перейти</string>
     <string name="windows_error">Не вдалося відкрити місце. Повторіть перехід.</string>
     <string name="windows_missing">Точну відповідність вірша не знайдено. Місце другого вікна збережено.</string>
+    <string name="calendar_lectionary">зач.</string>
 </resources>

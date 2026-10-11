@@ -147,4 +147,5 @@
     <string name="windows_go">Go</string>
     <string name="windows_error">Could not open the passage. Try again.</string>
     <string name="windows_missing">No exact verse correspondence found. The other window keeps its place.</string>
+    <string name="calendar_lectionary">Lection</string>
 </resources>

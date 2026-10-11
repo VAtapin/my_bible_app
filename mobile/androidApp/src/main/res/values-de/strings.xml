@@ -147,4 +147,5 @@
     <string name="windows_go">Öffnen</string>
     <string name="windows_error">Stelle konnte nicht geöffnet werden. Erneut versuchen.</string>
     <string name="windows_missing">Keine genaue Versentsprechung gefunden. Die zweite Stelle bleibt erhalten.</string>
+    <string name="calendar_lectionary">Perikope</string>
 </resources>

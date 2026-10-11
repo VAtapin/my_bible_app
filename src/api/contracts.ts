@@ -170,6 +170,10 @@ export interface CalendarReading {
     schemaVersion: number
     parseStatus: string
     passages: CalendarReadingPassage[]
+    lectionary?: {
+      status: string
+      candidates: { book: string; number: number; source_variant?: string }[]
+    } | null
   }
 }
 

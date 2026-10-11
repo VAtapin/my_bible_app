@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {calendarReadingTitle} from '@/services/calendarLectionary'
 import {computed,onMounted,onUnmounted,ref} from 'vue'
 import type {CalendarReading} from '@/api/contracts'
 import type {CalendarTextMetadata} from '@/api/automaticCalendar'
@@ -16,7 +17,7 @@ import {normalizePrayerText} from '@/services/prayerContent'
 const props=defineProps<{reading?:CalendarReading;item?:CalendarTextMetadata&{title:string;text:string;rubric?:string|null};code?:string}>(),emit=defineEmits<{close:[]}>()
 const {language,messages}=useI18n(),labels=computed(()=>calendarReaderMessages[language.value])
 const modal=ref<HTMLDialogElement>(),parts=ref<CalendarReadingPart[]>(),failed=ref(false),loading=ref(false)
-const title=computed(()=>props.reading?.display_ref||props.reading?.title||props.item?.title||'')
+const title=computed(()=>props.reading?calendarReadingTitle(props.reading,language.value):props.item?.title||'')
 const reader=useReaderPreferences();reader.initialize();const preferences=computed(()=>effectiveReaderPreferences(reader.preferences.value))
 let disposed=false,back:ReturnType<typeof calendarReaderBack>|undefined,opener:HTMLElement|undefined
 const controller=new AbortController()
