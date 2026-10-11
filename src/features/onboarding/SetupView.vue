@@ -353,3 +353,6 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
     </template>
   </MobileShell>
 </template>
+<style scoped>
+.language-card{padding:12px 14px}.language-card h2{font:600 14px/1.4 sans-serif}.language-card .section-intro{margin-bottom:10px}.language-card .language-selector{display:flex;flex-wrap:wrap;gap:8px}.language-card .language-selector button{min-height:30px;padding:5px 12px;border-radius:6px;font-size:12px}.setup-screen .section-selector button{min-height:58px;padding:8px 12px;border-radius:12px}.setup-screen .section-selector img{width:32px;height:32px;flex-basis:32px}
+</style>

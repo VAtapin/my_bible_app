@@ -54,10 +54,13 @@ onUnmounted(() => {
           <small>{{ text.brandSubtitle }}</small>
         </span>
       </RouterLink>
-      <div class="connection" :class="{ offline: !isOnline }">
+      <div class="header-actions"><div class="connection" :class="{ offline: !isOnline }">
         <span aria-hidden="true"></span>
         {{ isOnline ? text.online : text.offline }}
       </div>
+      <RouterLink to="/more" class="settings-link" :aria-label="text.appearance.settingsTitle" :title="text.appearance.settingsTitle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m9 3-.6 2.2-1.7 1L4.5 6l-2 3.5L4 11v2l-1.5 1.5 2 3.5 2.2-.2 1.7 1L9 21h4l.6-2.2 1.7-1 2.2.2 2-3.5L18 13v-2l1.5-1.5-2-3.5-2.2.2-1.7-1L13 3Z"/><circle cx="11" cy="12" r="3"/></svg>
+      </RouterLink></div>
     </header>
 
     <main class="app-content">
@@ -89,6 +92,7 @@ onUnmounted(() => {
   </div>
 </template>
 <style scoped>
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}.settings-link{display:grid;place-items:center;width:40px;height:40px;color:var(--brand-blue);border-radius:10px}.settings-link svg{width:22px;height:22px}.settings-link:hover{background:var(--light-blue,#edf3f7)}.settings-link:focus-visible{outline:2px solid var(--brand-blue);outline-offset:2px}
 .mobile-app.reading-screen{max-width:none;box-shadow:none}
 .reading-screen>.app-content{padding:8px max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left))}
 .reading-screen :deep(.prayer-reading){width:100%;max-width:none;margin:0;padding:0 0 8px}

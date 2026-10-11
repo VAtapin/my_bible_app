@@ -21,12 +21,14 @@ describe('reading-only shell layout',()=>{
  it('keeps catalogue pages out of reading-specific width and scroll rules',async()=>{
    const html=await render()
    expect(html).not.toContain('reading-screen');expect(html).not.toContain('reading-viewport')
+   expect(html).toMatch(/href="\/more"[^>]*class="settings-link"[^>]*aria-label="Настройки"/)
  })
  it('lets the reader use its own compact header without branding or connection status',async()=>{
    const html=await render(true,true,false)
    expect(html).toContain('without-header')
    expect(html).not.toContain('class="app-header"')
    expect(html).not.toContain('class="connection"')
+   expect(html).not.toContain('class="settings-link"')
    expect(html).toContain('class="bottom-nav"')
  })
 })
