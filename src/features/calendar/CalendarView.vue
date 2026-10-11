@@ -155,8 +155,7 @@ function stopHorizonDownload(): void {
         <h2>{{ text.calendar.readings }}</h2>
         <div class="calendar-list">
           <article v-for="reading in day.readings" :key="reading.id" class="reading-link-card">
-            <span><strong>{{ calendarReadingTitle(reading,language) }}</strong></span>
-            <button type="button" @click="selectedReading=reading">{{ text.calendar.open }}</button>
+            <button type="button" class="calendar-reading-text" @click="selectedReading=reading"><strong>{{ calendarReadingTitle(reading,language) }}</strong></button>
           </article>
         </div>
       </section>
