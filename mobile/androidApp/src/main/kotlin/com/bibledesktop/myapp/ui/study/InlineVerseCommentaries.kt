@@ -18,18 +18,29 @@ import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.setup.localized
 import kotlinx.coroutines.*
 
-private object InlineCommentaryPages {
+internal object InlineCommentaryPages {
  private val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
  private val requests=linkedMapOf<String,Pair<Long,Deferred<List<CommentaryEntry>>>>()
- suspend fun entries(client:BibleContentSource,chapter:BibleChapter,verse:BibleVerse,sources:List<String>):List<CommentaryEntry>{
-  val position=canonicalStudyPosition(verse.osisRef);val osis=verse.osisRef.substringBefore('.')
-  val key="${System.identityHashCode(client)}:${chapter.translation.canonCode}:$osis:${position.chapter}:${sources.sorted()}"
+ private suspend fun page(client:BibleContentSource,chapter:BibleChapter,osis:String,number:Int?,sources:List<String>):List<CommentaryEntry>{
+  val key="${System.identityHashCode(client)}:${chapter.translation.canonCode}:$osis:$number:${sources.sorted()}"
   val pending=synchronized(requests){val existing=requests[key];if(existing!=null&&System.currentTimeMillis()-existing.first<60000)existing.second else {
    val task=scope.async{val canon=chapter.translation.canonCode?:client.getTranslations().firstOrNull{it.code==chapter.translation.code}?.canonCode?:error("Canonical identity unavailable");val slug=client.getCanonicalSlug(canon,osis)
-    loadCommentaryRange(StudyPosition(position.chapter,1),StudyPosition(position.chapter,Int.MAX_VALUE)){number,offset->client.getCommentaries(slug,number,sources,offset)} }
+    if(number!=null)loadCommentaryRange(StudyPosition(number,1),StudyPosition(number,Int.MAX_VALUE)){requested,offset->client.getCommentaries(slug,requested,sources,offset)}
+    else {val result=mutableListOf<CommentaryEntry>();var offset=0;while(true){val value=client.getCommentaries(slug,null,sources,offset);result+=value.entries;offset+=value.entries.size;if(value.entries.isEmpty()||offset>=value.total)break};result.distinctBy{it.moduleCode to it.id}}
+   }
    requests[key]=System.currentTimeMillis() to task;if(requests.size>24)requests.remove(requests.keys.first());task
   }}
-  try{return pending.await().filter{commentaryOverlapsRange(it,position,position)}}catch(error:Exception){synchronized(requests){if(requests[key]?.second===pending)requests.remove(key)};throw error}
+  try{return pending.await()}catch(error:Exception){synchronized(requests){if(requests[key]?.second===pending)requests.remove(key)};throw error}
+ }
+ suspend fun entries(client:BibleContentSource,chapter:BibleChapter,verse:BibleVerse,sources:List<String>):List<CommentaryEntry>{
+  val position=canonicalStudyPosition(verse.osisRef)
+  return page(client,chapter,verse.osisRef.substringBefore('.'),position.chapter,sources).filter{verseSpecificCommentary(it)&&commentaryOverlapsRange(it,position,position)}
+ }
+ suspend fun boundary(client:BibleContentSource,chapter:BibleChapter,verse:BibleVerse,sources:List<String>,boundary:CommentaryBoundary):List<CommentaryEntry>{
+  val osis=verse.osisRef.substringBefore('.');val entries=mutableListOf<CommentaryEntry>()
+  if(boundary.chapterBoundary)entries+=page(client,chapter,osis,boundary.chapter,sources)
+  if(boundary.book)entries+=page(client,chapter,osis,null,sources)
+  return boundaryCommentaries(entries,boundary)
  }
 }
 @Composable internal fun InlineVerseCommentaries(language:String,chapter:BibleChapter,verse:BibleVerse,onStudy:()->Unit){

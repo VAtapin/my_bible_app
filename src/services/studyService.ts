@@ -23,7 +23,7 @@ export function createStudyService(api: StudyApi, cache: StudyCache = studyCache
     modules: async() => {const local=await installedCommentaryModules();try{const remote=await cached('study:modules',()=>api.modules());return[...new Map([...remote,...local].map(m=>[m.code,m])).values()]}catch(error){if(local.length&&error instanceof ApiError&&['offline','timeout'].includes(error.kind))return local;throw error}},
     canonicalSlug: (canon: string, osis: string) => cached(`study:canonical:${canon}:${osis}`, () => api.canonicalSlug(canon, osis)),
     canonicalBooks: (canon: string) => cached(`study:canonical-books:${canon}`, () => api.canonicalBooks(canon)),
-    commentaries: async(book: string, chapter: number | null, modules: string[], offset = 0) => await installedCommentaries(book,chapter,modules,offset)??cached(`study:commentaries:${book}:${chapter}:${[...modules].sort().join(',')}:${offset}`, () => api.commentaries(book, chapter, modules, offset)),
+    commentaries: async(book: string, chapter: number | null, modules: string[], offset = 0,scope?:'general') => await installedCommentaries(book,chapter,modules,offset,scope)??cached(`study:commentaries:${book}:${chapter}:${[...modules].sort().join(',')}:${offset}${scope?':general':''}`, () => api.commentaries(book, chapter, modules, offset,scope)),
   }
 }
 

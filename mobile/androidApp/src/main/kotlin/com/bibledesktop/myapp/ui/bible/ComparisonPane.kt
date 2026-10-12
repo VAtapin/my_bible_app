@@ -20,6 +20,7 @@ import com.bibledesktop.myapp.ui.reading.readingText
 import com.bibledesktop.myapp.ui.setup.localized
 import com.bibledesktop.myapp.ui.theme.readingFont
 import com.bibledesktop.myapp.ui.theme.LightBlue
+import com.bibledesktop.myapp.ui.study.BoundaryCommentaries
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -160,6 +161,8 @@ internal fun ComparisonRows(language: String, primary: BibleChapter, secondary: 
     selection: SavedPassage? = null,onStrong: ((BibleChapter,BibleVerse,String)->Unit)? = null,secondaryChapters:List<BibleChapter> = listOf(secondary)) {
     val sections=remember(primary.translation.code,secondary.translation.code,primary.book.slug,primary.chapter.number) {mutableStateMapOf(primary.chapter.number to ComparisonChapterFrame(primary,secondary,secondaryChapters))}
     val rows=comparisonFrameRows(sections.toSortedMap().values.toList())
+    val primaryBoundaries=readerCommentaryBoundaries(sections.values.map{it.primary})
+    val secondaryBoundaries=readerCommentaryBoundaries(rows.mapNotNull{it.row.secondaryChapter})
     val state = rememberLazyListState()
     var loading by remember {mutableStateOf(false)};var failed by remember {mutableStateOf(false)};var retry by remember {mutableIntStateOf(0)}
     val display=LocalReaderPreferences.current;val actions=LocalReaderNavigationActions.current;val context=LocalContext.current;val scope=rememberCoroutineScope()
@@ -212,10 +215,10 @@ internal fun ComparisonRows(language: String, primary: BibleChapter, secondary: 
                         val reference = row.primary?.let { "${chapter.book.name} ${chapter.chapter.number}:${it.number}" }
                             ?: row.secondary!!.let { "${other!!.book.name} ${other.chapter.number}:${it.number}" }
                         if(!display.clean&&(display.chapterLabels||display.verseNumbers))Text(reference, style = MaterialTheme.typography.labelMedium)
-                        if(source!=null&&mainVerse!=null) {Text(chapter.translation.name,style=MaterialTheme.typography.labelMedium);VerseRow(language,chapter,mainVerse,fontSize,"${chapter.translation.code}:${row.reference}" in bookmarks,{onBookmark(chapter,mainVerse)},{onShare(chapter,mainVerse)},{onNote(chapter,mainVerse)},onStudy=onStudy?.let{{it(chapter,mainVerse)}},onPersonal=onPersonal?.let{{it(chapter,mainVerse)}},selection=selection,onStrong=onStrong?.let{{number->it(chapter,mainVerse,number)}})}
+                        if(source!=null&&mainVerse!=null) {BoundaryCommentaries(language,source,chapter,mainVerse,primaryBoundaries[mainVerse.osisRef]?.before);Text(chapter.translation.name,style=MaterialTheme.typography.labelMedium);VerseRow(language,chapter,mainVerse,fontSize,"${chapter.translation.code}:${row.reference}" in bookmarks,{onBookmark(chapter,mainVerse)},{onShare(chapter,mainVerse)},{onNote(chapter,mainVerse)},onStudy=onStudy?.let{{it(chapter,mainVerse)}},onPersonal=onPersonal?.let{{it(chapter,mainVerse)}},selection=selection,onStrong=onStrong?.let{{number->it(chapter,mainVerse,number)}});BoundaryCommentaries(language,source,chapter,mainVerse,primaryBoundaries[mainVerse.osisRef]?.after)}
                         else ComparedText(language, chapter.translation, row.primary, fontSize)
                         HorizontalDivider()
-                        if(source!=null&&other!=null&&otherVerse!=null) {Text(other.translation.name,style=MaterialTheme.typography.labelMedium);VerseRow(language,other,otherVerse,fontSize,"${other.translation.code}:${row.reference}" in bookmarks,{onBookmark(other,otherVerse)},{onShare(other,otherVerse)},{onNote(other,otherVerse)},onStudy=onStudy?.let{{it(other,otherVerse)}},onPersonal=onPersonal?.let{{it(other,otherVerse)}},selection=selection,onStrong=onStrong?.let{{number->it(other,otherVerse,number)}})}
+                        if(source!=null&&other!=null&&otherVerse!=null) {BoundaryCommentaries(language,source,other,otherVerse,secondaryBoundaries[otherVerse.osisRef]?.before);Text(other.translation.name,style=MaterialTheme.typography.labelMedium);VerseRow(language,other,otherVerse,fontSize,"${other.translation.code}:${row.reference}" in bookmarks,{onBookmark(other,otherVerse)},{onShare(other,otherVerse)},{onNote(other,otherVerse)},onStudy=onStudy?.let{{it(other,otherVerse)}},onPersonal=onPersonal?.let{{it(other,otherVerse)}},selection=selection,onStrong=onStrong?.let{{number->it(other,otherVerse,number)}});BoundaryCommentaries(language,source,other,otherVerse,secondaryBoundaries[otherVerse.osisRef]?.after)}
                         else ComparedText(language, other?.translation?:secondary.translation, row.secondary, fontSize)
                     }
                 }

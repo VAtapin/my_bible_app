@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import InlineVerseReferences from '@/features/study/InlineVerseReferences.vue'
+import BoundaryCommentaries from '@/features/study/BoundaryCommentaries.vue'
+import {readerCommentaryBoundaries} from '@/services/commentaryBoundaries'
 import {useReferencePreferences} from '@/profile/referencePreferences'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { BibleChapter, BibleVerse } from '@/api/contracts'
@@ -28,6 +30,7 @@ onMounted(()=>{if(viewport.value && !props.readOnly)disposeGestures=attachReader
 onUnmounted(()=>disposeGestures?.())
 const { language, messages } = useI18n(), text = computed(() => continuousReadingMessages[language.value])
 const segments = ref<BibleChapter[]>([props.initial]), viewport = ref<HTMLElement>(), loading = ref(false), failedDirection = ref<1 | -1>(), stopped = ref(false)
+const materialBoundaries=computed(()=>readerCommentaryBoundaries(segments.value))
 const personal = ref(emptyPersonalStudy()), personalRepository = createPersonalStudyRepository()
 async function refreshPersonal(){try{personal.value=await personalRepository.read()}catch{/* Reading remains available; the editor reports damaged personal data. */}}
 function inPassage(passage:SavedPassage,chapter:BibleChapter,verse:BibleVerse){return passage.translationCode===chapter.translation.code&&passage.bookSlug===chapter.book.slug&&comparePoints(passage.start,{chapter:chapter.chapter.number,verse:verse.number})<=0&&comparePoints(passage.end,{chapter:chapter.chapter.number,verse:verse.number})>=0}
@@ -97,17 +100,21 @@ watch(()=>[props.followVerse,props.followRequest],async ([number])=>{
   <div ref="viewport" class="continuous-scroll" :class="{'reader-night':display.night,'continuous-paragraphs':!display.separateVerses,'reader-clean':display.clean}" :style="{'--reading-size':`${display.fontSize}px`,'--reader-line-height':String(display.lineHeight)}" tabindex="0" :aria-label="initial.book.name" @scroll="probe">
     <p v-if="failedDirection === -1" role="alert">{{ text.unavailable }} <button @click="load(-1)">{{ text.retry }}</button></p>
     <section v-for="chapter in segments" :key="chapter.chapter.number" :data-stream-chapter="chapter.chapter.number">
+      <BoundaryCommentaries v-if="display.commentaryLinks && !readOnly && materialBoundaries.get(chapter.verses[0]?.osis_ref??'')?.start" :chapter="chapter" :boundary="materialBoundaries.get(chapter.verses[0]!.osis_ref)!.start!" edge="start" />
       <h3 v-if="display.chapterLabels" class="chapter-heading">{{ chapter.book.name }} · {{ messages.chapter }} {{ chapter.chapter.number }}</h3>
       <p v-if="!chapter.verses.length">{{ text.empty }}</p>
       <ol>
-        <li v-for="verse in chapter.verses" :key="verse.osis_ref" :data-chapter="chapter.chapter.number" :data-book-verse="verse.number" :class="{ 'selected-verse': (selectedChapter === chapter.chapter.number && selectedVerse === verse.number)||(selection&&inPassage(selection,chapter,verse)), 'range-bookmarked':rangeBookmarks(chapter,verse).length>0,'reading-focus':calendarVerseFocused(readingFocus,verse) }" :style="{'--range-color':personal.palette[rangeBookmarks(chapter,verse)[0]?.color??'']?.day}">
+        <li v-for="(verse,index) in chapter.verses" :key="verse.osis_ref" :data-chapter="chapter.chapter.number" :data-book-verse="verse.number" :class="{ 'selected-verse': (selectedChapter === chapter.chapter.number && selectedVerse === verse.number)||(selection&&inPassage(selection,chapter,verse)), 'range-bookmarked':rangeBookmarks(chapter,verse).length>0,'reading-focus':calendarVerseFocused(readingFocus,verse) }" :style="{'--range-color':personal.palette[rangeBookmarks(chapter,verse)[0]?.color??'']?.day}">
+          <BoundaryCommentaries v-if="display.commentaryLinks && !readOnly && index>0 && materialBoundaries.get(verse.osis_ref)?.start" :chapter="chapter" :anchor="verse" :boundary="materialBoundaries.get(verse.osis_ref)!.start!" edge="start" />
           <small v-if="calendarVerseBoundary(readingFocus,chapter,verse,segments).start" class="reading-boundary">{{calendarReadingFocusMessages[language].start}}</small>
           <button v-if="!display.clean && !readOnly" type="button" class="bookmark-button" :class="{ active: bookmarks.has(bookmarkKey(chapter.translation.code, chapter.book.slug, chapter.chapter.number, verse.number)) }" :aria-label="`${messages.storage.bookmarks}: ${chapter.chapter.number}:${verse.number}`" @click="emit('bookmark', chapter, verse)">{{ bookmarks.has(bookmarkKey(chapter.translation.code, chapter.book.slug, chapter.chapter.number, verse.number)) ? '★' : '☆' }}</button>
           <component :is="readOnly ? 'span' : 'button'" type="button" class="verse-text" :aria-pressed="selectedChapter === chapter.chapter.number && selectedVerse === verse.number" @click="!readOnly && emit('select', chapter, verse)" @contextmenu.prevent="!readOnly && emit('actions', chapter, verse, $event)" @pointerdown="startPress($event, chapter, verse)" @pointermove="longPress.move($event.clientX, $event.clientY)" @pointerup="longPress.cancel()" @pointercancel="longPress.cancel()" @pointerleave="longPress.cancel()"><span v-if="display.verseNumbers" class="verse-number">{{ verse.number }}</span><template v-if="verse.plain_text"><SourceVerseText :verse="verse" :code="chapter.translation.code" :marks="personal.marks" :palette="personal.palette" :preferences="display" :read-only="readOnly" @strong="number=>emit('strong',number,chapter,verse)"/></template><template v-else>{{ bibleCatalogMessages[language].catalog_verse_missing }}</template><sup v-if="rangeBookmarks(chapter,verse).some(b=>b.description)">✎</sup></component>
           <InlineVerseReferences v-if="display.crossReferences&amp;&amp;referenceSettings.inlineMode==='list'&amp;&amp;!readOnly" :chapter="chapter" :verse="verse"/>
           <small v-if="calendarVerseBoundary(readingFocus,chapter,verse,segments).end" class="reading-boundary">{{calendarReadingFocusMessages[language].end}}</small>
+          <BoundaryCommentaries v-if="display.commentaryLinks && !readOnly && index<chapter.verses.length-1 && materialBoundaries.get(verse.osis_ref)?.end" :chapter="chapter" :anchor="verse" :boundary="materialBoundaries.get(verse.osis_ref)!.end!" edge="end" />
         </li>
       </ol>
+      <BoundaryCommentaries v-if="display.commentaryLinks && !readOnly && materialBoundaries.get(chapter.verses.at(-1)?.osis_ref??'')?.end" :chapter="chapter" :boundary="materialBoundaries.get(chapter.verses.at(-1)!.osis_ref)!.end!" edge="end" />
     </section>
     <p v-if="loading" role="status">{{ messages.loading }}</p>
     <p v-if="failedDirection === 1" role="alert">{{ text.unavailable }} <button @click="load(1)">{{ text.retry }}</button></p>

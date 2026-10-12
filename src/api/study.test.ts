@@ -19,7 +19,8 @@ describe('study API', () => {
   })
   it('loads chapter pages with explicit chosen modules rather than capped verse results', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ data: { book: 'john', chapter: 3, entries: [], total: 199 } })))
-    expect((await createStudyApi({ baseUrl: 'https://example.test/api', fetcher }).commentaries('john', 3, ['Z', 'A'], 10)).total).toBe(199)
+    expect((await createStudyApi({ baseUrl: 'https://example.test/api', fetcher }).commentaries('john', 3, ['Z', 'A'], 10,'general')).total).toBe(199)
     const url = new URL(String(fetcher.mock.calls[0]?.[0])); expect(url.pathname).toBe('/api/bible/books/john/chapters/3/commentaries'); expect(url.searchParams.get('modules')).toBe('A,Z')
+    expect(url.searchParams.get('scope')).toBe('general')
   })
 })

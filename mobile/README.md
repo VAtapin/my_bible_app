@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.13` (build 14).
+`0.1.14` (build 15).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -572,3 +572,34 @@ Play не проверены; прежнее предупреждение graphi
 
 - `BibleDesktop-0.1.13.apk`: SHA256 `AA907F074B09F8DDE12978DDD556DF32E1CDA16FB10E021B5C68F388A6709C18`.
 - `BibleDesktop-0.1.13.aab`: SHA256 `BC1F5650775F6529EA30E05ACEC96DCA1D009BAC23DB23626FFD558411937ACF`.
+
+## Android 0.1.14 / code 15 — материалы книги/главы и тематический атлас
+
+Общие статьи доступны компактно у канонических границ книги/главы в обычном
+чтении и сравнении. Явные before/after из источника сохраняются online/offline;
+отсутствующий признак остаётся нейтральным. Полный текст и аннотации раскрываются
+отдельно. Выбор источников сохранён; фоновый повтор временных ошибок не блокирует
+Библию. Общие статьи исключены из загрузчика материалов отдельного стиха.
+
+Атлас предлагает четыре схемы: Авраам, первое путешествие Павла,
+Македония/Греция и Галилея; у выбранного места показаны его маршруты.
+Раскрываемые остановки сохраняют повторные посещения и библейские ссылки.
+Схемы используют настоящие OpenBible объекты, а не реконструкцию древних дорог.
+
+Проверки: 71 shared host test, lintDebug/lintRelease, 4 UI-теста материалов,
+офлайн-пакеты и данные атласа PASS. Дополнительный прогон 15/15 на API37 x86_64:
+маршруты/viewport, continuous reading/comparison, paging/windows PASS.
+Подписанные APK/AAB, non-debuggable, ZIP/ELF LOAD проверки PASS.
+APK установлен поверх0.1.13 без удаления данных; cold start Status ok,
+versionName0.1.14/code15 подтверждены, crash buffer пуст (PAGE_SIZE4096).
+Физический ARM64, запуск на 16-КБ устройстве и Play не проверены;
+прежнее предупреждение graphics.path RELRO остаётся.
+
+Файлы: `androidApp/build/outputs/verified/0.1.14/`:
+
+- `BibleDesktop-0.1.14.apk`: SHA256 `8491B441DD8C4BF998F2628565E144C28AD275429902FEE3B1262109E1B132E9`.
+- `BibleDesktop-0.1.14.aab`: SHA256 `C3DE72BC1D54030270AAF19977741FB972AECE7BDBF099B14408CC9F1EBB1281`.
+
+```powershell
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 15 -VersionName '0.1.14'
+```

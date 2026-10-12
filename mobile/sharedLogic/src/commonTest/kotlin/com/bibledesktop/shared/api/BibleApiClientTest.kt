@@ -90,6 +90,7 @@ class BibleApiClientTest {
             try {
                 val error = runCatching { client.getTranslations() }.exceptionOrNull()!!
                 assertEquals(status != HttpStatusCode.Forbidden, isRetryableBibleFailure(error))
+                assertEquals(status == HttpStatusCode.TooManyRequests, isRateLimitedBibleFailure(error))
                 assertEquals(120_000L, bibleRetryDelayMillis(error))
             } finally { client.close() }
         }

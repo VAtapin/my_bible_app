@@ -237,6 +237,9 @@ fun isRetryableBibleFailure(error: Throwable): Boolean =
     error is io.ktor.client.plugins.ResponseException &&
         (error.response.status.value == 429 || error.response.status.value in 500..599)
 
+fun isRateLimitedBibleFailure(error: Throwable): Boolean =
+    error is io.ktor.client.plugins.ResponseException && error.response.status.value == 429
+
 /** A saved automatic calendar response may replace only an interrupted transport. */
 fun isCalendarTransportFailure(error: Throwable): Boolean = when (error) {
     is kotlinx.coroutines.CancellationException,

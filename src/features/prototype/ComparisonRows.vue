@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import InlineVerseReferences from '@/features/study/InlineVerseReferences.vue'
+import BoundaryCommentaries from '@/features/study/BoundaryCommentaries.vue'
+import {readerCommentaryBoundaries} from '@/services/commentaryBoundaries'
 import {useReferencePreferences} from '@/profile/referencePreferences'
 import {computed,nextTick,onMounted,onUnmounted,ref,watch} from 'vue'
 import SourceVerseText from './SourceVerseText.vue'
@@ -30,6 +32,7 @@ const display=computed(()=>effectiveReaderPreferences(preferences.value))
 type Frame=ComparisonFrame
 const frames=ref<Frame[]>([{primary:props.primary,secondary:props.secondary,secondaryChapters:props.secondaryChapters}]),root=ref<HTMLElement>(),loading=ref(false),failed=ref<number>(),selected=ref('')
 const rows=computed(()=>comparisonFrameRows(frames.value))
+const materialBoundaries=computed(()=>[readerCommentaryBoundaries(frames.value.map(frame=>frame.primary)),readerCommentaryBoundaries(frames.value.flatMap(frame=>frame.secondaryChapters??(frame.secondary?[frame.secondary]:[])))])
 let stopped=false,timer:ReturnType<typeof setTimeout>|undefined,dispose:(()=>void)|undefined
 async function load(direction:number){
  if(!props.service||loading.value||stopped)return
@@ -64,10 +67,12 @@ onUnmounted(()=>{stopped=true;clearTimeout(timer);dispose?.()})
  <div v-for="row in rows" :key="row.reference" class="parallel-row" :data-pair-ref="row.reference" :class="{'reading-focus':calendarVerseFocused(readingFocus,row.primary??row.secondary!), 'study-range':inPassage(row.frame.primary,row.primary)||inPassage(row.secondaryChapter,row.secondary),'selected-verse':selected?row.reference===selected:row.frame.primary.chapter.number===primary.chapter.number&&row.primary?.number===selectedVerse}">
   <small v-if="calendarVerseBoundary(readingFocus,row.frame.primary,row.primary??row.secondary!,frames.map(f=>f.primary)).start" class="reading-boundary">{{calendarReadingFocusMessages[language].start}}</small>
   <div v-for="(value,index) in [row.primary,row.secondary]" :key="index" class="parallel-verse" :style="{fontFamily:font(index===0?row.frame.primary:row.secondaryChapter??secondary)}">
+   <BoundaryCommentaries v-if="value && display.commentaryLinks && materialBoundaries[index]?.get(value.osis_ref)?.start" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :anchor="value" :boundary="materialBoundaries[index]!.get(value.osis_ref)!.start!" edge="start" />
    <small v-if="!display.clean">{{(index===0?row.frame.primary:row.secondaryChapter??secondary).translation.name}} · {{row.reference}}</small>
    <button v-if="value" class="verse-text" @click="selected=row.reference;emit('select',value.number,index===0?row.frame.primary:row.secondaryChapter!)" @contextmenu.prevent="emit('actions',index===0?row.frame.primary:row.secondaryChapter!,value,$event)"><span v-if="display.verseNumbers" class="verse-number">{{value.number}}</span><SourceVerseText :verse="value" :code="(index===0?row.frame.primary:row.secondaryChapter!).translation.code" :marks="personal.marks" :preferences="display" :palette="personal.palette" @strong="number=>emit('strong',number,index===0?row.frame.primary:row.secondaryChapter!,value)"/></button>
    <InlineVerseReferences v-if="value&amp;&amp;display.crossReferences&amp;&amp;referenceSettings.inlineMode==='list'" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :verse="value"/>
    <p v-if="!value">{{text.parallel.missing}}</p>
+   <BoundaryCommentaries v-if="value && display.commentaryLinks && materialBoundaries[index]?.get(value.osis_ref)?.end" :chapter="index===0?row.frame.primary:row.secondaryChapter!" :anchor="value" :boundary="materialBoundaries[index]!.get(value.osis_ref)!.end!" edge="end" />
   </div>
   <small v-if="calendarVerseBoundary(readingFocus,row.frame.primary,row.primary??row.secondary!,frames.map(f=>f.primary)).end" class="reading-boundary">{{calendarReadingFocusMessages[language].end}}</small>
  </div><p v-if="loading" role="status">{{text.loading}}</p><p v-if="failed===1" role="alert">{{labels.unavailable}} <button @click="load(1)">{{labels.retry}}</button></p>

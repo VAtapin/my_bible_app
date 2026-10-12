@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.bibledesktop.myapp.R
 import com.bibledesktop.myapp.ui.reading.ReadingViewport
 import com.bibledesktop.myapp.ui.setup.localized
+import com.bibledesktop.myapp.ui.study.BoundaryCommentaries
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -45,6 +46,7 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
     val rows = sections.toSortedMap().values.flatMap { chapter ->
         listOf(StreamRow(chapter, null)) + if (chapter.verses.isEmpty()) listOf(StreamRow(chapter, null, true)) else chapter.verses.map { StreamRow(chapter, it) }
     }
+    val commentaryBoundaries = readerCommentaryBoundaries(sections.values.toList())
     val state = rememberLazyListState()
     val display=LocalReaderPreferences.current
     val actions=LocalReaderNavigationActions.current
@@ -106,11 +108,15 @@ internal fun ContinuousChapterContent(language: String, initial: BibleChapter, c
                     if (row.verse == null) {
                         if (row.empty) Text(localized(R.string.bible_chapter_unavailable, language))
                         else if(display.chapterLabels)Text("${row.chapter.book.name} ${row.chapter.chapter.number}", Modifier.padding(vertical = 12.dp).testTag("stream-chapter-${row.chapter.chapter.number}"), style = MaterialTheme.typography.titleMedium)
-                    } else VerseRow(language, row.chapter, row.verse, fontSize, "${row.chapter.translation.code}:${row.verse.osisRef}" in bookmarkedKeys,
+                    } else Column {
+                        BoundaryCommentaries(language,client,row.chapter,row.verse,commentaryBoundaries[row.verse.osisRef]?.before)
+                        VerseRow(language, row.chapter, row.verse, fontSize, "${row.chapter.translation.code}:${row.verse.osisRef}" in bookmarkedKeys,
                         onBookmark = { onBookmark(row.chapter, row.verse) }, onShare = { onShare(row.chapter, row.verse) }, onNote = { onNote(row.chapter, row.verse) },
                         onStudy = onStudy?.let { { it(row.chapter, row.verse) } }, highlighted = row.chapter.chapter.number == initial.chapter.number && row.verse.number == initialVerse,
                         selection = selection, onPersonal = onPersonal?.let { handler -> { handler(row.chapter,row.verse) } },
                         onStrong = onStrong?.let { handler -> { number -> handler(row.chapter,row.verse,number) } })
+                        BoundaryCommentaries(language,client,row.chapter,row.verse,commentaryBoundaries[row.verse.osisRef]?.after)
+                    }
                 }
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())

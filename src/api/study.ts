@@ -5,6 +5,7 @@ export interface StudyBook { id: number; slug: string; title: string; author: st
 export interface StudySection {
   id: number; title: string | null; author: string | null; chapter_from: number; verse_from: number
   chapter_to: number | null; verse_to: number | null; book_osis_code: string | null; annotations?:CommentaryAnnotations|null
+  placement?: 'before' | 'after' | null
 }
 export interface StudyArticle extends StudySection { body: string }
 export interface CommentaryEntry extends Omit<StudyArticle, 'book_osis_code'> {
@@ -17,14 +18,15 @@ export interface BookPage { data: StudyBook[]; total: number }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
 const number = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0
 const nullableText = (v: unknown) => v === null || typeof v === 'string'
+const placement = (v: unknown) => v === undefined || v === null || v === 'before' || v === 'after'
 export const isStudyBook = (v: unknown): v is StudyBook => record(v) && number(v.id) && v.id > 0 && typeof v.slug === 'string'
   && typeof v.title === 'string' && nullableText(v.author) && nullableText(v.description) && typeof v.module_code === 'string'
-export const isStudySection = (v: unknown): v is StudySection => record(v) && number(v.id) && v.id > 0
+export const isStudySection = (v: unknown): v is StudySection => record(v) && placement(v.placement) && number(v.id) && v.id > 0
   && nullableText(v.title) && nullableText(v.author) && number(v.chapter_from) && number(v.verse_from)
   && (v.chapter_to === null || number(v.chapter_to)) && (v.verse_to === null || number(v.verse_to)) && nullableText(v.book_osis_code) && (v.annotations===undefined||v.annotations===null||isCommentaryAnnotations(v.annotations))
 const range = (v: Record<string, unknown>) => number(v.id) && v.id > 0 && nullableText(v.title) && nullableText(v.author)
   && number(v.chapter_from) && number(v.verse_from) && (v.chapter_to === null || number(v.chapter_to)) && (v.verse_to === null || number(v.verse_to))
-export const isCommentaryEntry = (v: unknown): v is CommentaryEntry => record(v) && range(v) && typeof v.body === 'string'
+export const isCommentaryEntry = (v: unknown): v is CommentaryEntry => record(v) && placement(v.placement) && range(v) && typeof v.body === 'string'
   && (v.commentary_book_id === null || number(v.commentary_book_id)) && typeof v.module_code === 'string' && typeof v.module_name === 'string' && (v.annotations===undefined||v.annotations===null||isCommentaryAnnotations(v.annotations))
 export const isBookContents = (v: unknown): v is BookContents => record(v) && isStudyBook(v.book) && number(v.total)
   && Array.isArray(v.sections) && v.sections.every(isStudySection)
@@ -61,9 +63,10 @@ export function createStudyApi(options: ApiClientOptions) {
       return (await request(`/canons/${encodeURIComponent(canon)}/books`, envelope((v): v is { books: { slug: string; osis_code: string }[] } => record(v)
         && Array.isArray(v.books) && v.books.every(b => record(b) && typeof b.slug === 'string' && typeof b.osis_code === 'string')))).data.books
     },
-    async commentaries(book: string, chapter: number | null, modules: string[], offset = 0) {
+    async commentaries(book: string, chapter: number | null, modules: string[], offset = 0, scope?:'general') {
       if (!modules.length || modules.length > 30) throw new Error('Invalid source selection')
       const params = pageQuery(offset, 10); params.set('modules', [...new Set(modules)].sort().join(','))
+      if(scope)params.set('scope',scope)
       const route = chapter === null ? '' : `/chapters/${id(chapter)}`
       return (await request(`/bible/books/${encodeURIComponent(book)}${route}/commentaries?${params}`, envelope((v): v is CommentaryPage => record(v)
         && v.book === book && v.chapter === chapter && number(v.total) && Array.isArray(v.entries) && v.entries.every(isCommentaryEntry)))).data
