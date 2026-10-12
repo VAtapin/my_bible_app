@@ -38,14 +38,27 @@ export function firstJourney(places) {
  for(const[id,verse]of itinerary)if(!places.some(p=>p.id===id&&p.verses.includes(verse)&&p.locations.length))throw Error('Unverified itinerary stop')
  return{id:'paul-first',kind:'schematic',source:'Acts 13–14',stops:itinerary.map(([place_id,osis])=>({place_id,osis}))}
 }
+/** Selected attested stops, not a complete journey or reconstructed ancient roads. */
+export function thematicRoutes(places) {
+ const definitions=[
+  ['abraham','Gen 11–13',[['a6cf75c','Gen.11.31'],['a6d9af3','Gen.11.31'],['adf74d4','Gen.12.6'],['a64f355','Gen.12.8'],['a1cb244','Gen.12.9'],['af301ca','Gen.12.10'],['a64f355','Gen.13.3'],['a85151a','Gen.13.18']]],
+  ['paul-macedonia','Acts 16–18',[['a91c509','Acts.16.8'],['a68750d','Acts.16.11'],['a6a7150','Acts.16.11'],['a49e1d0','Acts.16.12'],['a4bdea7','Acts.17.1'],['ab20df9','Acts.17.1'],['afa9d8e','Acts.17.1'],['a62fe31','Acts.17.10'],['a1fe6e7','Acts.17.15'],['a6f437a','Acts.18.1']]],
+  ['jesus-galilee','Luke 4; 7',[['af5884f','Luke.4.16'],['af2161c','Luke.4.31'],['aee679c','Luke.7.11']]],
+ ]
+ return [firstJourney(places),...definitions.map(([id,source,stops])=>{
+  for(const[place,osis]of stops)if(!places.some(p=>p.id===place&&p.verses.includes(osis)&&p.locations.length))throw Error(`Unverified itinerary stop: ${id}/${place}/${osis}`)
+  return{id,kind:'schematic',source,stops:stops.map(([place_id,osis])=>({place_id,osis}))}
+ })]
+}
 async function build(directory) {
  const ancient=await readFile(resolve(directory,'ancient.jsonl')),land=await readFile(resolve(directory,'land.geojson'))
  for(const[key,bytes]of Object.entries({ancient,land}))if(createHash('sha256').update(bytes).digest('hex')!==snapshots[key].sha256)throw Error('Source snapshot checksum changed; review before updating')
  const places=ancient.toString('utf8').trim().split('\n').map(line=>geographicPlace(JSON.parse(line)))
- const data={schema:1,referenceSystem:'English Protestant Bible (OpenBible.info)',sources:[{name:'OpenBible.info Bible Geocoding',url:snapshots.ancient.url,license:'CC BY 4.0',license_url:'https://creativecommons.org/licenses/by/4.0/',commit:snapshots.ancient.commit,sha256:snapshots.ancient.sha256},{name:'Natural Earth 1:110m land',url:snapshots.land.url,license:'Public domain',license_url:'https://www.naturalearthdata.com/about/terms-of-use/',commit:snapshots.land.commit,sha256:snapshots.land.sha256},{name:'OpenStreetMap contributors (source geography)',url:'https://www.openstreetmap.org/copyright',license:'ODbL 1.0',license_url:'https://opendatacommons.org/licenses/odbl/1-0/'}],places,land:landRings(JSON.parse(land.toString('utf8'))),routes:[firstJourney(places)]}
+ const data={schema:1,referenceSystem:'English Protestant Bible (OpenBible.info)',sources:[{name:'OpenBible.info Bible Geocoding',url:snapshots.ancient.url,license:'CC BY 4.0',license_url:'https://creativecommons.org/licenses/by/4.0/',commit:snapshots.ancient.commit,sha256:snapshots.ancient.sha256},{name:'Natural Earth 1:110m land',url:snapshots.land.url,license:'Public domain',license_url:'https://www.naturalearthdata.com/about/terms-of-use/',commit:snapshots.land.commit,sha256:snapshots.land.sha256},{name:'OpenStreetMap contributors (source geography)',url:'https://www.openstreetmap.org/copyright',license:'ODbL 1.0',license_url:'https://opendatacommons.org/licenses/odbl/1-0/'}],places,land:landRings(JSON.parse(land.toString('utf8'))),routes:thematicRoutes(places)}
  for(const root of ['public','mobile/androidApp/src/main/assets']){
   await mkdir(`${root}/data`,{recursive:true});await mkdir(`${root}/licenses`,{recursive:true});await writeFile(`${root}/data/bible-geo.json`,JSON.stringify(data));await copyFile(resolve(directory,'OpenBible-CC-BY-4.0.txt'),`${root}/licenses/OpenBible-CC-BY-4.0.txt`)
  }
+ await writeFile('src/services/geoRoutes.json',JSON.stringify(data.routes,null,2))
  console.log(`Built verified offline geography: ${places.length} places; ${data.land.length} land rings; ${itinerary.length} attested journey stops.`)
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await build(process.argv[2]??'.task-geo')

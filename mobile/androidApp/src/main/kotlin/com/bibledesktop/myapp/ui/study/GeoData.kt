@@ -17,3 +17,11 @@ internal fun parseGeoData(raw:String):GeoData {
  fun strings(row:JSONObject,key:String)=row.optJSONArray(key)?.let{array->(0 until array.length()).map{array.getString(it)}}?:emptyList()
  return GeoData(root.getString("referenceSystem"),(0 until places.length()).map{index->val row=places.getJSONObject(index);val locations=row.getJSONArray("locations");GeoPlace(row.getString("id"),row.getString("name"),strings(row,"aliases"),strings(row,"verses"),(0 until locations.length()).map{n->val loc=locations.getJSONObject(n);val lon=loc.getDouble("lon");val lat=loc.getDouble("lat");projectGeo(lon,lat);GeoLocation(loc.getString("id"),loc.getString("name"),lon,lat,if(loc.isNull("score"))null else loc.getDouble("score"),loc.getString("type"))})},(0 until land.length()).map{n->val ring=land.getJSONArray(n);(0 until ring.length()).map{m->val point=ring.getJSONArray(m);projectGeo(point.getDouble(0),point.getDouble(1))}},(0 until sources.length()).map{n->val source=sources.getJSONObject(n);GeoSource(source.getString("name"),source.getString("url"),source.getString("license"),source.optString("license_url").takeIf{it.isNotBlank()})},routes?.let{(0 until it.length()).map{n->val row=it.getJSONObject(n);val stops=row.getJSONArray("stops");GeoRoute(row.getString("id"),row.getString("source"),(0 until stops.length()).map{m->val stop=stops.getJSONObject(m);GeoStop(stop.getString("place_id"),stop.getString("osis"))})}}?:emptyList())
 }
+
+internal fun geographicRoutes(data:GeoData,placeId:String?=null):List<GeoRoute> = data.routes.filter { route -> placeId==null || route.stops.any { it.placeId==placeId } }
+internal fun geoRoutePlaces(data:GeoData,route:GeoRoute):List<GeoPlace> = route.stops.map { it.placeId }.distinct().mapNotNull { id -> data.places.find { it.id==id } }
+internal fun geoRoutePoints(data:GeoData,route:GeoRoute,variants:Map<String,String>):List<Offset> = route.stops.mapNotNull { stop ->
+ data.places.find { it.id==stop.placeId && stop.osis in it.verses }?.let { place ->
+  (place.locations.find { it.id==variants[place.id] } ?: place.locations.firstOrNull())?.let { projectGeo(it.lon,it.lat) }
+ }
+}

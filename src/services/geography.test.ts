@@ -1,7 +1,16 @@
 import {describe,it,expect} from 'vitest'
-import {geographicPlaces,projectGeo,geoRoutePoints,geoViewport,transformGeoViewport,type GeoData} from './geography'
+import {geographicPlaces,withBundledGeoRoutes,geographicRoutes,geoRoutePlaces,projectGeo,geoRoutePoints,geoViewport,transformGeoViewport,type GeoData} from './geography'
 const data:GeoData={schema:1,referenceSystem:'source',sources:[],land:[],places:[{id:'a',name:'Jerusalem',aliases:['Jebus'],verses:['Acts.1.4'],locations:[{id:'x',name:'Old City',lon:35.23,lat:31.78,score:500,type:'source'}]},{id:'b',name:'Other',verses:['Acts.1.5'],locations:[]}]}
 describe('published geography',()=>{
+ it('never attaches bundled routes to missing or unrelated cached geography',()=>{expect(withBundledGeoRoutes(data).routes).toEqual([])})
+ it('finds only routes through the selected place and preserves repeated stop order',()=>{
+  const route={id:'r',kind:'schematic',source:'Acts',stops:[{place_id:'a',osis:'Acts.1.4'},{place_id:'a',osis:'Acts.1.4'}]}
+  const routed={...data,routes:[route]}
+  expect(geographicRoutes(routed,'a')).toEqual([route]);expect(geographicRoutes(routed,'b')).toEqual([])
+  expect(geoRoutePlaces(routed,route).map(p=>p.id)).toEqual(['a'])
+  expect(geoRoutePoints(routed,route)).toHaveLength(2)
+  expect(geoRoutePoints(routed,route,{a:'missing'})).toEqual(geoRoutePoints(routed,route))
+ })
  it('projects real coordinates without guessing or accepting invalid latitude',()=>{expect(projectGeo(0,0)).toEqual([500,250]);expect(projectGeo(180,-90)).toEqual([1000,500]);expect(()=>projectGeo(181,0)).toThrow();expect(()=>projectGeo(0,NaN)).toThrow()})
  it('searches published variants and exact canonical references, not chapter approximations',()=>{expect(geographicPlaces(data,'jebus',['Acts.1.4']).map(p=>p.id)).toEqual(['a']);expect(geographicPlaces(data,'old city',['Acts.1.5'])).toEqual([]);expect(geographicPlaces(data,'',['Acts.1.40'])).toEqual([])})
  it('never invents route coordinates for unlocated or unattested stops',()=>{expect(geoRoutePoints(data,{id:'r',kind:'schematic',source:'Acts',stops:[{place_id:'a',osis:'Acts.1.5'},{place_id:'b',osis:'Acts.1.5'}]})).toEqual([]);expect(geoRoutePoints(data,{id:'r',kind:'schematic',source:'Acts',stops:[{place_id:'a',osis:'Acts.1.4'}]})).toEqual([projectGeo(35.23,31.78)])})

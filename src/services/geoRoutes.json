@@ -1,0 +1,174 @@
+[
+  {
+    "id": "paul-first",
+    "kind": "schematic",
+    "source": "Acts 13–14",
+    "stops": [
+      {
+        "place_id": "ae41ab4",
+        "osis": "Acts.13.1"
+      },
+      {
+        "place_id": "a6d306d",
+        "osis": "Acts.13.4"
+      },
+      {
+        "place_id": "afa863b",
+        "osis": "Acts.13.5"
+      },
+      {
+        "place_id": "a314765",
+        "osis": "Acts.13.6"
+      },
+      {
+        "place_id": "aff04b8",
+        "osis": "Acts.13.13"
+      },
+      {
+        "place_id": "a6c704a",
+        "osis": "Acts.13.14"
+      },
+      {
+        "place_id": "ae425aa",
+        "osis": "Acts.14.1"
+      },
+      {
+        "place_id": "af0719d",
+        "osis": "Acts.14.6"
+      },
+      {
+        "place_id": "aa401a9",
+        "osis": "Acts.14.20"
+      },
+      {
+        "place_id": "af0719d",
+        "osis": "Acts.14.21"
+      },
+      {
+        "place_id": "ae425aa",
+        "osis": "Acts.14.21"
+      },
+      {
+        "place_id": "a6c704a",
+        "osis": "Acts.14.21"
+      },
+      {
+        "place_id": "aff04b8",
+        "osis": "Acts.14.25"
+      },
+      {
+        "place_id": "ac744c1",
+        "osis": "Acts.14.25"
+      },
+      {
+        "place_id": "ae41ab4",
+        "osis": "Acts.14.26"
+      }
+    ]
+  },
+  {
+    "id": "abraham",
+    "kind": "schematic",
+    "source": "Gen 11–13",
+    "stops": [
+      {
+        "place_id": "a6cf75c",
+        "osis": "Gen.11.31"
+      },
+      {
+        "place_id": "a6d9af3",
+        "osis": "Gen.11.31"
+      },
+      {
+        "place_id": "adf74d4",
+        "osis": "Gen.12.6"
+      },
+      {
+        "place_id": "a64f355",
+        "osis": "Gen.12.8"
+      },
+      {
+        "place_id": "a1cb244",
+        "osis": "Gen.12.9"
+      },
+      {
+        "place_id": "af301ca",
+        "osis": "Gen.12.10"
+      },
+      {
+        "place_id": "a64f355",
+        "osis": "Gen.13.3"
+      },
+      {
+        "place_id": "a85151a",
+        "osis": "Gen.13.18"
+      }
+    ]
+  },
+  {
+    "id": "paul-macedonia",
+    "kind": "schematic",
+    "source": "Acts 16–18",
+    "stops": [
+      {
+        "place_id": "a91c509",
+        "osis": "Acts.16.8"
+      },
+      {
+        "place_id": "a68750d",
+        "osis": "Acts.16.11"
+      },
+      {
+        "place_id": "a6a7150",
+        "osis": "Acts.16.11"
+      },
+      {
+        "place_id": "a49e1d0",
+        "osis": "Acts.16.12"
+      },
+      {
+        "place_id": "a4bdea7",
+        "osis": "Acts.17.1"
+      },
+      {
+        "place_id": "ab20df9",
+        "osis": "Acts.17.1"
+      },
+      {
+        "place_id": "afa9d8e",
+        "osis": "Acts.17.1"
+      },
+      {
+        "place_id": "a62fe31",
+        "osis": "Acts.17.10"
+      },
+      {
+        "place_id": "a1fe6e7",
+        "osis": "Acts.17.15"
+      },
+      {
+        "place_id": "a6f437a",
+        "osis": "Acts.18.1"
+      }
+    ]
+  },
+  {
+    "id": "jesus-galilee",
+    "kind": "schematic",
+    "source": "Luke 4; 7",
+    "stops": [
+      {
+        "place_id": "af5884f",
+        "osis": "Luke.4.16"
+      },
+      {
+        "place_id": "af2161c",
+        "osis": "Luke.4.31"
+      },
+      {
+        "place_id": "aee679c",
+        "osis": "Luke.7.11"
+      }
+    ]
+  }
+]

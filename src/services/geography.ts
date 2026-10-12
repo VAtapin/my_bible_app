@@ -1,8 +1,19 @@
+import bundledRoutes from './geoRoutes.json'
 export interface GeoLocation {id:string;name:string;lon:number;lat:number;score:number|null;type:string}
 export interface GeoPlace {id:string;name:string;aliases?:string[];verses:string[];locations:GeoLocation[]}
 export interface GeoSource {name:string;url:string;license:string;license_url?:string}
 export interface GeoRoute {id:string;kind:string;source:string;stops:{place_id:string;osis:string}[]}
 export interface GeoData {schema:number;referenceSystem:string;sources:GeoSource[];places:GeoPlace[];land:number[][][];routes?:GeoRoute[]}
+export function withBundledGeoRoutes(data:GeoData):GeoData{
+ const routes=bundledRoutes.filter(route=>route.stops.every(stop=>data.places.some(place=>place.id===stop.place_id&&place.verses.includes(stop.osis)&&place.locations.length)))
+ return {...data,routes}
+}
+export function geographicRoutes(data:GeoData,placeId?:string):GeoRoute[]{
+ return (data.routes??[]).filter(route=>!placeId||route.stops.some(stop=>stop.place_id===placeId))
+}
+export function geoRoutePlaces(data:GeoData,route:GeoRoute):GeoPlace[]{
+ return [...new Set(route.stops.map(stop=>stop.place_id))].flatMap(id=>{const place=data.places.find(p=>p.id===id);return place?[place]:[]})
+}
 export function projectGeo(lon:number,lat:number):[number,number]{
  if(!Number.isFinite(lon)||!Number.isFinite(lat)||Math.abs(lon)>180.001||Math.abs(lat)>90.001)throw Error('Invalid geographic coordinate')
  return[(lon+180)/360*1000,(90-lat)/180*500]
@@ -34,5 +45,5 @@ export function geoRoutePoints(data:GeoData,route:GeoRoute,variants:Record<strin
 }
 let loading:Promise<GeoData>|undefined
 export function loadGeography():Promise<GeoData>{
- return loading??=(async()=>{const cached=typeof caches!=='undefined'?await(await import('./bundleAtlas')).cachedBundleAtlas():undefined;return cached??await fetch(`${import.meta.env.BASE_URL}data/bible-geo.json`)})().then(async response=>{if(!response.ok)throw Error(`Geographic dataset: ${response.status}`);const data=await response.json() as GeoData;if(data.schema!==1||!Array.isArray(data.places)||!Array.isArray(data.land)||!Array.isArray(data.sources))throw Error('Unsupported geographic dataset');data.places.forEach(place=>place.locations.forEach(loc=>projectGeo(loc.lon,loc.lat)));return data}).catch(error=>{loading=undefined;throw error})
+ return loading??=(async()=>{const cached=typeof caches!=='undefined'?await(await import('./bundleAtlas')).cachedBundleAtlas():undefined;return cached??await fetch(`${import.meta.env.BASE_URL}data/bible-geo.json`)})().then(async response=>{if(!response.ok)throw Error(`Geographic dataset: ${response.status}`);const data=await response.json() as GeoData;if(data.schema!==1||!Array.isArray(data.places)||!Array.isArray(data.land)||!Array.isArray(data.sources))throw Error('Unsupported geographic dataset');data.places.forEach(place=>place.locations.forEach(loc=>projectGeo(loc.lon,loc.lat)));return withBundledGeoRoutes(data)}).catch(error=>{loading=undefined;throw error})
 }
