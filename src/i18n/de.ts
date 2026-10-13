@@ -24,7 +24,7 @@ export const de: MessageShape<typeof ru> = {
     retry: 'Erneut versuchen',
   },
   readerActions: {
-    myBookmarks: 'Meine Lesezeichen', myNotes: 'Meine Notizen',
+    myBookmarks: 'Meine Lesezeichen', myNotes: 'Meine Notizen', addBookmark: 'Lesezeichen hinzufügen', removeBookmark: 'Lesezeichen entfernen',
     actions: 'Versaktionen', search: 'In der Bibel suchen', addNote: 'Notiz hinzufügen', copyLink: 'Link kopieren',
     saveNote: 'Notiz speichern', noteSaved: 'Notiz auf dem Gerät gespeichert.', noteFailed: 'Die Notiz konnte nicht gespeichert oder geöffnet werden.',
     noteLocal: 'Die Notiz bleibt nur auf diesem Gerät.', searchHint: 'Wörter oder Bibelstelle', find: 'Suchen',

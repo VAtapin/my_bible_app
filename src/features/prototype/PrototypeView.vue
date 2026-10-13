@@ -180,6 +180,12 @@ const selectedTranslation = computed(() => translations.value.find((item) => ite
 const catalogText = computed(() => bibleCatalogMessages[language.value])
 const selectedBook = computed(() => books.value.find((item) => item.slug === bookSlug.value))
 const bookmarkedVerseKeys = computed(() => new Set(bookmarks.value.map((item) => item.key)))
+const selectedBookmarked = computed(() => {
+  const source = actionChapter.value ?? visibleChapter.value ?? chapter.value
+  return source && selectedVerse.value !== undefined
+    ? bookmarkedVerseKeys.value.has(bookmarkKey(source.translation.code, source.book.slug, source.chapter.number, selectedVerse.value))
+    : false
+})
 
 onMounted(async () => {
   busy.value = true
@@ -423,7 +429,7 @@ function formatDate(value: string): string {
     </article>
     <aside v-if="studying" class="study-pane"><button type="button" @click="studying = false;studySource=undefined;studyVerse=undefined">{{ studyMessages[language].close }}</button><CommentaryPanel v-if="contextualChapter" :chapter="contextualChapter" :canon="comparisonCatalog.find(item=>item.code===contextualChapter?.translation.code)?.canon_code" :verse="studyVerse" :visible-first="studyFirst" :visible-last="studyLast" /><VerseStudyPanel v-if="studySource??contextualChapter" ref="studyPanel" :chapter="(studySource??contextualChapter)!" :verse="studyVerse??visibleFirst" @open="temporary=$event"/><DictionaryContext v-if="contextualChapter" :book="canonicalSlug" :osis="contextualChapter.verses[0]?.osis_ref.split('.')[0]" :verse-numbers="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>Number(v.osis_ref.split('.')[2]))" :verse-chapters="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>Number(v.osis_ref.split('.')[1]))" :chapter="contextualChapter.chapter.number" :verse-ids="contextualChapter.verses.filter(v=>v.number>=(studyFirst??1)&&v.number<=(studyLast??studyFirst??1)).map(v=>v.id)"/></aside>
     </div>
-    <VerseActions @study="openStudy" :service="chapterService" @selection="selection=$event" ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" @message="message = $event" />
+    <VerseActions @study="openStudy" :service="chapterService" @selection="selection=$event" ref="actions" :chapter="actionChapter ?? visibleChapter ?? chapter" :selected-verse="selectedVerse" :bookmarked="selectedBookmarked" @bookmark="(source, verse) => toggleBookmark(verse, source)" @message="message = $event" />
     <TemporaryPassage v-if="temporary" :group="temporary" :code="(studySource??contextualChapter)!.translation.code" :service="chapterService" :windows-available="!!comparisonView" @assign="(source,verse,id)=>{comparisonView?.preview(source,verse,id);temporary=undefined;studying=false}" @close="temporary=undefined"/>
     <template #footer>
       <nav class="bottom-nav reader-nav" :aria-label="text.reader.title">

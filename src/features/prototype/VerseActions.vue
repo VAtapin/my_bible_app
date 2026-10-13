@@ -15,8 +15,8 @@ import {verseStudyMessages} from '@/i18n/verseStudy'
 import { dictionaryMessages } from '@/i18n/dictionaries'
 import { dictionaryLookupLink } from '@/services/dictionaryLookup'
 
-const props = defineProps<{ chapter?: BibleChapter; selectedVerse?: number; service?: ChapterService }>()
-const emit = defineEmits<{ message: [value: string]; selection: [passage: SavedPassage]; study:[chapter:BibleChapter,verse:BibleChapter['verses'][number]] }>()
+const props = defineProps<{ chapter?: BibleChapter; selectedVerse?: number; service?: ChapterService; bookmarked?: boolean }>()
+const emit = defineEmits<{ message: [value: string]; selection: [passage: SavedPassage]; study:[chapter:BibleChapter,verse:BibleChapter['verses'][number]]; bookmark:[chapter:BibleChapter,verse:BibleChapter['verses'][number]] }>()
 const router = useRouter()
 const { messages: text, language } = useI18n()
 const studyText = computed(() => personalStudyMessages[language.value])
@@ -70,6 +70,11 @@ function readingUrl(): string {
   url.search = new URLSearchParams({ translation: chapter.translation.code, book: chapter.book.slug, chapter: String(chapter.chapter.number), ...(verse.value ? { verse: String(verse.value.number) } : {}) }).toString()
   return url.href
 }
+function toggleBookmark(): void {
+  if (!props.chapter || !verse.value) return
+  emit('bookmark', props.chapter, verse.value)
+  dialog.value?.close()
+}
 async function share(copy = false): Promise<void> {
   if (!props.chapter) return
   try {
@@ -89,6 +94,7 @@ defineExpose({ open })
   <dialog ref="dialog" class="verse-dialog" :aria-label="mode === 'note' ? text.readerActions.note : text.readerActions.actions" @click="($event.target === dialog) && !busy && dialog?.close()">
     <header><strong>{{ reference }}</strong><button type="button" :disabled="busy" :aria-label="text.calendar.close" @click="dialog?.close()">×</button></header>
     <template v-if="mode === 'menu'">
+      <button type="button" class="verse-menu-action" :disabled="!verse" @click="toggleBookmark">{{ bookmarked ? text.readerActions.removeBookmark : text.readerActions.addBookmark }}</button>
       <RouterLink class="verse-menu-action" to="/storage?tab=bookmarks" @click="dialog?.close()">{{ text.readerActions.myBookmarks }}</RouterLink>
       <RouterLink class="verse-menu-action" to="/storage?tab=notes" @click="dialog?.close()">{{ text.readerActions.myNotes }}</RouterLink>
       <button type="button" class="verse-menu-action" :disabled="!chapter" @click="mode = 'share'">{{ text.readerActions.share }}</button>

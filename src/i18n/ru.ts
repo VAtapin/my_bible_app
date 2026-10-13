@@ -34,7 +34,7 @@ export const ru = {
     retry: 'Повторить',
   },
   readerActions: {
-    myBookmarks: 'Мои закладки', myNotes: 'Мои заметки',
+    myBookmarks: 'Мои закладки', myNotes: 'Мои заметки', addBookmark: 'Добавить закладку', removeBookmark: 'Убрать закладку',
     actions: 'Действия со стихом', search: 'Поиск по Библии', addNote: 'Добавить заметку', copyLink: 'Скопировать ссылку',
     saveNote: 'Сохранить заметку', noteSaved: 'Заметка сохранена на устройстве.', noteFailed: 'Не удалось сохранить или открыть заметку.',
     noteLocal: 'Заметка хранится только на этом устройстве.', searchHint: 'Слова или библейская ссылка', find: 'Найти',

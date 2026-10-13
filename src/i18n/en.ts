@@ -18,7 +18,7 @@ export const en: MessageShape<typeof ru> = {
     retry: 'Retry',
   },
   readerActions: {
-    myBookmarks: 'My bookmarks', myNotes: 'My notes', actions: 'Verse actions', search: 'Search the Bible', addNote: 'Add a note', copyLink: 'Copy link',
+    myBookmarks: 'My bookmarks', myNotes: 'My notes', addBookmark: 'Add bookmark', removeBookmark: 'Remove bookmark', actions: 'Verse actions', search: 'Search the Bible', addNote: 'Add a note', copyLink: 'Copy link',
     saveNote: 'Save note', noteSaved: 'Note saved on this device.', noteFailed: 'Unable to save or open the note.', noteLocal: 'This note is stored only on this device.', searchHint: 'Words or a Bible reference', find: 'Find',
     noResults: 'No results found.', searchFailed: 'Search unavailable. Check your connection to the API.', bookmark: 'Bookmark', note: 'Note', audio: 'Audio', share: 'Share', size: 'Size', theme: 'Theme',
     selectVerse: 'Tap the text to select a verse.', shared: 'Link copied.', shareFailed: 'Unable to share. Please try again.', noteUnavailable: 'Notes are not connected yet.', audioUnavailable: 'Audio is not connected yet.',
