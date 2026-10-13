@@ -48,6 +48,9 @@ describe.skipIf(!process.env.REFERENCE_MAP_API)('published scoped reference reso
  it.skipIf(!process.env.REFERENCE_MAP_RST)('accepts only proved RST edition Ps119 to Ps118 links and keeps the rest raw',async()=>{
   await acceptsBoundedPsalmRemap('BQ_MYBIBLE_RST_9827BA0EF963')
  },60000)
+ it.skipIf(!process.env.REFERENCE_MAP_RST_STRONG)('accepts the separately proved default Russian edition without borrowing RST+ verse hashes',async()=>{
+  await acceptsBoundedPsalmRemap('BQ_RUSSIAN_RST_STRONG')
+ },60000)
  it.skipIf(!process.env.REFERENCE_MAP_CU)('accepts only proved CSL-PNM Ps119 to Ps118 links and keeps the rest raw',async()=>{
   await acceptsBoundedPsalmRemap('BQ_CSL_PNM')
  },60000)

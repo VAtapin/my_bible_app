@@ -80,7 +80,7 @@ class PublishedReferenceResolutionTest {
         publishedApi()
         val edition=InstrumentationRegistry.getArguments().getString("publishedRemapEdition").orEmpty()
         assumeTrue("Bounded edition remap acceptance is opt-in",edition.isNotBlank())
-        require(edition in setOf("BQ_MYBIBLE_RST_9827BA0EF963","BQ_CSL_PNM")) { "Only independently reviewed editions are accepted" }
+        require(edition in setOf("BQ_MYBIBLE_RST_9827BA0EF963","BQ_RUSSIAN_RST_STRONG","BQ_CSL_PNM")) { "Only independently reviewed editions are accepted" }
         val api=BibleApiClient()
         try {
             val originalLocation=api.getVerseLocations(code,listOf("Ps.119.2")).single()
