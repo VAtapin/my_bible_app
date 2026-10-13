@@ -54,6 +54,26 @@ describe.skipIf(!process.env.REFERENCE_MAP_API)('published scoped reference reso
  it.skipIf(!process.env.REFERENCE_MAP_CU)('accepts only proved CSL-PNM Ps119 to Ps118 links and keeps the rest raw',async()=>{
   await acceptsBoundedPsalmRemap('BQ_CSL_PNM')
  },60000)
+ it.skipIf(!process.env.REFERENCE_MAP_RST_PACKAGE)('resolves the published RST+ Psalm remap from the installed offline package',async()=>{
+  const edition='BQ_MYBIBLE_RST_9827BA0EF963',osis='Ps.118.2'
+  const source=(await bible.getVerseLocations!(edition,[osis]))[0]!
+  const online=(await references(osis,edition)).references.filter(item=>item.source==='legacy_quote')
+  const targets=online.filter(item=>item.readingTarget).map(item=>item.readingTarget!)
+  expect(online).toHaveLength(14);expect(targets).toHaveLength(3)
+  const repository=createIndexedDbChapterRepository(),service=createChapterService(bible,repository)
+  const addresses=new Map([[`${source.book_slug}:${source.chapter_number}`,{book:source.book_slug,chapter:source.chapter_number}]])
+  for(const target of targets)addresses.set(`${target.book_slug}:${target.chapter_number}`,{book:target.book_slug,chapter:target.chapter_number})
+  for(const address of addresses.values())await service.download(edition,address.book,address.chapter)
+  const manifest=await createStudyPackageApi(options).manifest(),pack=manifest.packages.find(item=>item.id==='CROSS_REFERENCES')
+  expect(pack).toBeDefined()
+  await installStudyPackage(pack!,options.baseUrl,new AbortController().signal,()=>{})
+  const network=vi.spyOn(bibleApi,'getChapter').mockRejectedValue(Error('Offline acceptance must not fetch a chapter'))
+  try{
+   const offline=guardedReferences((await installedCrossReferences(source.verse_id,edition,osis))!)
+   expect(offline.references.filter(item=>item.source==='legacy_quote').map(item=>({id:item.id,osis:item.readingTarget?.osis_ref,text:item.readingTarget?.text})).sort((a,b)=>a.id-b.id)).toEqual(online.map(item=>({id:item.id,osis:item.readingTarget?.osis_ref,text:item.readingTarget?.text})).sort((a,b)=>a.id-b.id))
+   expect(network).not.toHaveBeenCalled()
+  }finally{vi.restoreAllMocks()}
+ },600000)
  it.skipIf(!process.env.REFERENCE_MAP_PACKAGE)('installs the actual published package and resolves the same links from saved chapters without network',async()=>{
   const mark=(stage:string)=>process.stderr.write(`[reference-package] ${stage}\n`)
   const online=await references('Ps.119.1'),targets=online.references.filter(item=>item.source==='legacy_quote').map(item=>item.readingTarget!)
