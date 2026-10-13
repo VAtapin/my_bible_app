@@ -24,6 +24,33 @@ describe.skipIf(!process.env.REFERENCE_MAP_API)('published scoped reference reso
  it('does not promote a held group or assign the scoped English map to the Russian edition',async()=>{
   for(const [osis,edition] of [['Ps.119.5',code],['Ps.119.1','BQ_RUSSIAN_RST_STRONG']] as const){const value=await references(osis,edition);expect(value.references.filter(item=>item.source==='legacy_quote').every(item=>item.readingTarget===undefined&&item.target.text===null)).toBe(true)}
  },60000)
+ async function acceptsBoundedPsalmRemap(edition:string){
+  const original=(await references('Ps.119.2')).references.filter(item=>item.source==='legacy_quote')
+  const value=await references('Ps.118.2',edition),items=value.references.filter(item=>item.source==='legacy_quote')
+  expect(value.reference_resolution?.sources.find(item=>item.source==='legacy_quote')?.original_osis_refs).toEqual(['Ps.119.2'])
+  expect(items.map(item=>item.id).sort((a,b)=>a-b)).toEqual(original.map(item=>item.id).sort((a,b)=>a-b))
+  const verified=items.filter(item=>item.readingTarget),raw=items.filter(item=>!item.readingTarget)
+  expect(items).toHaveLength(14);expect(verified).toHaveLength(3);expect(raw).toHaveLength(11)
+  for(const item of verified){
+   const target=item.readingTarget!
+   expect(item.original_source?.osis_ref).toBe('Ps.119.2')
+   expect(item.original_target?.osis_ref).toMatch(/^Ps\.119\./)
+   expect(target.osis_ref).toBe(item.original_target?.osis_ref.replace(/^Ps\.119\./,'Ps.118.'))
+   expect(item.resolution?.status).toBe('verified')
+   const chapter=await bible.getChapter(edition,target.book_slug,target.chapter_number)
+   const verse=chapter.verses.find(verse=>verse.id===target.verse_id&&verse.osis_ref===target.osis_ref)
+   expect(verse?.plain_text).toBe(target.text)
+  }
+  for(const item of raw){expect(item.original_source?.osis_ref).toBe('Ps.119.2');expect(item.target.text).toBeNull();expect(item.resolution?.status).not.toBe('verified')}
+  const held=await references('Ps.118.5',edition)
+  expect(held.references.filter(item=>item.source==='legacy_quote').every(item=>!item.readingTarget&&item.target.text===null)).toBe(true)
+ }
+ it.skipIf(!process.env.REFERENCE_MAP_RST)('accepts only proved RST edition Ps119 to Ps118 links and keeps the rest raw',async()=>{
+  await acceptsBoundedPsalmRemap('BQ_MYBIBLE_RST_9827BA0EF963')
+ },60000)
+ it.skipIf(!process.env.REFERENCE_MAP_CU)('accepts only proved CSL-PNM Ps119 to Ps118 links and keeps the rest raw',async()=>{
+  await acceptsBoundedPsalmRemap('BQ_CSL_PNM')
+ },60000)
  it.skipIf(!process.env.REFERENCE_MAP_PACKAGE)('installs the actual published package and resolves the same links from saved chapters without network',async()=>{
   const mark=(stage:string)=>process.stderr.write(`[reference-package] ${stage}\n`)
   const online=await references('Ps.119.1'),targets=online.references.filter(item=>item.source==='legacy_quote').map(item=>item.readingTarget!)

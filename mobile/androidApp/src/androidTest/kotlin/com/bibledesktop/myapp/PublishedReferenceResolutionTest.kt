@@ -76,6 +76,49 @@ class PublishedReferenceResolutionTest {
         Unit
     }
 
+    @Test fun actualPublishedBoundedPsalmRemapKeepsUnsupportedLinksRaw()=runBlocking {
+        publishedApi()
+        val edition=InstrumentationRegistry.getArguments().getString("publishedRemapEdition").orEmpty()
+        assumeTrue("Bounded edition remap acceptance is opt-in",edition.isNotBlank())
+        require(edition in setOf("BQ_MYBIBLE_RST_9827BA0EF963","BQ_CSL_PNM")) { "Only independently reviewed editions are accepted" }
+        val api=BibleApiClient()
+        try {
+            val originalLocation=api.getVerseLocations(code,listOf("Ps.119.2")).single()
+            val original=api.getCrossReferences(originalLocation.verseId,code).references.filter{it.source==source}
+            val selectedLocation=api.getVerseLocations(edition,listOf("Ps.118.2")).single()
+            val selected=api.getCrossReferences(selectedLocation.verseId,edition)
+            assertEquals("Ps.118.2",selected.verse.osisRef)
+            assertEquals(listOf("Ps.119.2"),selected.referenceResolution!!.sources.single{it.source==source}.originalOsisRefs)
+            val links=selected.references.filter{it.source==source}
+            assertEquals(original.map{it.id}.sorted(),links.map{it.id}.sorted())
+            assertEquals(14,links.size)
+            val verified=links.filter{it.readingTarget!=null}
+            val raw=links.filter{it.readingTarget==null}
+            assertEquals(3,verified.size);assertEquals(11,raw.size)
+            val chapters=linkedMapOf<Pair<String,Int>,BibleChapter>()
+            for(link in verified){
+                val target=requireNotNull(link.readingTarget)
+                val originalTarget=requireNotNull(link.originalTarget)
+                assertEquals("Ps.119.2",link.originalSource?.osisRef)
+                assertTrue(originalTarget.osisRef.startsWith("Ps.119."))
+                assertEquals(originalTarget.osisRef.replace("Ps.119.","Ps.118."),target.osisRef)
+                assertEquals("verified",link.resolution?.status)
+                val location=api.getVerseLocations(edition,listOf(target.osisRef)).single()
+                assertEquals(location.verseId,target.verseId)
+                assertEquals(location.book,target.bookSlug)
+                assertEquals(location.chapter,target.chapterNumber)
+                assertEquals(location.verse,target.verseNumber)
+                val chapter=chapters.getOrPut(location.book to location.chapter){api.getChapter(edition,location.book,location.chapter)}
+                assertEquals(chapter.verses.single{it.id==location.verseId}.plainText,target.text)
+            }
+            for(link in raw){assertEquals("Ps.119.2",link.originalSource?.osisRef);assertNull(link.target.text);assertNotEquals("verified",link.resolution?.status)}
+            val heldLocation=api.getVerseLocations(edition,listOf("Ps.118.5")).single()
+            val held=api.getCrossReferences(heldLocation.verseId,edition)
+            assertTrue(held.references.filter{it.source==source}.all{it.readingTarget==null&&it.target.text==null})
+        } finally { api.close() }
+        Unit
+    }
+
     @Test fun actualPublishedPackageMatchesOnlineThenReadsWithoutRemoteAccess()=runBlocking {
         val base=publishedApi()
         assumeTrue("Full published package acceptance is opt-in",InstrumentationRegistry.getArguments().getString("publishedPackage")=="true")
