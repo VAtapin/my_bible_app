@@ -24,8 +24,8 @@ PWA.
   Multiplatform;
 - production API — `https://bible-desktop.com/api`.
 
-Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.17` (build 18).
+Идентификатор обеих платформ: `com.bibledesktop.myapp`. Подготовлена версия
+Android `0.1.18` (build 19); опубликована `0.1.17` (build 18).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -756,3 +756,23 @@ Actual publication tests не обращаются к серверу по умо
 проверяет SHA/размер/schema/index, сохраняет главы в отдельном test cache,
 закрывает API и сравнивает онлайн/офлайн результаты. Пользовательские данные
 не очищаются; удаляется только созданная этим тестом cache directory.
+
+## Android 0.1.18 / code 19 — номера Стронга выключены по умолчанию
+
+Если сохранённой настройки ещё нет, номера Стронга скрыты. Ранее сохранённое
+явное включение и ручное включение в настройках сохраняют прежнее поведение.
+Signed APK/AAB собраны существующим upload key; host tests, lintRelease,
+подписи, non-debuggable, ZIP/ELF LOAD прошли. На отдельном release-эмуляторе
+API37/x86_64/PAGE_SIZE16384 APK обновлён поверх 0.1.17 без удаления данных:
+versionCode19/versionName0.1.18, холодный запуск успешен, crash buffer пуст.
+На другом эмуляторе установлена копия с иной подписью; её данные не трогали.
+Физическое ARM64-устройство и Play не проверены. RELRO warning для
+androidx.graphics.path сохраняется. Публикация 0.1.18 пока не подтверждена.
+
+Проверенные локальные файлы: `androidApp/build/outputs/verified/0.1.18/`:
+- APK SHA256 `74C61897F3E4C13E1CB08EC2D21CFF43B4AE532541DDED35E5289CE27EDA71CE`.
+- AAB SHA256 `E1DF650992C556F00677975A9780D8D326D6BB2E2DBAE9B8B07A699D97848DC2`.
+
+```powershell
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 19 -VersionName '0.1.18'
+```
