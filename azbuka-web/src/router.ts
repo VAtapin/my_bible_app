@@ -8,5 +8,5 @@ export const router = createRouter({
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ],
   scrollBehavior: (to,from,saved) => saved ?? (to.path==='/dictionary' && from.path===to.path &&
-    ['q','mode','letter'].every(key=>to.query[key]===from.query[key]) ? false : { top: 0 })
+    ['view','q','mode','letter'].every(key=>to.query[key]===from.query[key]) ? false : { top: 0 })
 })
