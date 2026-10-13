@@ -95,6 +95,15 @@ export function createIndexedDbDailyContentRepository(): DailyContentRepository 
         state.put({...value,key:'prayer-catalog'})
       }))
     },
+    async getLiturgicalWorks(collection){
+      const row=await read<{data:LiturgicalWorkSummary[]}>(offlineStores.state,`liturgical-list:${collection}`)
+      return row?.data&&Array.isArray(row.data)&&row.data.every(item=>isLiturgicalWork(item)&&item.collections.includes(collection))?row.data:undefined
+    },
+    async putLiturgicalWorks(collection,works){
+      if(!works.every(item=>isLiturgicalWork(item)&&item.collections.includes(collection)))throw new ApiError('invalid-response','Invalid liturgical catalogue')
+      await put(offlineStores.state,{key:`liturgical-list:${collection}`,data:works,savedAt:new Date().toISOString()})
+      for(const work of works)await this.putLiturgicalWork?.(work)
+    },
     async getLiturgicalWork(slug){
       const alias=await read<{target:string}>(offlineStores.state,`prayer-work-alias:${slug}`)
       const data=(await read<{data:LiturgicalWorkSummary}>(offlineStores.state,`prayer-work:${alias?.target??slug}`))?.data

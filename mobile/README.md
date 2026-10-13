@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.15` (build 16).
+`0.1.16` (build 17).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -641,3 +641,55 @@ graphics.path RELRO остаётся. Публикация APK пока не п�
 ```powershell
 ./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 16 -VersionName '0.1.15'
 ```
+
+
+## Android 0.1.16 / code 17 — молитвословы и редакции
+
+«Молитвы → Молитвословы (книги)» использует прежний canonical API,
+collection=prayer-books. Отдельные молитвы обнаруживаются через unfiltered
+collection=prayers: DE-only works не требуют выдуманной CU пары. Карточки
+объединяются по canonical_slug с совместимым каталогом ru; книга отдельно
+от молитв и external-only ссылок. full-book-internal требует реальных
+canonical_slug/edition и не отвергает каталог.
+
+Полная книга: LazyColumn на ширину экрана, оглавление и фактические блоки,
+повторы/рубрики/страницы/заметки издания. startBlockId/endBlockId — обе
+inclusive, только в пределах возвращённого edition/body/hash. Старое API
+без anchors позволяет открыть канонические произведения раздела.
+Выбор издания одного языка не меняет язык и не смешивает тексты. Native
+cache сохраняет каждое издание и metadata отдельно, обновляет online,
+использует saved body offline; HTTP404/409 и invalid DTO не resurrect body.
+Прежний prayer detail reader сохранён, альтернативное издание открывает
+общую читалку. Чтение книги не означает назначение службы на дату.
+
+Проверки:78 shared host tests, lintDebug/lintRelease, 7 UI tests API37
+x86_64 PASS. Три новых UI tests используют экспорт настоящего isolated
+API corpus:1391 blocks/19 sections,101 DE молитва, DE-only family,
+оглавление/edition selector/offline roundtrip. Исторический sibling в
+тесте переключателя — явно тестовый DTO, не опубликованная редакция.
+Четыре прежних prayer UI tests PASS. Signed0.1.15→0.1.16 обновлён без
+удаления данных, cold start Status ok, versionCode17, crash buffer пуст.
+Физический ARM64/16KB/Play не проверены;
+прежний graphics.path RELRO warning остаётся. Корпус, anchors и клиент
+ещё требуют публикации через SSH; APK подготовлен, production receipt нет.
+
+Файлы: `androidApp/build/outputs/verified/0.1.16/`:
+
+- APK SHA256 `9BD700476D4ECBA2D4885260C4596BB9B5BB770E91D1AE0C264DC54A5BF0DC4C`.
+- AAB SHA256 `A6CA223A160DED941713EF02B6EAD1E3F456940B5363C66E3F3B5B98B1635D4E`.
+
+```powershell
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 17 -VersionName '0.1.16'
+```
+
+Опциональный actual-corpus UI test: экспортировать только публичные data
+из изолированной официально импортированной базы в JSON
+`{version,summary,prayers,prayerWorks}` (version whole book with edition,
+summary whole book, prayers compatible ru envelope, prayerWorks unfiltered
+collection=prayers data). Затем собрать debug APK/test APK, установить
+их отдельно от release, положить JSON в debug files/prayerbook-verification.json
+через adb run-as и запустить LiturgicalBookUiTest через am instrument.
+Без экспортированного файла эти3 tests явно skipped; обычные контрактные
+тесты остаются независимы от сервера. connectedDebugAndroidTest удаляет
+тестовую установку/данные: fixture нужно переносить после установки APK,
+не перед этим Gradle task. Запрет cleartext в приложении не ослаблялся.

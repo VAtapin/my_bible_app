@@ -29,6 +29,12 @@ describe('reviewed prayer catalog boundary', () => {
     expect((await de.api.getPrayerCatalog!('de')).external_sources![0]).toMatchObject({ offline_available: false, availability: 'external-only' })
   })
 
+  it('accepts an explicitly published internal book without treating it as an external offline copy',async()=>{
+    const book={...external,availability:'full-book-internal',offline_available:true,canonical_slug:'book-source',edition:'actual-edition'}
+    expect((await setup({...envelope,external_sources:[book,external]}).api.getPrayerCatalog!()).external_sources).toEqual([book,external])
+    await expect(setup({...envelope,external_sources:[{...book,canonical_slug:undefined}]}).api.getPrayerCatalog!()).rejects.toMatchObject({kind:'invalid-response'})
+  })
+
   it('preserves legacy catalog/detail payloads before v2 publication', async () => {
     const old = { id: 1, title: 'Old source', language_code: 'ru', category: 'common', liturgy_key: null, short_title: null, intro: null, excerpt: 'Actual excerpt' }
     expect(await setup({ data: [old] }).api.getPrayers()).toEqual([old])

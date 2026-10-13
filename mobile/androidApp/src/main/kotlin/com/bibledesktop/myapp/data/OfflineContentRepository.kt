@@ -185,6 +185,10 @@ internal class OfflineContentRepository(
             StrongEntry(explicit,field("word"),field("transliteration"),field("content"),StrongLexicon(lexicon["name"]?.jsonPrimitive?.contentOrNull?:error("Missing source name"),lexicon["language"]?.jsonPrimitive?.contentOrNull.orEmpty(),code),field("pronunciation"))
         }.sortedWith(compareBy({if(it.lexicon.language==strongLanguage)0 else 1},{it.lexicon.code.orEmpty()}))
     }
+    private val liturgicalCache=NativeLiturgicalCache(remote,store,canRefresh)
+    override suspend fun getLiturgicalWorks(collection:String)=liturgicalCache.works(collection)
+    override suspend fun getLiturgicalWork(slug:String)=liturgicalCache.work(slug)
+    override suspend fun getLiturgicalVersion(slug:String,language:String,edition:String?)=liturgicalCache.version(slug,language,edition)
     private val prayerCache = NativePrayerCache(remote, store, canRefresh)
     override suspend fun getPrayerCatalog(language: String) = prayerCache.catalog(language)
     override suspend fun getPrayers(language: String) = getPrayerCatalog(language).data

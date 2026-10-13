@@ -95,8 +95,10 @@ export interface PrayerExternalSource {
   language: string
   title: string
   url: string
-  availability: 'external-only'
-  offline_available: false
+  availability: 'external-only' | 'full-book-internal'
+  offline_available: boolean
+  canonical_slug?: string
+  edition?: string
 }
 
 export interface PrayerCatalog {
@@ -137,7 +139,22 @@ export interface LiturgicalBlock {
   text: string
 }
 
+export interface LiturgicalBookSection {
+  id: string
+  title: string
+  printed_pages: number[]
+  works: { slug: string }[]
+  startBlockId?: string
+  endBlockId?: string
+}
+
 export interface LiturgicalWorkVersion {
+  artifactType?: string
+  bookCompleteness?: string
+  sourceBook?: string
+  printedPages?: number[]
+  sourceEditionNotes?: string[]
+  bookSections?: LiturgicalBookSection[]
   completeness?: 'complete' | null
   slug: string
   title: string

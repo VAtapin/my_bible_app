@@ -161,6 +161,10 @@ class BibleApiClient internal constructor(
         return payload.data.validatePrayerDetail(payload.catalogVersion).also { require(it.id == id && it.languageCode == language) }
     }
 
+    override suspend fun getLiturgicalWorks(collection:String):List<LiturgicalWorkSummary> {
+        require(collection.matches(Regex("[a-z-]+")))
+        return client.get("$baseUrl/liturgical/works") { parameter("collection",collection) }.body<ApiEnvelope<List<LiturgicalWorkSummary>>>().data.also { list -> list.forEach { it.validateLiturgicalWork(); require(collection in it.collections) } }
+    }
     override suspend fun getLiturgicalWork(slug: String): LiturgicalWorkSummary {
         require(slug.isNotBlank() && slug !in listOf(".", "..") && !Regex("[/\\\\?#%]").containsMatchIn(slug))
         val work = client.get("$baseUrl/liturgical/works/$slug").body<ApiEnvelope<LiturgicalWorkSummary>>().data

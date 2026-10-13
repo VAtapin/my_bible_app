@@ -25,6 +25,8 @@ export interface DailyContentRepository {
   getPrayerCatalog?():Promise<StoredPrayerCatalog|undefined>
   isReviewedPrayerCatalog?():Promise<boolean>
   putPrayerCatalog?(value:StoredPrayerCatalog):Promise<void>
+  getLiturgicalWorks?(collection:string):Promise<LiturgicalWorkSummary[]|undefined>
+  putLiturgicalWorks?(collection:string,works:LiturgicalWorkSummary[]):Promise<void>
   getLiturgicalWork?(slug:string):Promise<LiturgicalWorkSummary|undefined>
   putLiturgicalWork?(value:LiturgicalWorkSummary):Promise<void>
   getLiturgicalVersion?(slug:string,language:string,edition?:string):Promise<StoredLiturgicalVersion|undefined>

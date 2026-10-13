@@ -20,6 +20,8 @@ class PrayerCatalogUiTest {
     private val queries=Collections.synchronizedList(mutableListOf<String>())
     private val editions=Collections.synchronizedList(mutableListOf<String>())
     private val source=object:BibleContentSource by BibleApiClient(){
+        override suspend fun getLiturgicalWorks(collection:String)=emptyList<LiturgicalWorkSummary>()
+        override suspend fun getLiturgicalWork(slug:String):LiturgicalWorkSummary=error("No alternate editions in this fixture")
         override suspend fun getPrayerCatalog(language:String):PrayerCatalog {queries+=language;return fixture.catalog}
         override suspend fun getPrayer(id:Long,language:String):PrayerDetail {editions+=language;return fixture.details.getValue(id).also{require(it.languageCode==language)}}
         override suspend fun getPrayer(id:Long):PrayerDetail=error("Reviewed UI must request the actual edition")

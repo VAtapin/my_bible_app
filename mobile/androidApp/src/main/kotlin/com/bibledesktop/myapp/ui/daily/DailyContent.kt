@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -92,6 +94,12 @@ fun PrayersScreen(
     client: BibleContentSource,
     onBack: () -> Unit,
 ) {
+    var bookLibrary by rememberSaveable { mutableStateOf(false) }
+    var canonicalSlug by rememberSaveable { mutableStateOf<String?>(null) }
+    var canonicalEdition by rememberSaveable { mutableStateOf<String?>(null) }
+    var canonicalLanguage by rememberSaveable { mutableStateOf("") }
+    var additionalWorks by remember { mutableStateOf<List<com.bibledesktop.shared.api.LiturgicalWorkSummary>>(emptyList()) }
+    LaunchedEffect(Unit){try{additionalWorks=client.getLiturgicalWorks("prayers")}catch(c:CancellationException){throw c}catch(_:Exception){}}
     var selectedPrayer by rememberSaveable { mutableStateOf<Long?>(null) }
     var selectedEdition by rememberSaveable { mutableStateOf<String?>(null) }
     var textLanguage by rememberSaveable { mutableStateOf("all") }
@@ -101,6 +109,7 @@ fun PrayersScreen(
     var retry by remember { mutableIntStateOf(0) }
     var reviewedCatalog by remember { mutableStateOf<PrayerCatalog?>(null) }
     var loadedRetry by remember { mutableIntStateOf(-1) }
+    val prayerListState=rememberLazyListState()
     val labels=prayerCatalogTexts(language)
     val uriHandler=LocalUriHandler.current
 
@@ -129,16 +138,20 @@ fun PrayersScreen(
         } catch(cancelled:CancellationException){throw cancelled}
         catch(_:Exception){detailState=LoadState.Error}
     }
+    if(bookLibrary){LiturgicalBookLibrary(language,client,{bookLibrary=false});return}
+    canonicalSlug?.let { slug -> LiturgicalReader(language,client,slug,canonicalLanguage,{canonicalSlug=null},onBack,canonicalEdition);return }
     BackHandler {if(selectedPrayer!=null)selectedPrayer=null else onBack()}
     if(selectedPrayer==null){
-        ContentListPage(localText(R.string.prayers_title,language),language,onBack){
+        ContentListPage(localText(R.string.prayers_title,language),language,onBack,prayerListState){
             val catalog=(listState as? LoadState.Ready)?.value
             val reviewed=catalog?.catalogVersion==2
+            item { Button(onClick={bookLibrary=true},modifier=Modifier.fillMaxWidth()){Text(bookTexts(language).books)} }
             item {
                 Text(localText(R.string.prayer_text_language,language),color=Ink,fontWeight=FontWeight.Bold)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
                     val languages=if(reviewed) linkedSetOf("all").apply {
                         catalog!!.data.forEach{addAll(it.availableLanguages)}
+                        additionalWorks.forEach{addAll(it.availableLanguages)}
                         catalog.externalSources.forEach{add(it.language)}
                     } else linkedSetOf("all").apply{addAll(com.bibledesktop.shared.presentation.interfaceLanguages.keys);add("cu");add("cu-civil")}
                     languages.forEach{code->
@@ -156,13 +169,21 @@ fun PrayersScreen(
                 is LoadState.Ready->{
                     val value=current.value
                     val entries=if(value.catalogVersion==2)value.data.filter{it.catalogVisible==true&&(group=="all"||group in it.groups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)}.distinctBy{it.canonicalSlug} else value.data
-                    item {Text(localText(R.string.prayer_source_count,language,entries.size),Modifier.testTag("prayer-source-count").padding(vertical=8.dp),color=PrimaryBlue)}
-                    if(entries.isEmpty())item{EmptyBox(localText(R.string.prayers_empty_language,language))}
+                    val listed=value.data.mapNotNull{it.canonicalSlug}.toSet()
+                    val extra=additionalWorks.filter{it.slug !in listed&&(group=="all"||group in it.prayerGroups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)}.distinctBy{it.slug}
+                    item {Text(localText(R.string.prayer_source_count,language,entries.size+extra.size),Modifier.testTag("prayer-source-count").padding(vertical=8.dp),color=PrimaryBlue)}
+                    if(entries.isEmpty()&&extra.isEmpty())item{EmptyBox(localText(R.string.prayers_empty_language,language))}
                     items(entries,key={it.canonicalSlug?:it.id.toString()}){prayer->
                         val edition=if(value.catalogVersion==2&&textLanguage!="all")textLanguage else prayer.languageCode
                         PrayerCard(prayer,edition){selectedEdition=if(value.catalogVersion==2)edition else null;selectedPrayer=prayer.id}
                     }
-                    val external=value.externalSources.filter{textLanguage=="all"||it.language==textLanguage}
+                    items(extra,key={"work-${it.slug}"}){work->
+                        androidx.compose.material3.ListItem(headlineContent={Text(work.title)},supportingContent={Text(work.availableLanguages.joinToString(" · "))},modifier=Modifier.clickable{
+                            canonicalLanguage=if(textLanguage!="all")textLanguage else if(language in work.availableLanguages)language else work.availableLanguages.first()
+                            canonicalEdition=null;canonicalSlug=work.slug
+                        })
+                    }
+                    val external=value.externalSources.filter{it.availability=="external-only"&&(textLanguage=="all"||it.language==textLanguage)}
                     if(external.isNotEmpty()){
                         item{Text(labels.external,color=Ink,fontWeight=FontWeight.Bold);Text(labels.externalOnly,Modifier.testTag("prayer-external-only"),color=PrimaryBlue)}
                         items(external,key={it.url}){source->Button(onClick={uriHandler.openUri(source.url)},modifier=Modifier.fillMaxWidth()){Text(source.title)}}
@@ -170,7 +191,7 @@ fun PrayersScreen(
                 }
             }
         }
-    }else PrayerReader(language,detailState,{selectedPrayer=null},onBack,{retry+=1})
+    }else PrayerReader(language,detailState,{selectedPrayer=null},onBack,{retry+=1},client){slug,actual,code->canonicalLanguage=actual;canonicalEdition=code;canonicalSlug=slug}
 }
 
 @Composable
@@ -214,6 +235,8 @@ private fun PrayerReader(
     onBack: () -> Unit,
     onHome: () -> Unit,
     onRetry: () -> Unit,
+    client:BibleContentSource,
+    onEdition:(String,String,String)->Unit,
 ) {
     val context = LocalContext.current
     var fontSize by rememberSaveable { mutableFloatStateOf(19f) }
@@ -223,6 +246,19 @@ private fun PrayerReader(
         modifier = Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding(),
     ) {
         ReadingHeader(title, language, onBack, onHome)
+        val detail=(state as? LoadState.Ready)?.value
+        var editions by remember { mutableStateOf<List<com.bibledesktop.shared.api.LiturgicalEditionSummary>>(emptyList()) }
+        var editionMenu by remember { mutableStateOf(false) }
+        LaunchedEffect(detail?.canonicalSlug,detail?.languageCode){
+            editions=emptyList()
+            detail?.canonicalSlug?.let{slug->try{editions=client.getLiturgicalWork(slug).editions.filter{it.language==detail.languageCode}}catch(c:CancellationException){throw c}catch(_:Exception){}}
+        }
+        if(editions.size>1)Box{
+            androidx.compose.material3.TextButton(onClick={editionMenu=true}){Text(bookTexts(language).edition)}
+            androidx.compose.material3.DropdownMenu(editionMenu,onDismissRequest={editionMenu=false}){editions.forEach{edition->
+                androidx.compose.material3.DropdownMenuItem(text={Text(edition.title)},onClick={editionMenu=false;onEdition(detail!!.canonicalSlug!!,edition.language,edition.code)})
+            }}
+        }
         when (val current = state) {
             LoadState.Loading -> LoadingBox(Modifier.weight(1f))
             LoadState.Error -> ErrorBox(
@@ -284,6 +320,7 @@ private fun ContentListPage(
     title: String,
     language: String,
     onBack: () -> Unit,
+    state:LazyListState,
     content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
 ) {
     Column(
@@ -291,6 +328,7 @@ private fun ContentListPage(
     ) {
         ReadingHeader(title, language, onBack, onBack)
         LazyColumn(
+            state=state,
             modifier = Modifier.weight(1f).testTag("daily-content-list"),
             contentPadding = PaddingValues(20.dp),
             content = content,

@@ -20,6 +20,7 @@ interface BibleContentSource {
     suspend fun getPrayerCatalog(language: String = "ru"): PrayerCatalog = PrayerCatalog(getPrayers(language))
     suspend fun getPrayer(id: Long): PrayerDetail
     suspend fun getPrayer(id: Long, language: String): PrayerDetail = getPrayer(id).also { require(it.languageCode == language) }
+    suspend fun getLiturgicalWorks(collection:String):List<LiturgicalWorkSummary> = error("Liturgical catalogue unavailable")
     suspend fun getLiturgicalWork(slug: String): LiturgicalWorkSummary = error("Canonical prayer metadata unavailable")
     suspend fun getLiturgicalVersion(slug: String, language: String, edition: String? = null): LiturgicalWorkVersion = error("Prayer edition unavailable")
     suspend fun getCalendarDay(date: String, language: String, profile: String = "typikon-strict"): CalendarDay

@@ -8,6 +8,8 @@ data class PrayerExternalSource(
     val language: String, val title: String, val url: String,
     val availability: String,
     @SerialName("offline_available") val offlineAvailable: Boolean,
+    @SerialName("canonical_slug") val canonicalSlug:String? = null,
+    val edition:String? = null,
 )
 
 @Serializable
@@ -50,6 +52,11 @@ data class LiturgicalWorkSummary(
 data class LiturgicalBlock(val id: String, val kind: String, val text: String)
 
 @Serializable
+data class LiturgicalBookReference(val slug:String)
+@Serializable
+data class LiturgicalBookSection(val id:String,val title:String,@SerialName("printed_pages") val printedPages:List<Int> = emptyList(),val works:List<LiturgicalBookReference> = emptyList(),val startBlockId:String? = null,val endBlockId:String? = null)
+
+@Serializable
 data class LiturgicalWorkVersion(
     val slug: String, val title: String, val language: String, val edition: String,
     @SerialName("edition_title") val editionTitle: String,
@@ -60,6 +67,12 @@ data class LiturgicalWorkVersion(
     @SerialName("content_hash") val contentHash: String,
     @SerialName("review_status") val reviewStatus: String,
     val completeness: String? = null,
+    val artifactType:String? = null,
+    val bookCompleteness:String? = null,
+    val sourceBook:String? = null,
+    val printedPages:List<Int> = emptyList(),
+    val sourceEditionNotes:List<String> = emptyList(),
+    val bookSections:List<LiturgicalBookSection> = emptyList(),
 )
 
 private val prayerGroups = setOf("short", "rules", "occasions", "initial")
@@ -78,7 +91,8 @@ fun PrayerCatalog.validatePrayerCatalog(): PrayerCatalog {
             it.availableLanguages, it.completeness, it.reviewStatus, it.contentRevision, it.catalogVisible) })
         require(externalSources.all { source ->
             val uri = io.ktor.http.Url(source.url)
-            source.language.isNotBlank() && source.title.isNotBlank() && source.availability == "external-only" && !source.offlineAvailable &&
+            source.language.isNotBlank() && source.title.isNotBlank() && ((source.availability == "external-only" && !source.offlineAvailable)||
+                    (source.availability=="full-book-internal"&&source.offlineAvailable&&source.canonicalSlug?.matches(Regex("[a-z0-9-]+"))==true&&!source.edition.isNullOrBlank())) &&
                 uri.protocol.name == "https" && uri.host.isNotBlank() && uri.user == null && uri.password == null
         })
     } else require(groups.isEmpty() && externalSources.isEmpty())
@@ -109,9 +123,13 @@ fun LiturgicalWorkSummary.validateLiturgicalWork(): LiturgicalWorkSummary {
 fun LiturgicalWorkVersion.validateLiturgicalVersion(requestedLanguage: String, requestedEdition: String? = null, requireReviewed: Boolean = false): LiturgicalWorkVersion {
     require(language == requestedLanguage && (requestedEdition == null || edition == requestedEdition))
     require(slug.isNotBlank() && edition.isNotBlank() && blocks.isNotEmpty())
+    require(printedPages.all{it>0} && bookSections.all{section->
+        section.id.isNotBlank() && section.title.isNotBlank() && section.printedPages.all{it>0} && section.works.all{it.slug.matches(Regex("[a-z0-9-]+"))} &&
+        (section.startBlockId==null||blocks.any{it.id==section.startBlockId}) && (section.endBlockId==null||blocks.any{it.id==section.endBlockId}) && (section.startBlockId==null||section.endBlockId==null||blocks.indexOfFirst{it.id==section.startBlockId}<=blocks.indexOfFirst{it.id==section.endBlockId})
+    })
     if (requireReviewed) require(completeness == "complete")
     if (completeness == "complete") {
-        require(reviewStatus == "prayer-reviewed" && contentHash.matches(Regex("[a-f0-9]{64}")) && blocks.any { it.text.isNotBlank() })
+        require(reviewStatus in setOf("prayer-reviewed", "source-verified-complete") && contentHash.matches(Regex("[a-f0-9]{64}")) && blocks.any { it.text.isNotBlank() })
         require(language != "cu" || orthography == "traditional")
         require(language != "cu-civil" || orthography in listOf("civil", "civil-accented"))
     }

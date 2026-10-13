@@ -19,7 +19,8 @@ export function isPrayerMetadata(value: Record<string, unknown>, required = fals
 
 function isExternalSource(value: unknown): boolean {
   if (!record(value) || typeof value.language !== 'string' || typeof value.title !== 'string' || typeof value.url !== 'string'
-    || value.availability !== 'external-only' || value.offline_available !== false) return false
+    || !(value.availability==='external-only'&&value.offline_available===false
+      ||value.availability==='full-book-internal'&&value.offline_available===true&&typeof value.canonical_slug==='string'&&/^[a-z0-9-]+$/.test(value.canonical_slug)&&typeof value.edition==='string'&&Boolean(value.edition.trim()))) return false
   try {
     const url = new URL(value.url)
     return url.protocol === 'https:' && Boolean(url.hostname) && !url.username && !url.password

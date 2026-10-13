@@ -44,6 +44,13 @@ class PrayerCatalogTest {
         } finally { api.close() }
     }
 
+    @Test fun publishedInternalBookHasAnExplicitCanonicalIdentity(){
+        val source=PrayerExternalSource("de","Book","https://orthodoxia.de/gebete/gebetbuch","full-book-internal",true,"book-source","actual-edition")
+        val value=kotlinx.serialization.json.Json{ignoreUnknownKeys=true}.decodeFromString<PrayerCatalog>(catalog).copy(externalSources=listOf(source))
+        assertEquals(source,value.validatePrayerCatalog().externalSources.single())
+        assertFails{value.copy(externalSources=listOf(source.copy(canonicalSlug=null))).validatePrayerCatalog()}
+        assertFails{value.copy(externalSources=listOf(source.copy(availability="external-only"))).validatePrayerCatalog()}
+    }
     @Test fun explicitActualEditionAndAccessFailuresNeverFallbackOrRelabel() = runBlocking {
         var status = HttpStatusCode.OK
         val api = BibleApiClient(HttpClient(MockEngine { request ->

@@ -20,11 +20,13 @@ const selectedLanguage=ref(''),selectedGroup=ref(''),query=ref('')
 const availableLanguages=computed(()=>[...new Set([...(catalog.value?.data.flatMap(prayerLanguages)??[]),...works.value.flatMap(work=>work.available_languages)])])
 const languageChoices=computed(()=>[...new Set([...availableLanguages.value,...(catalog.value?.external_sources?.map(source=>source.language)??[]),...(selectedLanguage.value?[selectedLanguage.value]:[])])])
 const groups=computed(()=>Object.entries(catalog.value?.groups??{}))
-const externalSources=computed(()=>catalog.value?.external_sources?.filter(source=>!selectedLanguage.value||source.language===selectedLanguage.value)??[])
+const externalSources=computed(()=>catalog.value?.external_sources?.filter(source=>source.availability==='external-only'&&(!selectedLanguage.value||source.language===selectedLanguage.value))??[])
 const displayPrayers=computed(()=>catalog.value?.data.filter(item=>
   (!selectedLanguage.value||prayerLanguages(item).includes(selectedLanguage.value))&&prayerInGroup(item,selectedGroup.value)&&matchesSettings(item)&&
   `${item.title} ${item.short_title??''}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase()))??[])
-const displayWorks=computed(()=>works.value.filter(work=>(!selectedLanguage.value||work.available_languages.includes(selectedLanguage.value))&&
+const displayBooks=computed(()=>displayWorks.value.filter(work=>work.collections.includes('prayer-books')))
+const displayOtherWorks=computed(()=>displayWorks.value.filter(work=>!work.collections.includes('prayer-books')))
+const displayWorks=computed(()=>works.value.filter(work=>(!selectedLanguage.value||work.available_languages.includes(selectedLanguage.value))&&(selectedGroup.value==='prayer-books'?work.collections.includes('prayer-books'):!selectedGroup.value||!work.collections.includes('prayers')||work.prayer_groups?.includes(selectedGroup.value))&&
   `${work.title} ${work.usage_titles?.join(' ')??''}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase())))
 function matchesSettings(item:PrayerSummary){
   const settings=profile.configuration?.prayers
@@ -43,24 +45,27 @@ onMounted(async()=>{
   try{
     const result=await service.openPrayerCatalog();catalog.value=result.data
     message.value=result.offline?text.value.prayers.offline:''
-    const collections=[result.data.catalog_version!==2&&(settings?.prayerBook||settings?.morning||settings?.evening)?'prayers':null,settings?.akathists?'akathists':null,settings?.canons?'canons':null,settings?.horologion?'horologion':null].filter((value):value is string=>value!==null)
-    works.value=uniqueWorkCards((await Promise.all(collections.map(collection=>bibleApi.getLiturgicalWorks(collection)))).flat()).filter(work=>
-      !work.collections.includes('prayers')||settings?.prayerBook||(settings?.morning&&/утрен|morgen/i.test(work.title))||(settings?.evening&&/сон грядущим|вечер|abend|nacht/i.test(work.title)))
+    const collections=['prayer-books',(settings?.prayerBook!==false||settings?.morning||settings?.evening)?'prayers':null,settings?.akathists?'akathists':null,settings?.canons?'canons':null,settings?.horologion?'horologion':null].filter((value):value is string=>value!==null)
+    const results=await Promise.allSettled(collections.map(collection=>service.openLiturgicalWorks(collection)))
+    const listed=new Set(result.data.data.map(item=>item.canonical_slug))
+    works.value=uniqueWorkCards(results.flatMap(result=>result.status==='fulfilled'?result.value:[])).filter(work=>!listed.has(work.slug)).filter(work=>
+      !settings||!work.collections.includes('prayers')||settings?.prayerBook||(settings?.morning&&/утрен|morgen/i.test(work.title))||(settings?.evening&&/сон грядущим|вечер|abend|nacht/i.test(work.title)))
   }catch{message.value=text.value.prayers.unavailable}
 })
 </script>
 <template>
   <MobileShell>
     <section class="reader-heading"><span class="card-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><p class="eyebrow dark-eyebrow">{{text.prayers.eyebrow}}</p><h1>{{text.prayers.title}}</h1></span></section>
-    <div class="prayer-filters"><label>{{labels.language}}<select v-model="selectedLanguage"><option value="">{{labels.all}}</option><option v-for="code in languageChoices" :key="code" :value="code">{{prayerLanguageLabel(code,text.setup)}}</option></select></label><label v-if="groups.length">{{labels.group}}<select v-model="selectedGroup"><option value="">{{labels.all}}</option><option v-for="[key,title] in groups" :key="key" :value="key">{{groupLabel(key,title)}}</option></select></label><label>{{labels.search}}<input v-model="query" type="search" /></label></div>
+    <div class="prayer-filters"><label>{{labels.language}}<select v-model="selectedLanguage"><option value="">{{labels.all}}</option><option v-for="code in languageChoices" :key="code" :value="code">{{prayerLanguageLabel(code,text.setup)}}</option></select></label><label v-if="groups.length">{{labels.group}}<select v-model="selectedGroup"><option value="">{{labels.all}}</option><option v-if="works.some(work=>work.collections.includes('prayer-books'))" value="prayer-books">{{labels.books}}</option><option v-for="[key,title] in groups" :key="key" :value="key">{{groupLabel(key,title)}}</option></select></label><label>{{labels.search}}<input v-model="query" type="search" /></label></div>
     <p v-if="message" class="status" role="status">{{message}}</p>
     <p v-if="catalog&&!displayPrayers.length&&!displayWorks.length" class="status">{{text.prayers.empty}}</p>
     <section class="content-catalog">
       <RouterLink v-for="prayer in displayPrayers" :key="prayer.canonical_slug??`prayer-${prayer.id}`" class="content-card" :to="prayerCardTarget(prayer,selectedLanguage)">
         <span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><em>{{prayer.group?groupLabel(prayer.group,catalog?.groups?.[prayer.group]??prayer.group):text.prayers.prayerBook}}</em><strong>{{prayer.title}}</strong><small>{{prayerLanguages(prayer).map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small><small v-if="prayer.excerpt">{{prayerExcerpt(prayer.excerpt)}}</small></span><span aria-hidden="true">→</span>
       </RouterLink>
-      <RouterLink v-for="work in displayWorks" :key="work.slug" class="content-card" :to="workTarget(work)"><span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><strong>{{work.title}}</strong><small>{{work.available_languages.map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small></span><span aria-hidden="true">→</span></RouterLink>
+      <RouterLink v-for="work in displayOtherWorks" :key="work.slug" class="content-card" :to="workTarget(work)"><span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><strong>{{work.title}}</strong><small>{{work.available_languages.map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small></span><span aria-hidden="true">→</span></RouterLink>
     </section>
+    <section v-if="displayBooks.length" class="content-catalog"><h2>{{labels.books}}</h2><RouterLink v-for="book in displayBooks" :key="book.slug" class="content-card" :to="workTarget(book)"><span><strong>{{book.title}}</strong><small>{{book.available_languages.map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small></span><span aria-hidden="true">→</span></RouterLink></section>
     <section v-if="externalSources.length" class="prayer-external"><h2>{{labels.external}}</h2><p>{{labels.externalOnly}}</p><p v-for="source in externalSources" :key="source.url"><a :href="source.url" target="_blank" rel="noopener noreferrer">{{source.title}}</a></p></section>
   </MobileShell>
 </template>

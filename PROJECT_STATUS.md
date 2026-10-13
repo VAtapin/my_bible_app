@@ -2,6 +2,37 @@
 
 ## Реализовано и текущее состояние
 
+- Молитвословы, WEB/Android 0.1.16/code17: отдельная категория prayer-books
+  в существующей библиотеке, полный текст на ширину экрана, оглавление
+  по настоящим bookSections/startBlockId/endBlockId. Границы обе inclusive,
+  привязаны к конкретному body/edition/hash; без anchors открываются
+  канонические произведения раздела, никаких вычислений по заголовкам.
+  Выбор нескольких изданий одного языка, страницы/заметки источника,
+  исходные рубрики и повторы сохранены. Native cache сохраняет книжную
+  metadata и каждую edition отдельно; HTTP/contract failures не подменяются
+  старым телом. Профиль/Библия/календарь не мигрируются.
+  Исправлен full-book-internal marker каталога: внутренняя книга отдельно
+  от external-only ссылок. Полный unfiltered collection=prayers открывает
+  DE-only families, русский compatibility catalog больше не считается
+  полным inventory; canonical_slug исключает повторные карточки.
+  Backend dependencies: 05e92f828a79b0a8ad1551f44731f3688e3b977b,
+  anchors 5b797b2d53a277f4a8845350ca79550f535bf5a6. Проверен настоящий
+  isolated API8094: 1391 blocks/19 anchors, полный каталог/DE-only body;
+  браузер390px без overflow, переход к последнему разделу PASS.
+  WEB533 tests122files PASS, 2 opt-in real API tests отдельно PASS,
+  typecheck/обе production-сборки PASS. Android78 shared host tests,
+  lintDebug/lintRelease, 7 UI tests API37 x86_64 PASS (3 новых на actual
+  exported corpus + 4 прежних). Native101 DE cards/whole book/section jump,
+  same-language edition request и offline roundtrip PASS; это UI tests
+  на реальном экспорте, не native HTTP integration against localhost.
+  Signed APK/AAB/non-debuggable/ZIP/ELF LOAD PASS, hashes mobile/README.md.
+  Signed0.1.15→0.1.16 установлен без удаления данных, cold start Status ok,
+  versionCode17, crash buffer пуст. ARM64/16KB/Play не проверены;
+  прежний graphics.path RELRO warning остаётся.
+  Production клиента/корпуса и выдача APK пока не подтверждены; готовое
+  передаётся SSH с dependency gate. Предыдущий клиентский commit8962364;
+  текущий блок: Add prayer books and edition navigation (hash в Git).
+
 - Android 0.1.15/code16: нативный сервис AZBYKA_CU_FULL через прежний
   DictionaryApi и Compose. Прямой вход из «Ещё», также выбор в прежнем
   каталоге словарей; каталог22908/36 букв, исходные/гражданские формы,
@@ -396,8 +427,8 @@
   пока не подтверждён.
 - Молитвенный API 34e7e82 и проверенный набор v2: 24 полных произведения,
   21 видимая каноническая карточка, четыре группы; фактические CU-civil и
-  русский текст Оптинской молитвы. CU traditional/DE локальных тел в этом
-  наборе нет. Серверная публикация/curation идут через общую очередь SSH;
+  русский текст Оптинской молитвы. Это исходный базовый набор; полная DE
+  книга и расширенный каталог описаны выше и ожидают production receipt. Серверная публикация/curation идут через общую очередь SSH;
   клиент не выполняет миграции или импорт самостоятельно.
 
 ## Ограничения и следующие действия

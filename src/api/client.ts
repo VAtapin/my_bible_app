@@ -371,6 +371,18 @@ export function isLiturgicalWork(item: unknown): item is LiturgicalWorkSummary {
       && item.completeness === 'complete' && typeof item.content_revision === 'string' && Boolean(item.content_revision.trim()))
 }
 
+function isBookMetadata(value:Record<string,unknown>):boolean {
+  const blocks=value.blocks as {id:string}[]
+  return (value.sourceEditionNotes===undefined||Array.isArray(value.sourceEditionNotes)&&value.sourceEditionNotes.every(note=>typeof note==='string'))
+    && (value.printedPages===undefined||Array.isArray(value.printedPages)&&value.printedPages.every(page=>Number.isInteger(page)&&Number(page)>0))
+    && (value.bookSections===undefined||Array.isArray(value.bookSections)&&value.bookSections.every(section=>isRecord(section)&&typeof section.id==='string'&&typeof section.title==='string'
+      && Array.isArray(section.printed_pages)&&section.printed_pages.every(page=>Number.isInteger(page)&&Number(page)>0)
+      && Array.isArray(section.works)&&section.works.every(work=>isRecord(work)&&typeof work.slug==='string'&&/^[a-z0-9-]+$/.test(work.slug))
+      && (section.startBlockId==null||typeof section.startBlockId==='string'&&blocks.some(block=>block.id===section.startBlockId))
+      && (section.endBlockId==null||typeof section.endBlockId==='string'&&blocks.some(block=>block.id===section.endBlockId))
+      && (section.startBlockId==null||section.endBlockId==null||blocks.findIndex(block=>block.id===section.startBlockId)<=blocks.findIndex(block=>block.id===section.endBlockId))))
+}
+
 export function isLiturgicalWorkVersion(value: unknown): value is LiturgicalWorkVersion {
   return isRecord(value)
     && typeof value.slug === 'string'
@@ -385,11 +397,12 @@ export function isLiturgicalWorkVersion(value: unknown): value is LiturgicalWork
       && typeof block.id === 'string'
       && typeof block.kind === 'string'
       && typeof block.text === 'string')
+    && isBookMetadata(value)
     && typeof value.credit === 'string'
     && typeof value.source_url === 'string'
     && typeof value.content_hash === 'string'
     && typeof value.review_status === 'string'
-    && (value.completeness !== 'complete' || value.review_status === 'prayer-reviewed'
+    && (value.completeness !== 'complete' || ['prayer-reviewed', 'source-verified-complete'].includes(String(value.review_status))
       && /^[a-f0-9]{64}$/u.test(value.content_hash) && value.blocks.some(block => isRecord(block) && typeof block.text === 'string' && Boolean(block.text.trim()))
       && (value.language !== 'cu' || value.orthography === 'traditional')
       && (value.language !== 'cu-civil' || ['civil', 'civil-accented'].includes(value.orthography)))
