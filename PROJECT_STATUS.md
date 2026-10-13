@@ -7,12 +7,14 @@
   выключение сохраняются; чистый режим по-прежнему временно скрывает номера.
   Проверены 12 целевых WEB-тестов, typecheck и production build; Android
   debug/test сборки и 2 instrumentation-теста на API37 emulator прошли.
-  WEB-изменение опубликовано в production из main commit a3b0dc7; главная страница, service worker и manifest совпали с production dist по SHA256. Подписанный Android 0.1.18/code19
+  WEB-изменение опубликовано из main a3b0dc7; главная страница, service worker
+  и manifest совпали с production dist по SHA256. Подписанный Android 0.1.18/code19
   собран и проверен: host tests, lintRelease, подписи APK/AAB,
   non-debuggable, ZIP/ELF LOAD PASS. На отдельном API37/x86_64/16KB release
   эмуляторе обновление с 0.1.17 без удаления данных и холодный запуск прошли,
-  crash buffer пуст. APK/AAB и SHA указаны в mobile/README.md; публикация
-  APK 0.1.18 опубликован 14.10.2026; SHA256 публичной загрузки совпал с проверенным артефактом. AAB не публиковался; physical ARM64/Play не проверены.
+  crash buffer пуст. APK опубликован 14.10.2026; SHA256 публичной загрузки
+  совпал с проверенным артефактом в mobile/README.md. AAB не публиковался;
+  physical ARM64/Play не проверены.
 
 - Нумерация русского/церковнославянского Псалтиря, 14.10.2026:
   действующая автоматическая карта KJV Ps119 дополнена только точным изданием
