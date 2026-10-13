@@ -41,12 +41,13 @@ class ReaderStudyPresentationTest {
   option.performClick();option.assertIsOff()
   compose.runOnIdle{assertFalse(value.value.chapterLabels)}
  }
- @Test fun absentStrongPreferenceDefaultsOnButExplicitOffAndCleanArePreserved(){
+ @Test fun absentStrongPreferenceDefaultsOffButExplicitChoicesAndCleanArePreserved(){
   val context=InstrumentationRegistry.getInstrumentation().targetContext
   val prefs=context.getSharedPreferences("bible-desktop-reader-controls",Context.MODE_PRIVATE)
   val existed=prefs.contains("strongNumbers");val old=prefs.getBoolean("strongNumbers",false)
   try{
-   check(prefs.edit().remove("strongNumbers").commit());assertTrue(ReaderPreferencesStore(context).load().strongNumbers)
+   check(prefs.edit().remove("strongNumbers").commit());assertFalse(ReaderPreferencesStore(context).load().strongNumbers)
+   check(prefs.edit().putBoolean("strongNumbers",true).commit());assertTrue(ReaderPreferencesStore(context).load().strongNumbers)
    check(prefs.edit().putBoolean("strongNumbers",false).commit());assertFalse(ReaderPreferencesStore(context).load().strongNumbers)
    assertFalse(ReaderPreferences(strongNumbers=true,clean=true).effective().strongNumbers)
   }finally{check(prefs.edit().apply{if(existed)putBoolean("strongNumbers",old)else remove("strongNumbers")}.commit())}
@@ -58,7 +59,7 @@ class ReaderStudyPresentationTest {
   val calls=AtomicInteger();var chosen by mutableStateOf<String?>(null)
   val source=object:BibleContentSource by BibleApiClient(){override suspend fun getStrongEntry(number:String,verseId:Long):StrongEntry{calls.incrementAndGet();return StrongEntry(number,content="Fixture dictionary article",lexicon=StrongLexicon("Fixture lexicon","en"))}}
   compose.setContent{BibleDesktopTheme{Column{
-   SourceVerseText(verse,AnnotatedString(verse.plainText),ReaderPreferences(),TextStyle.Default,onStrong={chosen=it})
+   SourceVerseText(verse,AnnotatedString(verse.plainText),ReaderPreferences(strongNumbers=true),TextStyle.Default,onStrong={chosen=it})
    chosen?.let{StrongArticle("en",chapter,verse.id,source,it)}
   }}}
   assertEquals(0,calls.get());compose.onNodeWithText("G3056").assertDoesNotExist()
