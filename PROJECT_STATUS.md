@@ -2,6 +2,24 @@
 
 ## Реализовано и текущее состояние
 
+- Приёмка толкований/публикаций, 13.10.2026: SSH подтвердил 180
+  опубликованных источников/1 284 382 статьи; ровно одна существующая
+  статья каждого источника — HTTP200/непустое тело/correct ID, 180/180.
+  Это доступность источников, не проверка всего корпуса и всех привязок.
+  OPTINA_COMMENTARIES: 109372 статьи/179 общих; actual general 1john1
+  total2 и 1corinthians1 total6, placement=null. Нумерация: profiles,
+  assignments, map sets и entries все0. Original legacy SQL найден
+  на сервере, но происхождение нумерации ещё проверяет API-чат;
+  отсутствие quote.tsk подтверждено только в конкретных проверенных путях.
+  Новый opt-in STUDY_API тест открывает оба actual general ответа через
+  строгий веб-контракт; 2 live + 4 прежних API tests PASS. Без STUDY_API
+  live проверки пропускаются, никаких автоматических production запросов.
+  Каталог отдельной Азбуки опубликован её Plesk user: страницы/HTML/SW/
+  ресурсы HTTPS/SHA PASS по receipt SSH. WEB Bible App/Android0.1.16
+  ещё ждут API full Gebetbuch05e92f8/anchors5b797b2. Новые backups
+  только с личным разрешением владельца; scoped preflight готовит SSH.
+  Последний связанный commit приёмки Android: b3fbcdf2420cad31718940ffb6a7382e834196e5.
+
 - Приёмка Android 0.1.16/code17, 13.10.2026: существующий отдельный
   BibleDesktop_Release_16KB_37, API37/x86_64, PAGE_SIZE=16384.
   Подписанный APK f477db2 обновлён поверх0.1.0 без удаления данных;
@@ -100,10 +118,10 @@
   530/530 tests121files Bible App, 35/35 tests12files standalone,
   typecheck/обе production-сборки PASS. Sandbox не давал тестам доступ
   к их временным файлам; полный check успешно выполнен вне sandbox.
-  Production API и клиент пока не подтверждены: готовое передаётся
-  «SSH - главный чат», импорт Азбуки только её отдельным пользователем
-  Plesk из штатного архива. Следующее: publication/HTTPS browser checks
-  и проверка shortcode в WordPress-проекте. Последний связанный commit:
+  Production API словаря принят 13.10.2026, каталог отдельной Азбуки
+  опубликован её Plesk user из штатного архива, HTTPS/SHA PASS по SSH.
+  Встроенная Азбука Bible App ждёт обновления общей веб-сборки.
+  Следующее: проверка shortcode в WordPress-проекте. Последний связанный commit:
   Add an alphabetic word catalog to Azbuka (hash в Git).
 
 - П21, WEB/Android: общие материалы книги/главы вынесены к фактическим
