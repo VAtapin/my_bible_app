@@ -32,7 +32,14 @@
   groups и RST/CU не получили автоматической подстановки. Actual WEB API
   acceptance2/2 PASS (36 Ps119:1 targets + held/Russian negatives); Android
   HTTPS acceptance1/1 PASS: IDs/OSIS/physical coordinates/text совпали с
-  настоящими главами выбранного издания. Schema2 package acceptance pending.
+  настоящими главами выбранного издания. Production CROSS_REFERENCES ZIP
+  schema2:29019484bytes/SHA eaa140855d508edc5afe69c37779d9d09541d8f824c5db81ed23784173a49dd9;
+  1594 forward и inverse entries,620 packages/2257 metadata preserved.
+  Actual WEB opt-in3/3 PASS: full ZIP install/index, saved21 selected-edition
+  chapters, offline readingTarget IDs/OSIS/text identical online; Android
+  actual offline instrumentation1/1 PASS after126.947s, remote disabled.
+  Web full-package test 178s in isolated fake IndexedDB. Emulator API37
+  x86_64 stopped after test; installed app/data preserved.
   WEB/APK0.1.17 опубликованы SSH13.10.2026: exactsourcee734aaa,
   actual4routes/41assets/SW/index и полныйHTTPSAPK28629504B/SHA PASS.
   OldAPK0.1.16 сохранён; epoch2035 сохранён. Backend runtime: minimal
@@ -514,7 +521,8 @@
 ## Ограничения и следующие действия
 
 - Весь первоначальный план из 28 пунктов ещё не завершён. Следующие блоки:
-  п4 — настоящие проверенные соответствия нумерации;
+  п4 — следующие доказанные соответствия нумерации RST/CU; первый bounded
+  KJV Ps119 scope уже принят online и offline;
   п28 — полная приёмка на физических устройствах. Для п21 наполнение признака
   до/после требует проверенных данных оригиналов; механизм уже реализован.
   П24 завершает механизм комплектов,
@@ -679,7 +687,8 @@
 
 ## Последний связанный commit
 
-- Текущая публикация WEB/Android0.1.17: d1cac02a693f3b0d6399eb6dbfd056a37381b80a — Record verified web and Android 0.1.17 publication. Следующая приёмка actual reference API добавлена вместе с opt-in WEB/Android tests в текущую задачу; пакет пока ожидает SSH.
+- Клиентская online-приёмка: b26174798be615a5a60eecbb7cdcb463575f7e88 — Verify published reference resolution on web and Android. Результат полной offline-приёмки записан в этом обновлении статуса.
+- Публикация WEB/Android0.1.17: d1cac02a693f3b0d6399eb6dbfd056a37381b80a — Record verified web and Android 0.1.17 publication. Scoped API и ZIP отдельно опубликованы SSH; текущая клиентская offline-приёмка описана выше.
 - Веб-читалка: c029ee6 — Complete full-width web reading and calendar dialogs (production проверен SSH).
 - Компактная веб-шапка: a32b563 — Compact the reader header and align selected study context (отправлен SSH для публикации).
 - Android 0.1.8: cd39497 — Release Android 0.1.8 with compact reader and real reference text.

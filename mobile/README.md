@@ -718,7 +718,12 @@ Backend contract pin e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af. Опублико�
 ограниченная карта legacy_quote124 SOURCEgroups/1958edges → KJV+1594coords.
 Actual Android HTTPS acceptance1/1 PASS: исходные координаты сохранены,
 target IDs/OSIS/book/chapter/verse/text совпали с настоящими главами издания.
-RST/CU не назначены этой карте; actual schema2 package acceptance ещё ожидается.
+RST/CU не назначены этой карте. Actual schema2 CROSS_REFERENCES ZIP
+29019484bytes/SHA eaa140855d508edc5afe69c37779d9d09541d8f824c5db81ed23784173a49dd9:
+Android offline instrumentation1/1 PASS на API37 x86_64 после126.947s;
+настоящая загрузка/индексация/чтение с выключенным remote совпали с online.
+WEB opt-in actual full-package acceptance3/3 PASS за178s:21 actual глава
+сохранена, полный ZIP установлен, offline targets IDs/OSIS/text совпали.
 
 83 host tests PASS;12 native instrumentation tests API37/x86_64 PASS, после
 последнего SOURCE-context fix3 affected resolver tests PASS. Debug/test compile,

@@ -19,7 +19,7 @@
     "packageAndDebuggable": "com.bibledesktop.myapp; debuggable=false",
     "zipAndElfLoadAlignment": "16 KB passed for arm64-v8a and x86_64",
     "emulatorRuntime": "Exact signed 0.1.16 to 0.1.17 update without clearing data on BibleDesktop_Release_16KB_37, API37 x86_64 PAGE_SIZE16384; versionCode18/versionName0.1.17/pageSizeCompat0, cold start Status ok, empty crash buffer. Entering Bible restored saved John3:16 and actual verse text; UI XML in ignored build/prayerbook-verification/release17-reader.xml. Owned emulator stopped. Initial attempt on a different test AVD failed signature mismatch; its app/data were not removed. Physical ARM64/Play not tested.",
-    "publishedReferenceApi": "Actual public HTTPS: WEB 2/2 passed (36 verified KJV Ps119:1 edges, held Ps119:5 and Russian edition negatives); Android 1/1 passed on API37 x86_64 emulator: target IDs/OSIS/book/chapter/verse/plain_text match actual selected edition chapters. Actual schema2 package acceptance pending."
+    "publishedReferenceApi": "Actual public HTTPS: WEB 3/3 passed including full schema2 ZIP install/index and offline parity over 21 real chapters; Android online 1/1 and full ZIP/offline parity 1/1 passed on API37 x86_64 emulator (126.947s), network client disabled after initial download. Scoped KJV verified; RST/CU still raw."
   },
   "bundledBible": {
     "code": "BQ_RUSSIAN_RST_STRONG",
@@ -42,7 +42,7 @@
     "Five existing Play screenshots show 0.1.0; refresh catalogue screenshots before submission",
     "Data Safety, audience, content rights and IARC declarations need owner confirmation",
     "Play App Signing certificate and domain association not configured",
-    "Actual schema2 CROSS_REFERENCES package publication and client offline acceptance pending; bounded KJV online map accepted, RST/CU admission still pending"
+    "Full source/edition numbering admission for RST/CU requires separate bounded proof; current publication covers only proven KJV Ps119 scope"
   ],
   "backendContract": "e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af",
   "implementationCommit": "e734aaa8b71d04a7b3076ba92e10172e521170c8",
