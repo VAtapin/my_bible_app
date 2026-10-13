@@ -767,7 +767,7 @@ API37/x86_64/PAGE_SIZE16384 APK обновлён поверх 0.1.17 без уд
 versionCode19/versionName0.1.18, холодный запуск успешен, crash buffer пуст.
 На другом эмуляторе установлена копия с иной подписью; её данные не трогали.
 Физическое ARM64-устройство и Play не проверены. RELRO warning для
-androidx.graphics.path сохраняется. Публикация 0.1.18 пока не подтверждена.
+androidx.graphics.path сохраняется. APK 0.1.18 опубликован 14.10.2026: https://biblia-app.ru/downloads/BibleDesktop-0.1.18.apk. SHA256 публичной загрузки совпал с проверенным артефактом: 74C61897F3E4C13E1CB08EC2D21CFF43B4AE532541DDED35E5289CE27EDA71CE.
 
 Проверенные локальные файлы: `androidApp/build/outputs/verified/0.1.18/`:
 - APK SHA256 `74C61897F3E4C13E1CB08EC2D21CFF43B4AE532541DDED35E5289CE27EDA71CE`.
