@@ -669,8 +669,15 @@ API corpus:1391 blocks/19 sections,101 DE молитва, DE-only family,
 тесте переключателя — явно тестовый DTO, не опубликованная редакция.
 Четыре прежних prayer UI tests PASS. Signed0.1.15→0.1.16 обновлён без
 удаления данных, cold start Status ok, versionCode17, crash buffer пуст.
-Физический ARM64/16KB/Play не проверены;
-прежний graphics.path RELRO warning остаётся. Корпус, anchors и клиент
+Дополнительная приёмка13.10.2026: подписанный APK с неизменным SHA256 ниже
+обновлён поверх0.1.0 без удаления данных на существующем
+BibleDesktop_Release_16KB_37 (API37/x86_64, PAGE_SIZE16384).
+versionCode17, pageSizeCompat=0; холодный запуск Status ok, crash buffer пуст.
+В авиарежиме с отключёнными Wi-Fi/data доступен настоящий текст Ин.3:16;
+после force-stop/cold start и повторного входа в «Библия» сохранён тот же стих.
+Сеть восстановлена, тестовый экземпляр остановлен. Это проверка runtime
+на x86_64 эмуляторе16КБ; физический ARM64/Play не проверены.
+Прежний graphics.path RELRO warning остаётся. Корпус, anchors и клиент
 ещё требуют публикации через SSH; APK подготовлен, production receipt нет.
 
 Файлы: `androidApp/build/outputs/verified/0.1.16/`:

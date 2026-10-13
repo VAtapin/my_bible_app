@@ -1,25 +1,24 @@
 {
   "status": "prepared-for-internal-testing-not-submitted",
-  "date": "2026-10-09",
-  "baseCommit": "83444fed280275b8f21c57cb8269aa81cff1a909",
+  "date": "2026-10-13",
+  "baseCommit": "f477db2520fdfe138a303eb473c79f89b2ef8d8b",
   "displayName": "Bible App",
   "package": "com.bibledesktop.myapp",
-  "versionName": "0.1.2",
-  "versionCode": 3,
+  "versionName": "0.1.16",
+  "versionCode": 17,
   "artifactSha256": {
-    "androidApp-release.aab": "DD56236B644AE3B6C1D549E963F7F07522F1CC3AD0CE62298A9E5E2197152A77",
-    "androidApp-release.apk": "3140ED652DC84D22FB7A877403928EAEF32AF4861DE39FC26DC1B48EA78FF864"
+    "BibleDesktop-0.1.16.aab": "A6CA223A160DED941713EF02B6EAD1E3F456940B5363C66E3F3B5B98B1635D4E",
+    "BibleDesktop-0.1.16.apk": "9BD700476D4ECBA2D4885260C4596BB9B5BB770E91D1AE0C264DC54A5BF0DC4C"
   },
   "checks": {
-    "sharedHostTests": "17 passed previously; unchanged code, release task UP-TO-DATE",
-    "androidInstrumentationTests": "2 catalogue UI tests passed on this revision: prominent direct action with an installed Bible, opening catalogue resets search, group/language filters; previous bundled-Bible revision passed 7 distinct tests including actual 1189 chapters without network, interruption/resume/idempotence and empty-reader action",
-    "webTests": "232 passed / 46 files; typecheck and both production builds passed; real browser verified direct catalogue action visible with enabled Synodal and opening actual API catalogue",
-    "releaseSigningGuardTests": "4 passed in previous preparation; unchanged guard, not repeated",
-    "releaseLint": "0 errors, 65 warnings, 3 hints",
+    "sharedHostTests": "78 passed on f477db2; unchanged for this runtime acceptance, not repeated",
+    "androidInstrumentationTests": "7 passed on API37 x86_64 on f477db2: 3 new prayer-book tests using an actual isolated API export (1391 blocks, 19 anchored sections, 101 DE prayers, exact edition selection, offline roundtrip and preserved parent language) plus 4 existing prayer UI regressions. The historical sibling in the edition selector test is an explicit test DTO, not a published edition. Not native HTTP integration against localhost.",
+    "webTests": "533 tests / 122 files, typecheck and both production builds passed on f477db2; 2 opt-in real API tests separately passed. Actual browser at 390px verified full book, anchored section jump and no horizontal overflow. Not repeated for documentation-only runtime receipt.",
+    "releaseLint": "lintDebug and lintRelease passed on f477db2; not repeated for documentation-only runtime receipt",
     "signatures": "AAB jarsigner and APK apksigner passed",
     "packageAndDebuggable": "com.bibledesktop.myapp; debuggable=false",
     "zipAndElfLoadAlignment": "16 KB passed for arm64-v8a and x86_64",
-    "emulatorRuntime": "Updated 0.1.2 revision installed over existing release and launched on API 37 x86_64 PAGE_SIZE=4096 without clearing data; prior 0.1.0 runtime passed on 16384, not rechecked for this release"
+    "emulatorRuntime": "0.1.15 to 0.1.16 update and cold launch previously passed on API37 x86_64 PAGE_SIZE4096. On 2026-10-13 the exact signed APK above updated existing 0.1.0 without clearing data on BibleDesktop_Release_16KB_37, API37 x86_64 PAGE_SIZE16384: versionCode17, pageSizeCompat0, cold start Status ok, empty crash buffer. Actual John3:16 readable with airplane mode enabled and Wi-Fi/data disabled; saved verse restored after force-stop/cold launch and entering Bible. Network restored and owned emulator stopped. No physical ARM64 or Play split acceptance."
   },
   "bundledBible": {
     "code": "BQ_RUSSIAN_RST_STRONG",

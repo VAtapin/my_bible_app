@@ -2,6 +2,23 @@
 
 ## Реализовано и текущее состояние
 
+- Приёмка Android 0.1.16/code17, 13.10.2026: существующий отдельный
+  BibleDesktop_Release_16KB_37, API37/x86_64, PAGE_SIZE=16384.
+  Подписанный APK f477db2 обновлён поверх0.1.0 без удаления данных;
+  versionCode17/versionName0.1.16/pageSizeCompat=0, cold start Status ok.
+  Авиарежим, Wi-Fi/mobile data отключены: настоящий текст Ин.3:16 доступен;
+  после force-stop/cold start и входа в «Библия» сохранён тот же стих.
+  Crash buffer пуст; screenshot/UI dump сохранены в ignored build artifacts.
+  Сеть эмулятора восстановлена, запущенный экземпляр остановлен.
+  APK/AAB hashes неизменны; новый APK не собирался. Физический ARM64/Play
+  не проверены: владелец подтвердил, что пока доступен только эмулятор.
+  Прежнее предупреждение RELRO не снято результатом x86_64 проверки.
+  Нумерация: API-чат не нашёл original quote.tsk/доказанную карту локально;
+  CSL-pnm russian_numbering=true не доказывает соответствие другим редакциям.
+  Нужны original quote source/edition metadata, SHA и проверенная карта;
+  серверные оригиналы/актуальный корпус толкований уточняет SSH/API.
+  Последний связанный implementation commit: f477db2520fdfe138a303eb473c79f89b2ef8d8b.
+
 - Молитвословы, WEB/Android 0.1.16/code17: отдельная категория prayer-books
   в существующей библиотеке, полный текст на ширину экрана, оглавление
   по настоящим bookSections/startBlockId/endBlockId. Границы обе inclusive,
@@ -27,7 +44,8 @@
   на реальном экспорте, не native HTTP integration against localhost.
   Signed APK/AAB/non-debuggable/ZIP/ELF LOAD PASS, hashes mobile/README.md.
   Signed0.1.15→0.1.16 установлен без удаления данных, cold start Status ok,
-  versionCode17, crash buffer пуст. ARM64/16KB/Play не проверены;
+  versionCode17, crash buffer пуст. ARM64/Play не проверены; дополнительный
+  runtime16КБ на x86_64 описан выше;
   прежний graphics.path RELRO warning остаётся.
   Production клиента/корпуса и выдача APK пока не подтверждены; готовое
   передаётся SSH с dependency gate. Предыдущий клиентский commit8962364;
