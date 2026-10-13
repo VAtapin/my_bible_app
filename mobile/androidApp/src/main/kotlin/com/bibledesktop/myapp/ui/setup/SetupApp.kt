@@ -125,6 +125,7 @@ private enum class Route {
     Books,
     Search,
     Dictionaries,
+    SlavonicDictionary,
     PersonalStudy,
     StudyDownloads,
 }
@@ -344,6 +345,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             onOpenBooks = { route = Route.Books },
             onSearch = { route = Route.Search },
             onDictionaries = { atlasMode=false; route = Route.Dictionaries },
+            onSlavonicDictionary = { route = Route.SlavonicDictionary },
             onAtlases = { atlasMode=true; route = Route.Dictionaries },
             onPersonalStudy = { route = Route.PersonalStudy },
             onStudyDownloads = { route = Route.StudyDownloads },
@@ -374,6 +376,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
             })
         Route.Books -> com.bibledesktop.myapp.ui.study.BooksScreen(language, client, onBack = { route = Route.More })
         Route.Dictionaries -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More }, atlasOnly=atlasMode)
+        Route.SlavonicDictionary -> com.bibledesktop.myapp.ui.study.SlavonicDictionaryScreen(language, onBack = { route = Route.More })
         Route.StudyDownloads -> com.bibledesktop.myapp.ui.study.DictionaryLibrary(language, client, preferences.getString("lastTranslation", "").orEmpty(), onBack = { route = Route.More }, downloads = true)
         Route.PersonalStudy -> com.bibledesktop.myapp.ui.bible.PersonalStudyLibrary(language, onBack = { route = Route.More }, onOpen = { passage ->
             preferences.edit().putString("lastTranslation", passage.translationCode).putString("lastBookSlug", passage.bookSlug)

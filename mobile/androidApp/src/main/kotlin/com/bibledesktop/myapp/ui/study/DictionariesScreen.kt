@@ -43,6 +43,10 @@ import kotlinx.serialization.json.jsonObject
     fun positionKey() = "$code:${modules.firstOrNull { it.code == code }?.version}:$key:$submitted:$offset"
     fun openArticle(target: String) { if(key.isNotEmpty()) articleHistory = articleHistory + key; key = target }
     fun back() { when { articleHistory.isNotEmpty() -> { key = articleHistory.last(); articleHistory = articleHistory.dropLast(1) }; key.isNotEmpty() -> key = ""; code.isNotEmpty() -> { code = ""; offset = 0 }; maps&&!atlasOnly -> maps=false; else -> onBack() } }
+    if (code == SlavonicDictionaryModule && !maps) {
+        SlavonicDictionaryScreen(language, onBack = { code = ""; key = ""; offset = 0 }, initialQuery = initialQuery, initialEntry = key)
+        return
+    }
     BackHandler { back() }
     LaunchedEffect(code, key, offset, submitted, retry) {
         busy = true; failed = false; article = null; page = null; images = emptyMap(); forms = emptyList()

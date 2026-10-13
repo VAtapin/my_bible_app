@@ -2,6 +2,29 @@
 
 ## Реализовано и текущее состояние
 
+- Android 0.1.15/code16: нативный сервис AZBYKA_CU_FULL через прежний
+  DictionaryApi и Compose. Прямой вход из «Ещё», также выбор в прежнем
+  каталоге словарей; каталог22908/36 букв, исходные/гражданские формы,
+  страницы30 слов, поиск word/meaning, полная plain-text статья на ширину
+  экрана. Back закрывает статью с сохранением списка/раздела. Ponomar для
+  исходных слов, русский оригинал значений, RU/DE/UK/EN подписи.
+  Favorites/30 последних слов — additive version1 JSON существующего
+  native profile, фоновые записи, повреждённые данные не перезаписываются.
+  Новый поиск/повторное чтение требует сети, полный offline корпус не
+  установлен; учебные уроки Азбуки этим этапом не переносятся.
+  Shared API75 tests (4 новых), lintDebug/lintRelease, 7 новых UI/storage
+  тестов на API37 x86_64 с actual public API PASS: обе формы поиска,
+  каталог/буквы/pagination/full body/возврат, favorites, state restoration,
+  прямой вход из More/общего каталога, сохранность профиля и corrupt-data handling.
+  Signed APK/AAB/non-debuggable/ZIP/ELF LOAD проверки PASS; артефакты/SHA
+  в mobile/README.md. ARM64/16KB/Play не проверены; прежнее предупреждение
+  graphics.path RELRO сохраняется.
+  Release установлен на прежнем0.1.14 без удаления данных, финальный
+  cold start Status ok/version0.1.15/code16, crash buffer пуст.
+  Публикация нового APK ещё не подтверждена,
+  готовое передаётся SSH. Последний связанный commit:
+  Add native Church Slavonic dictionary on Android (hash в Git).
+
 - Азбука, 13.10.2026: общий словарный экран в standalone /dictionary и
   Bible App /education/azbuka/dictionary. Настоящий AZBYKA_CU_FULL API:
   поиск исходного/гражданского слова и русского значения, 36 разделов
@@ -15,7 +38,7 @@
   RU/DE/CU UI, описание продукта и контракт/ссылки обновлены; новый
   WordPress shortcode согласуется в wp_cu_translator и здесь не объявлен
   готовым. Поиск/повторное чтение требуют сети; полный offline корпус
-  не установлен, нативный Android APK этим Vue-этапом не изменён.
+  не установлен; нативный Android-сервис описан отдельным блоком выше.
   Backend dependency: BibleDesktop 6d5f1d7da619a54337db0be289203d3edfcb56cb,
   22 908 статей/36 разделов. Реальная локальная интеграция с изолированным
   полным корпусом: поиск «абие»/«святая вода», pagination, полная статья,

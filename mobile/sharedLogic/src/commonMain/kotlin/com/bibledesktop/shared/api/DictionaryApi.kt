@@ -15,7 +15,11 @@ import kotlinx.serialization.Serializable
 @Serializable data class DictionaryArticle(val id: Long, val key: String, val topic: String, val body: String, val media: List<DictionaryMedia>, val links: List<DictionaryLink>, val references: List<DictionaryReference>)
 @Serializable data class DictionaryPage(val data: List<DictionaryTopic>, val total: Int)
 @Serializable data class DictionaryWordForm(@SerialName("module_code") val moduleCode: String, @SerialName("standard_form") val standard: String)
-class DictionaryApi(private val client: HttpClient = createPlatformHttpClient(), private val baseUrl: String = "https://bible-desktop.com/api") : AutoCloseable {
+class DictionaryApi(private val client: HttpClient = createPlatformHttpClient(), private val baseUrl: String = "https://bible-desktop.com/api") : AutoCloseable, SlavonicDictionarySource {
+    private val slavonic = SlavonicDictionaryRequests(client, baseUrl)
+    override suspend fun slavonicSearch(query: String, meaning: Boolean, letter: Int?, offset: Int) = slavonic.slavonicSearch(query, meaning, letter, offset)
+    override suspend fun slavonicAlphabet() = slavonic.slavonicAlphabet()
+    override suspend fun slavonicArticle(key: String) = slavonic.slavonicArticle(key)
     private fun code(value: String): String { require(Regex("[A-Za-z0-9][A-Za-z0-9_.-]*").matches(value)); return value }
     suspend fun modules(): List<DictionaryModule> = client.get("$baseUrl/dictionaries").body<ApiEnvelope<List<DictionaryModule>>>().data.also { require(it.all { m -> m.entries >= 0 && m.media >= 0 && m.forms >= 0 }) }
     suspend fun entries(module: String, query: String = "", offset: Int = 0): DictionaryPage { require(offset >= 0 && query.length <= 120); return client.get("$baseUrl/dictionaries/${code(module)}/entries") { parameter("q", query); parameter("offset", offset); parameter("limit", 30) }.body<DictionaryPage>().also { require(it.total >= 0 && it.data.all { e -> e.id > 0 && Regex("[a-f0-9]{40}").matches(e.key) }) } }

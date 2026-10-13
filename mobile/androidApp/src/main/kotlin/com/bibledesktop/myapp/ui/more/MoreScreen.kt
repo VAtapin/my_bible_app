@@ -76,6 +76,7 @@ fun MoreScreen(
     onOpenBooks: () -> Unit = {},
     onSearch: () -> Unit = {},
     onDictionaries: () -> Unit = {},
+    onSlavonicDictionary: () -> Unit = {},
     onAtlases: () -> Unit = onDictionaries,
     onPersonalStudy: () -> Unit = {},
     onStudyDownloads: () -> Unit = {},
@@ -130,6 +131,9 @@ fun MoreScreen(
             item { OfflinePanel(language) }
             item { androidx.compose.material3.OutlinedButton(onClick = onDictionaries, modifier = Modifier.fillMaxWidth()) {
                 Text(com.bibledesktop.myapp.ui.study.dictionaryTexts(language).title)
+            } }
+            item { androidx.compose.material3.OutlinedButton(onClick = onSlavonicDictionary, modifier = Modifier.fillMaxWidth()) {
+                Text(com.bibledesktop.myapp.ui.study.slavonicDictionaryTexts(language).title)
             } }
             item { androidx.compose.material3.OutlinedButton(onClick = onPersonalStudy, modifier = Modifier.fillMaxWidth()) {
                 Text(com.bibledesktop.myapp.ui.bible.personalStudyText(language, "library"))
