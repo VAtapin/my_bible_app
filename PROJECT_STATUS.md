@@ -25,10 +25,16 @@
   physicalARM64/Play не проверены, RELRO warning сохраняется.
   quote.sql исследован read-only:31092 rows; wholeedition identity
   не доказана.124/176 Ps119 reference sets EXACT officialTSK1.5,52 отличаются.
-  Candidate packet124SOURCEgroups/1958edges/1594nodes ещё требует actualDB
-  group/text сверки; productionprofiles/maps0, semanticadmission и публикация
-  offlinepackages остаются у API/SSH. Клиент не объявляет весь корпус verified.
-  Последний связанный commit: b6574948a058fbca3fc154ddc0e3843f7e086618.
+  ActualDB read-only124SOURCEgroups/1958edges и1594KJV+textSHA exact,
+  mismatch/missing/duplicate0. Это bounded proof, не wholeedition identity;
+  productionprofiles/maps0, reviewedmanifest/admission/offlinepublish у API/SSH.
+  WEB/APK0.1.17 опубликованы SSH13.10.2026: exactsourcee734aaa,
+  actual4routes/41assets/SW/index и полныйHTTPSAPK28629504B/SHA PASS.
+  OldAPK0.1.16 сохранён; backend5b797b2d/epoch2035/maps0 не менялись.
+  Азбука standalone не заменена. В serverbuild её дополнительный subbuild
+  после EAGAIN повторён отдельно и прошёл, mainbuild не повторяли.
+  Receipt backend docs/REFERENCE_CLIENT_PUBLICATION_RECEIPT.md.
+  Implementation commit: e734aaa8b71d04a7b3076ba92e10172e521170c8.
 
 - Приёмка толкований/публикаций, 13.10.2026: SSH подтвердил 180
   опубликованных источников/1 284 382 статьи; ровно одна существующая

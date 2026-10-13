@@ -733,5 +733,8 @@ cold start Status ok/code18/pageSizeCompat0/crash buffer пуст, вход в �
 ./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 18 -VersionName '0.1.17'
 ```
 
-0.1.17 готов к передаче SSH; публикация ещё не подтверждена. Предыдущий
-молитвослов/WEB/APK0.1.16 опубликован и проверен SSH13.10.2026.
+0.1.17 опубликован SSH13.10.2026: полный HTTPS APK28 629 504bytes/SHA
+совпадает с подписанным файлом выше; WEB4routes/41assets/index/SW SHA PASS.
+Исходники e734aaa8b71d04a7b3076ba92e10172e521170c8. Старый0.1.16 доступен.
+Backend/maps/offline epoch не менялись; настоящая semantic map publication
+остаётся отдельным этапом. Повторная сборка по этой приёмке не требуется.

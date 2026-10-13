@@ -41,8 +41,17 @@
     "Five existing Play screenshots show 0.1.0; refresh catalogue screenshots before submission",
     "Data Safety, audience, content rights and IARC declarations need owner confirmation",
     "Play App Signing certificate and domain association not configured",
-    "Numbering API v2 deployment, proven source/edition map admission and schema2 package publication pending; production maps not verified by test fixtures",
-    "Android 0.1.17 and updated WEB are prepared, not yet confirmed published; prior prayer-book/WEB/APK0.1.16 publication verified by SSH"
+    "Numbering API v2 deployment, proven source/edition map admission and schema2 package publication pending; production maps not verified by test fixtures"
   ],
-  "backendContract": "e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af"
+  "backendContract": "e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af",
+  "implementationCommit": "e734aaa8b71d04a7b3076ba92e10172e521170c8",
+  "downloadPublication": {
+    "date": "2026-10-13",
+    "apkUrl": "https://biblia-app.ru/downloads/BibleDesktop-0.1.17.apk",
+    "bytes": 28629504,
+    "sha256": "672C1E5BFF169E889E6A39BC0D2B4923FAEFDBA5F12C320420D38C73DF3F66E2",
+    "verifiedBy": "SSH - главный чат; full HTTPS download + source/assets checks",
+    "previousApkRetained": "0.1.16",
+    "playSubmitted": false
+  }
 }
