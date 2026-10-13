@@ -25,7 +25,7 @@ PWA.
 - production API — `https://bible-desktop.com/api`.
 
 Идентификатор обеих платформ: `com.bibledesktop.myapp`. Текущая версия Android:
-`0.1.16` (build 17).
+`0.1.17` (build 18).
 
 Android включает новые инструменты читалки, личные пометки, каталоги книг и
 словарей, контекстные толкования, полные справочные ZIP и офлайн-атлас.
@@ -700,3 +700,38 @@ collection=prayers data). Затем собрать debug APK/test APK, уста
 тесты остаются независимы от сервера. connectedDebugAndroidTest удаляет
 тестовую установку/данные: fixture нужно переносить после установки APK,
 не перед этим Gradle task. Запрет cleartext в приложении не ослаблялся.
+
+## Android 0.1.17 / code 18 — разрешение параллельных мест
+
+Online/cached API v2 сохраняет исходные координаты и отдельно разрешённые
+адреса выбранного перевода. Автоматический preview только для единственного
+exact/one-to-one целого стиха, согласованных query/source/map ID/version/SHA
+и настоящего текста. Старый обход через прямую загрузку неизвестной OSIS закрыт;
+ручное чтение и чтения календаря сохранены.
+
+Офлайн schema2 использует inverse SOURCE index, digest всей original source
+group и forward каждого TARGET с обратной проверкой уникальности. При remap
+обязательны оба text hashes. Fingerprinted TARGET-only entry не может
+разрешить SOURCE без group digest даже при identity. Пропуски карты, изменённый
+текст, split/merge не выбираются автоматически; исходные варианты сохраняются.
+Backend contract pin e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af. Реальные карты
+и серверные schema2 пакеты ещё требуют приёмки/публикации, fixtures этого не доказывают.
+
+83 host tests PASS;12 native instrumentation tests API37/x86_64 PASS, после
+последнего SOURCE-context fix3 affected resolver tests PASS. Debug/test compile,
+lintDebug/lintRelease, signed APK/AAB/signature/non-debuggable/ZIP/ELF LOAD PASS.
+Signed0.1.16→0.1.17 без удаления данных на сохранённом API37/x86_64/16384:
+cold start Status ok/code18/pageSizeCompat0/crash buffer пуст, вход в Библию
+восстановил Ин.3:16. Старый тестовый AVD с иной подписью оставлен без удаления
+его данных. Physical ARM64/Play не проверены; RELRO warning сохраняется.
+
+Файлы: `androidApp/build/outputs/verified/0.1.17/`:
+- APK SHA256 `672C1E5BFF169E889E6A39BC0D2B4923FAEFDBA5F12C320420D38C73DF3F66E2`.
+- AAB SHA256 `836C6F67E344FC4632B5DA0F9F0D95FB795B7496D33D097067131F54EB13D6A3`.
+
+```powershell
+./mobile/scripts/Build-Release.ps1 -KeyDirectory 'C:/Users/atapi/.android/bible-desktop-release' -VersionCode 18 -VersionName '0.1.17'
+```
+
+0.1.17 готов к передаче SSH; публикация ещё не подтверждена. Предыдущий
+молитвослов/WEB/APK0.1.16 опубликован и проверен SSH13.10.2026.

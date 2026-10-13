@@ -2,6 +2,7 @@ package com.bibledesktop.shared.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class StudyVerse(val id: Long, @SerialName("osis_ref") val osisRef: String)
@@ -11,13 +12,23 @@ data class CrossReferences(
     val verse: StudyVerse,
     @SerialName("translation_code") val translationCode: String,
     val references: List<CrossReference> = emptyList(),
+    @SerialName("reference_resolution") val referenceResolution: ReferenceQueryResolution? = null,
 )
-fun CrossReferences.guardedReferences():CrossReferences=copy(references=references.map{item->item.copy(target=item.target.copy(versification=item.versification,text=if(item.versification.verified)item.target.text else null))})
+fun CrossReferences.guardedReferences():CrossReferences=copy(references=references.map{item->
+    if(item.resolution!=null || referenceResolution!=null) item.guardedResolvedReference(this)
+    else item.copy(target=item.target.copy(versification=item.versification,text=if(item.versification.verified)item.target.text else null))
+})
 
 @Serializable
 data class CrossReference(val id: Long, val target: ReferenceTarget,
     val type: String? = null, val source: String? = null, val metadata: CrossReferenceMetadata? = null,
-    val versification:ReferenceVersification = ReferenceVersification())
+    val versification:ReferenceVersification = ReferenceVersification(),
+    @SerialName("original_source") val originalSource: OriginalReference? = null,
+    @SerialName("original_target") val originalTarget: OriginalReference? = null,
+    @SerialName("resolved_source") val resolvedSource: List<ResolvedReference> = emptyList(),
+    @SerialName("resolved_targets") val resolvedTargets: List<ResolvedReference> = emptyList(),
+    val resolution: ReferenceResolution? = null,
+    @Transient val readingTarget: ReferenceTarget? = null)
 
 @Serializable data class ReferenceVersification(val status:String="unknown",
     @SerialName("source_profile") val sourceProfile:String?=null,
@@ -69,7 +80,7 @@ data class ReferenceGroup(val source: String, val type: String, val targets: Lis
 /** Only consecutive targets from the same published source become one range. */
 fun referenceGroups(references: List<CrossReference>, bookOrder: Map<String, Int> = emptyMap()): List<ReferenceGroup> {
     val result = mutableListOf<ReferenceGroup>()
-    references.groupBy { listOf(it.source.orEmpty(), it.type.orEmpty(), it.metadata?.legacyQuoteId, it.metadata?.rawReference,
+    references.map { it.copy(target=it.readingTarget?:it.target) }.groupBy { listOf(it.source.orEmpty(), it.type.orEmpty(), it.metadata?.legacyQuoteId, it.metadata?.rawReference,
         it.target.osisRef.substringBefore('.'), it.target.osisRef.split('.')[1], it.target.chapterNumber,it.versification) }.values.forEach { bucket ->
         var targets = mutableListOf<ReferenceTarget>()
         fun finish() { if (targets.isNotEmpty()) result.add(ReferenceGroup(bucket.first().source.orEmpty(), bucket.first().type.orEmpty(), targets.toList())); targets = mutableListOf() }

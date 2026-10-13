@@ -65,7 +65,7 @@ class ReferencePresentationTest {
         Unit
     }
 
-    @Test fun unknownSemanticWithExactAvailableTextOpensExistingPassageReader() {
+    @Test fun unknownSemanticStaysHiddenButExplicitManualPassageStillOpens() {
         val api=BibleApiClient();val calls=mutableListOf<String>()
         val source=object:BibleContentSource by api {
             override suspend fun getVerseLocations(code:String,references:List<String>):List<VerseLocation> {
@@ -75,17 +75,16 @@ class ReferencePresentationTest {
             override suspend fun getChapter(code:String,slug:String,number:Int):BibleChapter=chapter()
             override suspend fun getBooks(code:String):List<BibleBook> = listOf(book)
         }
-        var opened by mutableStateOf(false)
+        var opened by mutableStateOf(true)
         try {
             compose.setContent { BibleDesktopTheme {
-                ReferencePassageCards("ru",chapter(),listOf(ReferenceGroup("legacy_quote","raw",listOf(target(verified=false)))),source){opened=true}
+                ReferencePassageCard("ru",chapter(),ReferenceGroup("legacy_quote","raw",listOf(target(verified=false))),mapOf("Gen.16.7" to "Actual text")){error("Unknown semantic card must remain hidden")}
                 if(opened)TemporaryStudyPassage("ru","RST",listOf(target(verified=false)),source){opened=false}
             } }
-            compose.waitUntil(10_000){compose.onAllNodesWithTag("reference-label-Gen.16.7").fetchSemanticsNodes().isNotEmpty()}
-            compose.onNodeWithTag("reference-label-Gen.16.7").performClick()
+            compose.onNodeWithTag("reference-label-Gen.16.7").assertDoesNotExist()
             compose.waitUntil(10_000){compose.onAllNodesWithTag("verse-7").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithTag("verse-7").assertIsDisplayed()
-            compose.runOnIdle { assertEquals(listOf("Gen.16.7","Gen.16.7"),calls) }
+            compose.runOnIdle { assertEquals(listOf("Gen.16.7"),calls) }
             compose.onNodeWithText("Нумерация",substring=true).assertDoesNotExist()
         } finally { api.close() }
     }

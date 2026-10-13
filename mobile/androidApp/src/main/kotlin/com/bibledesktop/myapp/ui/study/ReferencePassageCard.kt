@@ -49,13 +49,13 @@ internal suspend fun resolveReferenceCardText(client: BibleContentSource, code: 
     result
 }
 
-internal fun referenceGroupAvailable(group:ReferenceGroup,actual:Map<String,String>):Boolean = group.targets.isNotEmpty() && group.targets.all { (actual[it.osisRef] ?: referencePreviewText(it,"" )).isNotBlank() }
+internal fun referenceGroupAvailable(group:ReferenceGroup,actual:Map<String,String>):Boolean = group.targets.isNotEmpty() && group.targets.all { it.versification.verified && (actual[it.osisRef] ?: referencePreviewText(it,"" )).isNotBlank() }
 
 @Composable internal fun ReferencePassageCards(language:String, chapter:BibleChapter, groups:List<ReferenceGroup>, client:BibleContentSource, onOpen:(ReferenceGroup)->Unit) {
     val identities = groups.flatMap { it.targets }.map { it.osisRef }.distinct()
     var actual by remember(client,chapter.translation.code,identities) { mutableStateOf(emptyMap<String,String>()) }
     LaunchedEffect(client,chapter.translation.code,identities) {
-        actual=resolveReferenceCardText(client,chapter.translation.code,groups.flatMap { it.targets })
+        actual=resolveReferenceCardText(client,chapter.translation.code,groups.flatMap { it.targets }.filter { it.versification.verified })
     }
     groups.forEach { ReferencePassageCard(language,chapter,it,actual) { onOpen(it) } }
 }

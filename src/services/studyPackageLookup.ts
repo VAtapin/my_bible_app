@@ -12,7 +12,7 @@ export async function studyPackageRows(pack: InstalledStudyPackage, table: strin
   if(options.bookOsis && row.book_osis!==options.bookOsis)continue
   const source=typeof row.source_verse==='object'&&row.source_verse!==null?row.source_verse as Record<string,unknown>:undefined,target=typeof row.target_verse==='object'&&row.target_verse!==null?row.target_verse as Record<string,unknown>:undefined
   if(options.sourceApiId!==undefined && source?.api_id!==options.sourceApiId)continue
-  if(options.sourceOsis!==undefined && (source?.osis_ref??row.source_osis_ref)!==options.sourceOsis)continue
+  if(options.sourceOsis!==undefined && (table==='versification_inverse_entries.jsonl'?row.target_osis_ref:source?.osis_ref??row.source_osis_ref)!==options.sourceOsis)continue
   if(options.variation!==undefined && String(row.variation).normalize('NFC').toLocaleLowerCase()!==options.variation.normalize('NFC').toLocaleLowerCase())continue
   if(query && ![row.topic,row.title,row.author,row.standard_form,row.variation,row.word,row.id,row.source_code,row.source_name,source?.osis_ref,target?.osis_ref].filter(v=>typeof v==='string').join(' ').normalize('NFC').toLocaleLowerCase().includes(query))continue
   if(total>=offset && rows.length<limit)rows.push(row);total++

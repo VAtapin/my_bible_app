@@ -99,6 +99,11 @@ class BibleApiClient internal constructor(
         }.body<ApiEnvelope<CrossReferences>>().data.also {
             require(it.verse.id == verseId && it.translationCode == translationCode)
             require(it.references.all{ref->ref.versification.status in setOf("unknown","raw","ambiguous","verified")})
+            it.referenceResolution?.let { query ->
+                require(query.schema==2 && query.queryOsisRef==it.verse.osisRef)
+                require(query.sources.all { source -> source.source.isNotBlank() && source.status in setOf("unknown","raw","ambiguous","verified") })
+            }
+            require(it.references.all { ref -> ref.resolution==null || ref.resolution.status in setOf("unknown","raw","ambiguous","verified") })
         }.guardedReferences()
     }
 

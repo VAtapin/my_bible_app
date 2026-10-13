@@ -124,12 +124,15 @@ internal class OfflineContentRepository(
     internal suspend fun getCrossReferencesAt(verseId:Long,translationCode:String,sourceOsis:String?):CrossReferences {
         val packages=studyPackages
         if(packages?.has("CROSS_REFERENCES")==true){
+            val verifier=StudyVersification.create(packages)
+            if(verifier?.schema==2) {
+                return StudyReferenceResolver(packages,verifier,this).references(verseId,translationCode,requireNotNull(sourceOsis){"Selected edition verse identity unavailable"})
+            }
             val rows=mutableListOf<JsonObject>();var offset=0
             do { val page=packages.rows("CROSS_REFERENCES","references",sourceOsis=sourceOsis,sourceApiId=if(sourceOsis==null)verseId else null,offset=offset,limit=500);rows+=page.rows;offset+=page.rows.size }while(offset<page.total)
             val identity=sourceOsis?:rows.firstOrNull()?.get("source_verse")?.jsonObject?.get("osis_ref")?.jsonPrimitive?.contentOrNull
                 ?:error("Source verse identity unavailable in installed references")
             require(rows.all{it["source_verse"]?.jsonObject?.get("osis_ref")?.jsonPrimitive?.contentOrNull==identity})
-            val verifier=StudyVersification.create(packages)
             var statuses=rows.map{row->verifier?.reference((row["source_code"] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf{it.isString}?.contentOrNull.orEmpty(),identity,row.getValue("target_verse").jsonObject.getValue("osis_ref").jsonPrimitive.content,translationCode)?:ReferenceVersification()}
             if(statuses.any{it.verified}){
                 val sourceLocations=getVerseLocations(translationCode,listOf(identity))
@@ -157,7 +160,7 @@ internal class OfflineContentRepository(
             }
             return CrossReferences(StudyVerse(verseId,identity),translationCode,references)
         }
-        return content("references:$translationCode:$verseId",CrossReferences.serializer()){remote.getCrossReferences(verseId,translationCode)}
+        return content("references:$translationCode:$verseId",CrossReferences.serializer()){remote.getCrossReferences(verseId,translationCode)}.guardedReferences()
     }
     override suspend fun getStrongTokens(verseId: Long, translationCode: String) = content("tokens:$translationCode:$verseId", StrongTokens.serializer()) { remote.getStrongTokens(verseId, translationCode) }
     override suspend fun getStrongEntry(number: String, verseId: Long): StrongEntry {

@@ -4,9 +4,10 @@ import { studyCache,type StudyCache } from './studyService'
 import { installedStrongEntries } from './studyPackageLookup'
 import { installedCrossReferences } from './installedCrossReferences'
 import {referenceVersification,verifiedReference}from'@/api/verseStudy'
+import {resolvedReadingTarget} from './resolvedReferences'
 
 export type InstalledStrongReader = (number:string)=>Promise<{entries:Record<string,unknown>[];lexicons:Record<string,unknown>[]} | undefined>
-export function guardedReferences(value:StudyReferences):StudyReferences{return{...value,references:value.references.map(item=>{const status=referenceVersification(item.versification);return{...item,versification:status,target:{...item.target,versification:status,text:verifiedReference(status)?item.target.text:null}}})}}
+export function guardedReferences(value:StudyReferences):StudyReferences{return{...value,references:value.references.map(item=>{const status=value.reference_resolution?referenceVersification():referenceVersification(item.versification);return{...item,readingTarget:resolvedReadingTarget(item,value),versification:status,target:{...item.target,versification:status,text:verifiedReference(status)?item.target.text:null}}})}}
 export function installedStrongArticle(number:string,data:NonNullable<Awaited<ReturnType<InstalledStrongReader>>>,lexiconCode?:string):StudyStrongEntry {
   const entry=data.entries.find(e=>e.id===number&&(!lexiconCode||e.lexicon_code===lexiconCode)),lexicon=entry&&data.lexicons.find(l=>l.code===entry.lexicon_code)
   if(!entry||!lexicon||typeof lexicon.code!=='string'||typeof lexicon.name!=='string'||typeof lexicon.language!=='string'||[entry.word,entry.transliteration,entry.pronunciation,entry.content].some(v=>v!==null&&typeof v!=='string'))throw new ApiError('invalid-response','Strong entry absent or invalid in installed lexicon')
@@ -27,7 +28,7 @@ export function verseStudyService(api:VerseStudyApi,cache:StudyCache=studyCache,
 export interface ReferenceGroup { key:string;source:string;type:string;targets:StudyReferenceTarget[];label:string }
 /** Consecutive, explicitly published targets form a range; gaps and sources stay separate. */
 export function referenceGroups(references:StudyCrossReference[],bookOrder:Record<string,number>={}):ReferenceGroup[]{
-  references=references.map(item=>{const status=referenceVersification(item.versification);return{...item,target:{...item.target,versification:status,text:verifiedReference(status)?item.target.text:null}}})
+  references=references.map(item=>{const target=item.readingTarget??item.target,status=referenceVersification(item.readingTarget?target.versification:item.versification);return{...item,target:{...target,versification:status,text:verifiedReference(status)?target.text:null}}})
   const groups:ReferenceGroup[]=[]
   const buckets=new Map<string,StudyCrossReference[]>()
   for(const item of references){const osis=item.target.osis_ref.split('.');const key=JSON.stringify([item.source??'',item.type??'',item.metadata?.legacy_quote_id??'',item.metadata?.raw_ref??'',osis[0],osis[1],item.target.chapter_number,item.target.versification]);const bucket=buckets.get(key)??[];if(!bucket.some(r=>r.target.osis_ref===item.target.osis_ref))bucket.push(item);buckets.set(key,bucket)}

@@ -15,9 +15,10 @@ const props=defineProps<{group:ReferenceGroup;code:string}>()
 const emit=defineEmits<{open:[group:ReferenceGroup];copy:[group:ReferenceGroup,actual:Record<string,string>]}>()
 const {language}=useI18n(),labels=computed(()=>verseStudyMessages[language.value]),text=computed(()=>inlineReferenceMessages[language.value])
 const actual=ref<Record<string,string>>({}),service=createChapterService(bibleApi,createIndexedDbChapterRepository())
-const confirmed=computed(()=>props.group.targets.length>0&&props.group.targets.every(target=>verifiedReference(target.versification)||Boolean(actual.value[target.osis_ref])))
+const confirmed=computed(()=>props.group.targets.length>0&&props.group.targets.every(target=>verifiedReference(target.versification)))
 onMounted(()=>watch([()=>props.group,()=>props.code],(_,__,cleanup)=>{
  actual.value={}
+ if(!confirmed.value)return
  cleanup(backgroundReferences.subscribe(()=>readReferenceText(props.group,props.code,service),value=>{actual.value=value}))
 },{immediate:true}))
 </script>

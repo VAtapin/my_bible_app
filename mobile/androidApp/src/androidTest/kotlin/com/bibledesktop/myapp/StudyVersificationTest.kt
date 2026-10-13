@@ -5,6 +5,7 @@ import com.bibledesktop.myapp.data.*
 import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.jsonPrimitive
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
@@ -25,7 +26,8 @@ class StudyVersificationTest {
   val module=objectRow("schema" to 1,"kind" to "cross_references","code" to code)
   val files=linkedMapOf("module.json" to module.toString(),"sources.jsonl" to objectRow("code" to "legacy_quote","name" to "BibleQuote quote.tsk","record_count" to 1).toString(),"references.jsonl" to objectRow("id" to "reference","api_id" to 1,"source_code" to "legacy_quote","source_name" to "BibleQuote quote.tsk","source_verse" to objectRow("api_id" to 10,"osis_ref" to source,"book_slug" to "john","book_osis" to "John","chapter" to 3,"verse" to 16),"target_verse" to objectRow("api_id" to 100,"osis_ref" to target,"book_slug" to "genesis","book_osis" to "Gen","chapter" to 1,"verse" to 1)).toString())
   if(scenario!="legacy"){
-   module.put("versification_schema",1);files["module.json"]=module.toString()
+   module.put("versification_schema",if(scenario=="inverse-v2")2 else 1);files["module.json"]=module.toString()
+   if(scenario=="inverse-v2")files["versification_inverse_entries.jsonl"]=objectRow("map_set_id" to 7,"source_osis_ref" to "Ps.119.10","target_osis_ref" to "Ps.118.10","relation" to "exact","evidence_uri" to "https://evidence.example/map","evidence_id" to "review:10").toString()
    files["versification_profiles.jsonl"]=listOf(profile("SOURCE"),profile("EDITION")).joinToString("\n")
    files["versification_assignments.jsonl"]=listOf(assignment("reference_source","legacy_quote","SOURCE"),assignment("translation","RST","EDITION")).joinToString("\n")
    files["versification_map_sets.jsonl"]=if(scenario=="missing-map")""else objectRow("id" to 7,"source_profile_code" to "SOURCE","target_profile_code" to "EDITION","version" to "reviewed-v1","provenance_uri" to "https://evidence.example/map","sha256" to "b".repeat(64),"verified_at" to "2026-10-10 12:00:00","reviewer" to if(scenario=="missing-reviewer")""else"Documented reviewer").toString()
@@ -42,6 +44,15 @@ class StudyVersificationTest {
    assertEquals("unknown",verifier.reference("legacy_quote","John.3.16","Gen.1.1","OTHER_EDITION").status)
   }
   install(root,store,"legacy");assertNull(StudyVersification.create(store))
+ }}
+ @Test fun schemaTwoIndexesInverseBySelectedEditionAddressAndNeverAssumesIdentity()=runBlocking{isolated{root,store->
+  install(root,store,"inverse-v2")
+  assertEquals(2,requireNotNull(StudyVersification.create(store)).schema)
+  val selected=store.rows("CROSS_REFERENCES","versification_inverse_entries",mapSetId=7,sourceOsis="Ps.118.10",limit=2)
+  assertEquals(1,selected.total)
+  assertEquals("Ps.119.10",selected.rows.single()["source_osis_ref"]!!.jsonPrimitive.content)
+  assertEquals(0,store.rows("CROSS_REFERENCES","versification_inverse_entries",mapSetId=7,sourceOsis="Ps.119.10",limit=2).total)
+  assertEquals("raw",requireNotNull(StudyVersification.create(store)).reference("legacy_quote","Ps.119.10","Ps.119.1","RST").status)
  }}
  @Test fun verifiedDispatchUsesActualEditionIdsWhileUnknownKeepsStoredAddressWithoutPreview()=runBlocking{isolated{root,store->
   install(root,store)

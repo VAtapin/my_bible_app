@@ -2,6 +2,34 @@
 
 ## Реализовано и текущее состояние
 
+- Параллельные места, WEB/native Android0.1.17/code18: API v2 сохраняет
+  исходные SOURCE/TARGET и разрешённые адреса выбранного перевода.
+  Automatic preview требует matching query/source/map ID/version/SHA,
+  единственный exact/one-to-one целый стих и настоящий текст. Закрыт
+  прежний обход проверки через загрузку текста по исходной OSIS; ручное
+  чтение и чтения календаря сохранены. Cache повторно проверяет v2.
+  Офлайн schema2: inverse SOURCE → original source group, forward TARGET
+  и reciprocal uniqueness; при remap SHA всей группы и обоих actual texts.
+  Fingerprinted TARGET-only node не допускается как SOURCE без group SHA,
+  даже при identity. Исходные записи/неоднозначные варианты сохраняются;
+  missing entry не означает identity, schema1 совместим. Backend contract:
+  e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af (supersedes8fbd4e8).
+  WEB543 tests/124 files PASS,4 opt-in skipped; typecheck/обе сборки PASS.
+  После последнего SOURCEcontextfix:10 scoped tests PASS, обе сборки PASS.
+  Android83 host tests,12 instrumentation PASS и3 affected resolver tests
+  после SOURCEcontextfix PASS; debug/test compile/lintDebug PASS.
+  Signed APK/AAB/signatures/non-debuggable/ZIP/ELF LOAD/lintRelease PASS.
+  0.1.16→0.1.17 без удаления данных на API37/x86_64/PAGE_SIZE16384:
+  cold launch Status ok/code18/pageSizeCompat0/crash buffer пуст; вход
+  в Библию восстановил Ин.3:16. Артефакты/SHA mobile/README.md,
+  physicalARM64/Play не проверены, RELRO warning сохраняется.
+  quote.sql исследован read-only:31092 rows; wholeedition identity
+  не доказана.124/176 Ps119 reference sets EXACT officialTSK1.5,52 отличаются.
+  Candidate packet124SOURCEgroups/1958edges/1594nodes ещё требует actualDB
+  group/text сверки; productionprofiles/maps0, semanticadmission и публикация
+  offlinepackages остаются у API/SSH. Клиент не объявляет весь корпус verified.
+  Последний связанный commit: b6574948a058fbca3fc154ddc0e3843f7e086618.
+
 - Приёмка толкований/публикаций, 13.10.2026: SSH подтвердил 180
   опубликованных источников/1 284 382 статьи; ровно одна существующая
   статья каждого источника — HTTP200/непустое тело/correct ID, 180/180.
@@ -15,9 +43,12 @@
   строгий веб-контракт; 2 live + 4 прежних API tests PASS. Без STUDY_API
   live проверки пропускаются, никаких автоматических production запросов.
   Каталог отдельной Азбуки опубликован её Plesk user: страницы/HTML/SW/
-  ресурсы HTTPS/SHA PASS по receipt SSH. WEB Bible App/Android0.1.16
-  ещё ждут API full Gebetbuch05e92f8/anchors5b797b2. Новые backups
-  только с личным разрешением владельца; scoped preflight готовит SSH.
+  ресурсы HTTPS/SHA PASS по receipt SSH. WEB Bible App/Android0.1.16 опубликованы и проверены SSH13.10.2026:
+  одна лично разрешённая scoped копия13таблиц/5001229B, backend5b797b2d,
+  190actualHTTPSредакций,1391blocks/19inclusiveanchors/101DEprayers,
+  30calendarrefs. Старые13tables/dictionaryepoch2035 сохранены; WEB41assets
+  и полный скачанныйAPK/SHA PASS. Receipt backendce29b5ef.
+  Новые backups по-прежнему только с личным разрешением владельца.
   Последний связанный commit приёмки Android: b3fbcdf2420cad31718940ffb6a7382e834196e5.
 
 - Приёмка Android 0.1.16/code17, 13.10.2026: существующий отдельный
@@ -65,8 +96,9 @@
   versionCode17, crash buffer пуст. ARM64/Play не проверены; дополнительный
   runtime16КБ на x86_64 описан выше;
   прежний graphics.path RELRO warning остаётся.
-  Production клиента/корпуса и выдача APK пока не подтверждены; готовое
-  передаётся SSH с dependency gate. Предыдущий клиентский commit8962364;
+  Production клиента/корпуса и выдача APK0.1.16 подтверждены SSH13.10.2026:
+  WEB4routes/PWA/41assets и downloadedAPK/SHA PASS; old0.1.15 доступен.
+  Новый механизм нумерации пока в отдельной очереди публикации. Предыдущий клиентский commit8962364;
   текущий блок: Add prayer books and edition navigation (hash в Git).
 
 - Android 0.1.15/code16: нативный сервис AZBYKA_CU_FULL через прежний

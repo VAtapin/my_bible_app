@@ -19,6 +19,8 @@ export async function buildStudyPackageIndex(pack:StudyPackage,files:Record<stri
    for await(const row of packageRows(file)){
     signal.throwIfAborted();const prefix=[pack.id,pack.version,name],value:PackageIndexRecord={key:`study-index:${pack.id}:${pack.version}:${name}:${String(position++).padStart(12,'0')}`,value:row,studyPackage:[pack.id,pack.version],studyTable:prefix}
     if(typeof row.source_osis_ref==='string')value.studySource=[...prefix,row.source_osis_ref]
+    // The inverse table indexes actual-edition addresses in the existing per-table index.
+    if(name==='versification_inverse_entries.jsonl'&&typeof row.target_osis_ref==='string')value.studySource=[...prefix,row.target_osis_ref]
     if(typeof row.id==='string')value.studyId=[...prefix,row.id]
     const parent=row.entry_id??row.commentary_book_id;if(typeof parent==='string')value.studyParent=[...prefix,parent]
     const alias=row.api_id??row.entry_api_id;if(typeof alias==='number')value.studyApiId=[...prefix,String(alias)]
@@ -56,7 +58,7 @@ export async function indexedStudyPackageRows(pack:InstalledStudyPackage,table:s
  try {return await new Promise((resolve,reject)=>{const tx=db.transaction(offlineStores.state),index=tx.objectStore(offlineStores.state).index(selection[0]!),cursor=index.openCursor(IDBKeyRange.only(selection.length===1?prefix:[...prefix,selection[1]!]));const rows:Record<string,unknown>[]=[];let total=0
   cursor.onerror=()=>reject(cursor.error??new Error('Package index failed'))
   cursor.onsuccess=()=>{const item=cursor.result;if(!item){resolve({rows,total});return}const row=(item.value as PackageIndexRecord).value,source=record(row.source_verse)?row.source_verse:undefined,target=record(row.target_verse)?row.target_verse:undefined
-   const matches=(!options.id||row.id===options.id)&&(!options.entry||row.entry_id===options.entry||row.commentary_book_id===options.entry)&&(!options.book||row.book_slug===options.book)&&(!options.bookOsis||row.book_osis===options.bookOsis)&&(options.sourceOsis===undefined||(source?.osis_ref??row.source_osis_ref)===options.sourceOsis)&&(options.sourceApiId===undefined||source?.api_id===options.sourceApiId)&&(options.variation===undefined||String(row.variation).normalize('NFC').toLocaleLowerCase()===options.variation.normalize('NFC').toLocaleLowerCase())&&(!query||[row.topic,row.title,row.author,row.standard_form,row.variation,row.word,row.id,row.source_code,row.source_name,source?.osis_ref,target?.osis_ref].filter(v=>typeof v==='string').join(' ').normalize('NFC').toLocaleLowerCase().includes(query))
+   const matches=(!options.id||row.id===options.id)&&(!options.entry||row.entry_id===options.entry||row.commentary_book_id===options.entry)&&(!options.book||row.book_slug===options.book)&&(!options.bookOsis||row.book_osis===options.bookOsis)&&(options.sourceOsis===undefined||(table==='versification_inverse_entries.jsonl'?row.target_osis_ref:source?.osis_ref??row.source_osis_ref)===options.sourceOsis)&&(options.sourceApiId===undefined||source?.api_id===options.sourceApiId)&&(options.variation===undefined||String(row.variation).normalize('NFC').toLocaleLowerCase()===options.variation.normalize('NFC').toLocaleLowerCase())&&(!query||[row.topic,row.title,row.author,row.standard_form,row.variation,row.word,row.id,row.source_code,row.source_name,source?.osis_ref,target?.osis_ref].filter(v=>typeof v==='string').join(' ').normalize('NFC').toLocaleLowerCase().includes(query))
    if(matches){if(total>=offset&&rows.length<limit)rows.push(row);total++}item.continue()
   }
  })}finally{db.close()}

@@ -35,7 +35,7 @@ internal val LocalVerseStudyClient=staticCompositionLocalOf<BibleContentSource?>
    val data=((client as? OfflineContentRepository)?.getCrossReferencesAt(verse.id,chapter.translation.code,verse.osisRef)?:client.getCrossReferences(verse.id,chapter.translation.code))
     .also{require(it.verse.osisRef==verse.osisRef&&it.translationCode==chapter.translation.code)}
    val candidates=displayReferenceGroups(data.references,settings.inlineSources)
-   val actual=resolveReferenceCardText(client,chapter.translation.code,candidates.flatMap{it.targets})
+   val actual=resolveReferenceCardText(client,chapter.translation.code,candidates.flatMap{it.targets}.filter{it.versification.verified})
    candidates.filter{referenceGroupAvailable(it,actual)}
   })
  }

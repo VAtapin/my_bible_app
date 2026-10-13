@@ -1,9 +1,10 @@
 import { createApiRequest, type ApiClientOptions } from './client'
+import {isOriginalReference,isResolvedReference,isResolvedReferenceTarget,isReferenceResolution,isReferenceResolutionEnvelope,type OriginalReference,type ResolvedReference,type ResolvedReferenceTarget,type ReferenceResolution,type ReferenceResolutionEnvelope} from './referenceResolution'
 
 export interface ReferenceVersification {status:'unknown'|'raw'|'ambiguous'|'verified';source_profile:string|null;edition_profile:string|null;map_version:string|null}
 export interface StudyReferenceTarget { verse_id:number;osis_ref:string;reference:string;book_slug:string;chapter_number:number;verse_number:number;text:string|null;versification?:ReferenceVersification }
-export interface StudyCrossReference { id:number;type?:string|null;source?:string|null;metadata?:{legacy_quote_id?:number;raw_ref?:string}|null;target:StudyReferenceTarget;versification?:ReferenceVersification }
-export interface StudyReferences { verse:{id:number;osis_ref:string};translation_code:string;references:StudyCrossReference[] }
+export interface StudyCrossReference { id:number;type?:string|null;source?:string|null;metadata?:{legacy_quote_id?:number;raw_ref?:string}|null;target:StudyReferenceTarget;versification?:ReferenceVersification;original_source?:OriginalReference;original_target?:OriginalReference;resolved_source?:ResolvedReference[];resolved_targets?:ResolvedReferenceTarget[];resolution?:ReferenceResolution;readingTarget?:StudyReferenceTarget }
+export interface StudyReferences { verse:{id:number;osis_ref:string};translation_code:string;references:StudyCrossReference[];reference_resolution?:ReferenceResolutionEnvelope }
 export interface StudyStrongToken { strong_number:string;token_order?:number;surface_text?:string|null;grammar_code?:string|null }
 export interface StudyStrongTokens { verse:{id:number;osis_ref:string};tokens:StudyStrongToken[] }
 export interface StudyStrongEntry { number:string;canonical_number?:string|null;scope?:'H'|'G'|null;word:string|null;transliteration:string|null;pronunciation?:string|null;content:string|null;lexicon:{code?:string;name:string;language:string} }
@@ -15,7 +16,8 @@ export const isReferenceVersification=(v:unknown):v is ReferenceVersification=>r
 export function referenceVersification(value?:ReferenceVersification):ReferenceVersification{return value&&isReferenceVersification(value)?value:{status:'unknown',source_profile:null,edition_profile:null,map_version:null}}
 export function verifiedReference(value?:ReferenceVersification):boolean{const status=referenceVersification(value);return status.status==='verified'&&Boolean(status.source_profile&&status.edition_profile&&status.map_version)}
 export const isReferenceTarget=(v:unknown):v is StudyReferenceTarget=>record(v)&&id(v.verse_id)&&typeof v.osis_ref==='string'&&typeof v.reference==='string'&&typeof v.book_slug==='string'&&id(v.chapter_number)&&id(v.verse_number)&&nullableText(v.text)&&new RegExp(`^[A-Za-z0-9]+\\.${v.chapter_number}\\.${v.verse_number}$`,'u').test(v.osis_ref)
-const isReference=(v:unknown):v is StudyCrossReference=>record(v)&&id(v.id)&&optionalText(v.type)&&optionalText(v.source)&&isReferenceTarget(v.target)&&(v.versification===undefined||isReferenceVersification(v.versification))&&(v.metadata===undefined||v.metadata===null||record(v.metadata)&&(v.metadata.legacy_quote_id===undefined||id(v.metadata.legacy_quote_id))&&(v.metadata.raw_ref===undefined||typeof v.metadata.raw_ref==='string'))
+const mapping=(v:Record<string,unknown>)=>['original_source','original_target','resolved_source','resolved_targets','resolution'].every(key=>v[key]===undefined)||isOriginalReference(v.original_source)&&isOriginalReference(v.original_target)&&Array.isArray(v.resolved_source)&&v.resolved_source.every(isResolvedReference)&&Array.isArray(v.resolved_targets)&&v.resolved_targets.every(isResolvedReferenceTarget)&&isReferenceResolution(v.resolution)
+const isReference=(v:unknown):v is StudyCrossReference=>record(v)&&id(v.id)&&optionalText(v.type)&&optionalText(v.source)&&isReferenceTarget(v.target)&&mapping(v)&&(v.versification===undefined||isReferenceVersification(v.versification))&&(v.metadata===undefined||v.metadata===null||record(v.metadata)&&(v.metadata.legacy_quote_id===undefined||id(v.metadata.legacy_quote_id))&&(v.metadata.raw_ref===undefined||typeof v.metadata.raw_ref==='string'))
 const verse=(v:unknown)=>record(v)&&id(v.id)&&typeof v.osis_ref==='string'&&/^[A-Za-z0-9]+\.\d+\.\d+$/u.test(v.osis_ref)
 const envelope=<T>(check:(v:unknown)=>v is T)=>(v:unknown):v is {data:T}=>record(v)&&check(v.data)
 export function createVerseStudyApi(options:ApiClientOptions){
@@ -23,7 +25,7 @@ export function createVerseStudyApi(options:ApiClientOptions){
   return {
     async references(verseId:number,code:string){
       if(!id(verseId)||!code)throw new Error('Invalid passage')
-      return(await request(`/verses/${verseId}/cross-references?${new URLSearchParams({translation:code})}`,envelope((v):v is StudyReferences=>record(v)&&verse(v.verse)&&record(v.verse)&&v.verse.id===verseId&&v.translation_code===code&&Array.isArray(v.references)&&v.references.every(isReference)))).data
+      return(await request(`/verses/${verseId}/cross-references?${new URLSearchParams({translation:code})}`,envelope((v):v is StudyReferences=>record(v)&&verse(v.verse)&&record(v.verse)&&v.verse.id===verseId&&v.translation_code===code&&Array.isArray(v.references)&&v.references.every(isReference)&&(v.reference_resolution===undefined?v.references.every(ref=>ref.resolution===undefined):isReferenceResolutionEnvelope(v.reference_resolution)&&v.reference_resolution.query_osis_ref===v.verse.osis_ref)))).data
     },
     async tokens(verseId:number,code:string){
       if(!id(verseId)||!code)throw new Error('Invalid passage')

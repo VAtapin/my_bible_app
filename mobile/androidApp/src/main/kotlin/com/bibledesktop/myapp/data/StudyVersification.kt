@@ -8,13 +8,13 @@ import java.time.OffsetDateTime
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-private fun JsonObject.publishedString(key:String)=(get(key) as? JsonPrimitive)?.takeIf{it.isString}?.content?.takeIf{it.isNotBlank()}
-private fun publishedUri(value:String?)=value!=null&&runCatching{URI(value).let{it.scheme in listOf("https","http")&&!it.host.isNullOrBlank()&&it.userInfo==null}}.getOrDefault(false)
-private fun publishedSha(value:String?)=value!=null&&Regex("[a-fA-F0-9]{64}").matches(value)
+internal fun JsonObject.publishedString(key:String)=(get(key) as? JsonPrimitive)?.takeIf{it.isString}?.content?.takeIf{it.isNotBlank()}
+internal fun publishedUri(value:String?)=value!=null&&runCatching{URI(value).let{it.scheme in listOf("https","http")&&!it.host.isNullOrBlank()&&it.userInfo==null}}.getOrDefault(false)
+internal fun publishedSha(value:String?)=value!=null&&Regex("[a-fA-F0-9]{64}").matches(value)
 private fun verifiedDate(value:String?):Instant?=value?.let{runCatching{Instant.parse(it)}.getOrNull()?:runCatching{OffsetDateTime.parse(it).toInstant()}.getOrNull()?:runCatching{LocalDateTime.parse(it.replace(' ','T')).toInstant(ZoneOffset.UTC)}.getOrNull()}
 
-/** The package can establish identity only; map entries never silently remap a stored pair. */
-internal class StudyVersification private constructor(private val packages:StudyPackageStore){
+/** Schema-one identity compatibility and validated map metadata for the schema-two resolver. */
+internal class StudyVersification private constructor(private val packages:StudyPackageStore,val schema:Int){
  private val profiles=mutableMapOf<Pair<String,String>,String?>()
  private val maps=mutableMapOf<Pair<String,String>,List<JsonObject>>()
  private val entries=mutableMapOf<Pair<Long,String>,StudyPackageRows>()
@@ -25,11 +25,12 @@ internal class StudyVersification private constructor(private val packages:Study
    val metadata=packages.metadata(Code)?:return null
    if(metadata.publishedString("kind")!="cross_references")return null
    val flag=metadata["versification_schema"] as? JsonPrimitive
-   if(flag==null||flag.isString||flag.intOrNull!=1||Tables.any{!packages.hasTable(Code,it)})return null
-   return StudyVersification(packages)
+   if(flag==null||flag.isString||flag.intOrNull !in listOf(1,2)||Tables.any{!packages.hasTable(Code,it)})return null
+   if(flag.intOrNull==2&&!packages.hasTable(Code,"versification_inverse_entries"))return null
+   return StudyVersification(packages,flag.int)
   }
  }
- private suspend fun profile(type:String,code:String):String? {
+ internal suspend fun profile(type:String,code:String):String? {
   val key=type to code;if(key in profiles)return profiles[key]
   val assignments=packages.rows(Code,"versification_assignments",subjectType=type,subjectCode=code,limit=2)
   val assignment=assignments.rows.singleOrNull()?.takeIf{assignments.total==1&&it.publishedString("subject_type")==type&&it.publishedString("subject_code")==code&&publishedUri(it.publishedString("evidence_uri"))}
@@ -46,9 +47,19 @@ internal class StudyVersification private constructor(private val packages:Study
   val ordered=result.sortedWith(compareByDescending<JsonObject>{verifiedDate(it.publishedString("verified_at"))?:Instant.MIN}.thenByDescending{(it["id"] as? JsonPrimitive)?.longOrNull?:0})
   maps[key]=ordered;return ordered
  }
- private suspend fun candidates(set:Long,ref:String):StudyPackageRows {
+ internal suspend fun candidates(set:Long,ref:String):StudyPackageRows {
   val key=set to ref;entries[key]?.let{return it}
   val page=packages.rows(Code,"versification_map_entries",mapSetId=set,sourceOsis=ref,limit=2);entries[key]=page;return page
+ }
+ internal suspend fun selectedMap(source:String,edition:String):JsonObject? {
+  val from=profile("reference_source",source)?:return null
+  val to=profile("translation",edition)?:return null
+  return maps(from,to).firstOrNull { map ->
+   val id=(map["id"] as? JsonPrimitive)?.takeUnless{it.isString}?.longOrNull
+   id!=null&&id>0&&map.publishedString("source_profile_code")==from&&map.publishedString("target_profile_code")==to&&
+    map.publishedString("version")!=null&&verifiedDate(map.publishedString("verified_at"))!=null&&map.publishedString("reviewer")!=null&&
+    publishedUri(map.publishedString("provenance_uri"))&&publishedSha(map.publishedString("sha256"))
+  }
  }
  suspend fun reference(source:String,sourceRef:String,targetRef:String,edition:String):ReferenceVersification {
   if(!listOf(sourceRef,targetRef).all{Regex("[A-Za-z0-9]+\\.[1-9]\\d*\\.[1-9]\\d*").matches(it)})return ReferenceVersification()

@@ -24,7 +24,7 @@ internal fun displayReferenceGroups(references:List<CrossReference>,sources:List
 }
 internal fun referenceCopyText(group:ReferenceGroup,translation:String,actualText:Map<String,String> = emptyMap()):String {
  val body=group.targets.mapNotNull{target->
-  (actualText[target.osisRef] ?: referencePreviewText(target,""))
+  (if(target.versification.verified)actualText[target.osisRef] ?: referencePreviewText(target,"") else "")
    .takeIf{it.isNotBlank()}?.let{"${target.verseNumber} $it"}
  }.joinToString("\n")
  return "${group.label} · $translation" + if(body.isNotEmpty()) "\n$body" else ""

@@ -11,6 +11,7 @@ import {useReferencePreferences} from '@/profile/referencePreferences'
 import {createChapterService} from '@/services/chapterService'
 import {createIndexedDbChapterRepository} from '@/offline/indexedDbChapterRepository'
 import {bibleApi} from '@/api'
+import {verifiedReference} from '@/api/verseStudy'
 import TemporaryPassage from './TemporaryPassage.vue'
 const props=defineProps<{chapter:BibleChapter;verse:BibleVerse}>()
 const {settings,initialize}=useReferencePreferences();initialize()
@@ -28,7 +29,7 @@ watch([visible,()=>props.verse.id,()=>props.verse.osis_ref,()=>props.chapter.tra
  cleanup(backgroundReferences.subscribe(async()=>{
   const value=await service.references(id,code,osis_ref)
   if(value.verse.osis_ref!==osis_ref)throw Error('Wrong reference source')
-  const candidates=displayReferenceGroups(value.references,settings.value.inlineSources)
+  const candidates=displayReferenceGroups(value.references,settings.value.inlineSources).filter(group=>group.targets.every(target=>verifiedReference(target.versification)))
   if(!candidates.length)return []
   const actual=await readReferenceText({...candidates[0]!,targets:candidates.flatMap(group=>group.targets)},code,chapterService)
   return candidates.filter(group=>group.targets.every(target=>Boolean(actual[target.osis_ref]||referencePreviewText(target,''))))

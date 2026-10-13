@@ -1,24 +1,24 @@
 {
   "status": "prepared-for-internal-testing-not-submitted",
   "date": "2026-10-13",
-  "baseCommit": "f477db2520fdfe138a303eb473c79f89b2ef8d8b",
+  "baseCommit": "b6574948a058fbca3fc154ddc0e3843f7e086618",
   "displayName": "Bible App",
   "package": "com.bibledesktop.myapp",
-  "versionName": "0.1.16",
-  "versionCode": 17,
+  "versionName": "0.1.17",
+  "versionCode": 18,
   "artifactSha256": {
-    "BibleDesktop-0.1.16.aab": "A6CA223A160DED941713EF02B6EAD1E3F456940B5363C66E3F3B5B98B1635D4E",
-    "BibleDesktop-0.1.16.apk": "9BD700476D4ECBA2D4885260C4596BB9B5BB770E91D1AE0C264DC54A5BF0DC4C"
+    "BibleDesktop-0.1.17.aab": "836C6F67E344FC4632B5DA0F9F0D95FB795B7496D33D097067131F54EB13D6A3",
+    "BibleDesktop-0.1.17.apk": "672C1E5BFF169E889E6A39BC0D2B4923FAEFDBA5F12C320420D38C73DF3F66E2"
   },
   "checks": {
-    "sharedHostTests": "78 passed on f477db2; unchanged for this runtime acceptance, not repeated",
-    "androidInstrumentationTests": "7 passed on API37 x86_64 on f477db2: 3 new prayer-book tests using an actual isolated API export (1391 blocks, 19 anchored sections, 101 DE prayers, exact edition selection, offline roundtrip and preserved parent language) plus 4 existing prayer UI regressions. The historical sibling in the edition selector test is an explicit test DTO, not a published edition. Not native HTTP integration against localhost.",
-    "webTests": "533 tests / 122 files, typecheck and both production builds passed on f477db2; 2 opt-in real API tests separately passed. Actual browser at 390px verified full book, anchored section jump and no horizontal overflow. Not repeated for documentation-only runtime receipt.",
-    "releaseLint": "lintDebug and lintRelease passed on f477db2; not repeated for documentation-only runtime receipt",
+    "sharedHostTests": "83 passed, including v2 roundtrip, query/source/map matching, altered original target ID, ambiguity and oversized OSIS rejection",
+    "androidInstrumentationTests": "12 passed on API37 x86_64: 4 reference presentation, 3 versification, 2 independent digest fixtures, 3 offline resolver tests covering remap/identity and failure cases. After the additional SOURCE-context guard, the 3 affected resolver tests passed again. These are explicit fixtures, not proof of production numbering maps.",
+    "webTests": "543 passed across 124 files; 4 opt-in tests skipped. Typecheck and both production builds passed. After final SOURCE context guard: 10 scoped regression tests and both builds passed; full suite then 543 passed.",
+    "releaseLint": "lintDebug and lintRelease passed; signed APK/AAB rebuilt after final SOURCE-context guard",
     "signatures": "AAB jarsigner and APK apksigner passed",
     "packageAndDebuggable": "com.bibledesktop.myapp; debuggable=false",
     "zipAndElfLoadAlignment": "16 KB passed for arm64-v8a and x86_64",
-    "emulatorRuntime": "0.1.15 to 0.1.16 update and cold launch previously passed on API37 x86_64 PAGE_SIZE4096. On 2026-10-13 the exact signed APK above updated existing 0.1.0 without clearing data on BibleDesktop_Release_16KB_37, API37 x86_64 PAGE_SIZE16384: versionCode17, pageSizeCompat0, cold start Status ok, empty crash buffer. Actual John3:16 readable with airplane mode enabled and Wi-Fi/data disabled; saved verse restored after force-stop/cold launch and entering Bible. Network restored and owned emulator stopped. No physical ARM64 or Play split acceptance."
+    "emulatorRuntime": "Exact signed 0.1.16 to 0.1.17 update without clearing data on BibleDesktop_Release_16KB_37, API37 x86_64 PAGE_SIZE16384; versionCode18/versionName0.1.17/pageSizeCompat0, cold start Status ok, empty crash buffer. Entering Bible restored saved John3:16 and actual verse text; UI XML in ignored build/prayerbook-verification/release17-reader.xml. Owned emulator stopped. Initial attempt on a different test AVD failed signature mismatch; its app/data were not removed. Physical ARM64/Play not tested."
   },
   "bundledBible": {
     "code": "BQ_RUSSIAN_RST_STRONG",
@@ -26,7 +26,10 @@
     "books": 66,
     "availableChapters": 1189,
     "advertisedChapters": 1191,
-    "missingChapters": ["Даниил 13", "Даниил 14"],
+    "missingChapters": [
+      "Даниил 13",
+      "Даниил 14"
+    ],
     "compressedBytes": 6135931,
     "sha256": "0cbfa56827e81816b5a663306331825616bc7d692119c2f5726151b0579ad62f",
     "firstLaunchRequiresNetwork": false
@@ -34,9 +37,12 @@
   "remainingChecks": [
     "RELRO end is not 16 KB aligned in graphics-path library: warning retained, strict mode rejects; ARM64 16 KB runtime verification required",
     "Real physical device, Play-delivered AAB splits and update installation not tested",
-    "Owner review of Android privacy and server processing; no production deployment performed in this task",
+    "Owner review of Android privacy and server processing",
     "Five existing Play screenshots show 0.1.0; refresh catalogue screenshots before submission",
     "Data Safety, audience, content rights and IARC declarations need owner confirmation",
-    "Play App Signing certificate and domain association not configured"
-  ]
+    "Play App Signing certificate and domain association not configured",
+    "Numbering API v2 deployment, proven source/edition map admission and schema2 package publication pending; production maps not verified by test fixtures",
+    "Android 0.1.17 and updated WEB are prepared, not yet confirmed published; prior prayer-book/WEB/APK0.1.16 publication verified by SSH"
+  ],
+  "backendContract": "e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af"
 }
