@@ -35,6 +35,7 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
     </section>
 
     <SlavonicClock />
+    <RouterLink :to="azbukaPath('/dictionary')" class="dictionary-home"><span>Ѣ</span><strong>{{t('dictionary')}}</strong><span aria-hidden="true">→</span></RouterLink>
 
     <section class="dashboard-grid">
       <article class="progress-card">
@@ -58,3 +59,4 @@ const nextLetter = computed(() => letters.find((letter) => !profileStore.profile
     </section>
   </main>
 </template>
+<style scoped>.dictionary-home{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin:16px 0;background:white}.dictionary-home span:first-child{font:30px Ponomar,Georgia,serif;color:var(--ink-soft)}.dictionary-home span:last-child{margin-left:auto}</style>

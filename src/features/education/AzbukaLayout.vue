@@ -15,6 +15,7 @@ const failed = ref(false)
 const tabs = [
   { path: '', label: 'home', icon: 'home' }, { path: '/alphabet', label: 'learn', icon: 'alphabet' },
   { path: '/numbers', label: 'numbers', icon: 'numbers' }, { path: '/practice', label: 'practice', icon: 'practice' },
+  { path: '/dictionary', label: 'dictionary', icon: 'dictionary' },
   { path: '/profile', label: 'profile', icon: 'profile' },
 ] as const
 async function initialize(): Promise<void> {
@@ -47,4 +48,5 @@ onMounted(initialize)
 .embedded-azbuka .page { width: 100%; min-height: 0; padding: 16px 0 24px; margin: 0; border-radius: 0; box-shadow: none; }
 .embedded-azbuka .home-page .topbar { display: none; }
 .embedded-azbuka .answer-feedback { position: sticky; bottom: 0; width: 100%; margin: 12px 0 0; transform: none; left: auto; }
+.plugin-nav{grid-template-columns:repeat(6,minmax(0,1fr))}
 </style>

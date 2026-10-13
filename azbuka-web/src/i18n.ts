@@ -4,7 +4,7 @@ import type { Locale } from './domain/types'
 
 const messages = {
   cu: {
-    appName: 'А҆́збꙋка съ ци́фирїю',
+    appName: 'А҆́збꙋка съ ци́фирїю', dictionary: 'Слова́рь',
     appSubtitle: 'Цр҃ковнославѧ́нское о҆бꙋче́нїе',
     home: 'На́чало', learn: 'А҆́збꙋка', numbers: 'Ци́фирь', practice: 'Оу҆пражне́нїе', profile: 'Настро́йки',
     welcome: 'Оу҆чи́сѧ чита́ти зна́мєнїѧ',
@@ -34,7 +34,7 @@ const messages = {
     reset: 'Сбро́сити преꙋспѣѧ́нїе', resetConfirm: 'Косни́сѧ па́ки ко ᲂу҆твержде́нїю',
     onboardingTitle: 'Начне́мъ съ цр҃ковнославѧ́нскагѡ', onboardingText: 'Ѧ҆зы́къ мо́жно и҆змѣни́ти въ настро́йкахъ.',
     begin: 'Нача́ти оу҆че́нїе', install: 'Мо́жно поста́вити', installText: 'Сїѐ не ѡ҆бѧза́тельно: приложе́нїе дѣ́йствꙋетъ во браꙋ́зерѣ.',
-    offline: 'Безъ сѣ́ти по пе́рвомъ ѿкры́тїи', loading: 'Загрꙋжа́емъ преꙋспѣѧ́нїе…',
+    offline: 'Оу҆ро́цы безъ сѣ́ти по пе́рвомъ ѿкры́тїи', loading: 'Загрꙋжа́емъ преꙋспѣѧ́нїе…',
     exampleWithLetter: 'Примѣ́ръ съ бу́квою', readInContext: 'Бу́ква въ те́кстѣ',
     exampleCorpus: 'И҆сто́чникъ: Бї́блїа цр҃ковнославѧ́нскаѧ, 1900 · Bible Desktop',
     mastered: 'Бу́квъ и҆зꙋче́но', totalAnswers: 'Всѣ́хъ ѿвѣ́тѡвъ',
@@ -48,7 +48,7 @@ const messages = {
     units: 'Є҆дини́цы', tens: 'Десѧ́тки', hundreds: 'Со́тни'
   },
   ru: {
-    appName: 'Азбука с цифирью',
+    appName: 'Азбука с цифирью', dictionary: 'Словарь',
     appSubtitle: 'Церковнославянский тренажёр',
     home: 'Главная', learn: 'Азбука', numbers: 'Цифирь', practice: 'Тренировка', profile: 'Профиль',
     welcome: 'Учитесь читать знаки, а не угадывать их',
@@ -77,7 +77,7 @@ const messages = {
     reset: 'Сбросить учебный прогресс', resetConfirm: 'Нажмите ещё раз для подтверждения',
     onboardingTitle: 'Начнём с удобного языка', onboardingText: 'Его можно изменить в профиле в любое время.',
     begin: 'Начать обучение', install: 'Можно установить', installText: 'Но это необязательно — приложение полностью работает в браузере.',
-    offline: 'Доступно без сети после первого открытия', loading: 'Загружаем ваш прогресс…',
+    offline: 'Уроки доступны без сети после первого открытия', loading: 'Загружаем ваш прогресс…',
     exampleWithLetter: 'Пример с буквой', readInContext: 'Буква в живом тексте',
     exampleCorpus: 'Источник текста: Библия церковнославянская, 1900 · корпус Bible Desktop',
     mastered: 'Изучено букв', totalAnswers: 'Всего ответов',
@@ -91,7 +91,7 @@ const messages = {
     units: 'Единицы', tens: 'Десятки', hundreds: 'Сотни'
   },
   de: {
-    appName: 'Alphabet und Zahlen',
+    appName: 'Alphabet und Zahlen', dictionary: 'Wörterbuch',
     appSubtitle: 'Kirchenslawischer Trainer',
     home: 'Start', learn: 'Alphabet', numbers: 'Zahlen', practice: 'Übung', profile: 'Profil',
     welcome: 'Zeichen lesen lernen, statt sie zu erraten',
@@ -120,7 +120,7 @@ const messages = {
     reset: 'Lernfortschritt zurücksetzen', resetConfirm: 'Zum Bestätigen erneut tippen',
     onboardingTitle: 'Wähle zuerst deine Sprache', onboardingText: 'Du kannst sie später jederzeit im Profil ändern.',
     begin: 'Lernen beginnen', install: 'Installierbar', installText: 'Das ist optional — die App funktioniert vollständig im Browser.',
-    offline: 'Nach dem ersten Öffnen offline verfügbar', loading: 'Dein Fortschritt wird geladen…',
+    offline: 'Lektionen nach dem ersten Öffnen offline verfügbar', loading: 'Dein Fortschritt wird geladen…',
     exampleWithLetter: 'Beispiel mit dem Buchstaben', readInContext: 'Der Buchstabe im Text',
     exampleCorpus: 'Textquelle: Kirchenslawische Bibel, 1900 · Bible-Desktop-Korpus',
     mastered: 'Gelernte Buchstaben', totalAnswers: 'Antworten insgesamt',

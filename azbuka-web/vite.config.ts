@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'Азбука с цифирью',
         short_name: 'Азбука',
-        description: 'Тренажёр церковнославянской азбуки и цифири',
+        description: 'Церковнославянская азбука, цифирь и словарь с поиском по слову и значению',
         theme_color: '#4a6b8a',
         background_color: '#f7f5f1',
         display: 'standalone',

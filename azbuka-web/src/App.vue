@@ -12,8 +12,9 @@ const profileStore = useProfileStore()
 const { t, locale } = useI18n()
 
 onMounted(async () => {
+  await router.isReady()
   await profileStore.initialize()
-  if (!profileStore.profile && route.name !== 'onboarding') {
+  if (!profileStore.profile && route.name !== 'onboarding' && !route.meta.public) {
     await router.replace(azbukaPath('/onboarding'))
   } else if (profileStore.profile && route.name === 'onboarding') {
     await router.replace(azbukaPath('/'))

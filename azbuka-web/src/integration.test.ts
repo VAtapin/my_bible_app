@@ -13,7 +13,7 @@ describe('shared Azbuka navigation', () => {
   it('keeps all embedded routes within Biblia App', () => {
     configureAzbukaIntegration('/education/azbuka/')
     expect(isAzbukaEmbedded()).toBe(true)
-    for (const path of ['/', '/alphabet/az', '/numbers', '/practice/session', '/profile']) {
+    for (const path of ['/', '/alphabet/az', '/numbers', '/practice/session', '/profile', '/dictionary']) {
       expect(azbukaPath(path)).toBe(`/education/azbuka${path === '/' ? '' : path}`)
     }
     expect(azbukaIcon()).toBe('/brand/app-icon-512.png')

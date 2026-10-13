@@ -1,7 +1,7 @@
 import type { UserProfile } from '../domain/types'
 
 const DATABASE_NAME = 'azbuka-web'
-const DATABASE_VERSION = 1
+const DATABASE_VERSION = 2
 const STORE_NAME = 'profile'
 const PROFILE_KEY = 'primary'
 
@@ -17,11 +17,14 @@ export const defaultProfile = (): UserProfile => ({
   lastPracticeDate: null
 })
 
-const openDatabase = (): Promise<IDBDatabase> => new Promise((resolve, reject) => {
+export const openDatabase = (): Promise<IDBDatabase> => new Promise((resolve, reject) => {
   const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION)
   request.onupgradeneeded = () => {
     if (!request.result.objectStoreNames.contains(STORE_NAME)) {
       request.result.createObjectStore(STORE_NAME)
+    }
+    if (!request.result.objectStoreNames.contains('dictionary')) {
+      request.result.createObjectStore('dictionary')
     }
   }
   request.onsuccess = () => resolve(request.result)

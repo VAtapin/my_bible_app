@@ -7,5 +7,6 @@ export const router = createRouter({
     ...azbukaRoutes,
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ],
-  scrollBehavior: () => ({ top: 0 })
+  scrollBehavior: (to,from,saved) => saved ?? (to.path==='/dictionary' && from.path===to.path &&
+    ['q','mode','letter'].every(key=>to.query[key]===from.query[key]) ? false : { top: 0 })
 })

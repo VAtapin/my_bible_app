@@ -13,6 +13,7 @@ export const azbukaRoutes: RouteRecordRaw[] = [
   { path: '/alphabet', name: 'alphabet', component: AlphabetView },
   { path: '/alphabet/:id', name: 'letter', component: LetterView },
   { path: '/numbers', name: 'numbers', component: NumbersView },
+  { path: '/dictionary', name: 'dictionary', component: () => import('./views/DictionaryView.vue'), meta: { public: true } },
   { path: '/practice', name: 'practice', component: PracticeView },
   { path: '/practice/session', name: 'practice-session', component: PracticeSessionView },
   { path: '/profile', name: 'profile', component: ProfileView },

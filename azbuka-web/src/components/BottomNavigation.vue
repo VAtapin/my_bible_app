@@ -9,6 +9,7 @@ const items = [
   { to: '/alphabet', icon: 'alphabet' as const, label: 'learn' as const },
   { to: '/numbers', icon: 'numbers' as const, label: 'numbers' as const },
   { to: '/practice', icon: 'practice' as const, label: 'practice' as const },
+  { to: '/dictionary', icon: 'dictionary' as const, label: 'dictionary' as const },
   { to: '/profile', icon: 'profile' as const, label: 'profile' as const }
 ]
 </script>
@@ -21,3 +22,4 @@ const items = [
     </RouterLink>
   </nav>
 </template>
+<style scoped>.bottom-nav{grid-template-columns:repeat(6,minmax(0,1fr))}.bottom-nav span{font-size:10px}</style>
