@@ -714,8 +714,11 @@ group и forward каждого TARGET с обратной проверкой у
 обязательны оба text hashes. Fingerprinted TARGET-only entry не может
 разрешить SOURCE без group digest даже при identity. Пропуски карты, изменённый
 текст, split/merge не выбираются автоматически; исходные варианты сохраняются.
-Backend contract pin e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af. Реальные карты
-и серверные schema2 пакеты ещё требуют приёмки/публикации, fixtures этого не доказывают.
+Backend contract pin e51a8acabf3bfa1c7a12c39649d6ce0cc6b5b1af. Опубликована
+ограниченная карта legacy_quote124 SOURCEgroups/1958edges → KJV+1594coords.
+Actual Android HTTPS acceptance1/1 PASS: исходные координаты сохранены,
+target IDs/OSIS/book/chapter/verse/text совпали с настоящими главами издания.
+RST/CU не назначены этой карте; actual schema2 package acceptance ещё ожидается.
 
 83 host tests PASS;12 native instrumentation tests API37/x86_64 PASS, после
 последнего SOURCE-context fix3 affected resolver tests PASS. Debug/test compile,
@@ -736,5 +739,15 @@ cold start Status ok/code18/pageSizeCompat0/crash buffer пуст, вход в �
 0.1.17 опубликован SSH13.10.2026: полный HTTPS APK28 629 504bytes/SHA
 совпадает с подписанным файлом выше; WEB4routes/41assets/index/SW SHA PASS.
 Исходники e734aaa8b71d04a7b3076ba92e10172e521170c8. Старый0.1.16 доступен.
-Backend/maps/offline epoch не менялись; настоящая semantic map publication
-остаётся отдельным этапом. Повторная сборка по этой приёмке не требуется.
+После клиентской публикации backend получил bounded KJV admission отдельным
+этапом; dictionary epoch2035 сохранён. Повторная сборка приложения не требуется.
+
+Actual publication tests не обращаются к серверу по умолчанию. Для явной
+приёмки опубликованного API передать instrumentation argument
+`-e referenceMapApi https://bible-desktop.com/api` в
+`PublishedReferenceResolutionTest#actualPublishedKjvSourceGroupUsesActualEditionIdsAndTexts`.
+Второй test `actualPublishedPackageMatchesOnlineThenReadsWithoutRemoteAccess`
+требует дополнительно `-e publishedPackage true`: скачивает настоящий ZIP,
+проверяет SHA/размер/schema/index, сохраняет главы в отдельном test cache,
+закрывает API и сравнивает онлайн/офлайн результаты. Пользовательские данные
+не очищаются; удаляется только созданная этим тестом cache directory.

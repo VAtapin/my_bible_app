@@ -27,10 +27,16 @@
   не доказана.124/176 Ps119 reference sets EXACT officialTSK1.5,52 отличаются.
   ActualDB read-only124SOURCEgroups/1958edges и1594KJV+textSHA exact,
   mismatch/missing/duplicate0. Это bounded proof, не wholeedition identity;
-  productionprofiles/maps0, reviewedmanifest/admission/offlinepublish у API/SSH.
+  Production admission:2profiles/2assignments/1map/1594entries, только
+  legacy_quote124 SOURCEgroups/1958edges → bounded KJV+ scope.52 divergent
+  groups и RST/CU не получили автоматической подстановки. Actual WEB API
+  acceptance2/2 PASS (36 Ps119:1 targets + held/Russian negatives); Android
+  HTTPS acceptance1/1 PASS: IDs/OSIS/physical coordinates/text совпали с
+  настоящими главами выбранного издания. Schema2 package acceptance pending.
   WEB/APK0.1.17 опубликованы SSH13.10.2026: exactsourcee734aaa,
   actual4routes/41assets/SW/index и полныйHTTPSAPK28629504B/SHA PASS.
-  OldAPK0.1.16 сохранён; backend5b797b2d/epoch2035/maps0 не менялись.
+  OldAPK0.1.16 сохранён; epoch2035 сохранён. Backend runtime: minimal
+  e51a8ac component overlay поверх5b797b2d; scoped map import выполнен один раз.
   Азбука standalone не заменена. В serverbuild её дополнительный subbuild
   после EAGAIN повторён отдельно и прошёл, mainbuild не повторяли.
   Receipt backend docs/REFERENCE_CLIENT_PUBLICATION_RECEIPT.md.
@@ -41,9 +47,9 @@
   статья каждого источника — HTTP200/непустое тело/correct ID, 180/180.
   Это доступность источников, не проверка всего корпуса и всех привязок.
   OPTINA_COMMENTARIES: 109372 статьи/179 общих; actual general 1john1
-  total2 и 1corinthians1 total6, placement=null. Нумерация: profiles,
-  assignments, map sets и entries все0. Original legacy SQL найден
-  на сервере, но происхождение нумерации ещё проверяет API-чат;
+  total2 и 1corinthians1 total6, placement=null. Нумерация: новая bounded KJV
+  карта описана выше; RST/CU остаются без semantic admission. Original legacy SQL найден
+  на сервере, происхождение остальных систем ещё проверяет API-чат;
   отсутствие quote.tsk подтверждено только в конкретных проверенных путях.
   Новый opt-in STUDY_API тест открывает оба actual general ответа через
   строгий веб-контракт; 2 live + 4 прежних API tests PASS. Без STUDY_API
@@ -673,6 +679,7 @@
 
 ## Последний связанный commit
 
+- Текущая публикация WEB/Android0.1.17: d1cac02a693f3b0d6399eb6dbfd056a37381b80a — Record verified web and Android 0.1.17 publication. Следующая приёмка actual reference API добавлена вместе с opt-in WEB/Android tests в текущую задачу; пакет пока ожидает SSH.
 - Веб-читалка: c029ee6 — Complete full-width web reading and calendar dialogs (production проверен SSH).
 - Компактная веб-шапка: a32b563 — Compact the reader header and align selected study context (отправлен SSH для публикации).
 - Android 0.1.8: cd39497 — Release Android 0.1.8 with compact reader and real reference text.
