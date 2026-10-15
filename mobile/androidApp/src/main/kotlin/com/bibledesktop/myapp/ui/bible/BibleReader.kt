@@ -97,8 +97,8 @@ fun BibleReader(
     var translationCode by rememberSaveable {
         val saved = preferences.getString("lastTranslation", null)
         mutableStateOf(
-            saved?.takeIf(String::isNotBlank)
-                ?: translations.firstOrNull()?.code.orEmpty(),
+            saved?.takeIf { code -> translations.any { it.code == code && (it.language.code == language || preferences.getBoolean("readerTranslationExplicit", false)) } }
+                ?: translations.firstOrNull { it.language.code == language }?.code.orEmpty(),
         )
     }
     var selectedBookSlug by rememberSaveable {
@@ -166,8 +166,8 @@ fun BibleReader(
     }
 
     LaunchedEffect(translations, translationCode) {
-        if (translations.isNotEmpty() && translationCode.isBlank()) {
-            translationCode = translations.firstOrNull()?.code.orEmpty()
+        if (translationCode.isBlank()) {
+            translationCode = translations.firstOrNull { it.language.code == language }?.code.orEmpty()
         }
     }
 
@@ -256,6 +256,7 @@ fun BibleReader(
                 state = booksState,
                 onTranslationChange = {
                     translationCode = it
+                    preferences.edit().putBoolean("readerTranslationExplicit", true).putString("lastTranslation", it).apply()
                     selectedBookSlug = null
                     selectedChapter = null
                     focusedVerse = 0; referenceReturn = null

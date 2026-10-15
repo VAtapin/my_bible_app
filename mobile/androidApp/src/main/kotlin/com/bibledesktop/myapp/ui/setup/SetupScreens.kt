@@ -304,6 +304,7 @@ internal fun TranslationsScreen(
     language: String,
     source: com.bibledesktop.shared.api.BibleContentSource,
     onInstalled: (List<TranslationSummary>) -> Unit,
+    onSelected: (TranslationSummary) -> Unit,
     onBack: () -> Unit,
     onNext: () -> Unit,
 ) {
@@ -326,7 +327,7 @@ internal fun TranslationsScreen(
             }
         },
     ) {
-        com.bibledesktop.myapp.ui.more.BibleLibraryContent(language, source, Modifier.fillMaxSize(), onInstalled)
+        com.bibledesktop.myapp.ui.more.BibleLibraryContent(language, source, Modifier.fillMaxSize(), onInstalled, onSelected = onSelected)
     }
 }
 

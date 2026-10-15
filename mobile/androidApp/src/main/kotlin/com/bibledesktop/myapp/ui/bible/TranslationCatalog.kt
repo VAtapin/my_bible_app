@@ -103,6 +103,7 @@ internal fun CatalogFilters(language: String, catalog: List<TranslationSummary>,
 @Composable
 private fun FilterChoice(language: String, options: List<Pair<String, String>>, onClose: () -> Unit, onSelect: (String) -> Unit) {
     var search by rememberSaveable { mutableStateOf("") }
+    val visible = remember(options, search) { options.filter { bookSearchKey(it.second + " " + it.first).contains(bookSearchKey(search)) } }
     AlertDialog(onDismissRequest = onClose, title = { Text(localized(R.string.catalog_filter, language)) },
         confirmButton = { TextButton(onClick = onClose) { Text(localized(R.string.study_close, language)) } },
         text = {
@@ -110,7 +111,7 @@ private fun FilterChoice(language: String, options: List<Pair<String, String>>, 
                 OutlinedTextField(search, onValueChange = { search = it }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("filter-search"))
                 LazyColumn(Modifier.heightIn(max = 360.dp)) {
                     item { TextButton(onClick = { onSelect("") }, modifier = Modifier.fillMaxWidth()) { Text(localized(R.string.language_all, language)) } }
-                    items(options.filter { bookSearchKey(it.second + " " + it.first).contains(bookSearchKey(search)) }, key = { it.first }) {
+                    items(visible, key = { it.first }) {
                         TextButton(onClick = { onSelect(it.first) }, modifier = Modifier.fillMaxWidth().testTag("filter-${it.first}")) { Text(it.second) }
                     }
                 }

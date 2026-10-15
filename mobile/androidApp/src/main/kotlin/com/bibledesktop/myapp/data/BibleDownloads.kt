@@ -22,7 +22,7 @@ internal fun bibleRefreshKey(code:String)="bible-refresh:$code"
 /** One chapter is committed atomically. A restarted job audits actual files, not a hopeful counter. */
 internal class BibleDownloadEngine(
     private val source: BibleContentSource, private val store: OfflineStore,
-    private val pause: suspend () -> Unit = { delay(350) },
+    private val pause: suspend () -> Unit = {},
     private val shouldYield: () -> Boolean = { false },
 ) {
     private val json = Json { explicitNulls = false }

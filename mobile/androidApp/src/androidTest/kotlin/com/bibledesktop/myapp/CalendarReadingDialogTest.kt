@@ -37,6 +37,12 @@ class CalendarReadingDialogTest {
   override suspend fun getCalendarMonth(year:Int,month:Int,language:String)=listOf(CalendarGridDay(LocalDate.now().toString(),LocalDate.now().minusDays(13).toString(),4,CalendarDayStyle("ordinary","#000000",400),"Source fasting description","#dcebc9"))
   override suspend fun getCalendarDay(date:String,language:String,profile:String)=CalendarDay(date,LocalDate.parse(date).minusDays(13).toString(),"2026-04-12","Period","Fixture",readings=listOf(reading))
  }
+ @Test fun calendarReadingPrefersInterfaceLanguageUnlessAnotherWasChosen(){
+  val german=TranslationSummary("DE","Deutsch",language=LanguageSummary("de","Deutsch"))
+  assertEquals(german,preferredCalendarReadingTranslation(listOf(translation,german),"de",null))
+  assertEquals(translation,preferredCalendarReadingTranslation(listOf(translation,german),"de",translation.code))
+  assertNull(preferredCalendarReadingTranslation(listOf(translation),"de",null))
+ }
  @Test fun allNormalizedPartsKeepActualSplitModuleChaptersAndOrderedVerses()=runBlocking {
   val rows=loadCalendarReading(source,translation,reading,pause={})
   assertEquals(listOf("John.3.2","John.3.3","John.4.1","Luke.1.1","Luke.1.2"),rows.map{it.verse.osisRef})

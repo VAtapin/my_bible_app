@@ -23,9 +23,15 @@ import com.bibledesktop.shared.api.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
+internal fun preferredCalendarReadingTranslation(translations:List<TranslationSummary>,language:String,chosen:String?):TranslationSummary? =
+ translations.firstOrNull{it.code==chosen}
+  ?:translations.firstOrNull{it.language.code==language&&it.isDefault}
+  ?:translations.firstOrNull{it.language.code==language}
+
 /** Temporary calendar reading never updates the permanent Bible windows or their history. */
 @Composable internal fun CalendarPassageDialog(language:String,reading:CalendarReading,client:BibleContentSource,onClose:()->Unit){
  val context=LocalContext.current;val scope=rememberCoroutineScope()
+ val calendarChoices=remember(context){context.getSharedPreferences("bible-desktop-calendar-readings",Context.MODE_PRIVATE)}
  val preferences=remember(context){ReaderPreferencesStore(context).load()}
  var translations by remember{mutableStateOf(emptyList<TranslationSummary>())}
  var code by remember(reading.id){mutableStateOf<String?>(null)}
@@ -40,8 +46,8 @@ import kotlinx.coroutines.launch
  LaunchedEffect(client,retry){
   try{
    translations=client.getTranslations()
-   if(code==null){val stored=context.getSharedPreferences("bible-desktop-native-profile",Context.MODE_PRIVATE).getString("lastTranslation",null)
-    code=translations.firstOrNull{it.code==stored}?.code?:translations.firstOrNull{it.language.code=="ru"}?.code?:translations.firstOrNull()?.code
+   if(code==null){val stored=calendarChoices.getString("translation",null)
+    code=preferredCalendarReadingTranslation(translations,language,stored)?.code
     require(code!=null)
    }
   }catch(cancelled:CancellationException){throw cancelled}catch(_:Exception){error=true}
@@ -60,7 +66,7 @@ import kotlinx.coroutines.launch
      TextButton(onClick=onClose,modifier=Modifier.testTag("calendar-reading-close")){Text(localized(R.string.study_close,language))}
     }
     Box{TextButton(onClick={choosing=true}){Text(translations.firstOrNull{it.code==code}?.name.orEmpty())}
-     DropdownMenu(choosing,{choosing=false}){translations.forEach{translation->DropdownMenuItem(text={Text(translation.name)},onClick={code=translation.code;choosing=false})}}
+     DropdownMenu(choosing,{choosing=false}){translations.forEach{translation->DropdownMenuItem(text={Text(translation.name)},onClick={code=translation.code;calendarChoices.edit().putString("translation",translation.code).apply();choosing=false})}}
     }
     if(error)Column(Modifier.padding(10.dp)){Text(localized(R.string.study_missing_text,language));TextButton(onClick={retry++}){Text(localized(R.string.retry,language))}}
     else if(rows==null)LinearProgressIndicator(Modifier.fillMaxWidth())

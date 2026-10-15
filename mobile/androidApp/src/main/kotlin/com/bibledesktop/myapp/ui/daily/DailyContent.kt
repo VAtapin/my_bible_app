@@ -99,7 +99,7 @@ fun PrayersScreen(
     var additionalWorks by remember { mutableStateOf<List<com.bibledesktop.shared.api.LiturgicalWorkSummary>>(emptyList()) }
     var selectedPrayer by rememberSaveable { mutableStateOf<Long?>(null) }
     var selectedEdition by rememberSaveable { mutableStateOf<String?>(null) }
-    var textLanguage by rememberSaveable { mutableStateOf("all") }
+    var textLanguage by rememberSaveable(language) { mutableStateOf(language) }
     var group by rememberSaveable { mutableStateOf("all") }
     var listState by remember { mutableStateOf<LoadState<PrayerCatalog>>(LoadState.Loading) }
     var detailState by remember { mutableStateOf<LoadState<PrayerDetail>>(LoadState.Loading) }
@@ -147,7 +147,7 @@ fun PrayersScreen(
             item {
                 Text(localText(R.string.prayer_text_language,language),color=Ink,fontWeight=FontWeight.Bold)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-                    val languages=if(reviewed) linkedSetOf("all").apply {
+                    val languages=if(reviewed) linkedSetOf("all",language).apply {
                         catalog!!.data.forEach{addAll(it.availableLanguages)}
                         additionalWorks.forEach{addAll(it.availableLanguages)}
                     } else linkedSetOf("all").apply{addAll(com.bibledesktop.shared.presentation.interfaceLanguages.keys);add("cu");add("cu-civil")}

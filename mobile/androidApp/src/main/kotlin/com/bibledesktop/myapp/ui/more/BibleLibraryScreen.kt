@@ -37,7 +37,8 @@ internal fun BibleLibraryScreen(language: String, source: BibleContentSource, on
 /** Shared by setup and the reader: only packages actually saved on this device are installed. */
 @Composable
 internal fun BibleLibraryContent(language: String, source: BibleContentSource, modifier: Modifier = Modifier,
-    onInstalled: (List<TranslationSummary>) -> Unit = {}, onOpen: ((String) -> Unit)? = null) {
+    onInstalled: (List<TranslationSummary>) -> Unit = {}, onOpen: ((String) -> Unit)? = null,
+    onSelected: (TranslationSummary) -> Unit = {}) {
     val context = LocalContext.current
     val store = remember { OfflineStore(context) }
     val preferences = remember { context.getSharedPreferences(BibleDownloads.name, Context.MODE_PRIVATE) }
@@ -78,17 +79,28 @@ internal fun BibleLibraryContent(language: String, source: BibleContentSource, m
         finally { loading = false }
     }
     val editions = (if (tab == "catalog") catalog else packages.map { it.translation }).distinctBy { it.code }
-    val visible = matchingTranslations(editions, query, group, languageCode)
+    val visible = remember(editions, query, group, languageCode) { matchingTranslations(editions, query, group, languageCode) }
     Column(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("installed" to R.string.catalog_installed, "catalog" to R.string.catalog_all).forEach { (id, title) ->
-                FilterChip(selected = tab == id, onClick = { tab = id; group = ""; languageCode = ""; query = "" },
+                FilterChip(selected = tab == id, onClick = { tab = id; group = ""; languageCode = if (id == "catalog") language else ""; query = "" },
                     label = { Text(localized(title, language)) }, modifier = Modifier.weight(1f).testTag("library-$id"))
             }
         }
-        if (tab == "installed") Button(onClick = { tab = "catalog"; group = ""; languageCode = ""; query = "" },
+        if (tab == "installed") Button(onClick = { tab = "catalog"; group = ""; languageCode = language; query = "" },
             modifier = Modifier.fillMaxWidth().testTag("library-add")) {
             Text(localized(R.string.catalog_add_other, language))
+        }
+        if (tab == "installed" && onOpen != null) packages.firstOrNull { it.isInstalled && it.translation.language.code == language }?.let { preferred ->
+            OutlinedButton(onClick = { onOpen(preferred.translation.code) }, modifier = Modifier.fillMaxWidth().testTag("library-books")) {
+                Text(localized(R.string.bible_books_title, language))
+            }
+        }
+        if (tab == "catalog") Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = languageCode == language, onClick = { group = ""; languageCode = language },
+                label = { Text(com.bibledesktop.shared.presentation.interfaceLanguages[language] ?: language) }, modifier = Modifier.testTag("catalog-interface-language"))
+            FilterChip(selected = languageCode.isEmpty(), onClick = { group = ""; languageCode = "" },
+                label = { Text(localized(R.string.language_all, language)) }, modifier = Modifier.testTag("catalog-all-languages"))
         }
         CatalogFilters(language, editions, query, { query = it }, group, { group = it }, languageCode, { languageCode = it })
         if (tab == "catalog") Row {
@@ -153,6 +165,7 @@ internal fun BibleLibraryContent(language: String, source: BibleContentSource, m
                             pack?.complete == true -> Text(localized(R.string.catalog_installed, language))
                         }
                         if (!active && pack?.complete != true) Button(enabled = busy.isEmpty(), modifier = Modifier.testTag("install-${edition.code}"), onClick = {
+                            onSelected(edition)
                             busy = edition.code; expanded = edition.code
                             scope.launch {
                                 try { BibleDownloads.enqueue(context, edition.code, wifi) }

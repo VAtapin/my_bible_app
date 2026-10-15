@@ -104,6 +104,7 @@ import com.bibledesktop.shared.api.TranslationSummary
 import com.bibledesktop.shared.presentation.initialInterfaceLanguage
 import com.bibledesktop.shared.presentation.quickNativeSections
 import com.bibledesktop.shared.presentation.recommendedNativeTranslations
+import com.bibledesktop.shared.presentation.selectedSetupTranslations
 import java.util.Locale
 
 private const val PreferencesName = "bible-desktop-native-profile"
@@ -185,6 +186,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
     var atlasMode by rememberSaveable { mutableStateOf(false) }
     var libraryReturn by rememberSaveable { mutableStateOf(Route.Home) }
     var installedTranslations by remember { mutableStateOf<List<TranslationSummary>>(emptyList()) }
+    var chosenTranslation by remember { mutableStateOf<TranslationSummary?>(null) }
     var chooseBiblePassage by rememberSaveable { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
     var translationState by remember { mutableStateOf<TranslationState>(TranslationState.Loading) }
@@ -269,7 +271,13 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
         Route.Translations -> TranslationsScreen(
             language = language,
             source = client,
-            onInstalled = { installedTranslations = it; selectedTranslationCodes = it.joinToString(",") { edition -> edition.code } },
+            onInstalled = { installed ->
+                installedTranslations = installed
+                if (chosenTranslation == null && selectedTranslations.none { code ->
+                    (translationState as? TranslationState.Content)?.translations?.any { it.code == code && it.language.code == language } == true
+                }) selectedTranslationCodes = installed.firstOrNull { it.language.code == language }?.code.orEmpty()
+            },
+            onSelected = { chosenTranslation = it; selectedTranslationCodes = it.code },
             onBack = { route = if (quickSetup) Route.Welcome else Route.Sections },
             onNext = { route = Route.Summary },
         )
@@ -277,7 +285,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
         Route.Summary -> SummaryScreen(
             language = language,
             selectedSections = selectedSections,
-            selectedTranslations = installedTranslations
+            selectedTranslations = selectedSetupTranslations((translationState as? TranslationState.Content)?.translations.orEmpty(), installedTranslations, chosenTranslation, selectedTranslations)
                 .sortedBy { if (it.language.code == language) 0 else 1 },
             onBack = {
                 route = if ("bible" in selectedSections) Route.Translations else Route.Sections
@@ -392,7 +400,7 @@ fun SetupApp(initialDestination: String? = null, initialReaderLink: ReaderLink? 
         Route.Reminders -> com.bibledesktop.myapp.ui.reminders.RemindersScreen(language) { route = Route.Home }
         Route.BibleLibrary -> com.bibledesktop.myapp.ui.more.BibleLibraryScreen(language, client,
             onBack = { route = libraryReturn }, onOpen = { code ->
-                preferences.edit().putString("lastTranslation", code).remove("lastBookSlug").remove("lastChapter").remove("lastVerse").apply()
+                preferences.edit().putString("lastTranslation", code).putBoolean("readerTranslationExplicit", true).remove("lastBookSlug").remove("lastChapter").remove("lastVerse").apply()
                 route = Route.Bible
             })
     }

@@ -11,11 +11,12 @@ fun initialInterfaceLanguage(saved: String?, device: String): String =
 val quickNativeSections = setOf("bible", "prayer", "calendar", "study", "reminders")
 
 fun recommendedNativeTranslations(available: List<TranslationSummary>, language: String): Set<String> {
-    available.firstOrNull { it.code == "BQ_RUSSIAN_RST_STRONG" }?.let { return setOf(it.code) }
     val primary = available.firstOrNull { it.language.code == language && it.isDefault }
         ?: available.firstOrNull { it.language.code == language }
-        ?: available.firstOrNull { it.language.code == "ru" && it.isDefault }
-        ?: available.firstOrNull { it.language.code == "ru" }
-    return available.filter { it == primary || it.language.code in setOf("cu", "cu-civil") }
-        .map { it.code }.toSet()
+    if (primary == null) return emptySet()
+    return setOf(primary.code)
 }
+
+fun selectedSetupTranslations(available: List<TranslationSummary>, installed: List<TranslationSummary>,
+    chosen: TranslationSummary?, codes: Set<String>): List<TranslationSummary> =
+    (available + installed + listOfNotNull(chosen)).distinctBy { it.code }.filter { it.code in codes }
