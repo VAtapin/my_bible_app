@@ -16,7 +16,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -38,7 +37,6 @@ import kotlinx.coroutines.launch
     initialQuery: String = "", initialEntry: String = "") {
     val context = LocalContext.current
     val text = slavonicDictionaryTexts(language)
-    val uri = LocalUriHandler.current
     val source = remember(sourceOverride) { sourceOverride ?: DictionaryApi() }
     DisposableEffect(source) { onDispose { if (sourceOverride == null) (source as DictionaryApi).close() } }
     val notebook = remember(preferencesName) { SlavonicNotebook(context.applicationContext, preferencesName) }
@@ -199,7 +197,6 @@ import kotlinx.coroutines.launch
                         } }, modifier = Modifier.testTag("slavonic-save")) { Text(if (saved.favorites.any { it.key == value.key }) "★ ${text.remove}" else "☆ ${text.save}") } }
                         item { SelectionContainer { Text(value.definition, fontFamily = readingFont("ru"), fontSize = 19.sp,
                             lineHeight = 30.sp, modifier = Modifier.testTag("slavonic-definition")) } }
-                        item { TextButton(onClick = { uri.openUri(value.sourceUrl) }) { Text(text.source) } }
                         if (saveFailed) item { Text(text.saved) }
                     }
                 }

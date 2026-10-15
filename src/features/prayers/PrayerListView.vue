@@ -18,9 +18,8 @@ const labels=computed(()=>prayerCatalogMessages[language.value])
 const catalog=ref<PrayerCatalog>(),works=ref<LiturgicalWorkSummary[]>([]),message=ref('')
 const selectedLanguage=ref(''),selectedGroup=ref(''),query=ref('')
 const availableLanguages=computed(()=>[...new Set([...(catalog.value?.data.flatMap(prayerLanguages)??[]),...works.value.flatMap(work=>work.available_languages)])])
-const languageChoices=computed(()=>[...new Set([...availableLanguages.value,...(catalog.value?.external_sources?.map(source=>source.language)??[]),...(selectedLanguage.value?[selectedLanguage.value]:[])])])
+const languageChoices=computed(()=>[...new Set([...availableLanguages.value,...(selectedLanguage.value?[selectedLanguage.value]:[])])])
 const groups=computed(()=>Object.entries(catalog.value?.groups??{}))
-const externalSources=computed(()=>catalog.value?.external_sources?.filter(source=>source.availability==='external-only'&&(!selectedLanguage.value||source.language===selectedLanguage.value))??[])
 const displayPrayers=computed(()=>catalog.value?.data.filter(item=>
   (!selectedLanguage.value||prayerLanguages(item).includes(selectedLanguage.value))&&prayerInGroup(item,selectedGroup.value)&&matchesSettings(item)&&
   `${item.title} ${item.short_title??''}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase()))??[])
@@ -66,7 +65,6 @@ onMounted(async()=>{
       <RouterLink v-for="work in displayOtherWorks" :key="work.slug" class="content-card" :to="workTarget(work)"><span class="module-icon"><img src="/app-icons/prayers.png" alt="" /></span><span><strong>{{work.title}}</strong><small>{{work.available_languages.map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small></span><span aria-hidden="true">→</span></RouterLink>
     </section>
     <section v-if="displayBooks.length" class="content-catalog"><h2>{{labels.books}}</h2><RouterLink v-for="book in displayBooks" :key="book.slug" class="content-card" :to="workTarget(book)"><span><strong>{{book.title}}</strong><small>{{book.available_languages.map(code=>prayerLanguageLabel(code,text.setup)).join(' · ')}}</small></span><span aria-hidden="true">→</span></RouterLink></section>
-    <section v-if="externalSources.length" class="prayer-external"><h2>{{labels.external}}</h2><p>{{labels.externalOnly}}</p><p v-for="source in externalSources" :key="source.url"><a :href="source.url" target="_blank" rel="noopener noreferrer">{{source.title}}</a></p></section>
   </MobileShell>
 </template>
-<style scoped>.prayer-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}.prayer-filters label{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}.prayer-filters select,.prayer-filters input{min-height:42px}.prayer-external{padding:16px;border:1px solid var(--line);border-radius:12px;margin-top:20px}</style>
+<style scoped>.prayer-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}.prayer-filters label{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}.prayer-filters select,.prayer-filters input{min-height:42px}</style>

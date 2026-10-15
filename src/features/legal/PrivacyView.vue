@@ -40,7 +40,7 @@ const { messages: text } = useI18n()
 
       <section>
         <h2>{{ text.privacy.contactTitle }}</h2>
-        <p>{{ text.privacy.contactBefore }} <a href="https://bible-desktop.com/pages/contacts" target="_blank" rel="noopener noreferrer">{{ text.privacy.contactLink }}</a>.</p>
+        <p>{{ text.privacy.contactBefore }} {{ text.privacy.contactLink }}.</p>
       </section>
     </article>
   </MobileShell>

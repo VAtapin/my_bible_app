@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
@@ -80,7 +79,6 @@ internal fun LiturgicalReader(language:String,client:BibleContentSource,initialS
     var bookPosition by rememberSaveable { mutableIntStateOf(0) }
     val list=rememberLazyListState()
     val scope=rememberCoroutineScope()
-    val uri=LocalUriHandler.current
     LaunchedEffect(slug,edition){
         version=null;summary=null;error=false
         try{
@@ -119,7 +117,6 @@ internal fun LiturgicalReader(language:String,client:BibleContentSource,initialS
                 Text(block.text,modifier=Modifier.fillMaxWidth().padding(vertical=4.dp),fontFamily=readingFont(value.language),fontSize=fontSize.sp,lineHeight=(fontSize*1.5f).sp,fontWeight=if(block.kind=="heading")FontWeight.Bold else FontWeight.Normal,color=if(block.kind=="rubric")MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
             }
             items(value.sourceEditionNotes){Text(it,fontSize=14.sp)}
-            item{Text(value.credit,fontSize=12.sp);TextButton(onClick={uri.openUri(value.sourceUrl)}){Text(labels.source)}}
         }
         if(contents&&value!=null)AlertDialog(onDismissRequest={contents=false},confirmButton={},title={Text(labels.contents)},text={
             LazyColumn{

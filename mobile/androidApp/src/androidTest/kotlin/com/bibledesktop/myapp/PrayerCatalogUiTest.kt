@@ -36,9 +36,8 @@ class PrayerCatalogUiTest {
         compose.onNodeWithTag("prayer-edition-cu").assertDoesNotExist()
         compose.onNodeWithTag("prayer-edition-cu-civil").performClick();count(20)
         compose.onNodeWithTag("prayer-edition-ru").performClick();count(1)
-        compose.onNodeWithTag("prayer-edition-de").performClick();count(0)
-        compose.onNodeWithTag("daily-content-list").performScrollToNode(hasTestTag("prayer-external-only"))
-        compose.onNodeWithTag("prayer-external-only").assertIsDisplayed()
+        compose.onNodeWithTag("prayer-edition-de").assertDoesNotExist()
+        compose.onNodeWithTag("prayer-external-only").assertDoesNotExist()
         assertTrue(queries.isNotEmpty());assertTrue(queries.all{it=="ru"})
     }
     @Test fun fullRuleUsesActualEditionAndKeepsDescriptionSeparateFromEntireBody(){

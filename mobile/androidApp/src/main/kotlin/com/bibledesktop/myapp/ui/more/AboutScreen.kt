@@ -1,8 +1,5 @@
 package com.bibledesktop.myapp.ui.more
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,18 +20,10 @@ import com.bibledesktop.myapp.ui.theme.*
 
 /** Public project identity and real installed version; no network needed to view this page. */
 @Composable
-internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Unit,
-    onOpenLink: ((String) -> Unit)? = null) {
+internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Unit) {
     val context = LocalContext.current
     val version = remember(context) { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
-    var linkFailed by remember { mutableStateOf(false) }
     var license by remember { mutableStateOf<String?>(null) }
-    val open: (String) -> Unit = { url ->
-        linkFailed = false
-        if (onOpenLink != null) onOpenLink(url)
-        else try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-        catch (_: ActivityNotFoundException) { linkFailed = true }
-    }
     BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize().background(Cream).statusBarsPadding().navigationBarsPadding()) {
         ReadingHeader(localized(R.string.about_title, language), language, onBack, onHome)
@@ -50,10 +39,6 @@ internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Uni
                         Text("Vladimir Atapin", color = Navy, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
-                AboutLink(localized(R.string.about_online, language), "https://bible-app.online/${language.takeIf { it in setOf("ru", "de", "uk", "en") } ?: "ru"}", open)
-                AboutLink(localized(R.string.about_website, language), "https://bible-desktop.com/", open)
-                AboutLink(localized(R.string.about_privacy, language), "https://bible-app.online/android/privacy/${language.takeIf { it in setOf("ru", "de", "uk", "en") } ?: "ru"}.html", open)
-                if (linkFailed) Text(localized(R.string.about_link_unavailable, language), color = MaterialTheme.colorScheme.error)
                 TextButton(onClick = { license = context.assets.open("licenses/Snowball-BSD.txt").bufferedReader().use { it.readText() } }) {
                     Text(localized(R.string.verse_search_license, language))
                 }
@@ -63,14 +48,4 @@ internal fun AboutScreen(language: String, onBack: () -> Unit, onHome: () -> Uni
     license?.let { content -> AlertDialog(onDismissRequest = { license = null },
         title = { Text("Snowball · BSD") }, text = { Text(content, Modifier.heightIn(max = 450.dp).verticalScroll(rememberScrollState())) },
         confirmButton = { TextButton(onClick = { license = null }) { Text(localized(R.string.study_close, language)) } }) }
-}
-
-@Composable
-private fun AboutLink(title: String, url: String, onOpen: (String) -> Unit) {
-    OutlinedButton(onClick = { onOpen(url) }, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            Text(url, fontSize = 12.sp)
-        }
-    }
 }

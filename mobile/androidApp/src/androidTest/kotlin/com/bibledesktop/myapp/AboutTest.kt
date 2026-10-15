@@ -18,18 +18,17 @@ import org.junit.runner.RunWith
 class AboutTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
-    @Test fun russianPhoneShowsIdentityVersionAndRealSiteTargets() = checkPage("ru", "О приложении", "Версия", "На главную", DpSize(390.dp, 844.dp))
+    @Test fun russianPhoneShowsIdentityVersionWithoutSiteLinks() = checkPage("ru", "О приложении", "Версия", "На главную", DpSize(390.dp, 844.dp))
     @Test fun germanTabletShowsLocalizedAbout() = checkPage("de", "Über die App", "Version", "Zur Startseite", DpSize(960.dp, 1280.dp))
     @Test fun ukrainianPhoneShowsLocalizedAbout() = checkPage("uk", "Про застосунок", "Версія", "На головну", DpSize(390.dp, 844.dp))
-    @Test fun englishLargeFontKeepsLinksReachable() = checkPage("en", "About the app", "Version", "Go to home", DpSize(390.dp, 844.dp), 2f)
+    @Test fun englishLargeFontShowsIdentityWithoutSiteLinks() = checkPage("en", "About the app", "Version", "Go to home", DpSize(390.dp, 844.dp), 2f)
 
     @OptIn(ExperimentalTestApi::class)
     private fun checkPage(language: String, title: String, versionLabel: String, homeLabel: String, size: DpSize, fontScale: Float = 1f) {
-        val links = mutableListOf<String>()
         var home = false
         compose.setContent { BibleDesktopTheme {
             DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(size) then DeviceConfigurationOverride.FontScale(fontScale)) {
-                AboutScreen(language, onBack = {}, onHome = { home = true }, onOpenLink = { links.add(it) })
+                AboutScreen(language, onBack = {}, onHome = { home = true })
             }
         } }
         compose.onNodeWithText(title).assertIsDisplayed()
@@ -37,9 +36,8 @@ class AboutTest {
         val version = compose.activity.packageManager.getPackageInfo(compose.activity.packageName, 0).versionName
         compose.onNodeWithText("$versionLabel $version").performScrollTo().assertIsDisplayed()
         listOf("https://bible-app.online/$language", "https://bible-desktop.com/", "https://bible-app.online/android/privacy/$language.html").forEach { url ->
-            compose.onNodeWithText(url, useUnmergedTree = true).performScrollTo().assertIsDisplayed().performClick()
+            compose.onNodeWithText(url, useUnmergedTree = true).assertDoesNotExist()
         }
-        assertEquals(listOf("https://bible-app.online/$language", "https://bible-desktop.com/", "https://bible-app.online/android/privacy/$language.html"), links)
         compose.onNodeWithContentDescription(homeLabel).performClick()
         assertTrue(home)
         if (language == "ru") {

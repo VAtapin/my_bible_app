@@ -78,7 +78,6 @@ import com.bibledesktop.shared.api.PrayerSummary
 import com.bibledesktop.shared.api.PrayerCatalog
 import com.bibledesktop.shared.api.validatePrayerCatalog
 import com.bibledesktop.shared.api.validatePrayerDetail
-import androidx.compose.ui.platform.LocalUriHandler
 import kotlinx.coroutines.CancellationException
 import java.util.Locale
 
@@ -111,7 +110,6 @@ fun PrayersScreen(
     var loadedRetry by remember { mutableIntStateOf(-1) }
     val prayerListState=rememberLazyListState()
     val labels=prayerCatalogTexts(language)
-    val uriHandler=LocalUriHandler.current
 
     LaunchedEffect(textLanguage, retry) {
         if(reviewedCatalog!=null&&loadedRetry==retry){listState=LoadState.Ready(reviewedCatalog!!);return@LaunchedEffect}
@@ -152,7 +150,6 @@ fun PrayersScreen(
                     val languages=if(reviewed) linkedSetOf("all").apply {
                         catalog!!.data.forEach{addAll(it.availableLanguages)}
                         additionalWorks.forEach{addAll(it.availableLanguages)}
-                        catalog.externalSources.forEach{add(it.language)}
                     } else linkedSetOf("all").apply{addAll(com.bibledesktop.shared.presentation.interfaceLanguages.keys);add("cu");add("cu-civil")}
                     languages.forEach{code->
                         val label=when(code){"all"->labels.all;"cu"->localText(R.string.prayer_cu,language);"cu-civil"->localText(R.string.prayer_cu_civil,language);else->com.bibledesktop.shared.presentation.interfaceLanguages[code]?:code}
@@ -182,11 +179,6 @@ fun PrayersScreen(
                             canonicalLanguage=if(textLanguage!="all")textLanguage else if(language in work.availableLanguages)language else work.availableLanguages.first()
                             canonicalEdition=null;canonicalSlug=work.slug
                         })
-                    }
-                    val external=value.externalSources.filter{it.availability=="external-only"&&(textLanguage=="all"||it.language==textLanguage)}
-                    if(external.isNotEmpty()){
-                        item{Text(labels.external,color=Ink,fontWeight=FontWeight.Bold);Text(labels.externalOnly,Modifier.testTag("prayer-external-only"),color=PrimaryBlue)}
-                        items(external,key={it.url}){source->Button(onClick={uriHandler.openUri(source.url)},modifier=Modifier.fillMaxWidth()){Text(source.title)}}
                     }
                 }
             }

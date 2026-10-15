@@ -74,8 +74,6 @@ watch([()=>route.params.slug,()=>route.params.language,()=>route.query.edition],
         <h2 v-if="block.kind === 'heading'" :id="`block-${block.id}`" class="prayer-text-heading">{{ block.text }}</h2>
         <p v-else :id="`block-${block.id}`" :class="{ rubric: block.kind === 'rubric' }">{{ block.text }}</p>
       </template>
-      <p v-if="work.credit">{{work.credit}}</p>
-      <p v-if="work.source_url"><a :href="work.source_url" target="_blank" rel="noopener noreferrer">{{labels.source}}</a></p>
       <p class="status" role="status">{{message}}</p>
     </article>
     <p v-else class="status" role="status">{{ message }}</p>
