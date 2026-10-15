@@ -93,12 +93,10 @@ fun PrayersScreen(
     client: BibleContentSource,
     onBack: () -> Unit,
 ) {
-    var bookLibrary by rememberSaveable { mutableStateOf(false) }
     var canonicalSlug by rememberSaveable { mutableStateOf<String?>(null) }
     var canonicalEdition by rememberSaveable { mutableStateOf<String?>(null) }
     var canonicalLanguage by rememberSaveable { mutableStateOf("") }
     var additionalWorks by remember { mutableStateOf<List<com.bibledesktop.shared.api.LiturgicalWorkSummary>>(emptyList()) }
-    LaunchedEffect(Unit){try{additionalWorks=client.getLiturgicalWorks("prayers")}catch(c:CancellationException){throw c}catch(_:Exception){}}
     var selectedPrayer by rememberSaveable { mutableStateOf<Long?>(null) }
     var selectedEdition by rememberSaveable { mutableStateOf<String?>(null) }
     var textLanguage by rememberSaveable { mutableStateOf("all") }
@@ -108,6 +106,10 @@ fun PrayersScreen(
     var retry by remember { mutableIntStateOf(0) }
     var reviewedCatalog by remember { mutableStateOf<PrayerCatalog?>(null) }
     var loadedRetry by remember { mutableIntStateOf(-1) }
+    var topic by rememberSaveable { mutableStateOf("all") }
+    var additionalError by remember { mutableStateOf(false) }
+    LaunchedEffect(retry){additionalError=false;try{additionalWorks=com.bibledesktop.shared.api.prayerSectionWorks(client)}catch(c:CancellationException){throw c}catch(_:Exception){additionalError=true}}
+    val topicLabels=prayerTopicLabels(language)
     val prayerListState=rememberLazyListState()
     val labels=prayerCatalogTexts(language)
 
@@ -136,14 +138,12 @@ fun PrayersScreen(
         } catch(cancelled:CancellationException){throw cancelled}
         catch(_:Exception){detailState=LoadState.Error}
     }
-    if(bookLibrary){LiturgicalBookLibrary(language,client,{bookLibrary=false});return}
     canonicalSlug?.let { slug -> LiturgicalReader(language,client,slug,canonicalLanguage,{canonicalSlug=null},onBack,canonicalEdition);return }
     BackHandler {if(selectedPrayer!=null)selectedPrayer=null else onBack()}
     if(selectedPrayer==null){
         ContentListPage(localText(R.string.prayers_title,language),language,onBack,prayerListState){
             val catalog=(listState as? LoadState.Ready)?.value
             val reviewed=catalog?.catalogVersion==2
-            item { Button(onClick={bookLibrary=true},modifier=Modifier.fillMaxWidth()){Text(bookTexts(language).books)} }
             item {
                 Text(localText(R.string.prayer_text_language,language),color=Ink,fontWeight=FontWeight.Bold)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -156,18 +156,22 @@ fun PrayersScreen(
                         FilterChip(textLanguage==code,onClick={textLanguage=code},modifier=Modifier.testTag("prayer-edition-$code"),label={Text(label)})
                     }
                 }
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                    (listOf("all")+com.bibledesktop.shared.api.prayerTopics).forEach{key->FilterChip(topic==key,onClick={topic=key},modifier=Modifier.testTag("prayer-topic-$key"),label={Text(if(key=="all")labels.all else topicLabels.getValue(key))})}
+                }
                 if(reviewed)FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
                     (listOf("all")+catalog!!.groups.keys).forEach{key->FilterChip(group==key,onClick={group=key},modifier=Modifier.testTag("prayer-group-$key"),label={Text(if(key=="all")labels.all else labels.groups[key]?:catalog.groups.getValue(key))})}
                 }
             }
+            if(additionalError)item{ErrorBox(localText(R.string.prayers_error,language),localText(R.string.retry,language),{retry+=1})}
             when(val current=listState){
                 LoadState.Loading->item{LoadingBox()}
                 LoadState.Error->item{ErrorBox(localText(R.string.prayers_error,language),localText(R.string.retry,language),{retry+=1})}
                 is LoadState.Ready->{
                     val value=current.value
-                    val entries=if(value.catalogVersion==2)value.data.filter{it.catalogVisible==true&&(group=="all"||group in it.groups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)}.distinctBy{it.canonicalSlug} else value.data
+                    val entries=(if(value.catalogVersion==2)value.data.filter{it.catalogVisible==true&&(group=="all"||group in it.groups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)}.distinctBy{it.canonicalSlug} else value.data).filter{topic=="all"||com.bibledesktop.shared.api.prayerTopic(it.canonicalSlug.orEmpty(),it.category,groups=it.groups)==topic}
                     val listed=value.data.mapNotNull{it.canonicalSlug}.toSet()
-                    val extra=additionalWorks.filter{it.slug !in listed&&(group=="all"||group in it.prayerGroups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)}.distinctBy{it.slug}
+                    val extra=additionalWorks.filter{it.slug !in listed&&(group=="all"||group in it.prayerGroups)&&(textLanguage=="all"||textLanguage in it.availableLanguages)&&(topic=="all"||com.bibledesktop.shared.api.prayerTopic(it.slug,collections=it.collections,groups=it.prayerGroups)==topic)}.distinctBy{it.slug}
                     item {Text(localText(R.string.prayer_source_count,language,entries.size+extra.size),Modifier.testTag("prayer-source-count").padding(vertical=8.dp),color=PrimaryBlue)}
                     if(entries.isEmpty()&&extra.isEmpty())item{EmptyBox(localText(R.string.prayers_empty_language,language))}
                     items(entries,key={it.canonicalSlug?:it.id.toString()}){prayer->

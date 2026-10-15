@@ -40,6 +40,13 @@ class PrayerCatalogUiTest {
         compose.onNodeWithTag("prayer-external-only").assertDoesNotExist()
         assertTrue(queries.isNotEmpty());assertTrue(queries.all{it=="ru"})
     }
+    @Test fun morningAndEveningTopicsKeepRulesWithoutBookLibraryEntry(){
+        open("ru")
+        compose.onNodeWithText("Молитвословы (книги)").assertDoesNotExist()
+        compose.onNodeWithTag("prayer-topic-morning").performClick();count(2)
+        compose.onNodeWithTag("prayer-group-rules").performClick();count(1)
+        compose.onNodeWithTag("prayer-topic-evening").performClick();count(1)
+    }
     @Test fun fullRuleUsesActualEditionAndKeepsDescriptionSeparateFromEntireBody(){
         open("en")
         compose.onNodeWithTag("prayer-group-rules").performClick();count(4)

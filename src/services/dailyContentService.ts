@@ -58,6 +58,18 @@ export function createDailyContentService(api: BibleApi, repository: DailyConten
         return { data: stored.data, offline: true }
       }
     },
+    async openLiturgicalWork(slug:string){
+      try{
+        const work=await api.getLiturgicalWork!(slug)
+        await repository.putLiturgicalWork?.(work)
+        return work
+      }catch(error){
+        if(!prayerNetworkUnavailable(error))throw error
+        const saved=await repository.getLiturgicalWork?.(slug)
+        if(!saved)throw error
+        return saved
+      }
+    },
     async openLiturgicalWorks(collection:string){
       try{
         const works=await api.getLiturgicalWorks(collection)
