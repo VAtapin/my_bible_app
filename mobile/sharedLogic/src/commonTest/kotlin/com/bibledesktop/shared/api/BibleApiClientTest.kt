@@ -12,6 +12,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleApiClientTest {
+    @Test fun unfilteredLiturgicalCatalogueIncludesGermanOnlyWorks() = runBlocking {
+        val engine = MockEngine { request ->
+            assertEquals("/api/liturgical/works", request.url.encodedPath)
+            assertTrue(request.url.parameters["collection"] == null)
+            respond("""{"data":[{"id":1,"slug":"de-prayer","title":"Deutsches Gebet","collections":["prayers"],"available_languages":["de"],"editions":[{"code":"de-modern","title":"Deutsch","language":"de","orthography":"modern","reader_profile":"full"}]}]}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = BibleApiClient(HttpClient(engine) { configureBibleApiClient() }, "https://example.test/api")
+        try { assertEquals("de-prayer", client.getLiturgicalWorks("").single().slug) } finally { client.close() }
+    }
     @Test fun strongEntryRejectsContradictoryScopeAndIdentityButAllowsLegacyBareNumbers() = runBlocking {
         suspend fun read(request: String, returned: String, metadata: String = ""): Result<StrongEntry> {
             val engine = MockEngine {

@@ -9,7 +9,7 @@ import {createDailyContentService} from '@/services/dailyContentService'
 import {useProfileStore} from '@/stores/profileStore'
 import {prayerEdition,prayerLanguageLabel} from '@/services/prayerEditions'
 import {prayerExcerpt} from '@/services/prayerContent'
-import {prayerLanguages,prayerInGroup,prayerCardTarget,prayerTopics,prayerTopic,prayerSectionWorks} from '@/services/prayerCatalog'
+import {prayerLanguages,preferredPrayerLanguage,prayerInGroup,prayerCardTarget,prayerTopics,prayerTopic,prayerSectionWorks} from '@/services/prayerCatalog'
 import {prayerCatalogMessages} from '@/i18n/prayerCatalog'
 
 const service=createDailyContentService(bibleApi,createIndexedDbDailyContentRepository())
@@ -31,8 +31,7 @@ function workTarget(work:LiturgicalWorkSummary){const actual=workLanguage(work),
 onMounted(async()=>{
   const settings=profile.load()?.prayers
   const preferred=settings?.languageCodes??[language.value]
-  // The legacy RU request is a compatibility catalogue, not a promise of translated RU editions.
-  selectedLanguage.value=preferred.length===1&&preferred[0]!=='ru'?preferred[0]!:''
+  selectedLanguage.value=preferredPrayerLanguage(language.value,preferred)
   message.value=text.value.prayers.loading
   try{
     const result=await service.openPrayerCatalog();catalog.value=result.data

@@ -25,7 +25,7 @@ internal class NativeLiturgicalCache(private val remote:BibleContentSource,priva
         store.write("liturgical-denied:$key",Boolean.serializer(),false)
         return fresh
     }
-    suspend fun works(collection:String)=read("liturgical-list:$collection",ListSerializer(LiturgicalWorkSummary.serializer()),{list->list.forEach{it.validateLiturgicalWork();require(collection in it.collections)}}){remote.getLiturgicalWorks(collection)}
+    suspend fun works(collection:String)=read("liturgical-list:$collection",ListSerializer(LiturgicalWorkSummary.serializer()),{list->list.forEach{it.validateLiturgicalWork();require(collection.isEmpty()||collection in it.collections)}}){remote.getLiturgicalWorks(collection)}
     suspend fun work(slug:String)=read("liturgical-work:$slug",LiturgicalWorkSummary.serializer(),{it.validateLiturgicalWork();require(it.slug==slug||slug in it.legacySlugs)}){remote.getLiturgicalWork(slug)}
     suspend fun version(slug:String,language:String,edition:String?):LiturgicalWorkVersion{
         val summary=work(slug)

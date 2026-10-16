@@ -8,6 +8,7 @@ import { offlineDatabaseName } from '@/offline/database'
 import { enabledWebBibles, saveEnabledWebBibles, synodalCode, readWebChapter, webBibleBooks } from './webBibleLibrary'
 import { createChapterService } from './chapterService'
 import type { ChapterRepository } from '@/offline/chapterRepository'
+import { createCompleteConfiguration } from '@/profile/configuration'
 
 const edition: TranslationSummary = { code: synodalCode, name: 'Синодальная Библия', short_name: 'RST-Strong', language: { code: 'ru', name: 'Русский' }, canon_code: null, has_old_testament: true, has_new_testament: true, has_apocrypha: false, has_strong: true, is_default: true }
 const second = { ...edition, code: 'SECOND', name: 'Second' }
@@ -29,6 +30,15 @@ describe('web enabling and online Bible reads', () => {
     expect(await enabledWebBibles(api)).toEqual([edition])
     expect(api.getBooks).not.toHaveBeenCalled(); expect(api.getChapter).not.toHaveBeenCalled()
     expect(await createIndexedDbLibraryRepository().listPackages()).toEqual([])
+  })
+  it('starts a German quick profile with the German Bible while leaving other editions selectable', async () => {
+    const profile = createCompleteConfiguration('de')
+    vi.stubGlobal('window', { localStorage: { getItem: (key: string) => key === 'bible-desktop:profile:v1' ? JSON.stringify(profile) : null } })
+    try {
+      const german = { ...edition, code: profile.bible.translationCode, name: 'Elberfelder Bibel', language: { code: 'de', name: 'Deutsch' } }
+      const api = { getTranslations: vi.fn(async () => [edition, german]) } as unknown as BibleApi
+      expect(await enabledWebBibles(api)).toEqual([german])
+    } finally { vi.unstubAllGlobals() }
   })
   it('persists enabling/disabling, retains cached texts and prevents removing the last edition', async () => {
     await saveEnabledWebBibles([edition, second])

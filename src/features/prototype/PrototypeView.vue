@@ -20,7 +20,7 @@ import CommentaryPanel from '@/features/study/CommentaryPanel.vue'
 import { studyMessages } from '@/i18n/study'
 import { studyContext } from '@/services/studyContext'
 import { loadBibleCatalog } from '@/services/bibleCatalog'
-import { enabledWebBibles, readWebChapter, synodalCode, webBibleBooks } from '@/services/webBibleLibrary'
+import { enabledWebBibles, readWebChapter, webBibleBooks } from '@/services/webBibleLibrary'
 import { bibleCatalogMessages } from '@/i18n/bibleCatalog'
 import { verseTarget } from '@/services/readerActions'
 import { reactive } from 'vue'
@@ -206,7 +206,6 @@ onMounted(async () => {
     const catalog = translations.value
     bookmarks.value = savedBookmarks
     translationCode.value = typeof route.query.translation === 'string' ? route.query.translation : catalog.find(item => item.code === savedLocation?.translationCode)?.code
-      ?? catalog.find((item) => item.code === synodalCode)?.code
       ?? catalog[0]?.code
       ?? ''
     const restoredLocation = savedLocation?.translationCode === translationCode.value ? savedLocation : undefined

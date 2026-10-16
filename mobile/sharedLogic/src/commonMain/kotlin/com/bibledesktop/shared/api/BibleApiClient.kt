@@ -167,8 +167,8 @@ class BibleApiClient internal constructor(
     }
 
     override suspend fun getLiturgicalWorks(collection:String):List<LiturgicalWorkSummary> {
-        require(collection.matches(Regex("[a-z-]+")))
-        return client.get("$baseUrl/liturgical/works") { parameter("collection",collection) }.body<ApiEnvelope<List<LiturgicalWorkSummary>>>().data.also { list -> list.forEach { it.validateLiturgicalWork(); require(collection in it.collections) } }
+        require(collection.isEmpty() || collection.matches(Regex("[a-z-]+")))
+        return client.get("$baseUrl/liturgical/works") { if(collection.isNotEmpty())parameter("collection",collection) }.body<ApiEnvelope<List<LiturgicalWorkSummary>>>().data.also { list -> list.forEach { it.validateLiturgicalWork(); require(collection.isEmpty() || collection in it.collections) } }
     }
     override suspend fun getLiturgicalWork(slug: String): LiturgicalWorkSummary {
         require(slug.isNotBlank() && slug !in listOf(".", "..") && !Regex("[/\\\\?#%]").containsMatchIn(slug))

@@ -1,7 +1,12 @@
 import {expect,it,vi} from 'vitest'
-import {prayerTopic,prayerSectionWorks} from './prayerCatalog'
+import {prayerTopic,prayerSectionWorks,preferredPrayerLanguage} from './prayerCatalog'
 import type {LiturgicalWorkSummary,LiturgicalWorkVersion} from '@/api/contracts'
 const work=(slug:string,collections=['prayers']):LiturgicalWorkSummary=>({id:1,slug,title:slug,collections,available_languages:['de'],editions:[],source_url:null})
+it('starts with the interface language while preserving an explicitly different prayer choice',()=>{
+ expect(preferredPrayerLanguage('de',['de','ru','cu','cu-civil'])).toBe('de')
+ expect(preferredPrayerLanguage('de',['ru'])).toBe('ru')
+ expect(preferredPrayerLanguage('de',[])).toBe('de')
+})
 it('groups individual prayers and full rules by occasion without guessing from translated titles',()=>{
  for(const slug of ['prayer-morning-rule','prayer-morning-1','prayer-morning-trinity'])expect(prayerTopic(slug)).toBe('morning')
  for(const slug of ['prayer-evening-rule','prayer-evening-1','prayer-before-sleep'])expect(prayerTopic(slug)).toBe('evening')

@@ -37,7 +37,12 @@ class LiturgicalBookUiTest {
         version.validateLiturgicalVersion("de",summary.editions.single().code)
         assertEquals(1391,version.blocks.size);assertEquals(19,version.bookSections.size)
         source=object:BibleContentSource by BibleApiClient(){
-            override suspend fun getLiturgicalWorks(collection:String)=if(collection=="prayer-books")listOf(summary)else prayerWorks.also{require(collection=="prayers")}
+            override suspend fun getLiturgicalWorks(collection:String)=when(collection){
+                "prayer-books"->listOf(summary)
+                "prayers"->prayerWorks
+                ""->prayerWorks+summary
+                else->error("Unexpected collection: $collection")
+            }
             override suspend fun getPrayerCatalog(language:String)=catalog.also{require(language=="ru")}
             override suspend fun getLiturgicalWork(slug:String)=summary.also{require(slug==summary.slug)}
             override suspend fun getLiturgicalVersion(slug:String,language:String,edition:String?)=version.also{require(slug==summary.slug);it.validateLiturgicalVersion(language,edition)}
@@ -92,10 +97,12 @@ class LiturgicalBookUiTest {
             val root=File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,"book-test-${UUID.randomUUID()}")
             var online=true
             val cache=NativeLiturgicalCache(source,OfflineStore(root),{online})
+            assertEquals(prayerWorks+summary,cache.works(""))
             cache.works("prayer-books");cache.version(summary.slug,"de",version.edition)
             online=false
             val reopened=NativeLiturgicalCache(object:BibleContentSource by source{override suspend fun getLiturgicalVersion(slug:String,language:String,edition:String?):LiturgicalWorkVersion=error("Must use stored body")},OfflineStore(root),{false})
             assertEquals(version,reopened.version(summary.slug,"de",version.edition))
+            assertEquals(prayerWorks+summary,reopened.works(""))
             assertEquals(listOf(summary),reopened.works("prayer-books"))
         }
     }

@@ -18,8 +18,9 @@ export async function enabledWebBibles(api: BibleApi): Promise<TranslationSummar
   const catalog = await loadBibleCatalog(api)
   const profile = typeof window === 'undefined' ? undefined : createLocalProfileRepository(window.localStorage).load()
   const legacy = await localBibles(createIndexedDbLibraryRepository(), createIndexedDbChapterRepository())
-  const codes = new Set([synodalCode, ...(profile?.bible.translationCodes ?? []), ...legacy.map(item => item.translation.code)])
-  const enabled = catalog.filter(item => codes.has(item.code)).sort((a, b) => Number(b.code === synodalCode) - Number(a.code === synodalCode))
+  const preferred = profile?.bible.translationCode ?? synodalCode
+  const codes = new Set([preferred, ...(profile?.bible.translationCodes ?? []), ...legacy.map(item => item.translation.code)])
+  const enabled = catalog.filter(item => codes.has(item.code)).sort((a, b) => Number(b.code === preferred) - Number(a.code === preferred))
   if (enabled.length) await saveEnabledWebBibles(enabled)
   return enabled
 }

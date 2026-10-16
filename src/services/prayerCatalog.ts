@@ -11,6 +11,9 @@ export function uniquePrayerCards(items:PrayerSummary[]):PrayerSummary[]{
   return[...unique.values()]
 }
 export function prayerLanguages(item:PrayerSummary):string[]{return item.available_languages??[item.language_code]}
+export function preferredPrayerLanguage(interfaceLanguage:string,configured:string[]):string{
+  return configured.includes(interfaceLanguage)?interfaceLanguage:configured[0]??interfaceLanguage
+}
 export function prayerInGroup(item:PrayerSummary,group:string):boolean{return !group||(item.groups??(item.group?[item.group]:[])).includes(group)}
 export function prayerCardTarget(item:PrayerSummary,language:string){
   const selected=language||item.language_code
