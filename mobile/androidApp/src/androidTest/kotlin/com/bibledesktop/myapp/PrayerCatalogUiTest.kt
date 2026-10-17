@@ -26,17 +26,19 @@ class PrayerCatalogUiTest {
         override suspend fun getPrayer(id:Long,language:String):PrayerDetail {editions+=language;return fixture.details.getValue(id).also{require(it.languageCode==language)}}
         override suspend fun getPrayer(id:Long):PrayerDetail=error("Reviewed UI must request the actual edition")
     }
-    private fun open(language:String){compose.setContent{BibleDesktopTheme{PrayersScreen(language,source,{})}};await("prayer-group-rules");compose.onNodeWithTag("prayer-edition-all").performClick()}
+    private fun open(language:String){compose.setContent{BibleDesktopTheme{PrayersScreen(language,source,{},listOf(language,"cu-civil"))}};await("prayer-group-rules");compose.onNodeWithTag("prayer-edition-cu-civil").performClick()}
     private fun await(tag:String){compose.waitUntil(10_000){compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()}}
     private fun count(expected:Int){compose.waitUntil(10_000){compose.onAllNodes(hasTestTag("prayer-source-count") and hasText(": $expected",substring=true)).fetchSemanticsNodes().isNotEmpty()}}
     @Test fun germanInterfaceStartsWithGermanTextsOnly(){
         compose.setContent{BibleDesktopTheme{PrayersScreen("de",source,{})}}
         await("prayer-edition-de");count(0)
         compose.onNodeWithTag("prayer-card-prayer-morning-rule").assertDoesNotExist()
-        compose.onNodeWithTag("prayer-edition-all").performClick();count(21)
+        compose.onNodeWithTag("prayer-edition-all").assertDoesNotExist()
+        compose.onNodeWithTag("prayer-edition-ru").assertDoesNotExist()
     }
     @Test fun ukrainianInterfaceDiscoversFourGroupsAndActualEditionsWithoutUnsupportedQueries(){
-        open("uk");count(21)
+        compose.setContent{BibleDesktopTheme{PrayersScreen("uk",source,{},listOf("uk","cu-civil","ru"))}}
+        await("prayer-group-rules");count(0)
         listOf("short","rules","occasions","initial").forEach{compose.onNodeWithTag("prayer-group-$it").assertExists()}
         compose.onNodeWithTag("prayer-edition-uk").assertExists();compose.onNodeWithTag("prayer-edition-en").assertDoesNotExist()
         compose.onNodeWithTag("prayer-edition-cu").assertDoesNotExist()
@@ -49,7 +51,7 @@ class PrayerCatalogUiTest {
     @Test fun morningAndEveningTopicsKeepRulesWithoutBookLibraryEntry(){
         open("ru")
         compose.onNodeWithText("Молитвословы (книги)").assertDoesNotExist()
-        compose.onNodeWithTag("prayer-topic-morning").performClick();count(2)
+        compose.onNodeWithTag("prayer-topic-morning").performClick();count(1)
         compose.onNodeWithTag("prayer-group-rules").performClick();count(1)
         compose.onNodeWithTag("prayer-topic-evening").performClick();count(1)
     }

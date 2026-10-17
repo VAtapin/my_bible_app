@@ -90,6 +90,9 @@
     <string name="calendar_next_month">Next month</string>
     <string name="calendar_corpus_ru">Calendar texts are currently in Russian.</string>
     <string name="prayer_text_language">Prayer text language</string>
+    <string name="german_prayer_book">German prayer book</string>
+    <string name="german_prayer_book_orthodoxia">Orthodoxes Gebetbuch</string>
+    <string name="german_prayer_book_maltzew">Alexios Maltzew (1911)</string>
     <string name="prayer_cu">Church Slavonic</string>
     <string name="prayer_cu_civil">Church Slavonic · civil script</string>
     <string name="notes_title">Notes</string>

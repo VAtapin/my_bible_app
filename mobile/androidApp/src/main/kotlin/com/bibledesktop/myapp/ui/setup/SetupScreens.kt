@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -258,6 +259,10 @@ internal fun SectionsScreen(
     selected: Set<String>,
     onLanguageChange: (String) -> Unit,
     onToggle: (String) -> Unit,
+    prayerLanguages: Set<String>,
+    onPrayerLanguageToggle: (String) -> Unit,
+    germanPrayerBook: String,
+    onGermanPrayerBookChange: (String) -> Unit,
     onBack: () -> Unit,
     onNext: () -> Unit,
 ) {
@@ -295,6 +300,24 @@ internal fun SectionsScreen(
                 selected = section.id in selected,
                 onToggle = { onToggle(section.id) },
             )
+        }
+        if("prayer" in selected){
+            Spacer(Modifier.height(22.dp))
+            Text(localized(R.string.prayer_text_language,language),color=Ink,fontWeight=FontWeight.Bold)
+            FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                listOf("ru","de","uk","en","cu","cu-civil").forEach{code->
+                    val label=when(code){"cu"->localized(R.string.prayer_cu,language);"cu-civil"->localized(R.string.prayer_cu_civil,language);else->com.bibledesktop.shared.presentation.interfaceLanguages[code]?:code}
+                    FilterChip(code in prayerLanguages,onClick={onPrayerLanguageToggle(code)},label={Text(label)})
+                }
+            }
+            if("de" in prayerLanguages){
+                Spacer(Modifier.height(12.dp))
+                Text(localized(R.string.german_prayer_book,language),color=Ink,fontWeight=FontWeight.Bold)
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                    FilterChip(germanPrayerBook=="orthodoxia",onClick={onGermanPrayerBookChange("orthodoxia")},label={Text(localized(R.string.german_prayer_book_orthodoxia,language))})
+                    FilterChip(germanPrayerBook=="maltzew",onClick={onGermanPrayerBookChange("maltzew")},label={Text(localized(R.string.german_prayer_book_maltzew,language))})
+                }
+            }
         }
     }
 }

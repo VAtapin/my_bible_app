@@ -1,6 +1,17 @@
 package com.bibledesktop.shared.api
 
 val prayerTopics=listOf("morning","evening","communion","meals","work","study","living","departed","initial","canons","akathists","hours","hymns","occasions")
+private val prayerCollections=setOf("prayers","canons","akathists","horologion","horologion-laity","horologion-appendix")
+fun prayerCatalogWorks(works:List<LiturgicalWorkSummary>):List<LiturgicalWorkSummary> = works.filter{
+ "prayer-books" !in it.collections&&it.collections.any(prayerCollections::contains)
+}
+fun configuredPrayerLanguages(interfaceLanguage:String,configured:List<String>):List<String> =
+ (configured.ifEmpty{listOf(interfaceLanguage)}).distinct()
+fun preferredPrayerEdition(work:LiturgicalWorkSummary,language:String,germanBook:String):LiturgicalEditionSummary?{
+ val choices=work.editions.filter{it.language==language}
+ val preferred=if(germanBook=="maltzew")"historic-1911" else "modern-de"
+ return if(language=="de")choices.find{it.orthography==preferred}?:choices.firstOrNull() else choices.firstOrNull()
+}
 fun prayerTopic(slug:String,category:String="",collections:List<String> = emptyList(),groups:List<String> = emptyList()):String = when {
  category=="morning"||slug.startsWith("prayer-morning-")||slug=="prayer-optina"->"morning"
  category in listOf("evening","evening_rule")||slug.startsWith("prayer-evening-")||slug=="prayer-before-sleep"->"evening"

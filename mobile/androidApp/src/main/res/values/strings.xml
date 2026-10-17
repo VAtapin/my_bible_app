@@ -95,6 +95,9 @@
     <string name="calendar_next_month">Следующий месяц</string>
     <string name="calendar_corpus_ru">Календарные тексты пока доступны на русском.</string>
     <string name="prayer_text_language">Язык молитвенного текста</string>
+    <string name="german_prayer_book">Немецкий молитвослов</string>
+    <string name="german_prayer_book_orthodoxia">Orthodoxes Gebetbuch</string>
+    <string name="german_prayer_book_maltzew">Alexios Maltzew (1911)</string>
     <string name="prayer_cu">Церковнославянский</string>
     <string name="prayer_cu_civil">Церковнославянский · гражданский</string>
     <string name="notes_title">Заметки</string>

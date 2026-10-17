@@ -11,6 +11,15 @@ class PrayerTopicsTest {
   assertEquals("communion",prayerTopic("prayer-communion-rule"))
  }
  private fun work(slug:String,collections:List<String> = listOf("prayers"))=LiturgicalWorkSummary(1,slug,slug,collections,listOf("de"),listOf(LiturgicalEditionSummary("actual","Actual","de","modern","full")))
+ @Test fun catalogUsesConfiguredLanguagesAndOnePreferredGermanEdition(){
+  val editions=listOf(LiturgicalEditionSummary("maltzew","Maltzew","de","historic-1911","full"),LiturgicalEditionSummary("orthodoxia","Orthodoxia","de","modern-de","full"))
+  val prayer=work("prayer-morning-rule").copy(editions=editions)
+  assertEquals(listOf("ru","cu"),configuredPrayerLanguages("de",listOf("ru","cu","ru")))
+  assertEquals(listOf("de"),configuredPrayerLanguages("de",emptyList()))
+  assertEquals(listOf("prayer-morning-rule","canon"),prayerCatalogWorks(listOf(prayer,work("canon",listOf("canons")),work("book",listOf("prayer-books")))).map{it.slug})
+  assertEquals("orthodoxia",preferredPrayerEdition(prayer,"de","orthodoxia")?.code)
+  assertEquals("maltzew",preferredPrayerEdition(prayer,"de","maltzew")?.code)
+ }
  @Test fun everyBookUnitIsExposedOnceWithoutBookCards()=runBlocking{
   val requested=mutableListOf<String>()
   val client=object:BibleContentSource by BibleApiClient(){
