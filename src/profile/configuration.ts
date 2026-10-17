@@ -42,6 +42,7 @@ export interface AppConfiguration {
     canons: boolean
     horologion: boolean
     languageCodes: string[]
+    germanPrayerBook?: 'orthodoxia' | 'maltzew'
   }
   calendar: {
     level: CalendarLevel
@@ -70,6 +71,7 @@ export interface ConfigurationDraft {
   canons: boolean
   horologion: boolean
   prayerLanguageCodes: string[]
+  germanPrayerBook?: 'orthodoxia' | 'maltzew'
   calendarLevel: CalendarLevel
   calendarHome?: CalendarHomeSettings
   educationPluginIds?: EducationPluginId[]
@@ -140,6 +142,7 @@ export function createConfiguration(
       canons: draft.canons,
       horologion: draft.horologion,
       languageCodes: prayerLanguageCodes.length ? prayerLanguageCodes : [draft.interfaceLanguage],
+      germanPrayerBook: draft.germanPrayerBook ?? previous?.prayers.germanPrayerBook ?? 'orthodoxia',
     },
     calendar: { level: draft.calendarLevel, languageCode: draft.interfaceLanguage, home: draft.calendarHome ?? defaultCalendarHome() },
     education: {
@@ -180,6 +183,7 @@ export function isAppConfiguration(value: unknown): value is AppConfiguration {
     && typeof value.prayers.horologion === 'boolean'
     && isStringArray(value.prayers.languageCodes)
     && value.prayers.languageCodes.length > 0
+    && (value.prayers.germanPrayerBook === undefined || value.prayers.germanPrayerBook === 'orthodoxia' || value.prayers.germanPrayerBook === 'maltzew')
     && isRecord(value.calendar)
     && (value.calendar.level === 'major' || value.calendar.level === 'all')
     && typeof value.calendar.languageCode === 'string'

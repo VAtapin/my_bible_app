@@ -24,6 +24,7 @@ import EducationOptions from './EducationOptions.vue'
 import CalendarOptions from './CalendarOptions.vue'
 import BibleLibrary from '@/features/prototype/BibleLibrary.vue'
 import { enabledWebBibles } from '@/services/webBibleLibrary'
+import {prayerCatalogMessages} from '@/i18n/prayerCatalog'
 import { bibleApi } from '@/api'
 import { learningApps } from '@/features/education/learningApps'
 
@@ -46,6 +47,8 @@ const akathists = ref(false)
 const canons = ref(false)
 const horologion = ref(false)
 const prayerLanguageCodes = ref<string[]>([interfaceLanguage.value])
+const germanPrayerBook = ref<'orthodoxia'|'maltzew'>('orthodoxia')
+const prayerLabels = computed(() => prayerCatalogMessages[language.value])
 const calendarLevel = ref<CalendarLevel>('major')
 const calendarHome = ref(defaultCalendarHome())
 const educationPluginIds = ref<EducationPluginId[]>([])
@@ -103,6 +106,7 @@ onMounted(async () => {
     canons.value = existing.prayers.canons
     horologion.value = existing.prayers.horologion
     prayerLanguageCodes.value = [...existing.prayers.languageCodes]
+    germanPrayerBook.value = existing.prayers.germanPrayerBook ?? 'orthodoxia'
     calendarLevel.value = existing.calendar.level
     calendarHome.value = { ...(existing.calendar.home ?? defaultCalendarHome()) }
     const education = educationSettings(existing)
@@ -188,6 +192,7 @@ function save(): void {
       canons: canons.value,
       horologion: horologion.value,
       prayerLanguageCodes: prayerLanguageCodes.value,
+      germanPrayerBook: germanPrayerBook.value,
       calendarLevel: calendarLevel.value,
       calendarHome: calendarHome.value,
       educationPluginIds: educationPluginIds.value,
@@ -301,6 +306,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu') }" :aria-pressed="prayerLanguageCodes.includes('cu')" @click="togglePrayerLanguage('cu')">{{ text.setup.churchSlavonic }}</button>
           <button type="button" :class="{ selected: prayerLanguageCodes.includes('cu-civil') }" :aria-pressed="prayerLanguageCodes.includes('cu-civil')" @click="togglePrayerLanguage('cu-civil')">{{ text.setup.churchSlavonicCivil }}</button>
         </div>
+        <label v-if="prayerLanguageCodes.includes('de')" class="prayer-book-choice">{{ prayerLabels.germanBook }}<select v-model="germanPrayerBook"><option value="orthodoxia">{{ prayerLabels.orthodoxia }}</option><option value="maltzew">{{ prayerLabels.maltzew }}</option></select></label>
       </div>
 
       <CalendarOptions v-if="sections.includes('calendar')" v-model:level="calendarLevel" v-model:home="calendarHome" />
@@ -338,6 +344,7 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
           <dd v-else>{{ selectedTranslationNames.join(', ') }}</dd>
         </div>
         <div v-if="sections.includes('prayers')"><dt>{{ text.setup.summaryPrayerContent }}</dt><dd>{{ selectedPrayerLabels.join(', ') }}</dd></div>
+        <div v-if="sections.includes('prayers')&&prayerLanguageCodes.includes('de')"><dt>{{ prayerLabels.germanBook }}</dt><dd>{{ germanPrayerBook==='orthodoxia'?prayerLabels.orthodoxia:prayerLabels.maltzew }}</dd></div>
         <div><dt>{{ text.setup.summaryNotifications }}</dt><dd>{{ notificationsEnabled ? notificationTime : text.setup.disabled }}</dd></div>
       </dl>
       <template v-if="mode === 'quick'">
@@ -354,5 +361,5 @@ function defaultTranslationCode(value: InterfaceLanguage): string {
   </MobileShell>
 </template>
 <style scoped>
-.language-card{padding:12px 14px}.language-card h2{font:600 14px/1.4 sans-serif}.language-card .section-intro{margin-bottom:10px}.language-card .language-selector{display:flex;flex-wrap:wrap;gap:8px}.language-card .language-selector button{min-height:30px;padding:5px 12px;border-radius:6px;font-size:12px}.setup-screen .section-selector button{min-height:58px;padding:8px 12px;border-radius:12px}.setup-screen .section-selector img{width:32px;height:32px;flex-basis:32px}
+.language-card{padding:12px 14px}.language-card h2{font:600 14px/1.4 sans-serif}.language-card .section-intro{margin-bottom:10px}.language-card .language-selector{display:flex;flex-wrap:wrap;gap:8px}.language-card .language-selector button{min-height:30px;padding:5px 12px;border-radius:6px;font-size:12px}.setup-screen .section-selector button{min-height:58px;padding:8px 12px;border-radius:12px}.setup-screen .section-selector img{width:32px;height:32px;flex-basis:32px}.setup-screen .language-selector.compact button{min-width:0;max-width:100%;padding:8px;white-space:normal;overflow-wrap:anywhere;line-height:1.25}.prayer-book-choice{display:grid;gap:6px;margin-top:16px}.prayer-book-choice select{min-width:0;max-width:100%;min-height:44px}
 </style>

@@ -14,18 +14,24 @@ export function prayerLanguages(item:PrayerSummary):string[]{return item.availab
 export function preferredPrayerLanguage(interfaceLanguage:string,configured:string[]):string{
   return configured.includes(interfaceLanguage)?interfaceLanguage:configured[0]??interfaceLanguage
 }
+export function prayerLanguageChoices(interfaceLanguage:string,configured:string[]|undefined):string[]{
+  return [...new Set(configured?.length?configured:[interfaceLanguage])]
+}
 export interface PrayerWorkCard {work:LiturgicalWorkSummary;language:string;edition?:LiturgicalEditionSummary}
+export type GermanPrayerBook='orthodoxia'|'maltzew'
 const prayerWorkCollections=new Set(['prayers','canons','akathists','horologion','horologion-laity','horologion-appendix'])
 export function prayerCatalogWorks(works:LiturgicalWorkSummary[]):LiturgicalWorkSummary[]{
   return works.filter(work=>work.collections.some(collection=>prayerWorkCollections.has(collection))&&!work.collections.includes('prayer-books'))
 }
-/** Show published prayer and worship units, never their source-book containers. */
-export function prayerWorkCards(works:LiturgicalWorkSummary[],selectedLanguage:string):PrayerWorkCard[]{
+/** Show one card per published unit and language; the reader can switch editions. */
+export function prayerWorkCards(works:LiturgicalWorkSummary[],selectedLanguage:string,germanBook:GermanPrayerBook='orthodoxia'):PrayerWorkCard[]{
   return prayerCatalogWorks(works).flatMap(work=>{
     const language=selectedLanguage||work.available_languages[0]
     if(!language||!work.available_languages.includes(language))return[]
     const editions=work.editions.filter(edition=>edition.language===language)
-    return (selectedLanguage?editions:editions.slice(0,1)).map(edition=>({work,language,edition}))
+    const orthography=germanBook==='maltzew'?'historic-1911':'modern-de'
+    const edition=language==='de'?editions.find(item=>item.orthography===orthography)??editions[0]:editions[0]
+    return edition?[{work,language,edition}]:[]
   })
 }
 export function prayerInGroup(item:PrayerSummary,group:string):boolean{return !group||(item.groups??(item.group?[item.group]:[])).includes(group)}

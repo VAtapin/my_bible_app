@@ -39,6 +39,15 @@ describe('app configuration', () => {
     expect(restored.calendar.home).toEqual({ oldStyle: false, compact: false, fasting: true, readings: true, commemorations: true })
   })
 
+  it('keeps the selected German prayer book and accepts older profiles without this setting', () => {
+    const configuration=createConfiguration({...draft,germanPrayerBook:'maltzew'})
+    expect(migrateAppConfiguration(JSON.parse(JSON.stringify(configuration)))?.prayers.germanPrayerBook).toBe('maltzew')
+    const older=JSON.parse(JSON.stringify(configuration))
+    delete older.prayers.germanPrayerBook
+    expect(migrateAppConfiguration(older)?.prayers.germanPrayerBook).toBeUndefined()
+    expect(isAppConfiguration({...configuration,prayers:{...configuration.prayers,germanPrayerBook:'unknown'}})).toBe(false)
+  })
+
   it('keeps old education profiles compatible without overwriting them', () => {
     const configuration = createConfiguration({ ...draft, sections: ['study'] })
     delete configuration.education
