@@ -15,9 +15,13 @@ export function preferredPrayerLanguage(interfaceLanguage:string,configured:stri
   return configured.includes(interfaceLanguage)?interfaceLanguage:configured[0]??interfaceLanguage
 }
 export interface PrayerWorkCard {work:LiturgicalWorkSummary;language:string;edition?:LiturgicalEditionSummary}
-/** The prayer list contains only individual published works; distinct same-language editions get their own links. */
+const prayerWorkCollections=new Set(['prayers','canons','akathists','horologion','horologion-laity','horologion-appendix'])
+export function prayerCatalogWorks(works:LiturgicalWorkSummary[]):LiturgicalWorkSummary[]{
+  return works.filter(work=>work.collections.some(collection=>prayerWorkCollections.has(collection))&&!work.collections.includes('prayer-books'))
+}
+/** Show published prayer and worship units, never their source-book containers. */
 export function prayerWorkCards(works:LiturgicalWorkSummary[],selectedLanguage:string):PrayerWorkCard[]{
-  return works.filter(work=>work.collections.includes('prayers')).flatMap(work=>{
+  return prayerCatalogWorks(works).flatMap(work=>{
     const language=selectedLanguage||work.available_languages[0]
     if(!language||!work.available_languages.includes(language))return[]
     const editions=work.editions.filter(edition=>edition.language===language)

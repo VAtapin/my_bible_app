@@ -8,7 +8,7 @@ import {createIndexedDbDailyContentRepository} from '@/offline/indexedDbDailyCon
 import {createDailyContentService} from '@/services/dailyContentService'
 import {useProfileStore} from '@/stores/profileStore'
 import {prayerLanguageLabel} from '@/services/prayerEditions'
-import {preferredPrayerLanguage,prayerTopics,prayerTopic,prayerWorkCards,type PrayerWorkCard} from '@/services/prayerCatalog'
+import {preferredPrayerLanguage,prayerTopics,prayerTopic,prayerCatalogWorks,prayerWorkCards,type PrayerWorkCard} from '@/services/prayerCatalog'
 import {prayerCatalogMessages} from '@/i18n/prayerCatalog'
 
 const service=createDailyContentService(bibleApi,createIndexedDbDailyContentRepository())
@@ -29,7 +29,7 @@ onMounted(async()=>{
   selectedLanguage.value=preferredPrayerLanguage(language.value,preferred)
   message.value=text.value.prayers.loading
   try{
-    works.value=await service.openLiturgicalWorks('prayers')
+    works.value=prayerCatalogWorks(await service.openLiturgicalWorks(''))
     message.value=''
   }catch{message.value=text.value.prayers.unavailable}
 })
