@@ -23,7 +23,7 @@ fi
 
 git pull --ff-only
 npm ci
-npm run build
+npm run build:app
 
 test -s dist/index.html
 test -s dist/sw.js
@@ -33,6 +33,7 @@ done
 
 echo "Bible App build is ready in $app_dir/dist"
 if $publish_azbuka; then
+    npm run build:azbuka
     # Only the Azbuka owner imports this public archive into their own directory.
     test -s azbuka-web/dist/index.html
     test -s azbuka-web/dist/sw.js

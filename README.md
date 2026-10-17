@@ -246,7 +246,7 @@ git fetch origin main && \
 git checkout --track origin/main && \
 export PATH="/opt/plesk/node/22/bin:$PATH" && \
 npm ci && \
-npm run build
+npm run build:app
 ```
 
 Команда не удаляет существующие файлы. Если в каталоге есть стандартная
@@ -258,13 +258,13 @@ npm run build
 ```bash
 cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 export PATH="/opt/plesk/node/22/bin:$PATH" && \
-git pull --ff-only && \
 bash scripts/deploy-production.sh
 ```
 
 Основная версия создаётся в `dist`, самостоятельная «Азбука» — в
 `azbuka-web/dist`. Домены обслуживают разные пользователи Plesk, поэтому
-`scripts/deploy-production.sh` по умолчанию обновляет только Bible App.
+`scripts/deploy-production.sh` сам выполняет `git pull --ff-only`, `npm ci`
+и сборку основного Bible App. По умолчанию отдельная «Азбука» не собирается.
 Если изменялась самостоятельная «Азбука» и нужно обновить её отдельно,
 запустите этот скрипт с `--with-azbuka`: он также создаст
 `dist/azbuka-release.tar.gz`; в папку другого пользователя он не записывает.
@@ -344,7 +344,8 @@ Cross-origin CORS статических SVG/PNG для этих известн�
 по точным привязкам каталога к памятям в порядке главенства дневного API.
 В календаре можно выбрать день в сетке недели или месяца; все его памяти
 показываются независимо от фильтра краткой сводки главной.
-`npm run build` собирает обе версии; `npm run check` проверяет также общие
+`npm run build:app` собирает основной Bible App; `npm run build` собирает обе
+версии; `npm run check` проверяет также общие
 учебные тесты.
 
 ## Статус
