@@ -1,11 +1,23 @@
 import {expect,it,vi} from 'vitest'
-import {prayerTopic,prayerSectionWorks,preferredPrayerLanguage} from './prayerCatalog'
+import {prayerTopic,prayerSectionWorks,preferredPrayerLanguage,prayerWorkCards} from './prayerCatalog'
 import type {LiturgicalWorkSummary,LiturgicalWorkVersion} from '@/api/contracts'
 const work=(slug:string,collections=['prayers']):LiturgicalWorkSummary=>({id:1,slug,title:slug,collections,available_languages:['de'],editions:[],source_url:null})
 it('starts with the interface language while preserving an explicitly different prayer choice',()=>{
  expect(preferredPrayerLanguage('de',['de','ru','cu','cu-civil'])).toBe('de')
  expect(preferredPrayerLanguage('de',['ru'])).toBe('ru')
  expect(preferredPrayerLanguage('de',[])).toBe('de')
+})
+it('lists only prayers and gives distinct German editions separate cards',()=>{
+ const prayer={...work('prayer-morning-rule'),editions:[
+  {code:'historic',title:'Maltzew',language:'de',orthography:'historic',reader_profile:'full'},
+  {code:'modern',title:'Orthodoxia',language:'de',orthography:'modern',reader_profile:'full'},
+ ]}
+ const works=[prayer,work('whole-book',['prayer-books']),work('calendar-hymn',['calendar-reference'])]
+ expect(prayerWorkCards(works,'de').map(card=>[card.work.slug,card.edition?.code])).toEqual([
+  ['prayer-morning-rule','historic'],['prayer-morning-rule','modern'],
+ ])
+ expect(prayerWorkCards(works,'').map(card=>card.edition?.code)).toEqual(['historic'])
+ expect(prayerWorkCards(works,'cu')).toEqual([])
 })
 it('groups individual prayers and full rules by occasion without guessing from translated titles',()=>{
  for(const slug of ['prayer-morning-rule','prayer-morning-1','prayer-morning-trinity'])expect(prayerTopic(slug)).toBe('morning')

@@ -97,12 +97,18 @@ export function createIndexedDbDailyContentRepository(): DailyContentRepository 
     },
     async getLiturgicalWorks(collection){
       const row=await read<{data:LiturgicalWorkSummary[]}>(offlineStores.state,`liturgical-list:${collection}`)
-      return row?.data&&Array.isArray(row.data)&&row.data.every(item=>isLiturgicalWork(item)&&item.collections.includes(collection))?row.data:undefined
+      return row?.data&&Array.isArray(row.data)&&row.data.every(item=>isLiturgicalWork(item)&&(!collection||item.collections.includes(collection)))?row.data:undefined
     },
     async putLiturgicalWorks(collection,works){
-      if(!works.every(item=>isLiturgicalWork(item)&&item.collections.includes(collection)))throw new ApiError('invalid-response','Invalid liturgical catalogue')
-      await put(offlineStores.state,{key:`liturgical-list:${collection}`,data:works,savedAt:new Date().toISOString()})
-      for(const work of works)await this.putLiturgicalWork?.(work)
+      if(!works.every(item=>isLiturgicalWork(item)&&(!collection||item.collections.includes(collection))))throw new ApiError('invalid-response','Invalid liturgical catalogue')
+      await withDatabase(database=>transaction(database,[offlineStores.state],tx=>{
+        const state=tx.objectStore(offlineStores.state)
+        state.put({key:`liturgical-list:${collection}`,data:works,savedAt:new Date().toISOString()})
+        for(const work of works){
+          state.put({key:`prayer-work:${work.slug}`,data:work})
+          for(const alias of work.legacy_slugs??[])state.put({key:`prayer-work-alias:${alias}`,target:work.slug})
+        }
+      }))
     },
     async getLiturgicalWork(slug){
       const alias=await read<{target:string}>(offlineStores.state,`prayer-work-alias:${slug}`)

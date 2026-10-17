@@ -1,4 +1,4 @@
-import type {PrayerSummary,LiturgicalWorkSummary} from '@/api/contracts'
+import type {PrayerSummary,LiturgicalWorkSummary,LiturgicalEditionSummary} from '@/api/contracts'
 
 /** A work may serve several groups/languages, but still has one catalogue card. */
 export function uniquePrayerCards(items:PrayerSummary[]):PrayerSummary[]{
@@ -13,6 +13,16 @@ export function uniquePrayerCards(items:PrayerSummary[]):PrayerSummary[]{
 export function prayerLanguages(item:PrayerSummary):string[]{return item.available_languages??[item.language_code]}
 export function preferredPrayerLanguage(interfaceLanguage:string,configured:string[]):string{
   return configured.includes(interfaceLanguage)?interfaceLanguage:configured[0]??interfaceLanguage
+}
+export interface PrayerWorkCard {work:LiturgicalWorkSummary;language:string;edition?:LiturgicalEditionSummary}
+/** The prayer list contains only individual published works; distinct same-language editions get their own links. */
+export function prayerWorkCards(works:LiturgicalWorkSummary[],selectedLanguage:string):PrayerWorkCard[]{
+  return works.filter(work=>work.collections.includes('prayers')).flatMap(work=>{
+    const language=selectedLanguage||work.available_languages[0]
+    if(!language||!work.available_languages.includes(language))return[]
+    const editions=work.editions.filter(edition=>edition.language===language)
+    return (selectedLanguage?editions:editions.slice(0,1)).map(edition=>({work,language,edition}))
+  })
 }
 export function prayerInGroup(item:PrayerSummary,group:string):boolean{return !group||(item.groups??(item.group?[item.group]:[])).includes(group)}
 export function prayerCardTarget(item:PrayerSummary,language:string){

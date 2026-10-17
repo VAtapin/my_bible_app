@@ -33,6 +33,7 @@ function unitTarget(unit:LiturgicalWorkSummary){
   return {path:`/liturgical/${unit.slug}/${actual}`,query:edition?{edition:edition.code}:undefined}
 }
 const message = ref('')
+const isPrayer=computed(()=>metadata.value?.collections.includes('prayers')??false)
 const editionChoices=computed(()=>metadata.value?.editions.filter(item=>item.language===work.value?.language)??[])
 function chooseEdition(event:Event){router.replace({path:route.path,query:{...route.query,edition:(event.target as HTMLSelectElement).value}})}
 function pageLabel(pages:number[]){return pages.length>1&&pages.every((page,index)=>index===0||page===pages[index-1]!+1)?`${pages[0]}–${pages.at(-1)}`:pages.join(', ')}
@@ -65,11 +66,11 @@ watch([()=>route.params.slug,()=>route.params.language,()=>route.query.edition],
     <article v-if="work" class="prayer-reading liturgical-reading" :class="{ 'traditional-prayer': work.orthography === 'traditional' && work.language === 'cu', 'civil-prayer': work.language.startsWith('cu') && ['civil', 'civil-accented'].includes(work.orthography) }" :lang="work.language.startsWith('cu') ? 'cu' : work.language">
       <p class="eyebrow dark-eyebrow">{{ prayerLanguageLabel(work.language, text.setup) }}</p>
       <h1>{{ work.title }}</h1>
-      <label v-if="editionChoices.length>1" class="edition-picker">{{labels.edition}}<select :value="work.edition" @change="chooseEdition"><option v-for="edition in editionChoices" :key="edition.code" :value="edition.code">{{edition.title}}</option></select></label>
+      <label v-if="!isPrayer&&editionChoices.length>1" class="edition-picker">{{labels.edition}}<select :value="work.edition" @change="chooseEdition"><option v-for="edition in editionChoices" :key="edition.code" :value="edition.code">{{edition.title}}</option></select></label>
       <details v-if="work.bookSections?.length" class="book-contents"><summary>{{labels.contents}}</summary><ol><li v-for="section in work.bookSections" :key="section.id"><button v-if="section.startBlockId" type="button" @click="jump(section.startBlockId)">{{section.title}}</button><button v-else type="button" @click="selectedSection=selectedSection===section.id?'':section.id">{{section.title}}</button><small v-if="section.printed_pages.length"> · {{labels.pages}} {{pageLabel(section.printed_pages)}}</small><ul v-if="selectedSection===section.id"><li v-for="unit in sectionWorks.filter(item=>item.available_languages.includes(work!.language))" :key="unit.slug"><RouterLink :to="unitTarget(unit)">{{unit.title}}</RouterLink></li></ul></li></ol></details>
-      <details v-if="work.sourceEditionNotes?.length"><summary>{{labels.edition}}</summary><p v-for="note in work.sourceEditionNotes" :key="note" class="rubric">{{note}}</p></details>
-      <p v-if="work.completeness==='complete'">{{labels.complete}}</p>
-      <section v-if="metadata?.intro" class="prayer-intro"><h2>{{labels.intro}}</h2><PrayerContent :content="metadata.intro" /></section>
+      <details v-if="!isPrayer&&work.sourceEditionNotes?.length"><summary>{{labels.edition}}</summary><p v-for="note in work.sourceEditionNotes" :key="note" class="rubric">{{note}}</p></details>
+      <p v-if="!isPrayer&&work.completeness==='complete'">{{labels.complete}}</p>
+      <section v-if="!isPrayer&&metadata?.intro" class="prayer-intro"><h2>{{labels.intro}}</h2><PrayerContent :content="metadata.intro" /></section>
       <template v-for="block in visibleBlocks" :key="block.id">
         <h2 v-if="block.kind === 'heading'" :id="`block-${block.id}`" class="prayer-text-heading">{{ block.text }}</h2>
         <p v-else :id="`block-${block.id}`" :class="{ rubric: block.kind === 'rubric' }">{{ block.text }}</p>

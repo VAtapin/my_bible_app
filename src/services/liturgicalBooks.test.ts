@@ -16,6 +16,14 @@ describe('whole prayer books and separate editions',()=>{
   expect(isLiturgicalWorkVersion({...version,sourceEditionNotes:[5]})).toBe(false)
   expect(isLiturgicalWorkVersion({...version,bookSections:[{...version.bookSections![0],startBlockId:'missing'}]})).toBe(false)
  })
+ it('caches an unfiltered catalogue with mixed collections in one operation',async()=>{
+  const repository=createIndexedDbDailyContentRepository()
+  const prayer={...summary,slug:'prayer-unit',collections:['prayers']}
+  await repository.putLiturgicalWorks?.('',[summary,prayer])
+  expect(await repository.getLiturgicalWorks?.('')).toEqual([summary,prayer])
+  expect(await repository.getLiturgicalWork?.('prayer-unit')).toEqual(prayer)
+  await expect(repository.putLiturgicalWorks?.('prayers',[summary])).rejects.toMatchObject({kind:'invalid-response'})
+ })
  it('keeps book catalogue, full rubrics, section metadata and both same-language editions offline without replacing either',async()=>{
   const repository=createIndexedDbDailyContentRepository()
   const api={getLiturgicalWorks:vi.fn(async()=>[summary]),getLiturgicalWork:vi.fn(async()=>summary),getLiturgicalVersion:vi.fn(async(_slug,_language,edition)=>({...version,edition:edition??'modern',blocks:[...version.blocks,{id:'b4',kind:'text',text:edition??'modern'}]}))} as unknown as BibleApi

@@ -17,7 +17,7 @@ afterEach(() => {
   }
 })
 
-/** Run the real Bash script and tar locally; Git/npm are isolated command fixtures. */
+/** Run the real Bash script and tar locally; npm is an isolated command fixture. */
 describe('production deploy with separate Plesk users', () => {
   function fixture(azbuka = false) {
     const root = mkdtempSync(join(tmpdir(), 'bible-deploy-test-')); roots.push(root)
@@ -25,8 +25,7 @@ describe('production deploy with separate Plesk users', () => {
     mkdirSync(join(root, 'scripts')); copyFileSync(resolve('scripts/deploy-production.sh'), join(root, 'scripts/deploy-production.sh'))
     for (const [name, content] of Object.entries({
       node: '#!/usr/bin/env bash\necho "${TEST_NODE_MAJOR:-22}"\n',
-      git: '#!/usr/bin/env bash\nprintf "%s\\n" "git $*" >> deploy.calls\nexit "${TEST_GIT_EXIT:-0}"\n',
-      npm: '#!/usr/bin/env bash\nprintf "%s\\n" "npm $*" >> deploy.calls\n',
+      npm: '#!/usr/bin/env bash\nprintf "%s\\n" "npm $*" >> deploy.calls\nif [[ "$*" == ci ]]; then exit "${TEST_NPM_CI_EXIT:-0}"; fi\n',
     })) { writeFileSync(join(bin, name), content); chmodSync(join(bin, name), 0o755) }
     mkdirSync(join(root, 'dist/app-icons'), { recursive: true })
     for (const file of ['index.html', 'sw.js', ...['bookmarks', 'calendar', 'library', 'prayers', 'setup'].map(icon => `app-icons/${icon}.png`)]) writeFileSync(join(root, 'dist', file), 'public fixture')
@@ -44,7 +43,7 @@ describe('production deploy with separate Plesk users', () => {
     const { root, run } = fixture()
     const result = run()
     expect(result.status, result.stderr).toBe(0)
-    expect(readFileSync(join(root, 'deploy.calls'), 'utf8').trim().split('\n')).toEqual(['git pull --ff-only', 'npm ci', 'npm run build'])
+    expect(readFileSync(join(root, 'deploy.calls'), 'utf8').trim().split('\n')).toEqual(['npm ci', 'npm run build:app'])
     expect(existsSync(join(root, 'dist/azbuka-release.tar.gz'))).toBe(false)
     expect(result.stdout).not.toContain('Azbuka archive')
   })
@@ -56,12 +55,13 @@ describe('production deploy with separate Plesk users', () => {
     const contents = execFileSync(bash, ['-c', 'tar -tzf "$1"', 'archive-test', archive], { encoding: 'utf8' })
     expect(contents).toContain('./index.html'); expect(contents).toContain('./sw.js')
     expect(contents).not.toContain('.env'); expect(contents).not.toContain('scripts/')
+    expect(readFileSync(join(root, 'deploy.calls'), 'utf8').trim().split('\n')).toEqual(['npm ci', 'npm run build:app', 'npm run build:azbuka'])
     expect(result.stdout).toContain('Import it separately')
   })
-  it('stops on a rejected Git update before installing or building', () => {
+  it('stops when npm install fails before building', () => {
     const { root, run } = fixture(true)
-    expect(run(['--with-azbuka'], { TEST_GIT_EXIT: '1' }).status).toBe(1)
-    expect(readFileSync(join(root, 'deploy.calls'), 'utf8').trim()).toBe('git pull --ff-only')
+    expect(run(['--with-azbuka'], { TEST_NPM_CI_EXIT: '1' }).status).toBe(1)
+    expect(readFileSync(join(root, 'deploy.calls'), 'utf8').trim()).toBe('npm ci')
     expect(existsSync(join(root, 'dist/azbuka-release.tar.gz'))).toBe(false)
   })
   it('rejects a missing main artifact', () => {
@@ -72,7 +72,7 @@ describe('production deploy with separate Plesk users', () => {
     const { run } = fixture()
     expect(run(['--with-azbuka']).status).not.toBe(0)
   })
-  it('rejects unknown options before Git runs', () => {
+  it('rejects unknown options before npm runs', () => {
     const { root, run } = fixture()
     expect(run(['--copy-azbuka']).status).toBe(2)
     expect(existsSync(join(root, 'deploy.calls'))).toBe(false)
