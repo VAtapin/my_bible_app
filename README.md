@@ -258,13 +258,15 @@ npm run build:app
 ```bash
 cd /var/www/vhosts/biblia-app.ru/httpdocs && \
 export PATH="/opt/plesk/node/22/bin:$PATH" && \
+git pull --ff-only && \
 bash scripts/deploy-production.sh
 ```
 
 Основная версия создаётся в `dist`, самостоятельная «Азбука» — в
 `azbuka-web/dist`. Домены обслуживают разные пользователи Plesk, поэтому
-`scripts/deploy-production.sh` сам выполняет `git pull --ff-only`, `npm ci`
-и сборку основного Bible App. По умолчанию отдельная «Азбука» не собирается.
+Сначала обновите код, затем запускайте уже новую версию сценария. Он выполняет
+`npm ci` и сборку основного Bible App. По умолчанию отдельная «Азбука» не
+собирается.
 Если изменялась самостоятельная «Азбука» и нужно обновить её отдельно,
 запустите этот скрипт с `--with-azbuka`: он также создаст
 `dist/azbuka-release.tar.gz`; в папку другого пользователя он не записывает.

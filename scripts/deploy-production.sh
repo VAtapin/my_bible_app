@@ -21,7 +21,6 @@ if [[ "$(node -p 'process.versions.node.split(".")[0]')" != "22" ]]; then
     exit 1
 fi
 
-git pull --ff-only
 npm ci
 npm run build:app
 
